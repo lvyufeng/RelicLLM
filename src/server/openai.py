@@ -9,6 +9,43 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
+
+def _set_best_env_defaults() -> None:
+    os.environ.setdefault("DEEPSEEK_PD_PHASE_AUTO_SELECT", "1")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE", "1")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_GROUPED_GEMM", "1")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_PREFETCH_BEFORE_FFN", "1")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_MAX_CACHED_LAYERS", "3")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_ARENA", "1")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_BUCKETED_GEMM", "1")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_BUCKET_EXPERTS", "16")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_CHUNK_TOKENS", "512")
+    os.environ.setdefault("DEEPSEEK_GPU_MOE_DECODE_ACTIVE", "1")
+    os.environ.setdefault("DEEPSEEK_INT8_IMPL", "cuda_ext")
+    os.environ.setdefault("DEEPSEEK_MOE_ASYNC_ALLREDUCE", "1")
+    os.environ.setdefault("DEEPSEEK_SHARED_EXPERT_INT8", "1")
+    os.environ.setdefault("DEEPSEEK_FLASHINFER_STYLE_ATTN_CUDA", "1")
+    os.environ.setdefault("DEEPSEEK_PREFILL_SPARSE_ATTN_HEADPAIR_CUDA", "1")
+    os.environ.setdefault("DEEPSEEK_FUSED_C4_INDEXER_CUDA", "1")
+    os.environ.setdefault("DEEPSEEK_HC_PRE_CUDA", "1")
+    os.environ.setdefault("DEEPSEEK_HC_POST_CUDA", "1")
+    os.environ.setdefault("DEEPSEEK_CPU_DECODE_INLINE_THRESHOLD", "0")
+    os.environ.setdefault("DEEPSEEK_CPU_TOPK_PERSISTENT", "1")
+    os.environ.setdefault("DEEPSEEK_PD_DECODE_OMP_THREADS", "12")
+    os.environ.setdefault("DEEPSEEK_FUSED_ATTN_PREFUSE", "1")
+    for module in ("WQ_A", "WQ_B", "WKV", "WO_B", "INDEXER_WQ_B"):
+        os.environ.setdefault(f"DEEPSEEK_PD_PREFILL_{module}_INT8", "1")
+        os.environ.setdefault(f"DEEPSEEK_PD_DECODE_{module}_INT8", "1")
+    os.environ.setdefault("DEEPSEEK_PD_PREFILL_WO_A_INT8", "0")
+    os.environ.setdefault("DEEPSEEK_PD_DECODE_WO_A_INT8", "1")
+    os.environ.setdefault("DEEPSEEK_WO_A_FP16", "1")
+    os.environ.setdefault("DEEPSEEK_CPU_MOE_EXTERNAL_SERVER", "0")
+    os.environ.setdefault("DEEPSEEK_CPU_MOE_INPROC_SERVER", "0")
+    os.environ.setdefault("DEEPSEEK_CPU_MOE_SHARED_WEIGHTS", "0")
+
+
+_set_best_env_defaults()
+
 import torch
 import torch.distributed as dist
 from transformers import AutoTokenizer
@@ -34,39 +71,6 @@ DEFAULT_MODEL_ID = "deepseek-v4-flash-w8a8"
 
 def _env_enabled(name: str) -> bool:
     return os.getenv(name, "0").lower() in {"1", "true", "yes"}
-
-
-def _set_best_env_defaults() -> None:
-    os.environ.setdefault("DEEPSEEK_PD_PHASE_AUTO_SELECT", "1")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE", "1")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_GROUPED_GEMM", "1")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_PREFETCH_BEFORE_FFN", "1")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_MAX_CACHED_LAYERS", "3")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_ARENA", "1")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_BUCKETED_GEMM", "1")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_BUCKET_EXPERTS", "16")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_CHUNK_TOKENS", "512")
-    os.environ.setdefault("DEEPSEEK_INT8_IMPL", "cuda_ext")
-    os.environ.setdefault("DEEPSEEK_MOE_ASYNC_ALLREDUCE", "1")
-    os.environ.setdefault("DEEPSEEK_SHARED_EXPERT_INT8", "1")
-    os.environ.setdefault("DEEPSEEK_FLASHINFER_STYLE_ATTN_CUDA", "1")
-    os.environ.setdefault("DEEPSEEK_PREFILL_SPARSE_ATTN_HEADPAIR_CUDA", "1")
-    os.environ.setdefault("DEEPSEEK_FUSED_C4_INDEXER_CUDA", "1")
-    os.environ.setdefault("DEEPSEEK_HC_PRE_CUDA", "1")
-    os.environ.setdefault("DEEPSEEK_HC_POST_CUDA", "1")
-    os.environ.setdefault("DEEPSEEK_CPU_DECODE_INLINE_THRESHOLD", "0")
-    os.environ.setdefault("DEEPSEEK_CPU_TOPK_PERSISTENT", "1")
-    os.environ.setdefault("DEEPSEEK_PD_DECODE_OMP_THREADS", "12")
-    os.environ.setdefault("DEEPSEEK_FUSED_ATTN_PREFUSE", "1")
-    for module in ("WQ_A", "WQ_B", "WKV", "WO_B", "INDEXER_WQ_B"):
-        os.environ.setdefault(f"DEEPSEEK_PD_PREFILL_{module}_INT8", "1")
-        os.environ.setdefault(f"DEEPSEEK_PD_DECODE_{module}_INT8", "1")
-    os.environ.setdefault("DEEPSEEK_PD_PREFILL_WO_A_INT8", "0")
-    os.environ.setdefault("DEEPSEEK_PD_DECODE_WO_A_INT8", "1")
-    os.environ.setdefault("DEEPSEEK_WO_A_FP16", "1")
-    os.environ.setdefault("DEEPSEEK_CPU_MOE_EXTERNAL_SERVER", "0")
-    os.environ.setdefault("DEEPSEEK_CPU_MOE_INPROC_SERVER", "0")
-    os.environ.setdefault("DEEPSEEK_CPU_MOE_SHARED_WEIGHTS", "0")
 
 
 def _setup_cpu_runtime(routed_experts_device: str, local_rank: int, world_size: int) -> None:
