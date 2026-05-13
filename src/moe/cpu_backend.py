@@ -372,6 +372,19 @@ class CPURoutedExpertsBackend:
         self._topk_limit = int(os.getenv("DEEPSEEK_CPU_TOPK_LIMIT", "0"))
         self._profile_enabled = _env_enabled("DEEPSEEK_CPU_MOE_PROFILE")
         self._route_profile_enabled = _env_enabled("DEEPSEEK_CPU_ROUTE_PROFILE")
+        self._gguf_routes_native_enabled = _env_enabled_default_on("DEEPSEEK_GGUF_ROUTES_NATIVE")
+        serving_prefill_chunk = int(os.getenv("DEEPSEEK_SERVING_PREFILL_CHUNK_TOKENS", os.getenv("DEEPSEEK_GPU_PREFILL_MOE_CHUNK_TOKENS", "256")) or "256")
+        self._gguf_routes_native_max_batch = max(1, int(os.getenv("DEEPSEEK_GGUF_ROUTES_NATIVE_MAX_BATCH", str(serving_prefill_chunk))))
+        self._gguf_grouped_expert_enabled = _env_enabled_default_on("DEEPSEEK_GGUF_GROUPED_EXPERT_PREFILL")
+        self._gguf_raw_block_cache = {}
+        self._has_gguf_raw_experts = None
+        self._gguf_grid_cpu = None
+        self._gguf_route_capacity = 0
+        self._gguf_route_tokens_buf = None
+        self._gguf_route_weights_buf = None
+        self._gguf_w1_ptrs_buf = None
+        self._gguf_w3_ptrs_buf = None
+        self._gguf_w2_ptrs_buf = None
         self._host_reduce_name = f"/deepseek_cpu_moe_reduce_{os.getppid()}_{self.layer_idx}"
         self._host_reduce_slot = 0
 
@@ -383,6 +396,17 @@ class CPURoutedExpertsBackend:
                 native_mod.host_float_allreduce_unlink(host_reduce_name)
             except Exception:
                 pass
+
+    def has_gguf_raw_experts(self) -> bool:
+        if self._has_gguf_raw_experts is not None:
+            return self._has_gguf_raw_experts
+        for expert_id in range(self.experts_start_idx, self.experts_end_idx):
+            expert = self.experts[expert_id]
+            if expert is not None and getattr(expert, "_gguf_raw_backing", None) is not None:
+                self._has_gguf_raw_experts = True
+                return True
+        self._has_gguf_raw_experts = False
+        return False
 
     def _apply_topk_limit(self, topk_ids: torch.Tensor, topk_weights: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         if self._topk_limit <= 0 or self._topk_limit >= topk_ids.shape[-1]:
@@ -459,7 +483,7 @@ class CPURoutedExpertsBackend:
         if cached is not None:
             return cached
         expert = self.experts[expert_id]
-        if expert is None:
+        if expert is None or getattr(expert, "_gguf_raw_backing", None) is not None:
             return None
         # Fast path: int8 checkpoint. Materialize directly into the per-layer pinned arena so
         # there is exactly one physical copy of each expert's int8 weights/scales.
@@ -707,7 +731,7 @@ class CPURoutedExpertsBackend:
         if cached is not None:
             return cached
         expert = self.experts[expert_id]
-        if expert is None:
+        if expert is None or getattr(expert, "_gguf_raw_backing", None) is not None:
             return None
         if expert.w1.weight.dtype != torch.float4_e2m1fn_x2:
             return None
@@ -822,6 +846,9 @@ class CPURoutedExpertsBackend:
     def prepare_fp4_weights(self, expert_ids: Sequence[int] | None = None) -> bool:
         """Materialize routed experts into the pinned FP4 arena. Returns True
         when every local expert has an arena slot ready."""
+        if self.has_gguf_raw_experts():
+            self._fp4_weights_prepared = False
+            return False
         if not self._fp4_arena_enabled:
             return False
         if expert_ids is None:
@@ -916,6 +943,10 @@ class CPURoutedExpertsBackend:
                     self._inter_dim = expert.w1.out_features
                     self._swiglu_limit = float(expert.swiglu_limit)
                     break
+        if self.has_gguf_raw_experts():
+            self.release_int8_prepare_cache()
+            self._int8_weights_prepared = False
+            return False
         full_prepare = expert_ids is None
         if expert_ids is None:
             expert_ids = range(self.experts_start_idx, self.experts_end_idx)
@@ -1057,6 +1088,12 @@ class CPURoutedExpertsBackend:
         return self.dispatch_forward(hidden_states, expert_ids, route_weights)
 
     def _ensure_native_ready(self) -> bool:
+        if self.has_gguf_raw_experts():
+            self._native_ready = True
+            self._native_enabled = False
+            self._native_int8_enabled = False
+            self._native_fp4_raw_enabled = False
+            return False
         if self._native_ready:
             return self._native_enabled
         self._native_ready = True
@@ -1203,13 +1240,183 @@ class CPURoutedExpertsBackend:
             self._swiglu_limit,
         )
 
+    def _should_run_gguf_grouped_expert_prefill(self, batch_size: int) -> bool:
+        return (
+            self._gguf_grouped_expert_enabled
+            and batch_size > self._gguf_routes_native_max_batch
+            and self.has_gguf_raw_experts()
+        )
+
+    def _run_gguf_grouped_expert_forward(
+        self,
+        input_cpu: torch.Tensor,
+        expert_ids_cpu: torch.Tensor,
+        weights_cpu: torch.Tensor,
+        output_cpu: torch.Tensor,
+    ) -> tuple[int, int] | None:
+        output_cpu.zero_()
+        flat_ids = expert_ids_cpu.reshape(-1)
+        token_ids = torch.arange(expert_ids_cpu.size(0), dtype=torch.long, device=expert_ids_cpu.device).repeat_interleave(expert_ids_cpu.size(1))
+        local_mask = (flat_ids >= self.experts_start_idx) & (flat_ids < self.experts_end_idx)
+        if not local_mask.any():
+            return (0, 0) if self._profile_enabled else None
+        route_experts = flat_ids[local_mask]
+        route_tokens = token_ids[local_mask]
+        route_weights = weights_cpu.reshape(-1, 1)[local_mask]
+        sort_order = torch.argsort(route_experts)
+        route_experts = route_experts[sort_order]
+        route_tokens = route_tokens[sort_order]
+        route_weights = route_weights[sort_order]
+        unique_ids, counts = torch.unique_consecutive(route_experts, return_counts=True)
+        call_count = 0
+        routed_rows = 0
+        offset = 0
+        for expert_id, count in zip(unique_ids.tolist(), counts.tolist()):
+            group_slice = slice(offset, offset + count)
+            group_rows = route_tokens[group_slice]
+            expert = self.experts[expert_id]
+            contribution = expert.forward_cpu(
+                input_cpu[group_rows],
+                route_weights[group_slice],
+                x_cpu=input_cpu[group_rows],
+            )
+            output_cpu.index_add_(0, group_rows, contribution)
+            call_count += 1
+            routed_rows += count
+            offset += count
+        if self._profile_enabled:
+            return call_count, routed_rows
+        return None
+
+    def _should_run_gguf_routes_native(self, batch_size: int) -> bool:
+        return (
+            self._gguf_routes_native_enabled
+            and batch_size <= self._gguf_routes_native_max_batch
+            and self.has_gguf_raw_experts()
+        )
+
     def _choose_runner(self, batch_size: int):
         native_ready = self._ensure_native_ready()
         if native_ready and self._should_run_int8_native(batch_size):
             return self._run_native_int8_decode_forward
         if self._native_enabled:
             return self._run_native_forward
+        if self._should_run_gguf_routes_native(batch_size):
+            return self._run_gguf_routes_native_forward
+        if self._should_run_gguf_grouped_expert_prefill(batch_size):
+            return self._run_gguf_grouped_expert_forward
         return self._run_reference_forward
+
+    def _gguf_expert_raw_blocks(self, expert, backing):
+        cached = self._gguf_raw_block_cache.get(backing.expert_id)
+        if cached is not None:
+            return cached
+        try:
+            from src.gguf.tensor_reader import get_cached_gguf_tensor_reader
+        except Exception:
+            return None
+        reader = get_cached_gguf_tensor_reader(backing.gguf_path)
+        w1, w1_type, w1_in_dim = reader.read_routed_expert_blocks(backing.w1_name, backing.expert_id, 0, expert.w1.out_features)
+        w3, w3_type, w3_in_dim = reader.read_routed_expert_blocks(backing.w3_name, backing.expert_id, 0, expert.w3.out_features)
+        w2, w2_type, w2_in_dim = reader.read_routed_expert_blocks(backing.w2_name, backing.expert_id, 0, expert.w2.out_features)
+        cached = (w1, w1_type, w1_in_dim, w3, w3_type, w3_in_dim, w2, w2_type, w2_in_dim)
+        self._gguf_raw_block_cache[backing.expert_id] = cached
+        return cached
+
+    def _run_gguf_routes_native_forward(
+        self,
+        input_cpu: torch.Tensor,
+        expert_ids_cpu: torch.Tensor,
+        weights_cpu: torch.Tensor,
+        output_cpu: torch.Tensor,
+    ) -> tuple[int, int] | None:
+        if self._native_mod is None or not hasattr(self._native_mod, "gguf_routes_forward"):
+            return self._run_reference_forward(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+        try:
+            from src.gguf.tensor_reader import get_iq2xxs_signed_grid_tensor
+        except Exception:
+            return self._run_reference_forward(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+
+        max_routes = expert_ids_cpu.size(0) * expert_ids_cpu.size(1)
+        if self._gguf_route_capacity < max_routes:
+            self._gguf_route_tokens_buf = torch.empty(max_routes, dtype=torch.long, device="cpu")
+            self._gguf_route_weights_buf = torch.empty(max_routes, dtype=torch.float32, device="cpu")
+            self._gguf_w1_ptrs_buf = torch.empty(max_routes, dtype=torch.long, device="cpu")
+            self._gguf_w3_ptrs_buf = torch.empty(max_routes, dtype=torch.long, device="cpu")
+            self._gguf_w2_ptrs_buf = torch.empty(max_routes, dtype=torch.long, device="cpu")
+            self._gguf_route_capacity = max_routes
+        if self._gguf_grid_cpu is None:
+            self._gguf_grid_cpu = get_iq2xxs_signed_grid_tensor().to(device="cpu")
+
+        route_tokens_t = self._gguf_route_tokens_buf
+        route_weights_t = self._gguf_route_weights_buf
+        w1_ptrs_t = self._gguf_w1_ptrs_buf
+        w3_ptrs_t = self._gguf_w3_ptrs_buf
+        w2_ptrs_t = self._gguf_w2_ptrs_buf
+        route_count = 0
+        type_meta = None
+        for token in range(expert_ids_cpu.size(0)):
+            for top_idx in range(expert_ids_cpu.size(1)):
+                expert_id = int(expert_ids_cpu[token, top_idx])
+                if expert_id < self.experts_start_idx or expert_id >= self.experts_end_idx:
+                    continue
+                expert = self.experts[expert_id]
+                backing = getattr(expert, "_gguf_raw_backing", None) if expert is not None else None
+                if backing is None:
+                    return self._run_reference_forward(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+                blocks = self._gguf_expert_raw_blocks(expert, backing)
+                if blocks is None:
+                    return self._run_reference_forward(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+                w1, w1_type, w1_in_dim, w3, w3_type, w3_in_dim, w2, w2_type, w2_in_dim = blocks
+                if w1_in_dim != expert.w1.in_features or w3_in_dim != expert.w3.in_features or w2_in_dim != expert.w2.in_features:
+                    return self._run_reference_forward(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+                current_meta = (
+                    w1.shape[1], w1.shape[2], 0 if w1_type == "iq2_xxs" else 1,
+                    w3.shape[1], w3.shape[2], 0 if w3_type == "iq2_xxs" else 1,
+                    w2.shape[1], w2.shape[2], 0 if w2_type == "iq2_xxs" else 1,
+                    expert.w1.in_features, expert.w1.out_features,
+                )
+                if type_meta is None:
+                    type_meta = current_meta
+                elif type_meta != current_meta:
+                    return self._run_reference_forward(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+                route_tokens_t[route_count] = token
+                route_weights_t[route_count] = float(weights_cpu[token, top_idx])
+                w1_ptrs_t[route_count] = w1.data_ptr()
+                w3_ptrs_t[route_count] = w3.data_ptr()
+                w2_ptrs_t[route_count] = w2.data_ptr()
+                route_count += 1
+        if route_count == 0:
+            return (0, 0) if self._profile_enabled else None
+        assert type_meta is not None
+        input_contig = input_cpu if input_cpu.device.type == "cpu" and input_cpu.dtype == torch.float32 and input_cpu.is_contiguous() else input_cpu.contiguous().to(device="cpu", dtype=torch.float32)
+        self._native_mod.gguf_routes_forward(
+            input_contig.data_ptr(),
+            route_tokens_t[:route_count].data_ptr(),
+            route_weights_t[:route_count].data_ptr(),
+            output_cpu.data_ptr(),
+            route_count,
+            input_contig.shape[0],
+            type_meta[9],
+            type_meta[10],
+            w1_ptrs_t[:route_count].data_ptr(),
+            w3_ptrs_t[:route_count].data_ptr(),
+            w2_ptrs_t[:route_count].data_ptr(),
+            type_meta[0],
+            type_meta[1],
+            type_meta[2],
+            type_meta[3],
+            type_meta[4],
+            type_meta[5],
+            type_meta[6],
+            type_meta[7],
+            type_meta[8],
+            float(getattr(self.experts[self.experts_start_idx], "swiglu_limit", 0.0)) if self.experts_end_idx > self.experts_start_idx else 0.0,
+            self._gguf_grid_cpu.data_ptr(),
+        )
+        if self._profile_enabled:
+            return route_count, route_count
+        return None
 
     def _run_reference_forward(
         self,
@@ -1217,8 +1424,10 @@ class CPURoutedExpertsBackend:
         expert_ids_cpu: torch.Tensor,
         weights_cpu: torch.Tensor,
         output_cpu: torch.Tensor,
-    ) -> None:
+    ) -> tuple[int, int] | None:
         output_cpu.zero_()
+        call_count = 0
+        routed_rows = 0
         for top_idx in range(expert_ids_cpu.size(1)):
             ids_col = expert_ids_cpu[:, top_idx]
             local_mask = (ids_col >= self.experts_start_idx) & (ids_col < self.experts_end_idx)
@@ -1239,7 +1448,12 @@ class CPURoutedExpertsBackend:
                     weights_cpu[group_rows, top_idx:top_idx + 1],
                     x_cpu=input_cpu[group_rows],
                 )
+                call_count += 1
+                routed_rows += count
                 offset += count
+        if self._profile_enabled:
+            return call_count, routed_rows
+        return None
 
     def run_forward_cpu_into(
         self,
@@ -1252,9 +1466,12 @@ class CPURoutedExpertsBackend:
         runner = self._choose_runner(input_cpu.shape[0])
         if self._profile_enabled:
             t0 = time.perf_counter()
-            runner(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+            stats = runner(input_cpu, expert_ids_cpu, weights_cpu, output_cpu)
+            stats_text = ""
+            if isinstance(stats, tuple) and len(stats) == 2:
+                stats_text = f" calls={stats[0]} routed_rows={stats[1]}"
             print(
-                f"cpu_moe layer={self.layer_idx} batch={input_cpu.shape[0]} runner={getattr(runner, '__name__', runner)} time={time.perf_counter() - t0:.3f}s",
+                f"cpu_moe layer={self.layer_idx} batch={input_cpu.shape[0]} runner={getattr(runner, '__name__', runner)} time={time.perf_counter() - t0:.3f}s{stats_text}",
                 flush=True,
             )
         else:
@@ -1289,18 +1506,25 @@ class CPURoutedExpertsBackend:
             runner = self._run_native_int8_decode_forward
         elif self._native_enabled:
             runner = self._run_native_forward
+        elif self._should_run_gguf_routes_native(batch_size):
+            runner = self._run_gguf_routes_native_forward
+        elif self._should_run_gguf_grouped_expert_prefill(batch_size):
+            runner = self._run_gguf_grouped_expert_forward
         else:
             runner = self._run_reference_forward
         def run_profiled(*_ignored):
             t0 = time.perf_counter()
-            runner(
+            stats = runner(
                 input_cpu[current_slot][:batch_size],
                 expert_ids_cpu[current_slot][:batch_size],
                 weights_cpu[current_slot][:batch_size],
                 output_cpu[current_slot][:batch_size],
             )
+            stats_text = ""
+            if isinstance(stats, tuple) and len(stats) == 2:
+                stats_text = f" calls={stats[0]} routed_rows={stats[1]}"
             print(
-                f"cpu_moe layer={self.layer_idx} batch={batch_size} runner={getattr(runner, '__name__', runner)} time={time.perf_counter() - t0:.3f}s",
+                f"cpu_moe layer={self.layer_idx} batch={batch_size} runner={getattr(runner, '__name__', runner)} time={time.perf_counter() - t0:.3f}s{stats_text}",
                 flush=True,
             )
 

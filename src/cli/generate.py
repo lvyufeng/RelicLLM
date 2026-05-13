@@ -6,6 +6,8 @@ from src.runtime.generation import main
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument("--ckpt-path", type=str, required=True)
+    parser.add_argument("--ckpt-format", type=str, choices=["auto", "safetensors", "gguf"], default="auto")
+    parser.add_argument("--tokenizer-path", type=str, default=None)
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--input-file", type=str, default="")
     parser.add_argument("--interactive", action="store_true")
@@ -14,6 +16,7 @@ def parse_args():
     parser.add_argument("--routed-experts-device", type=str, choices=["gpu", "cpu"], default="gpu")
     parser.add_argument("--pd-mode", type=str, choices=["off", "scheduler"], default="off")
     parser.add_argument("--pd-prefill-chunk-tokens", type=int, default=0)
+    parser.add_argument("--partition-policy", type=str, choices=["legacy", "baseline_4gpu", "layer_pp_4gpu"], default="legacy")
     args = parser.parse_args()
     assert args.input_file or args.interactive, "Either input-file or interactive mode must be specified"
     return args
@@ -31,4 +34,7 @@ if __name__ == "__main__":
         args.routed_experts_device,
         args.pd_mode,
         args.pd_prefill_chunk_tokens,
+        args.ckpt_format,
+        args.tokenizer_path,
+        args.partition_policy,
     )

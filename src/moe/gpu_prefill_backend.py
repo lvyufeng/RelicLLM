@@ -138,6 +138,7 @@ class GPUPrefillMoEBackend:
         self._last_stage_cache_misses = 0
         self.grouped_gemm_enabled = os.getenv("DEEPSEEK_GPU_PREFILL_MOE_GROUPED_GEMM", "0").lower() in {"1", "true", "yes"}
         self.bucketed_gemm_enabled = os.getenv("DEEPSEEK_GPU_PREFILL_MOE_BUCKETED_GEMM", "0").lower() in {"1", "true", "yes"}
+        self.fp4_direct_grouped_enabled = os.getenv("DEEPSEEK_GPU_PREFILL_MOE_FP4_DIRECT_GROUPED", "0").lower() in {"1", "true", "yes"}
         self.single_token_group_enabled = os.getenv("DEEPSEEK_GPU_MOE_SINGLE_TOKEN_GROUP", "1").lower() in {"1", "true", "yes"}
 
     @staticmethod
@@ -677,14 +678,14 @@ class GPUPrefillMoEBackend:
         if _local_ids.numel() == 0:
             return torch.zeros((x.shape[0], self.dim), device=x.device, dtype=torch.float32)
         if self._w1q is None or self._prepared_device != x.device or self._staged_arena_format != "int8":
-            self._stage_local_experts(x.device, _local_ids, prefer_fp4=False)
+            self._stage_local_experts(x.device, _local_ids, prefer_fp4=self.fp4_direct_grouped_enabled)
         elif len(self._staged_local_experts) < self.n_local_experts:
             unstaged_local_ids = [local_id for local_id in _local_ids.tolist() if int(local_id) not in self._staged_local_experts]
             if unstaged_local_ids:
                 self._stage_local_experts(
                     x.device,
                     torch.tensor(unstaged_local_ids, device=indices.device, dtype=torch.long),
-                    prefer_fp4=False,
+                    prefer_fp4=self.fp4_direct_grouped_enabled,
                 )
         if self.profile_enabled:
             torch.cuda.synchronize(x.device)
@@ -693,7 +694,7 @@ class GPUPrefillMoEBackend:
         self._record_staged_weights_on_current_stream(x.device)
         self._touch_cache(x.device)
         if (
-            os.getenv("DEEPSEEK_GPU_PREFILL_MOE_FP4_DIRECT_GROUPED", "0").lower() in {"1", "true", "yes"}
+            self.fp4_direct_grouped_enabled
             and self._staged_arena_format == "fp4"
             and hasattr(self._cuda_ext, "moe_prefill_fp4_grouped_gemm_forward")
         ):
