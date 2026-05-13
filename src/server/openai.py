@@ -19,17 +19,19 @@ def _set_best_env_defaults() -> None:
     os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_ARENA", "1")
     os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_BUCKETED_GEMM", "1")
     os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_BUCKET_EXPERTS", "16")
-    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_CHUNK_TOKENS", "512")
+    os.environ.setdefault("DEEPSEEK_GPU_PREFILL_MOE_CHUNK_TOKENS", "2048")
     os.environ.setdefault("DEEPSEEK_GPU_MOE_DECODE_ACTIVE", "1")
-    os.environ.setdefault("DEEPSEEK_GPU_MOE_CROSS_LAYER_PREFETCH", "1")
+    os.environ.setdefault("DEEPSEEK_GPU_MOE_CROSS_LAYER_PREFETCH", "0")
     os.environ.setdefault("DEEPSEEK_GPU_MOE_CROSS_LAYER_PREFETCH_K", "10")
     os.environ.setdefault("DEEPSEEK_GPU_MOE_CROSS_LAYER_PREFETCH_LOCAL_LIMIT", "2")
     os.environ.setdefault("DEEPSEEK_INT8_IMPL", "cuda_ext")
     os.environ.setdefault("DEEPSEEK_MOE_ASYNC_ALLREDUCE", "1")
-    os.environ.setdefault("DEEPSEEK_SHARED_EXPERT_INT8", "1")
+    os.environ.setdefault("DEEPSEEK_SHARED_EXPERT_PAIR_INT8_CUDA", "1")
+    os.environ.setdefault("DEEPSEEK_PD_SHARED_EXPERT_FP16", "1")
     os.environ.setdefault("DEEPSEEK_FLASHINFER_STYLE_ATTN_CUDA", "1")
     os.environ.setdefault("DEEPSEEK_PREFILL_SPARSE_ATTN_HEADPAIR_CUDA", "1")
     os.environ.setdefault("DEEPSEEK_FUSED_C4_INDEXER_CUDA", "1")
+    os.environ.setdefault("DEEPSEEK_C4_TOPK_TILE_MERGE_CUDA", "0")
     os.environ.setdefault("DEEPSEEK_HC_PRE_CUDA", "1")
     os.environ.setdefault("DEEPSEEK_HC_POST_CUDA", "1")
     os.environ.setdefault("DEEPSEEK_CPU_DECODE_INLINE_THRESHOLD", "0")
@@ -60,10 +62,11 @@ from src.runtime.generation import (
     _enable_numa_interleave,
     generate,
     generate_stream,
-    load_original_hf_model,
+    load_model,
 )
 from src.runtime.transformer import ModelArgs, Transformer
-from src.runtime.pd_scheduler import PDScheduler, run_single_request, run_single_stream_request
+from src.runtime.pd_scheduler import PDExecutionFacade, PDScheduler
+from src.server.engine import DeepSeekServingEngine
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 from src.encoding.dsv4 import encode_messages, eos_token, parse_message_from_completion_text  # noqa: E402
@@ -112,8 +115,13 @@ def _setup_cpu_runtime(routed_experts_device: str, local_rank: int, world_size: 
 
 
 def _init_runtime(args):
-    _set_best_env_defaults()
+    if args.ckpt_format != "gguf" and not (args.ckpt_format == "auto" and args.ckpt_path.endswith(".gguf")):
+        os.environ.setdefault("DEEPSEEK_SHARED_EXPERT_INT8", "1")
+    if args.partition_policy == "baseline_4gpu" and args.pd_mode != "scheduler":
+        raise ValueError("partition_policy=baseline_4gpu requires --pd-mode scheduler")
     world_size = int(os.getenv("WORLD_SIZE", "1"))
+    if args.partition_policy == "layer_pp_4gpu" and world_size not in {2, 4}:
+        raise ValueError("partition_policy=layer_pp_4gpu requires torchrun with WORLD_SIZE=2 or 4")
     rank = int(os.getenv("RANK", "0"))
     local_rank = int(os.getenv("LOCAL_RANK", "0"))
     if world_size > 1:
@@ -130,8 +138,10 @@ def _init_runtime(args):
     with open(args.config) as f:
         config_data = json.load(f)
     config_data["routed_experts_device"] = args.routed_experts_device
+    config_data["partition_policy"] = args.partition_policy
     model_args = ModelArgs(**config_data)
-    model_args.max_batch_size = 1
+    serving_max_batch_size = max(1, int(os.getenv("DEEPSEEK_SERVING_MAX_RUNNING_REQUESTS", "1")))
+    model_args.max_batch_size = serving_max_batch_size
     if args.max_model_len:
         model_args.max_seq_len = int(args.max_model_len)
 
@@ -139,6 +149,7 @@ def _init_runtime(args):
     init_start = time.perf_counter()
     with torch.device("cuda"):
         model = Transformer(model_args)
+    model.max_batch_size = serving_max_batch_size
     if args.routed_experts_device == "cpu" and SharedCPUMoEWeightArena.enabled():
         if _env_enabled("DEEPSEEK_CPU_MOE_SHARED_WEIGHT_NUMA_INTERLEAVE"):
             _enable_numa_interleave()
@@ -146,12 +157,16 @@ def _init_runtime(args):
         if not shared_root_dir:
             raise RuntimeError("DEEPSEEK_CPU_MOE_SHARED_WEIGHTS=1 requires DEEPSEEK_CPU_MOE_SHARED_WEIGHT_DIR")
         shared_cpu_moe_arena = _bind_shared_cpu_moe_weights(model, shared_root_dir, model_args, world_size, rank)
-    tokenizer = AutoTokenizer.from_pretrained(args.ckpt_path)
+    tokenizer_path = args.tokenizer_path or args.ckpt_path
+    if args.ckpt_format == "gguf" or (args.ckpt_format == "auto" and args.ckpt_path.endswith(".gguf")):
+        if not args.tokenizer_path:
+            raise ValueError("GGUF checkpoints require --tokenizer-path to point to a tokenizer directory")
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     print(f"init time: {time.perf_counter() - init_start:.3f}s", flush=True)
 
     print("load model", flush=True)
     load_start = time.perf_counter()
-    load_original_hf_model(model, args.ckpt_path, world_size, rank)
+    load_model(model, args.ckpt_path, world_size, rank, args.ckpt_format)
     if args.routed_experts_device == "cpu":
         model.prepare_cpu_expert_int8()
         if shared_cpu_moe_arena is not None:
@@ -163,10 +178,12 @@ def _init_runtime(args):
 
     control_group = dist.new_group(backend="gloo", timeout=timedelta(days=7)) if world_size > 1 else None
     scheduler = PDScheduler() if args.pd_mode == "scheduler" else None
+    executor = PDExecutionFacade.from_env(generate, generate_stream, scheduler)
     return {
         "model": model,
         "tokenizer": tokenizer,
         "scheduler": scheduler,
+        "executor": executor,
         "model_id": args.model,
         "rank": rank,
         "local_rank": local_rank,
@@ -234,41 +251,26 @@ def _strip_special_eos(text: str) -> str:
     return text
 
 
-def _run_payload(runtime: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-    torch.cuda.set_device(runtime["local_rank"])
-    torch.set_default_device("cuda")
-    model = runtime["model"]
-    tokenizer = runtime["tokenizer"]
-    scheduler = runtime["scheduler"]
-    messages = payload["messages"]
-    thinking_mode = payload["thinking_mode"]
-    reasoning_effort = payload.get("reasoning_effort")
-    prompt_text = encode_messages(messages, thinking_mode=thinking_mode, reasoning_effort=reasoning_effort)
-    prompt_ids = tokenizer.encode(prompt_text)
-    max_tokens = int(payload.get("max_tokens") or 512)
-    temperature = float(payload.get("temperature", 0.0) or 0.0)
-    runner = generate
-    if scheduler is None:
-        completion_tokens, prefill_time, decode_time, prefill_tokens, decode_tokens = runner(
-            model,
-            [prompt_ids],
-            max_tokens,
-            tokenizer.eos_token_id,
-            temperature,
-        )
-    else:
-        completion_tokens, prefill_time, decode_time, prefill_tokens, decode_tokens = run_single_request(
-            runner,
-            model,
-            [prompt_ids],
-            max_tokens,
-            tokenizer.eos_token_id,
-            temperature,
-            scheduler=scheduler,
-        )
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
-    completion_ids = completion_tokens[0]
+def _timing_metrics(prefill_time: float, decode_time: float, prefill_tokens: int, decode_tokens: int) -> dict[str, float | int]:
+    total_time = prefill_time + decode_time
+    total_tokens = prefill_tokens + decode_tokens
+    return {
+        "prefill_time": prefill_time,
+        "decode_time": decode_time,
+        "prefill_tokens": prefill_tokens,
+        "decode_tokens": decode_tokens,
+        "ttft": prefill_time,
+        "ttft_ms": prefill_time * 1000.0,
+        "tpot": decode_time / max(decode_tokens, 1),
+        "tpot_ms": decode_time * 1000.0 / max(decode_tokens, 1),
+        "prefill_tokens_per_second": prefill_tokens / max(prefill_time, 1e-9),
+        "decode_tokens_per_second": decode_tokens / max(decode_time, 1e-9),
+        "throughput_tokens_per_second": total_tokens / max(total_time, 1e-9),
+        "total_tokens_per_second": total_tokens / max(total_time, 1e-9),
+    }
+
+
+def _format_completion_result(tokenizer, thinking_mode: str, prompt_ids: list[int], completion_ids: list[int], prefill_time: float, decode_time: float, prefill_tokens: int, decode_tokens: int) -> dict[str, Any]:
     completion_text = tokenizer.decode(completion_ids)
     try:
         assistant_msg = parse_message_from_completion_text(completion_text, thinking_mode)
@@ -288,14 +290,72 @@ def _run_payload(runtime: dict[str, Any], payload: dict[str, Any]) -> dict[str, 
         "content": content,
         "reasoning_content": reasoning,
         "tool_calls": tool_calls,
-        "timings": {
-            "prefill_time": prefill_time,
-            "decode_time": decode_time,
-            "prefill_tokens": prefill_tokens,
-            "decode_tokens": decode_tokens,
-            "decode_tokens_per_second": decode_tokens / max(decode_time, 1e-9),
-        },
+        "timings": _timing_metrics(prefill_time, decode_time, prefill_tokens, decode_tokens),
     }
+
+
+def _run_payload(runtime: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any] | list[dict[str, Any]]:
+    torch.cuda.set_device(runtime["local_rank"])
+    torch.set_default_device("cuda")
+    model = runtime["model"]
+    tokenizer = runtime["tokenizer"]
+    executor = runtime["executor"]
+    batched_prompt_ids = payload.get("_prompt_ids_batch")
+    if batched_prompt_ids is not None:
+        prompt_ids_list = [[int(t) for t in prompt_ids] for prompt_ids in batched_prompt_ids]
+        thinking_modes = payload.get("_thinking_mode_batch") or [payload["thinking_mode"]] * len(prompt_ids_list)
+        max_tokens_list = [int(v) for v in (payload.get("_max_tokens_batch") or [])]
+        if not max_tokens_list:
+            max_tokens_list = [int(payload.get("max_tokens") or 512)] * len(prompt_ids_list)
+        if len(set(max_tokens_list)) != 1:
+            raise RuntimeError("batched non-stream requests must use the same max_tokens in the first serving engine version")
+        max_tokens = max_tokens_list[0]
+        temperature = float(payload.get("temperature", 0.0) or 0.0)
+        completion_tokens, prefill_time, decode_time, prefill_tokens, decode_tokens = executor.run(
+            model,
+            prompt_ids_list,
+            max_tokens,
+            tokenizer.eos_token_id,
+            temperature,
+        )
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        return [
+            _format_completion_result(
+                tokenizer,
+                str(thinking_modes[i] or "chat"),
+                prompt_ids_list[i],
+                completion_tokens[i],
+                prefill_time,
+                decode_time,
+                prefill_tokens,
+                decode_tokens,
+            )
+            for i in range(len(prompt_ids_list))
+        ]
+
+    thinking_mode = payload["thinking_mode"]
+    prompt_ids = payload.get("_prompt_ids")
+    if prompt_ids is None:
+        messages = payload["messages"]
+        reasoning_effort = payload.get("reasoning_effort")
+        prompt_text = encode_messages(messages, thinking_mode=thinking_mode, reasoning_effort=reasoning_effort)
+        prompt_ids = tokenizer.encode(prompt_text)
+    else:
+        prompt_ids = [int(t) for t in prompt_ids]
+    max_tokens = int(payload.get("max_tokens") or 512)
+    temperature = float(payload.get("temperature", 0.0) or 0.0)
+    completion_tokens, prefill_time, decode_time, prefill_tokens, decode_tokens = executor.run(
+        model,
+        [prompt_ids],
+        max_tokens,
+        tokenizer.eos_token_id,
+        temperature,
+    )
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    completion_ids = completion_tokens[0]
+    return _format_completion_result(tokenizer, thinking_mode, prompt_ids, completion_ids, prefill_time, decode_time, prefill_tokens, decode_tokens)
 
 
 def _make_payload(body: dict[str, Any]) -> dict[str, Any]:
@@ -319,33 +379,26 @@ def _run_payload_stream(runtime: dict[str, Any], payload: dict[str, Any]):
     torch.set_default_device("cuda")
     model = runtime["model"]
     tokenizer = runtime["tokenizer"]
-    scheduler = runtime["scheduler"]
-    prompt_text = encode_messages(
-        payload["messages"],
-        thinking_mode=payload["thinking_mode"],
-        reasoning_effort=payload.get("reasoning_effort"),
-    )
-    prompt_ids = tokenizer.encode(prompt_text)
+    executor = runtime["executor"]
+    prompt_ids = payload.get("_prompt_ids")
+    if prompt_ids is None:
+        prompt_text = encode_messages(
+            payload["messages"],
+            thinking_mode=payload["thinking_mode"],
+            reasoning_effort=payload.get("reasoning_effort"),
+        )
+        prompt_ids = tokenizer.encode(prompt_text)
+    else:
+        prompt_ids = [int(t) for t in prompt_ids]
     max_tokens = int(payload.get("max_tokens") or 512)
     temperature = float(payload.get("temperature", 0.0) or 0.0)
-    if scheduler is None:
-        events = generate_stream(
-            model,
-            [prompt_ids],
-            max_tokens,
-            tokenizer.eos_token_id,
-            temperature,
-        )
-    else:
-        events = run_single_stream_request(
-            generate_stream,
-            model,
-            [prompt_ids],
-            max_tokens,
-            tokenizer.eos_token_id,
-            temperature,
-            scheduler=scheduler,
-        )
+    events = executor.stream(
+        model,
+        [prompt_ids],
+        max_tokens,
+        tokenizer.eos_token_id,
+        temperature,
+    )
     for event in events:
         if event.get("type") == "done":
             event = dict(event)
@@ -504,17 +557,21 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             body = self._read_json_body()
             stream = bool(body.get("stream", False))
             payload = _make_payload(body)
+            prompt_text = encode_messages(
+                payload["messages"],
+                thinking_mode=payload["thinking_mode"],
+                reasoning_effort=payload.get("reasoning_effort"),
+            )
+            payload["_prompt_ids"] = runtime["tokenizer"].encode(prompt_text)
         except Exception as exc:
             self._send_json(400, {"error": {"message": str(exc), "type": "invalid_request_error"}})
             return
         if not stream:
-            with self.server.request_lock:
-                try:
-                    _broadcast_payload(payload, runtime)
-                    result = _run_payload(runtime, payload)
-                except Exception as exc:
-                    self._send_json(500, {"error": {"message": str(exc), "type": "server_error"}})
-                    return
+            try:
+                result = self.server.engine.submit(payload)
+            except Exception as exc:
+                self._send_json(500, {"error": {"message": str(exc), "type": "server_error"}})
+                return
             self._send_json(200, _completion_response(runtime, payload, result))
             return
         self.send_response(200)
@@ -527,25 +584,24 @@ class OpenAIHandler(BaseHTTPRequestHandler):
         self.wfile.write(_sse_line(_chunk_payload(runtime, payload, {"role": "assistant"})))
         self.wfile.flush()
         done_event = None
-        with self.server.request_lock:
-            try:
-                _broadcast_payload(payload, runtime)
-                for event in _run_payload_stream(runtime, payload):
-                    if event.get("type") == "token":
-                        if disconnected:
-                            continue
-                        for delta in decoder.append(event.get("token_ids", [])):
-                            try:
-                                self.wfile.write(_sse_line(_chunk_payload(runtime, payload, delta)))
-                                self.wfile.flush()
-                            except (BrokenPipeError, ConnectionResetError, OSError):
-                                disconnected = True
-                    elif event.get("type") == "done":
-                        done_event = event
-            except Exception as exc:
-                if not disconnected:
-                    self._send_json(500, {"error": {"message": str(exc), "type": "server_error"}})
-                return
+        try:
+            events = self.server.engine.submit_stream(payload)
+            for event in events:
+                if event.get("type") == "token":
+                    if disconnected:
+                        continue
+                    for delta in decoder.append(event.get("token_ids", [])):
+                        try:
+                            self.wfile.write(_sse_line(_chunk_payload(runtime, payload, delta)))
+                            self.wfile.flush()
+                        except (BrokenPipeError, ConnectionResetError, OSError):
+                            disconnected = True
+                elif event.get("type") == "done":
+                    done_event = event
+        except Exception as exc:
+            if not disconnected:
+                self._send_json(500, {"error": {"message": str(exc), "type": "server_error"}})
+            return
         if done_event is None:
             return
         final_msg = decoder.final_message(payload["thinking_mode"])
@@ -562,13 +618,12 @@ class OpenAIHandler(BaseHTTPRequestHandler):
                     "completion_tokens": len(done_event["completion_tokens"][0]),
                     "total_tokens": done_event["prompt_tokens"] + len(done_event["completion_tokens"][0]),
                 }
-                final_chunk["deepseek_timings"] = {
-                    "prefill_time": done_event["prefill_time"],
-                    "decode_time": done_event["decode_time"],
-                    "prefill_tokens": done_event["prefill_tokens"],
-                    "decode_tokens": done_event["decode_tokens"],
-                    "decode_tokens_per_second": done_event["decode_tokens"] / max(done_event["decode_time"], 1e-9),
-                }
+                final_chunk["deepseek_timings"] = _timing_metrics(
+                    done_event["prefill_time"],
+                    done_event["decode_time"],
+                    done_event["prefill_tokens"],
+                    done_event["decode_tokens"],
+                )
             self.wfile.write(_sse_line(final_chunk))
             self.wfile.write(_sse_line("[DONE]"))
             self.wfile.flush()
@@ -576,10 +631,10 @@ class OpenAIHandler(BaseHTTPRequestHandler):
 
 
 class DeepSeekHTTPServer(ThreadingHTTPServer):
-    def __init__(self, server_address, handler_class, runtime):
+    def __init__(self, server_address, handler_class, runtime, engine):
         super().__init__(server_address, handler_class)
         self.runtime = runtime
-        self.request_lock = threading.Lock()
+        self.engine = engine
 
 
 def _worker_loop(runtime: dict[str, Any]) -> None:
@@ -591,7 +646,7 @@ def _worker_loop(runtime: dict[str, Any]) -> None:
             continue
         if payload.get("op") == "shutdown":
             break
-        if payload.get("op") == "chat_completion":
+        if payload.get("op") in {"chat_completion", "chat_completion_batch"}:
             if payload.get("stream"):
                 for _event in _run_payload_stream(runtime, payload):
                     pass
@@ -600,11 +655,13 @@ def _worker_loop(runtime: dict[str, Any]) -> None:
 
 
 def _serve(runtime: dict[str, Any], host: str, port: int) -> None:
-    server = DeepSeekHTTPServer((host, port), OpenAIHandler, runtime)
+    engine = DeepSeekServingEngine(runtime, _broadcast_payload, _run_payload, _run_payload_stream)
+    server = DeepSeekHTTPServer((host, port), OpenAIHandler, runtime, engine)
     print(f"OpenAI-compatible server listening on http://{host}:{port}", flush=True)
     try:
         server.serve_forever()
     finally:
+        engine.close()
         if runtime["world_size"] > 1:
             _broadcast_payload({"op": "shutdown"}, runtime)
         server.server_close()
@@ -615,10 +672,13 @@ def main() -> None:
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--ckpt-path", type=str, default=os.environ.get("CKPT_PATH", os.path.abspath(os.path.join(current_dir, "../../checkpoints/DeepSeek-V4-Flash-w8a8"))))
+    parser.add_argument("--ckpt-format", type=str, choices=["auto", "safetensors", "gguf"], default=os.environ.get("CKPT_FORMAT", "auto"))
+    parser.add_argument("--tokenizer-path", type=str, default=os.environ.get("TOKENIZER_PATH"))
     parser.add_argument("--config", type=str, default=os.path.abspath(os.path.join(current_dir, "../../configs/config_w8a8.json")))
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL_ID)
     parser.add_argument("--routed-experts-device", type=str, choices=["gpu", "cpu"], default="cpu")
     parser.add_argument("--pd-mode", type=str, choices=["off", "scheduler"], default="scheduler")
+    parser.add_argument("--partition-policy", type=str, choices=["legacy", "baseline_4gpu", "layer_pp_4gpu"], default=os.environ.get("PARTITION_POLICY", "legacy"))
     parser.add_argument("--max-model-len", type=int, default=4096)
     args = parser.parse_args()
     runtime = _init_runtime(args)

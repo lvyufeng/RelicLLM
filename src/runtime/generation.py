@@ -13,16 +13,18 @@ from transformers import AutoTokenizer
 from safetensors import safe_open
 
 from src.moe.shared_weights import SharedCPUMoEWeightArena
+from src.runtime.partition_policy import (
+    checkpoint_key_is_needed_for_policy,
+    partition_rule_kind,
+    shard_shape_for_rank,
+    shard_tensor_for_rank,
+)
 from src.runtime.transformer import (
     Transformer,
     ModelArgs,
-    ParallelEmbedding,
-    ParallelHead,
-    ColumnParallelLinear,
-    RowParallelLinear,
-    Attention,
 )
 from src.kernels.ops import soft_fp8_blockfp8_weight_dequant
+from src.runtime.gguf_loader import load_gguf_model
 from src.encoding.dsv4 import encode_messages, parse_message_from_completion_text
 
 
@@ -48,6 +50,8 @@ def _bind_shared_cpu_moe_weights(model: Transformer, root_dir: str, args: ModelA
         create=not precreated,
     )
     for layer in model.layers:
+        if layer is None:
+            continue
         moe = layer.ffn
         for expert_id in range(moe.experts_start_idx, moe.experts_end_idx):
             expert = moe.experts[expert_id]
@@ -97,151 +101,6 @@ def _cpu_affinity_for_rank(local_rank: int, world_size: int) -> list[int] | None
     for siblings in selected:
         cpus.extend(siblings)
     return sorted(cpus)
-
-
-def _full_tensor_name(module_name: str, param_name: str) -> str:
-    return f"{module_name}.{param_name}" if module_name else param_name
-
-
-def _expert_idx_from_name(name: str) -> int | None:
-    if "experts." not in name or "shared_experts" in name:
-        return None
-    parts = name.split('.')
-    try:
-        return int(parts[parts.index("experts") + 1])
-    except (ValueError, IndexError):
-        return None
-
-
-def _module_owns_expert(module, expert_idx: int) -> bool:
-    return getattr(module, "experts_start_idx", 0) <= expert_idx < getattr(module, "experts_end_idx", 0)
-
-
-def _checkpoint_key_is_needed_for_rank(
-    key: str,
-    state_keys: set[str],
-    name_to_module: dict[str, torch.nn.Module],
-) -> bool:
-    if key.endswith(".scale") and f"{key[:-6]}.weight" in state_keys:
-        return False
-    if key not in state_keys:
-        return False
-    module_name, _, _ = key.rpartition('.')
-    module = name_to_module.get(module_name)
-    if module is None:
-        return False
-    expert_idx = _expert_idx_from_name(key)
-    if expert_idx is None:
-        return True
-    parts = key.split('.')
-    owner_module = name_to_module.get('.'.join(parts[:parts.index("experts")]))
-    return owner_module is not None and _module_owns_expert(owner_module, expert_idx)
-
-
-def _is_replicated_c4_indexer_param(name: str, module) -> bool:
-    return getattr(module, "replicated_c4_indexer", False) and (
-        name.endswith("indexer.wq_b.weight")
-        or name.endswith("indexer.weights_proj.weight")
-        or name.endswith("indexer.wq_b.scale")
-        or name.endswith("indexer.weights_proj.scale")
-    )
-
-
-def _is_column_parallel(module) -> bool:
-    return isinstance(module, (ParallelEmbedding, ParallelHead, ColumnParallelLinear))
-
-
-def _is_row_parallel(module) -> bool:
-    return isinstance(module, RowParallelLinear)
-
-
-def _shard_tensor_for_rank(name: str, tensor: torch.Tensor, module, world_size: int, rank: int) -> torch.Tensor:
-    if "experts." in name and "shared_experts" not in name:
-        parts = name.split('.')
-        expert_pos = parts.index("experts") + 1
-        expert_idx = int(parts[expert_pos])
-        local_experts = module.n_local_experts if hasattr(module, 'n_local_experts') else None
-        if local_experts is None:
-            return tensor
-        start = getattr(module, 'experts_start_idx', rank * local_experts)
-        end = getattr(module, 'experts_end_idx', start + local_experts)
-        if expert_idx < start or expert_idx >= end:
-            return None
-        return tensor
-
-    if _is_replicated_c4_indexer_param(name, module):
-        return tensor
-
-    if _is_column_parallel(module):
-        if tensor.ndim == 2:
-            shard_dim = 0
-        elif tensor.ndim == 1:
-            shard_dim = 0
-        else:
-            return tensor
-        assert tensor.size(shard_dim) % world_size == 0, f"{name} not divisible on dim {shard_dim}"
-        shard = tensor.size(shard_dim) // world_size
-        return tensor.narrow(shard_dim, rank * shard, shard).contiguous()
-
-    if _is_row_parallel(module):
-        if tensor.ndim == 2:
-            shard_dim = 1
-        elif tensor.ndim == 1:
-            return tensor
-        else:
-            return tensor
-        assert tensor.size(shard_dim) % world_size == 0, f"{name} not divisible on dim {shard_dim}"
-        shard = tensor.size(shard_dim) // world_size
-        return tensor.narrow(shard_dim, rank * shard, shard).contiguous()
-
-    if isinstance(module, Attention) and name.endswith("attn_sink"):
-        assert tensor.size(0) % world_size == 0, f"{name} not divisible on dim 0"
-        shard = tensor.size(0) // world_size
-        return tensor.narrow(0, rank * shard, shard).contiguous()
-
-    return tensor
-
-
-def _load_tensor_for_rank(name: str, reader, module, world_size: int, rank: int) -> torch.Tensor | None:
-    if not hasattr(reader, "get_slice"):
-        return _shard_tensor_for_rank(name, reader.get_tensor(name), module, world_size, rank)
-
-    tensor_slice = reader.get_slice(name)
-    shape = tensor_slice.get_shape()
-    if "experts." in name and "shared_experts" not in name:
-        return _shard_tensor_for_rank(name, reader.get_tensor(name), module, world_size, rank)
-    if _is_replicated_c4_indexer_param(name, module):
-        return reader.get_tensor(name)
-    if _is_column_parallel(module):
-        if len(shape) == 2:
-            shard_dim = 0
-        elif len(shape) == 1:
-            shard_dim = 0
-        else:
-            return reader.get_tensor(name)
-        assert shape[shard_dim] % world_size == 0, f"{name} not divisible on dim {shard_dim}"
-        shard = shape[shard_dim] // world_size
-        start = rank * shard
-        if len(shape) == 2:
-            return tensor_slice[start:start + shard, :].contiguous()
-        return tensor_slice[start:start + shard].contiguous()
-    if _is_row_parallel(module):
-        if len(shape) == 2:
-            shard_dim = 1
-        elif len(shape) == 1:
-            return reader.get_tensor(name)
-        else:
-            return reader.get_tensor(name)
-        assert shape[shard_dim] % world_size == 0, f"{name} not divisible on dim {shard_dim}"
-        shard = shape[shard_dim] // world_size
-        start = rank * shard
-        return tensor_slice[:, start:start + shard].contiguous()
-    if isinstance(module, Attention) and name.endswith("attn_sink"):
-        assert shape[0] % world_size == 0, f"{name} not divisible on dim 0"
-        shard = shape[0] // world_size
-        start = rank * shard
-        return tensor_slice[start:start + shard].contiguous()
-    return reader.get_tensor(name)
 
 
 def _dequant_int8_weight(weight: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
@@ -453,6 +312,31 @@ def _copy_quantized_weight_to_target(key: str, state_dict: dict[str, torch.Tenso
     _copy_float_weight_to_target(key, state_dict, module, target, tensor)
 
 
+def _load_tensor_for_rank(name: str, reader, module, world_size: int, rank: int, partition_policy: str = "legacy") -> torch.Tensor | None:
+    if partition_policy == "layer_pp_4gpu":
+        return reader.get_tensor(name)
+    if not hasattr(reader, "get_slice"):
+        return shard_tensor_for_rank(name, reader.get_tensor(name), module, world_size, rank)
+
+    rule_kind = partition_rule_kind(name, module)
+    if rule_kind == "expert_owned":
+        return shard_tensor_for_rank(name, reader.get_tensor(name), module, world_size, rank)
+    if rule_kind in {"replicated_indexer", "replicated_shared_expert", "replicated_baseline"}:
+        return reader.get_tensor(name)
+
+    tensor_slice = reader.get_slice(name)
+    shape = tuple(tensor_slice.get_shape())
+    shard_dim, start, shard = shard_shape_for_rank(shape, rule_kind, world_size, rank)
+    if shard_dim is None:
+        return reader.get_tensor(name)
+    if len(shape) == 1:
+        return tensor_slice[start:start + shard].contiguous()
+    if len(shape) == 2 and shard_dim == 0:
+        return tensor_slice[start:start + shard, :].contiguous()
+    if len(shape) == 2 and shard_dim == 1:
+        return tensor_slice[:, start:start + shard].contiguous()
+    return reader.get_tensor(name)
+
 
 def load_original_hf_model(model: Transformer, ckpt_path: str, world_size: int, rank: int) -> None:
     state_dict = model.state_dict()
@@ -467,11 +351,13 @@ def load_original_hf_model(model: Transformer, ckpt_path: str, world_size: int, 
     for key, file_name in weight_map.items():
         file_to_keys.setdefault(file_name, []).append(key)
 
+    partition_policy = getattr(model, "partition_policy", "legacy")
+    n_layers = getattr(model, "n_layers", None)
     filtered_file_to_keys = {}
     for file_name, keys in file_to_keys.items():
         needed_keys = [
             key for key in keys
-            if _checkpoint_key_is_needed_for_rank(key, state_keys, name_to_module)
+            if checkpoint_key_is_needed_for_policy(key, state_keys, name_to_module, partition_policy, world_size, rank, n_layers)
         ]
         if needed_keys:
             filtered_file_to_keys[file_name] = needed_keys
@@ -492,9 +378,9 @@ def load_original_hf_model(model: Transformer, ckpt_path: str, world_size: int, 
                 _maybe_bind_routed_int8_arena(key, state_dict, name_to_module)
                 _maybe_bind_routed_fp4_arena(key, state_dict, name_to_module)
                 target = state_dict[key]
-                tensor = _load_tensor_for_rank(key, f, module, world_size, rank)
+                tensor = _load_tensor_for_rank(key, f, module, world_size, rank, partition_policy)
                 scale_key = f"{key[:-7]}.scale"
-                scale_tensor = _load_tensor_for_rank(scale_key, f, module, world_size, rank) if key.endswith(".weight") and scale_key in weight_map else None
+                scale_tensor = _load_tensor_for_rank(scale_key, f, module, world_size, rank, partition_policy) if key.endswith(".weight") and scale_key in weight_map else None
 
                 if key.endswith(".weight") and tensor.dtype == torch.int8 and target.dtype != torch.int8 and not (
                     scale_tensor is not None and scale_tensor.ndim == 2 and tensor.ndim == 2
@@ -621,12 +507,38 @@ def load_original_hf_model(model: Transformer, ckpt_path: str, world_size: int, 
     if missing:
         raise ValueError(f"Missing {len(missing)} parameters from original HF checkpoint load, e.g. {missing[:10]}")
 
+
+def load_model(model: Transformer, ckpt_path: str, world_size: int, rank: int, ckpt_format: str = "auto") -> None:
+    resolved = ckpt_format
+    if resolved == "auto":
+        resolved = "gguf" if ckpt_path.endswith(".gguf") else "safetensors"
+    if resolved == "safetensors":
+        load_original_hf_model(model, ckpt_path, world_size, rank)
+        return
+    if resolved == "gguf":
+        load_gguf_model(model, ckpt_path, world_size, rank)
+        return
+    raise ValueError(f"Unsupported checkpoint format: {ckpt_format}")
+
 def sample(logits, temperature: float = 1.0):
     """Gumbel-max trick: equivalent to multinomial sampling but faster on GPU,
     since it avoids the GPU-to-CPU sync in torch.multinomial."""
     logits = logits / max(temperature, 1e-5)
     probs = torch.softmax(logits, dim=-1, dtype=torch.float32)
     return probs.div_(torch.empty_like(probs).exponential_(1)).argmax(dim=-1)
+
+
+def _sync_timing_boundary(model, enabled: bool) -> None:
+    if not enabled:
+        return
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    if dist.is_initialized() and getattr(model, "is_layer_pp", False):
+        dist.barrier()
+
+
+def _env_flag(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).lower() in {"1", "true", "yes"}
 
 
 @torch.inference_mode()
@@ -637,6 +549,7 @@ def generate(
     eos_id: int,
     temperature: float = 1.0,
     phase_callback=None,
+    prefill_chunk_tokens: int = 0,
 ) -> List[List[int]]:
     prompt_lens = [len(t) for t in prompt_tokens]
     assert max(prompt_lens) <= model.max_seq_len, f"Prompt length exceeds model maximum sequence length (max_seq_len={model.max_seq_len})"
@@ -664,6 +577,10 @@ def generate(
     # [prev_tok, draft] with strict greedy match (accept iff
     # main.argmax[t+1] == draft). On accept we advance prev_pos by 2.
     mtp_spec_enabled = os.environ.get("DEEPSEEK_DECODE_MTP_SPEC", "0").lower() in {"1", "true", "yes"}
+    if getattr(model, "is_layer_pp", False) and temperature > 0:
+        raise RuntimeError("layer_pp_4gpu currently supports greedy decoding only")
+    if getattr(model, "is_layer_pp", False) and (mtp_log_enabled or mtp_spec_enabled):
+        raise RuntimeError("layer_pp_4gpu does not support MTP log/speculative paths yet")
     # Single-prompt requirement for spec mode: prompt_mask handling is
     # easier when all rows have the same prompt length. Disable spec for
     # multi-prompt or temperature > 0 calls.
@@ -677,10 +594,14 @@ def generate(
     prev_pos = 0
     finished = torch.tensor([False] * len(prompt_tokens))
     prompt_mask = tokens != -1
+    sync_timings = _env_flag("DEEPSEEK_SYNC_TIMINGS", "1" if getattr(model, "is_layer_pp", False) else "0")
+    sync_each_step = _env_flag("DEEPSEEK_SYNC_EACH_STEP", "0")
+    prompt_prefill_tokens = sum(prompt_lens)
     prefill_time = 0.0
     decode_time = 0.0
     prefill_tokens = 0
     decode_tokens = 0
+    decode_wall_start = None
     cur_pos = min(prompt_lens)
     while cur_pos < total_len:
         phase = "prefill" if prev_pos == 0 else "decode"
@@ -719,14 +640,22 @@ def generate(
             and not bool(prompt_mask[:, cur_pos].all())
             and not bool(prompt_mask[:, cur_pos + 1].any())
         )
+        _sync_timing_boundary(model, sync_timings and sync_each_step)
         step_start = time.perf_counter()
         if temperature > 0:
             logits = model.forward(tokens[:, prev_pos:cur_pos], prev_pos)
             last_hidden = None
             spec_verify = False
+        elif prev_pos == 0 and prefill_chunk_tokens > 0 and cur_pos - prev_pos > prefill_chunk_tokens:
+            chunk_start = prev_pos
+            while chunk_start + prefill_chunk_tokens < cur_pos:
+                chunk_end = chunk_start + prefill_chunk_tokens
+                model.forward(tokens[:, chunk_start:chunk_end], chunk_start, return_next_token=False)
+                chunk_start = chunk_end
+            next_token = model.forward(tokens[:, chunk_start:cur_pos], chunk_start, return_next_token=True)
+            last_hidden = None
+            logits = None
         elif spec_verify:
-            # Length-2 verify: feed [tokens[prev_pos:cur_pos]..., draft] so the
-            # forward sees `[just-sampled tok at cur_pos-1, draft tok for cur_pos]`.
             # prev_pos for decode rounds is always cur_pos-1, so the input chunk
             # is of length 2: [tokens[:, prev_pos], draft] -> positions
             # prev_pos and prev_pos+1 (== cur_pos), predicting cur_pos and cur_pos+1.
@@ -765,6 +694,7 @@ def generate(
                 next_token = model.forward(tokens[:, prev_pos:cur_pos], prev_pos, return_next_token=True)
                 last_hidden = None
             logits = None
+        _sync_timing_boundary(model, sync_timings and sync_each_step)
         step_time = time.perf_counter() - step_start
         if capture_this and profiler_active is not None:
             torch.cuda.synchronize()
@@ -792,9 +722,12 @@ def generate(
                 print(f"decode profile summary failed: {exc}", flush=True)
             profiler_active = None
         if prev_pos == 0:
+            _sync_timing_boundary(model, sync_timings and not sync_each_step)
+            step_time = time.perf_counter() - step_start
             generated_this_step = int((~prompt_mask[:, cur_pos]).sum().item())
             prefill_time += step_time
             prefill_tokens += generated_this_step
+            decode_wall_start = time.perf_counter()
             if cur_pos + 1 < total_len and hasattr(model, "release_gpu_prefill_moe_cache"):
                 model.release_gpu_prefill_moe_cache()
                 if os.environ.get("DEEPSEEK_RELEASE_PREFILL_INT8_AFTER_PREFILL", "0").lower() in {"1", "true", "yes"} and hasattr(model, "release_cpu_expert_int8_prepare_cache"):
@@ -964,6 +897,9 @@ def generate(
             print(f"[mtp_spec] accept_rate {mtp_spec_accepts}/{mtp_spec_rounds} = {mtp_spec_accepts / mtp_spec_rounds:.3f}", flush=True)
         else:
             print("[mtp_spec] no spec rounds were run", flush=True)
+    if sync_timings and not sync_each_step and decode_wall_start is not None:
+        _sync_timing_boundary(model, True)
+        decode_time = time.perf_counter() - decode_wall_start
     completion_tokens = []
     for i, toks in enumerate(tokens.tolist()):
         toks = toks[prompt_lens[i]:prompt_lens[i]+max_new_tokens]
@@ -971,7 +907,7 @@ def generate(
             toks = toks[:toks.index(eos_id)]
         toks.append(eos_id)
         completion_tokens.append(toks)
-    return completion_tokens, prefill_time, decode_time, prefill_tokens, decode_tokens
+    return completion_tokens, prefill_time, decode_time, prompt_prefill_tokens, decode_tokens
 
 
 @torch.inference_mode()
@@ -982,6 +918,7 @@ def generate_stream(
     eos_id: int,
     temperature: float = 1.0,
     phase_callback=None,
+    prefill_chunk_tokens: int = 0,
 ):
     prompt_lens = [len(t) for t in prompt_tokens]
     assert max(prompt_lens) <= model.max_seq_len, f"Prompt length exceeds model maximum sequence length (max_seq_len={model.max_seq_len})"
@@ -997,16 +934,24 @@ def generate_stream(
     profiler_active = None
     mtp_log_enabled = os.environ.get("DEEPSEEK_MTP_LOG", "0").lower() in {"1", "true", "yes"}
     mtp_spec_enabled = os.environ.get("DEEPSEEK_DECODE_MTP_SPEC", "0").lower() in {"1", "true", "yes"}
+    if getattr(model, "is_layer_pp", False) and temperature > 0:
+        raise RuntimeError("layer_pp_4gpu currently supports greedy streaming only")
+    if getattr(model, "is_layer_pp", False) and (mtp_log_enabled or mtp_spec_enabled):
+        raise RuntimeError("layer_pp_4gpu does not support MTP log/speculative streaming paths yet")
     if mtp_spec_enabled and (temperature > 0 or len(set(prompt_lens)) > 1):
         mtp_spec_enabled = False
     pending_drafts = None
     prev_pos = 0
     finished = torch.tensor([False] * len(prompt_tokens))
     prompt_mask = tokens != -1
+    sync_timings = _env_flag("DEEPSEEK_SYNC_TIMINGS", "1" if getattr(model, "is_layer_pp", False) else "0")
+    sync_each_step = _env_flag("DEEPSEEK_SYNC_EACH_STEP", "0")
+    prompt_prefill_tokens = sum(prompt_lens)
     prefill_time = 0.0
     decode_time = 0.0
     prefill_tokens = 0
     decode_tokens = 0
+    decode_wall_start = None
     cur_pos = min(prompt_lens)
     while cur_pos < total_len:
         phase = "prefill" if prev_pos == 0 else "decode"
@@ -1041,11 +986,21 @@ def generate_stream(
             and not bool(prompt_mask[:, cur_pos].all())
             and not bool(prompt_mask[:, cur_pos + 1].any())
         )
+        _sync_timing_boundary(model, sync_timings and sync_each_step)
         step_start = time.perf_counter()
         if temperature > 0:
             logits = model.forward(tokens[:, prev_pos:cur_pos], prev_pos)
             last_hidden = None
             spec_verify = False
+        elif prev_pos == 0 and prefill_chunk_tokens > 0 and cur_pos - prev_pos > prefill_chunk_tokens:
+            chunk_start = prev_pos
+            while chunk_start + prefill_chunk_tokens < cur_pos:
+                chunk_end = chunk_start + prefill_chunk_tokens
+                model.forward(tokens[:, chunk_start:chunk_end], chunk_start, return_next_token=False)
+                chunk_start = chunk_end
+            next_token = model.forward(tokens[:, chunk_start:cur_pos], chunk_start, return_next_token=True)
+            last_hidden = None
+            logits = None
         elif spec_verify:
             assert prev_pos == cur_pos - 1, "spec_verify requires prev_pos==cur_pos-1"
             spec_verify_two_len1 = os.environ.get("DEEPSEEK_DECODE_MTP_SPEC_TWO_LEN1", "0").lower() in {"1", "true", "yes"}
@@ -1077,6 +1032,7 @@ def generate_stream(
                 next_token = model.forward(tokens[:, prev_pos:cur_pos], prev_pos, return_next_token=True)
                 last_hidden = None
             logits = None
+        _sync_timing_boundary(model, sync_timings and sync_each_step)
         step_time = time.perf_counter() - step_start
         if capture_this and profiler_active is not None:
             torch.cuda.synchronize()
@@ -1104,9 +1060,12 @@ def generate_stream(
                 print(f"decode profile summary failed: {exc}", flush=True)
             profiler_active = None
         if prev_pos == 0:
+            _sync_timing_boundary(model, sync_timings and not sync_each_step)
+            step_time = time.perf_counter() - step_start
             generated_this_step = int((~prompt_mask[:, cur_pos]).sum().item())
             prefill_time += step_time
             prefill_tokens += generated_this_step
+            decode_wall_start = time.perf_counter()
             if cur_pos + 1 < total_len and hasattr(model, "release_gpu_prefill_moe_cache"):
                 model.release_gpu_prefill_moe_cache()
                 if os.environ.get("DEEPSEEK_RELEASE_PREFILL_INT8_AFTER_PREFILL", "0").lower() in {"1", "true", "yes"} and hasattr(model, "release_cpu_expert_int8_prepare_cache"):
@@ -1115,7 +1074,8 @@ def generate_stream(
                 next_token = sample(logits, temperature)
             next_token = torch.where(prompt_mask[:, cur_pos], tokens[:, cur_pos], next_token)
             tokens[:, cur_pos] = next_token
-            if generated_this_step > 0:
+            emit_rank = (not dist.is_initialized() or dist.get_rank() == 0)
+            if generated_this_step > 0 and emit_rank:
                 yield {
                     "type": "token",
                     "token_ids": next_token[~prompt_mask[:, cur_pos]].tolist(),
@@ -1198,7 +1158,7 @@ def generate_stream(
             next_token = sample(logits, temperature)
         next_token = torch.where(prompt_mask[:, cur_pos], tokens[:, cur_pos], next_token)
         tokens[:, cur_pos] = next_token
-        if generated_this_step > 0:
+        if generated_this_step > 0 and (not dist.is_initialized() or dist.get_rank() == 0):
             yield {
                 "type": "token",
                 "token_ids": next_token[~prompt_mask[:, cur_pos]].tolist(),
@@ -1235,6 +1195,9 @@ def generate_stream(
         cur_pos += 1
         if finished.all():
             break
+    if sync_timings and not sync_each_step and decode_wall_start is not None:
+        _sync_timing_boundary(model, True)
+        decode_time = time.perf_counter() - decode_wall_start
     completion_tokens = []
     for i, toks in enumerate(tokens.tolist()):
         toks = toks[prompt_lens[i]:prompt_lens[i]+max_new_tokens]
@@ -1242,15 +1205,34 @@ def generate_stream(
             toks = toks[:toks.index(eos_id)]
         toks.append(eos_id)
         completion_tokens.append(toks)
-    yield {
-        "type": "done",
-        "completion_tokens": completion_tokens,
-        "prefill_time": prefill_time,
-        "decode_time": decode_time,
-        "prefill_tokens": prefill_tokens,
-        "decode_tokens": decode_tokens,
-        "finish_reason": "stop" if finished.all() else "length",
-    }
+    if not dist.is_initialized() or dist.get_rank() == 0:
+        yield {
+            "type": "done",
+            "completion_tokens": completion_tokens,
+            "prefill_time": prefill_time,
+            "decode_time": decode_time,
+            "prefill_tokens": prompt_prefill_tokens,
+            "decode_tokens": decode_tokens,
+            "finish_reason": "stop" if finished.all() else "length",
+        }
+
+
+def _maybe_print_cuda_memory(tag: str, rank: int) -> None:
+    if os.getenv("DEEPSEEK_CUDA_MEMORY_PROFILE", "0").lower() not in {"1", "true", "yes"}:
+        return
+    if not torch.cuda.is_available():
+        return
+    torch.cuda.synchronize()
+    device = torch.cuda.current_device()
+    allocated = torch.cuda.memory_allocated(device) / 1024**3
+    reserved = torch.cuda.memory_reserved(device) / 1024**3
+    peak_allocated = torch.cuda.max_memory_allocated(device) / 1024**3
+    peak_reserved = torch.cuda.max_memory_reserved(device) / 1024**3
+    print(
+        f"cuda_memory rank={rank} tag={tag} allocated={allocated:.3f}GiB reserved={reserved:.3f}GiB "
+        f"peak_allocated={peak_allocated:.3f}GiB peak_reserved={peak_reserved:.3f}GiB",
+        flush=True,
+    )
 
 
 def main(
@@ -1263,8 +1245,18 @@ def main(
     routed_experts_device: str = "gpu",
     pd_mode: str = "off",
     pd_prefill_chunk_tokens: int = 0,
+    ckpt_format: str = "auto",
+    tokenizer_path: str | None = None,
+    partition_policy: str = "legacy",
 ) -> None:
+    if partition_policy == "baseline_4gpu" and pd_mode != "scheduler":
+        raise ValueError("partition_policy=baseline_4gpu requires --pd-mode scheduler")
     world_size = int(os.getenv("WORLD_SIZE", "1"))
+    if partition_policy == "layer_pp_4gpu":
+        if world_size not in {2, 4}:
+            raise ValueError("partition_policy=layer_pp_4gpu requires torchrun with WORLD_SIZE=2 or 4")
+        if temperature > 0:
+            raise ValueError("partition_policy=layer_pp_4gpu currently requires --temperature 0")
     rank = int(os.getenv("RANK", "0"))
     local_rank = int(os.getenv("LOCAL_RANK", "0"))
     load_barrier_group = None
@@ -1312,9 +1304,12 @@ def main(
     with open(config) as f:
         config_data = json.load(f)
     config_data["routed_experts_device"] = routed_experts_device
+    config_data["partition_policy"] = partition_policy
     args = ModelArgs(**config_data)
     if interactive:
         args.max_batch_size = 1
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
     print(args)
     shared_cpu_moe_arena = None
     init_start = time.perf_counter()
@@ -1327,12 +1322,16 @@ def main(
         if not shared_root_dir:
             raise RuntimeError("DEEPSEEK_CPU_MOE_SHARED_WEIGHTS=1 requires DEEPSEEK_CPU_MOE_SHARED_WEIGHT_DIR")
         shared_cpu_moe_arena = _bind_shared_cpu_moe_weights(model, shared_root_dir, args, world_size, rank)
-    tokenizer = AutoTokenizer.from_pretrained(ckpt_path)
+    tokenizer_source = tokenizer_path or ckpt_path
+    if ckpt_format == "gguf" or (ckpt_format == "auto" and ckpt_path.endswith(".gguf")):
+        if tokenizer_path is None:
+            raise ValueError("GGUF checkpoints require --tokenizer-path to point to a tokenizer directory")
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_source)
     print(f"init time: {time.perf_counter() - init_start:.3f}s", flush=True)
     print("load model")
     load_start = time.perf_counter()
     load_timing_enabled = os.getenv("DEEPSEEK_LOAD_TIMING", "0").lower() in {"1", "true", "yes"}
-    load_original_hf_model(model, ckpt_path, world_size, rank)
+    load_model(model, ckpt_path, world_size, rank, ckpt_format)
     if load_timing_enabled:
         print(f"load_timing rank={rank} stage=weights time={time.perf_counter() - load_start:.3f}s", flush=True)
     if routed_experts_device == "cpu":
@@ -1351,6 +1350,7 @@ def main(
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     print(f"load time: {time.perf_counter() - load_start:.3f}s", flush=True)
+    _maybe_print_cuda_memory("after_load", rank)
     torch.set_default_device("cuda")
     print("I'm DeepSeek 👋")
 
@@ -1361,7 +1361,7 @@ def main(
 
     def _run_generate(prompt_token_lists):
         if pd_scheduler_obj is None:
-            return generate(model, prompt_token_lists, max_new_tokens, tokenizer.eos_token_id, temperature)
+            return generate(model, prompt_token_lists, max_new_tokens, tokenizer.eos_token_id, temperature, prefill_chunk_tokens=pd_prefill_chunk_tokens)
         from src.runtime.pd_scheduler import run_single_request
         return run_single_request(
             generate,
@@ -1370,6 +1370,7 @@ def main(
             max_new_tokens,
             tokenizer.eos_token_id,
             temperature,
+            prefill_chunk_tokens=pd_prefill_chunk_tokens,
             scheduler=pd_scheduler_obj,
         )
 
@@ -1409,7 +1410,16 @@ def main(
         gen_time = time.perf_counter() - gen_start
         gen_tokens = sum(len(tokens) for tokens in completion_tokens)
         print(f"generate time: {gen_time:.3f}s, tokens: {gen_tokens}, tokens/s: {gen_tokens / max(gen_time, 1e-9):.3f}", flush=True)
-        print(f"prefill time: {prefill_time:.3f}s, prefill tokens: {prefill_tokens}, decode time: {decode_time:.3f}s, decode tokens: {decode_tokens}, decode tokens/s: {decode_tokens / max(decode_time, 1e-9):.3f}", flush=True)
+        prefill_tps = prefill_tokens / max(prefill_time, 1e-9)
+        tpot_ms = decode_time * 1000.0 / max(decode_tokens, 1)
+        total_tps = (prefill_tokens + decode_tokens) / max(prefill_time + decode_time, 1e-9)
+        print(
+            f"prefill time: {prefill_time:.3f}s, prefill tokens: {prefill_tokens}, prefill tokens/s: {prefill_tps:.3f}, "
+            f"decode time: {decode_time:.3f}s, decode tokens: {decode_tokens}, decode tokens/s: {decode_tokens / max(decode_time, 1e-9):.3f}, "
+            f"ttft: {prefill_time:.3f}s, tpot: {tpot_ms:.3f}ms, throughput tokens/s: {total_tps:.3f}",
+            flush=True,
+        )
+        _maybe_print_cuda_memory("after_generate", rank)
         completions = tokenizer.batch_decode(completion_tokens)
         for prompt, completion in zip(prompts, completions):
             print("Prompt:", prompt)
@@ -1433,6 +1443,9 @@ if __name__ == "__main__":
     parser.add_argument("--routed-experts-device", type=str, choices=["gpu", "cpu"], default="gpu")
     parser.add_argument("--pd-mode", type=str, choices=["off", "scheduler"], default="off")
     parser.add_argument("--pd-prefill-chunk-tokens", type=int, default=0)
+    parser.add_argument("--tokenizer-path", type=str, default=None)
+    parser.add_argument("--ckpt-format", type=str, choices=["auto", "safetensors", "gguf"], default="auto")
+    parser.add_argument("--partition-policy", type=str, choices=["legacy", "baseline_4gpu", "layer_pp_4gpu"], default="legacy")
     args = parser.parse_args()
     assert args.input_file or args.interactive, "Either input-file or interactive mode must be specified"
-    main(args.ckpt_path, args.config, args.input_file, args.interactive, args.max_new_tokens, args.temperature, args.routed_experts_device, args.pd_mode, args.pd_prefill_chunk_tokens)
+    main(args.ckpt_path, args.config, args.input_file, args.interactive, args.max_new_tokens, args.temperature, args.routed_experts_device, args.pd_mode, args.pd_prefill_chunk_tokens, args.ckpt_format, args.tokenizer_path, args.partition_policy)

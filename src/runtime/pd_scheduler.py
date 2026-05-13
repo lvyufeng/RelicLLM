@@ -6,7 +6,7 @@ import collections
 import os
 import signal
 from dataclasses import dataclass, field
-from typing import Callable, Deque, List, Optional, Tuple
+from typing import Any, Callable, Deque, Iterator, List, Optional, Tuple
 
 
 _ATTN_INT8_SUFFIXES = (
@@ -29,6 +29,111 @@ class Request:
     kv_owned: bool = False
     next_prefill_offset: int = 0
     metadata: dict = field(default_factory=dict)
+
+
+@dataclass
+class PDExecutionConfig:
+    scheduler: Optional["PDScheduler"] = None
+    prefill_chunk_tokens: int = 0
+    decode_first: bool = True
+
+    @property
+    def phase_callback(self) -> Optional[Callable[[str], None]]:
+        if self.scheduler is None or not self.scheduler.has_phase_overrides():
+            return None
+        return self.scheduler.apply_phase_resources
+
+    @classmethod
+    def from_env(cls, scheduler: Optional["PDScheduler"] = None) -> "PDExecutionConfig":
+        prefill_chunk_tokens = int(os.getenv("DEEPSEEK_SERVING_PREFILL_CHUNK_TOKENS", "0") or "0")
+        decode_first = os.getenv("DEEPSEEK_SERVING_DECODE_FIRST", "1").lower() not in {"0", "false", "no"}
+        return cls(scheduler=scheduler, prefill_chunk_tokens=prefill_chunk_tokens, decode_first=decode_first)
+
+
+class PDExecutionFacade:
+    def __init__(self, generate_fn: Callable, generate_stream_fn: Callable, config: PDExecutionConfig) -> None:
+        self._generate_fn = generate_fn
+        self._generate_stream_fn = generate_stream_fn
+        self.config = config
+
+    @classmethod
+    def from_env(
+        cls,
+        generate_fn: Callable,
+        generate_stream_fn: Callable,
+        scheduler: Optional["PDScheduler"] = None,
+    ) -> "PDExecutionFacade":
+        return cls(generate_fn, generate_stream_fn, PDExecutionConfig.from_env(scheduler))
+
+    def run(
+        self,
+        model: Any,
+        prompt_tokens: List[List[int]],
+        max_new_tokens: int,
+        eos_id: int,
+        temperature: float,
+    ):
+        return self._call_generate(
+            self._generate_fn,
+            model,
+            prompt_tokens,
+            max_new_tokens,
+            eos_id,
+            temperature,
+        )
+
+    def stream(
+        self,
+        model: Any,
+        prompt_tokens: List[List[int]],
+        max_new_tokens: int,
+        eos_id: int,
+        temperature: float,
+    ) -> Iterator[dict[str, Any]]:
+        yield from self._call_generate(
+            self._generate_stream_fn,
+            model,
+            prompt_tokens,
+            max_new_tokens,
+            eos_id,
+            temperature,
+        )
+
+    def _call_generate(
+        self,
+        generate_fn: Callable,
+        model: Any,
+        prompt_tokens: List[List[int]],
+        max_new_tokens: int,
+        eos_id: int,
+        temperature: float,
+    ):
+        return self._call_generate_with_kwargs(
+            generate_fn,
+            model,
+            prompt_tokens,
+            max_new_tokens,
+            eos_id,
+            temperature,
+            {},
+        )
+
+    def _call_generate_with_kwargs(
+        self,
+        generate_fn: Callable,
+        model: Any,
+        prompt_tokens: List[List[int]],
+        max_new_tokens: int,
+        eos_id: int,
+        temperature: float,
+        extra_kwargs: dict[str, Any],
+    ):
+        kwargs: dict[str, Any] = dict(extra_kwargs)
+        kwargs["prefill_chunk_tokens"] = self.config.prefill_chunk_tokens
+        phase_callback = self.config.phase_callback
+        if phase_callback is not None:
+            kwargs["phase_callback"] = phase_callback
+        return generate_fn(model, prompt_tokens, max_new_tokens, eos_id, temperature, **kwargs)
 
 
 class PDScheduler:
@@ -201,24 +306,25 @@ def run_single_request(
     eos_id: int,
     temperature: float,
     scheduler: Optional[PDScheduler] = None,
+    **generate_kwargs,
 ):
-    scheduler = scheduler or PDScheduler()
-    if scheduler.has_phase_overrides():
-        return generate_fn(
+    prefill_chunk_tokens = int(generate_kwargs.pop("prefill_chunk_tokens", 0) or 0)
+    facade = PDExecutionFacade(
+        generate_fn,
+        lambda *args, **kwargs: iter(()),
+        PDExecutionConfig(scheduler=scheduler or PDScheduler(), prefill_chunk_tokens=prefill_chunk_tokens),
+    )
+    if generate_kwargs:
+        return facade._call_generate_with_kwargs(
+            generate_fn,
             model,
             prompt_tokens,
             max_new_tokens,
             eos_id,
             temperature,
-            phase_callback=scheduler.apply_phase_resources,
+            generate_kwargs,
         )
-    return generate_fn(
-        model,
-        prompt_tokens,
-        max_new_tokens,
-        eos_id,
-        temperature,
-    )
+    return facade.run(model, prompt_tokens, max_new_tokens, eos_id, temperature)
 
 
 def run_single_stream_request(
@@ -229,22 +335,23 @@ def run_single_stream_request(
     eos_id: int,
     temperature: float,
     scheduler: Optional[PDScheduler] = None,
+    **generate_kwargs,
 ):
-    scheduler = scheduler or PDScheduler()
-    if scheduler.has_phase_overrides():
-        yield from generate_stream_fn(
+    prefill_chunk_tokens = int(generate_kwargs.pop("prefill_chunk_tokens", 0) or 0)
+    facade = PDExecutionFacade(
+        lambda *args, **kwargs: None,
+        generate_stream_fn,
+        PDExecutionConfig(scheduler=scheduler or PDScheduler(), prefill_chunk_tokens=prefill_chunk_tokens),
+    )
+    if generate_kwargs:
+        yield from facade._call_generate_with_kwargs(
+            generate_stream_fn,
             model,
             prompt_tokens,
             max_new_tokens,
             eos_id,
             temperature,
-            phase_callback=scheduler.apply_phase_resources,
+            generate_kwargs,
         )
         return
-    yield from generate_stream_fn(
-        model,
-        prompt_tokens,
-        max_new_tokens,
-        eos_id,
-        temperature,
-    )
+    yield from facade.stream(model, prompt_tokens, max_new_tokens, eos_id, temperature)
