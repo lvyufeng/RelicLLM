@@ -5,16 +5,17 @@ import json
 import os
 from collections import Counter, defaultdict
 
-import torch
-
+from src.gguf.bundle import GGUFBundle, read_gguf_bundle
 from src.gguf.ds4_mapping import validate_ds4_tensor_mappings
-from src.gguf.reader import GGUFArraySummary, GGUFReader
-from src.runtime.transformer import ModelArgs, Transformer
+from src.gguf.reader import GGUFArraySummary
+from src.moe_model.registry import detect_spec, known_architectures
+from src.moe_model.spec import CapabilityReport, SpecValidation
 
 
 DS4_Q2_TYPES = {
     "q2_k",
     "iq2_xxs",
+    "iq1_m",
     "q4_k",
     "q8_0",
     "f16",
@@ -59,7 +60,7 @@ def _classify_tensor(name: str) -> str:
     return "other"
 
 
-def _summarize(ds4):
+def _summarize_file(ds4) -> None:
     print(f"path: {ds4.path}")
     print(f"size: {_format_bytes(ds4.size)}")
     print(f"version: {ds4.version}")
@@ -67,7 +68,31 @@ def _summarize(ds4):
     print(f"metadata_count: {ds4.metadata_count}")
     print(f"alignment: {ds4.alignment}")
     print(f"data_start: {ds4.data_start}")
-    for key in (
+    _summarize_metadata_and_tensors(ds4.metadata, ds4.tensors)
+
+
+def _summarize_bundle(bundle: GGUFBundle) -> None:
+    if len(bundle.shards) == 1:
+        _summarize_file(bundle.primary)
+        return
+    print(f"path: {bundle.path}")
+    print(f"size: {_format_bytes(bundle.size)}")
+    print(f"version: {bundle.version}")
+    print(f"shard_count: {len(bundle.shards)}")
+    print(f"tensor_count: {bundle.tensor_count}")
+    print(f"metadata_count: {bundle.metadata_count}")
+    print(f"primary_shard: {bundle.shards[bundle.primary_index].path}")
+    print("\nshards:")
+    for shard in bundle.shards:
+        print(
+            f"  [{shard.index}] {os.path.basename(shard.path)} "
+            f"size={_format_bytes(shard.file.size)} tensors={shard.file.tensor_count} metadata={shard.file.metadata_count}"
+        )
+    _summarize_metadata_and_tensors(bundle.metadata, bundle.tensors)
+
+
+def _summarize_metadata_and_tensors(metadata, tensors) -> None:
+    metadata_keys = (
         "general.architecture",
         "deepseek4.block_count",
         "deepseek4.embedding_length",
@@ -75,15 +100,26 @@ def _summarize(ds4):
         "deepseek4.expert_used_count",
         "deepseek4.expert_feed_forward_length",
         "deepseek4.context_length",
-    ):
-        if key in ds4.metadata:
-            print(f"metadata.{key}: {_metadata_value_text(ds4.metadata[key])}")
+        "minimax-m2.block_count",
+        "minimax-m2.embedding_length",
+        "minimax-m2.expert_count",
+        "minimax-m2.expert_used_count",
+        "minimax-m2.expert_feed_forward_length",
+        "minimax-m2.context_length",
+        "minimax-m2.attention.head_count",
+        "minimax-m2.attention.head_count_kv",
+        "minimax-m2.attention.key_length",
+        "minimax-m2.attention.value_length",
+    )
+    for key in metadata_keys:
+        if key in metadata:
+            print(f"metadata.{key}: {_metadata_value_text(metadata[key])}")
 
-    by_type = Counter(t.type_name for t in ds4.tensors)
-    by_class = Counter(_classify_tensor(t.name) for t in ds4.tensors)
+    by_type = Counter(t.type_name for t in tensors)
+    by_class = Counter(_classify_tensor(t.name) for t in tensors)
     bytes_by_type = defaultdict(int)
     bytes_by_class = defaultdict(int)
-    for tensor in ds4.tensors:
+    for tensor in tensors:
         if tensor.nbytes is not None:
             bytes_by_type[tensor.type_name] += tensor.nbytes
             bytes_by_class[_classify_tensor(tensor.name)] += tensor.nbytes
@@ -96,27 +132,28 @@ def _summarize(ds4):
     for class_name, count in sorted(by_class.items()):
         print(f"  {class_name:18s} {count:6d} {_format_bytes(bytes_by_class.get(class_name, 0))}")
 
-    routed = [t for t in ds4.tensors if _classify_tensor(t.name) == "routed_experts"]
+    routed = [t for t in tensors if _classify_tensor(t.name) == "routed_experts"]
     routed_types = Counter(t.type_name for t in routed)
     print("\nrouted expert types:")
     for type_name, count in sorted(routed_types.items()):
         print(f"  {type_name:12s} {count:6d}")
 
-    unknown_types = sorted({t.type_name for t in ds4.tensors if t.type_name.startswith("unknown_")})
+    unknown_types = sorted({t.type_name for t in tensors if t.type_name.startswith("unknown_")})
     if unknown_types:
         print("\nunknown tensor types:")
         for type_name in unknown_types:
             print(f"  {type_name}")
 
 
-def _print_tensors(ds4, limit: int, contains: str | None) -> None:
-    tensors = ds4.tensors
+def _print_tensors(bundle: GGUFBundle, limit: int, contains: str | None) -> None:
+    tensors = list(bundle.tensors)
     if contains:
         tensors = [t for t in tensors if contains in t.name]
     for tensor in tensors[:limit]:
+        shard_text = "" if len(bundle.shards) == 1 else f"\tshard={os.path.basename(tensor.shard_path)}"
         print(
             f"{tensor.name}\t{tensor.type_name}\t{tensor.dimensions}\t"
-            f"offset={tensor.offset}\tabs={tensor.absolute_offset}\tbytes={_format_bytes(tensor.nbytes)}"
+            f"offset={tensor.offset}\tabs={tensor.absolute_offset}\tbytes={_format_bytes(tensor.nbytes)}{shard_text}"
         )
     if len(tensors) > limit:
         print(f"... {len(tensors) - limit} more tensors")
@@ -178,6 +215,10 @@ def _validate_ds4_q2(ds4) -> int:
 
 
 def _runtime_state_shapes(config_path: str, routed_experts_device: str) -> dict[str, tuple[int, ...]]:
+    import torch
+
+    from src.runtime.transformer import ModelArgs, Transformer
+
     with open(config_path) as f:
         config_data = json.load(f)
     config_data["routed_experts_device"] = routed_experts_device
@@ -222,8 +263,75 @@ def _validate_runtime_mapping(ds4, config_path: str, routed_experts_device: str)
     return 0
 
 
+def _print_spec_summary(report: CapabilityReport) -> None:
+    p = report.params
+    print("\nspec summary:")
+    print(f"  architecture: {p.architecture}")
+    print(f"  layers: {p.n_layers}")
+    print(f"  hidden_size: {p.hidden_size}")
+    print(f"  vocab_size: {p.vocab_size}")
+    print(f"  context_length: {p.context_length}")
+    print(f"  attention_kind: {p.attention_kind}")
+    print(f"  n_heads: {p.n_heads}")
+    print(f"  n_kv_heads: {p.n_kv_heads}")
+    print(f"  head_dim: {p.head_dim}")
+    print(f"  rope_dim: {p.rope_dim}")
+    print(f"  rope_base: {p.rope_base}")
+    print(f"  n_routed_experts: {p.n_routed_experts}")
+    print(f"  top_k: {p.top_k}")
+    print(f"  expert_intermediate_size: {p.expert_intermediate_size}")
+    print(f"  n_shared_experts: {p.n_shared_experts}")
+    print(f"  gate_function: {p.gate_function}")
+
+
+def _print_validation(validation: SpecValidation) -> int:
+    print("\nspec validation:")
+    print(f"  ok: {validation.ok}")
+    print(f"  mapped_sources: {validation.mapped_sources}")
+    print(f"  unmapped_sources: {len(validation.unmapped_sources)}")
+    print("  role_counts:")
+    for role, count in sorted(validation.role_counts.items()):
+        print(f"    {role:16s} {count:6d}")
+    if validation.warnings:
+        print("  warnings:")
+        for warning in validation.warnings[:20]:
+            print(f"    - {warning}")
+    if validation.errors:
+        print("  errors:")
+        for error in validation.errors[:80]:
+            print(f"    - {error}")
+        if len(validation.errors) > 80:
+            print(f"    ... {len(validation.errors) - 80} more errors")
+        return 1
+    return 0
+
+
+def _print_capability_report(report: CapabilityReport) -> None:
+    print("\ncapability report:")
+    print("  tensor types:")
+    for type_name, count in sorted(report.tensor_type_counts.items()):
+        print(f"    {type_name:12s} {count:6d} {_format_bytes(report.bytes_by_type.get(type_name, 0))}")
+    print("  tensor roles:")
+    for role, count in sorted(report.tensor_role_counts.items()):
+        print(f"    {role:16s} {count:6d} {_format_bytes(report.bytes_by_role.get(role, 0))}")
+    print("  capabilities:")
+    for item in report.capabilities:
+        print(f"    [{item.status}] {item.name}: {item.reason}")
+
+
+def _print_placement_report(report: CapabilityReport) -> None:
+    print("\nplacement report:")
+    for decision in report.placements:
+        est = ""
+        if decision.estimated_bytes is not None:
+            est += f" total={_format_bytes(decision.estimated_bytes)}"
+        if decision.estimated_bytes_per_gpu is not None:
+            est += f" per_gpu={_format_bytes(decision.estimated_bytes_per_gpu)}"
+        print(f"  [{decision.status}] {decision.name}:{est} {decision.reason}")
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Inspect a GGUF file without loading tensor payloads.")
+    parser = argparse.ArgumentParser(description="Inspect a GGUF file or sharded GGUF bundle without loading tensor payloads.")
     parser.add_argument("--gguf-path", required=True)
     parser.add_argument("--summary", action="store_true")
     parser.add_argument("--list-tensors", action="store_true")
@@ -233,20 +341,60 @@ def main() -> int:
     parser.add_argument("--validate-runtime-mapping", action="store_true")
     parser.add_argument("--config", default="configs/config_w8a8.json")
     parser.add_argument("--routed-experts-device", choices=["gpu", "cpu"], default="cpu")
+    parser.add_argument("--architecture", default="auto", choices=["auto", *known_architectures()])
+    parser.add_argument("--spec-summary", action="store_true")
+    parser.add_argument("--validate-spec", action="store_true")
+    parser.add_argument("--capability-report", action="store_true")
+    parser.add_argument("--placement-report", action="store_true")
+    parser.add_argument("--gpu-count", type=int, default=4)
+    parser.add_argument("--gpu-memory-gib", type=float, default=22.0)
     args = parser.parse_args()
 
     if not os.path.exists(args.gguf_path):
         raise FileNotFoundError(args.gguf_path)
-    ds4 = GGUFReader(args.gguf_path).read()
-    if args.summary or not args.list_tensors:
-        _summarize(ds4)
+
+    bundle = read_gguf_bundle(args.gguf_path)
+    if args.summary or not (args.list_tensors or args.spec_summary or args.validate_spec or args.capability_report or args.placement_report):
+        _summarize_bundle(bundle)
     if args.list_tensors:
-        _print_tensors(ds4, args.limit, args.contains)
+        _print_tensors(bundle, args.limit, args.contains)
+
     status = 0
     if args.validate_ds4_q2:
-        status = max(status, _validate_ds4_q2(ds4))
+        status = max(status, _validate_ds4_q2(bundle if len(bundle.shards) > 1 else bundle.primary))
+
+    spec = None
+    report = None
+    if args.spec_summary or args.validate_spec or args.capability_report or args.placement_report or args.validate_runtime_mapping:
+        spec = detect_spec(bundle, args.architecture)
+
     if args.validate_runtime_mapping:
-        status = max(status, _validate_runtime_mapping(ds4, args.config, args.routed_experts_device))
+        assert spec is not None
+        if spec.architecture != "deepseek4":
+            print(
+                "runtime mapping: FAILED\n"
+                f"  - runtime mapping/generation is currently implemented for deepseek4 only, got {spec.architecture!r}; "
+                "use --validate-spec for header/logical tensor validation",
+                flush=True,
+            )
+            status = max(status, 1)
+        else:
+            status = max(status, _validate_runtime_mapping(bundle if len(bundle.shards) > 1 else bundle.primary, args.config, args.routed_experts_device))
+
+    if spec is not None and (args.spec_summary or args.capability_report or args.placement_report):
+        report = spec.capability_report(bundle, gpu_count=args.gpu_count, gpu_memory_gib=args.gpu_memory_gib)
+    if args.spec_summary:
+        assert report is not None
+        _print_spec_summary(report)
+    if args.validate_spec:
+        assert spec is not None
+        status = max(status, _print_validation(spec.validate_bundle(bundle)))
+    if args.capability_report:
+        assert report is not None
+        _print_capability_report(report)
+    if args.placement_report:
+        assert report is not None
+        _print_placement_report(report)
     return status
 
 
