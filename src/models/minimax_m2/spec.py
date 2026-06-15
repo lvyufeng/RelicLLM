@@ -249,6 +249,15 @@ class MiniMaxM2Spec:
         if os.environ.get("DEEPSEEK_GGUF_Q2K_W2_DP4A") is None:
             os.environ["DEEPSEEK_GGUF_Q2K_W2_DP4A"] = "1"
 
+        # Enable Q4_K/Q5_K INT8 MMA tensor-core path for attention q/k/v/o_proj
+        # (Q5_K) and output/embedding (Q4_K) prefill. Vendored llama.cpp MMQ.
+        # Measured on UD-IQ1_M TP4 (256-tok prefill): 49.74 -> 104.86 TPS (2.1x).
+        # First generated token matches the float baseline exactly; later tokens
+        # diverge through KV-cache rounding (int8 activation quant vs float dequant).
+        # Numerics vs float: max_abs~0.06, mean_abs~0.01, p99_rel~0.15.
+        if os.environ.get("GGUF_Q4K_Q5K_MMA") is None:
+            os.environ["GGUF_Q4K_Q5K_MMA"] = "1"
+
         model, _info = load_minimax_m2_gguf_model(
             bundle,
             device=device,
