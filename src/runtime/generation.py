@@ -186,11 +186,24 @@ def run_gguf_generation(
             f"architecture {spec.architecture!r} does not support GGUF raw-block token generation"
         )
 
+    model_context_tokens = 0
+    if hasattr(spec, "parse_params"):
+        params = spec.parse_params(bundle)
+        model_context_tokens = int(getattr(params, "context_length", 0) or 0)
+    request_tokens = len(prompt_tokens) + int(max_new_tokens)
+    if model_context_tokens > 0 and request_tokens > model_context_tokens:
+        raise ValueError(
+            f"request_tokens={request_tokens} exceeds model_context_tokens={model_context_tokens} "
+            f"for architecture={spec.architecture!r}"
+        )
+
     if rank == 0:
         print(
             f"gguf_load_start architecture={spec.architecture} world={world} "
             f"layers={n_layers or 'full'} prompt_tokens={len(prompt_tokens)} "
-            f"max_new_tokens={max_new_tokens} dtype={str(dtype).removeprefix('torch.')}",
+            f"max_new_tokens={max_new_tokens} request_tokens={request_tokens} "
+            f"model_context_tokens={model_context_tokens or 'unknown'} "
+            f"dtype={str(dtype).removeprefix('torch.')}",
             flush=True,
         )
 
