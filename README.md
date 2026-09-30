@@ -20,9 +20,13 @@ implementations, the serving adapters and the schedulers; the kernels come from
 - **No kernels.** `relic_core.kernels` is imported, not vendored. Build relic-core first:
 
   ```bash
-  pip install -e ../relic-core --no-build-isolation
-  pip install -e . --no-build-isolation
+  pip install -e ../relic-core --no-build-isolation --no-deps
+  pip install -e . --no-build-isolation --no-deps
   ```
+
+  `--no-deps` on both: `torch` is resolved from the environment, and pip without the flag may
+  reinstall a different one and rebuild the kernels against the wrong ABI. The `relic-core`
+  dependency line is a local checkout, not a PyPI release.
 
 - **Not the single-card / edge runtime** — that is PocketLLM.
 
