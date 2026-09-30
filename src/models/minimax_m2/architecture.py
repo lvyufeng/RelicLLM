@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 from src.components.gguf.quantized_ops import QuantizedGGUFEmbedding, QuantizedGGUFLinear
 from src.components.gguf.tp_logits import distributed_argmax_local_logits, gather_sharded_logits
-from src.kernels.cuda_loader import load_cuda_kernel
+from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.loader.gguf.bundle import GGUFBundle
 from src.models.minimax_m2.moe_runtime import MiniMaxM2DeviceResidentCache
 from src.models.minimax_m2.spec import MiniMaxM2Spec
@@ -175,7 +175,7 @@ class MiniMaxAttention:
 
         if use_fused:
             try:
-                from src.kernels.cuda_loader import load_cuda_kernel
+                from relic_core.kernels.cuda_loader import load_cuda_kernel
                 cuda_ext = load_cuda_kernel()
                 if hasattr(cuda_ext, "fused_minimax_rope_halfsplit_inplace"):
                     self._ensure_rope_freqs(end_pos)

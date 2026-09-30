@@ -7,7 +7,7 @@ import torch
 from src.loader.mappings.deepseek_v4 import validate_ds4_tensor_mappings
 from src.loader.gguf.reader import GGUFReader
 from src.loader.gguf.tensor_reader import GGUFTensorDataReader
-from src.kernels.ops import soft_fp8_blockfp8_weight_dequant
+from relic_core.kernels.ops import soft_fp8_blockfp8_weight_dequant
 from src.loader.safetensors import filter_file_to_keys, iter_safetensors_shards, read_safetensors_index
 from src.models.deepseek_v4.partition import (
     checkpoint_key_is_needed_for_policy,

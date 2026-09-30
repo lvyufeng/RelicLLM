@@ -35,7 +35,7 @@ from typing import Callable, Sequence
 import torch
 import torch.nn.functional as F
 
-from src.kernels.cuda_loader import load_cuda_kernel
+from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.mimo_v2.config import MimoV2AttentionShape, MimoV2TextConfig
 from src.models.mimo_v2.layers import (
     apply_partial_rope,

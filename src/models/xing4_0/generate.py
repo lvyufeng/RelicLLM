@@ -4,7 +4,7 @@ The trunk's forward is one call that consumes whichever tokens it is handed
 (``gguf_model.forward``), so a decode step is that call with one token and a
 prefill is the same call with a chunk.  What this module adds is the loop around
 it -- the sampler, the end-of-turn set, the chunk boundary and the clocks -- and
-it is separate from `pocketllm`'s adapters for the reason the other models'
+it is separate from `relicllm`'s adapters for the reason the other models'
 loops are: the numbers a request reports and the way a cancel reaches it are the
 same questions whatever is serving them.
 

@@ -206,7 +206,7 @@ class Xing4_0GGUFModel:
         return self.loader.tensor_ref(name).type_name
 
     def _cuda(self):
-        from src.kernels.cuda_loader import load_cuda_kernel
+        from relic_core.kernels.cuda_loader import load_cuda_kernel
 
         module = load_cuda_kernel()
         if module is None:

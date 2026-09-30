@@ -37,7 +37,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.kernels.ops import act_quant, fp4_act_quant, sparse_attn
+from relic_core.kernels.ops import act_quant, fp4_act_quant, sparse_attn
 from src.models.deepseek_v4_1.config import V41TextConfig
 from src.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
 from src.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3

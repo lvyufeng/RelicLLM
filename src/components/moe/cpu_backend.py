@@ -9,8 +9,8 @@ import time
 import torch
 from torch.autograd.profiler import record_function
 
-from src.kernels.cuda_loader import load_cuda_kernel
-from src.kernels.ops import Packed4BitWeightAlongK, _dequant_fp4_weight_torch, _quantize_int8_weight_torch
+from relic_core.kernels.cuda_loader import load_cuda_kernel
+from relic_core.kernels.ops import Packed4BitWeightAlongK, _dequant_fp4_weight_torch, _quantize_int8_weight_torch
 
 
 _EXT_DIR = Path(__file__).resolve().parents[3] / "build" / "extensions"

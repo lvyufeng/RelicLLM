@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "relicllm"
+version = "0.1.0.dev0"
+description = "Multi-GPU inference runtime for older accelerators, on PyTorch"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "lvyufeng" }
+]
+keywords = [
+    "llm",
+    "inference",
+    "pytorch",
+    "tensor-parallel",
+    "multi-gpu",
+    "deepseek",
+    "mimo",
+    "glm",
+    "qwen",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0,<2.7",
+    # The operator library. Not on PyPI yet; install it from its checkout with
+    # `pip install -e ../relic-core --no-build-isolation` before this package.
+    "relic-core",
+    "transformers>=4.40",
+    "safetensors>=0.4",
+    "tqdm>=4.66",
+    "setuptools>=68",
+    "ninja>=1.11",
+    "pybind11>=2.10",
+    "cmake>=3.18",
+]
+
+[project.optional-dependencies]
+triton = ["triton>=2.0"]
+
+[project.scripts]
+relicllm = "relicllm.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/lvyufeng/RelicLLM"
+Repository = "https://github.com/lvyufeng/RelicLLM"
+Issues = "https://github.com/lvyufeng/RelicLLM/issues"
+
+# Both the `relicllm` package and the `src` tree are shipped. The tree is
+# resolved in setup.py via find_namespace_packages() so the list cannot drift.
+[tool.setuptools]
+include-package-data = true

@@ -68,7 +68,7 @@ BLOCK_TOKENS = 64
 # the key is a chain over *all* the blocks below `L` and not a hash of the length alone.
 HASH_BYTES = 8
 
-_DOMAIN = b"pocketllm.prefix-cache.1"
+_DOMAIN = b"relicllm.prefix-cache.1"
 
 
 def tokens_bytes(tokens) -> bytes:

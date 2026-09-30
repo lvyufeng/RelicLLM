@@ -358,7 +358,7 @@ class MiniMaxM2DeviceResidentCache:
         tokens: int = 1,
         dtype: torch.dtype = torch.float16,
     ) -> tuple[torch.Tensor, MiniMaxM2CudaGemmSmokeResult]:
-        from src.kernels.cuda_loader import load_cuda_kernel
+        from relic_core.kernels.cuda_loader import load_cuda_kernel
 
         tensor = self.load_role(int(layer), role)
         expert = self.expert_start if expert is None else int(expert)

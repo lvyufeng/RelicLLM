@@ -3,7 +3,7 @@
 What is here is the half of serving that is about *this* model and format -- how a request becomes a
 payload, how the executor's tokens become text, how a streamed answer is split, and the worker loop a
 non-zero rank runs. What is *not* here is the HTTP surface or the request lifecycle: those are
-`pocketllm/server/openai.py` and `pocketllm/backends/`, and they are shared with every other runtime.
+`relicllm/server/openai.py` and `relicllm/backends/`, and they are shared with every other runtime.
 
 That split is why this module has no `BaseHTTPRequestHandler` in it any more. It used to, and it used
 to have a `main()` that started a server of its own -- a second OpenAI surface, in a repository that
@@ -80,7 +80,7 @@ from src.models.deepseek_v4.runtime import ModelArgs, Transformer
 from src.runtime.pd_scheduler import PDExecutionFacade, PDScheduler
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-from pocketllm import protocol  # noqa: E402
+from relicllm import protocol  # noqa: E402
 from src.encoding.deepseek_v4 import dsml_token, encode_messages, eos_token, parse_message_from_completion_text  # noqa: E402
 
 

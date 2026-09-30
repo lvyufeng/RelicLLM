@@ -156,7 +156,7 @@ def encode_messages(
 
     ``tools`` is not passed to the encoder separately: the OpenAI tool schemas belong to the first
     system message, and the control plane has already attached them there (see
-    :func:`pocketllm.protocol.chat.prepare_messages`). They are accepted and ignored here rather than
+    :func:`relicllm.protocol.chat.prepare_messages`). They are accepted and ignored here rather than
     silently dropped upstream, so a caller reading this signature does not go looking for a
     parameter that does not exist.
     """

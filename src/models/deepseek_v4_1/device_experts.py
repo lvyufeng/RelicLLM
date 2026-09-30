@@ -267,7 +267,7 @@ from typing import Sequence
 
 import torch
 
-from src.kernels.cuda_loader import load_cuda_kernel
+from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.deepseek_v4_1.modules import RoutedExperts
 
 __all__ = ["DeviceRoutedExperts", "device_experts_available"]

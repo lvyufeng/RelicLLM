@@ -15,8 +15,8 @@ from torch.autograd.profiler import record_function
 
 from src.components.moe.cpu_backend import CPURoutedExpertsBackend, start_in_process_cpu_moe_server
 from src.components.moe.gpu_prefill_backend import GPUPrefillMoEBackend
-from src.kernels.ops import act_quant, fp4_act_quant, fp8_gemm, fp4_gemm, sparse_attn, hc_split_sinkhorn, Packed4BitWeightAlongK, _quantize_int8_weight_torch, soft_bf16_weight_gemm_int8, soft_bf16_weight_gemm_int8_pair_cuda_ext, _SHARED_EXPERT_PAIR_INT8_CUDA, _dequant_fp4_weight_torch, soft_fp8_blockfp8_weight_dequant, q8_0_weight_gemm
-from src.kernels.cuda_loader import load_cuda_kernel
+from relic_core.kernels.ops import act_quant, fp4_act_quant, fp8_gemm, fp4_gemm, sparse_attn, hc_split_sinkhorn, Packed4BitWeightAlongK, _quantize_int8_weight_torch, soft_bf16_weight_gemm_int8, soft_bf16_weight_gemm_int8_pair_cuda_ext, _SHARED_EXPERT_PAIR_INT8_CUDA, _dequant_fp4_weight_torch, soft_fp8_blockfp8_weight_dequant, q8_0_weight_gemm
+from relic_core.kernels.cuda_loader import load_cuda_kernel
 
 
 world_size = 1

@@ -1,0 +1,324 @@
+"""Command-line entry points for the unified PocketLLM API."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+
+from .api import ConfigurationError, EngineArgs, UnsupportedFeatureError, device_hint
+from .backends.cli_surface import add_declared_options, resolved_options
+from .backends.factory import create_backend, select_backend
+from .server.openai import serve
+from .supervisor import TensorParallelSupervisor
+
+
+#: The platforms ``--device`` accepts, which is ``EngineArgs``'s set: ``auto`` asks the build, and
+#: an explicit value this build cannot serve is refused rather than retuned. Spelled here as well
+#: because the parser has to render the set in ``--help`` and refuse a bad one before anything is
+#: constructed -- and it is the *choices* that make the refusal reachable at all.
+DEVICE_PLATFORMS = ("auto", "cuda", "ascend", "cpu")
+
+
+def _device_platform(value: str) -> str:
+    """``--device``'s type: the platform, or a refusal naming the flag that answers a card.
+
+    ``choices`` alone would print ``invalid choice: 'cuda:2'``, which is true and unhelpful -- the
+    whole of U3's migration is that the value is well formed and belongs to a different flag, and a
+    message that does not say so is a message an operator answers by reading the source.
+    """
+    if value not in DEVICE_PLATFORMS:
+        raise argparse.ArgumentTypeError(
+            f"must be one of {', '.join(DEVICE_PLATFORMS)}, got {value!r}{device_hint(value)}"
+        )
+    return value
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="relicllm", description="PocketLLM unified inference interface")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    serve_parser = subparsers.add_parser("serve", help="start the OpenAI-compatible server")
+    serve_parser.add_argument("--model", required=True, help="checkpoint directory or model path")
+    serve_parser.add_argument("--backend", choices=["auto", "torch", "cpp", "v41", "mimo", "xing4"], default="auto")
+    serve_parser.add_argument("--tokenizer-path")
+    serve_parser.add_argument("--config-path")
+    serve_parser.add_argument("--model-format", choices=["auto", "safetensors", "gguf"], default="auto")
+    serve_parser.add_argument("--tensor-parallel-size", type=int, default=1)
+    serve_parser.add_argument("--tensor-parallel-rank", type=int, default=0)
+    serve_parser.add_argument(
+        "--tensor-parallel-supervisor",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="supervise local TP ranks automatically (default: enabled)",
+    )
+    serve_parser.add_argument(
+        "--tensor-parallel-startup-timeout",
+        type=float,
+        default=300.0,
+        metavar="SECONDS",
+        help="rank startup timeout in seconds (default: 300)",
+    )
+    serve_parser.add_argument(
+        "--tensor-parallel-shutdown-timeout",
+        type=float,
+        default=30.0,
+        metavar="SECONDS",
+        help="rank shutdown timeout in seconds (default: 30)",
+    )
+    serve_parser.add_argument("--tensor-parallel-master-addr")
+    serve_parser.add_argument("--tensor-parallel-master-port", type=int)
+    serve_parser.add_argument("--tensor-parallel-rendezvous-dir")
+    serve_parser.add_argument(
+        "--device",
+        default="auto",
+        type=_device_platform,
+        choices=DEVICE_PLATFORMS,
+        help=(
+            "platform this process runs on: auto, cuda, ascend or cpu; `auto` asks the build "
+            "(default: auto). A card is not a platform -- `--device cuda:2` is refused by name, "
+            "because `--device-ids` answers it"
+        ),
+    )
+    serve_parser.add_argument(
+        "--device-ids",
+        default=None,
+        metavar="L",
+        help=(
+            "cards the ranks run on, comma-separated and in rank order, so rank r takes the r-th; "
+            "default is each rank's own card, which is what a per-rank CUDA_VISIBLE_DEVICES did"
+        ),
+    )
+    serve_parser.add_argument("--max-model-len", type=int)
+    serve_parser.add_argument("--dtype")
+    serve_parser.add_argument("--kv-cache-dtype", default="auto")
+    serve_parser.add_argument("--prefill-chunk-tokens", type=int, default=0)
+    serve_parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=True)
+    serve_parser.add_argument(
+        "--max-batch-size",
+        type=int,
+        default=1,
+        help=(
+            "rows the batch scheduler may run at once. Above 1 this asks for the batch path on a "
+            "backend that has one; a backend without a scheduler refuses it rather than accepting "
+            "a width it cannot honour"
+        ),
+    )
+    serve_parser.add_argument(
+        "--enable-batching",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "serve through the batch scheduler (default: on for backends that own one). "
+            "--no-enable-batching forces the serialized session, and cannot be combined with a "
+            "--max-batch-size above 1"
+        ),
+    )
+    serve_parser.add_argument("--host", default="0.0.0.0")
+    serve_parser.add_argument("--port", type=int, default=8000)
+    # "auto" asks the native model registry which engine the checkpoint wants.
+    # The explicit values stay for checkpoints that declare nothing, and for
+    # forcing one runtime onto a checkpoint to compare them.
+    serve_parser.add_argument("--engine-kind", default="auto",
+                              choices=["auto", "qwen", "persistent"])
+    # Matches the legacy server default: routed experts live in host memory so
+    # a 4x2080Ti box can hold the model. "gpu" needs far more device memory.
+    serve_parser.add_argument("--routed-experts-device", choices=["gpu", "cpu"], default="cpu")
+    serve_parser.add_argument("--pd-mode", choices=["off", "scheduler"], default="scheduler")
+    serve_parser.add_argument("--attention-window", type=int, default=0)
+    serve_parser.add_argument("--attention-sink-tokens", type=int, default=0)
+    serve_parser.add_argument("--speculative-method", choices=["mtp", "dspark", "dflash2"])
+    serve_parser.add_argument("--speculative-tokens", type=int, default=1)
+    serve_parser.add_argument("--served-model-name", help="model id reported by /v1/models")
+    serve_parser.add_argument(
+        "--backend-option",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help=(
+            "backend-specific option, by the key a runtime declares it under; repeatable, parsed as "
+            "JSON when possible, and beats the flag that spells the same option"
+        ),
+    )
+    serve_parser.add_argument(
+        "--supervised-child",
+        action="store_true",
+        help=argparse.SUPPRESS,  # internal flag for supervisor-launched children
+    )
+    # The runtimes' own levers, one flag each, read out of the declarations they carry. Added last
+    # so the host's flags above keep their order in `--help` and the generated sections follow them.
+    add_declared_options(serve_parser)
+    return parser
+
+
+def _backend_options(namespace: argparse.Namespace) -> dict[str, object]:
+    options: dict[str, object] = {
+        "engine_kind": namespace.engine_kind,
+        "routed_experts_device": namespace.routed_experts_device,
+        "pd_mode": namespace.pd_mode,
+    }
+    nccl_id_path = os.getenv("POCKETLLM_NCCL_ID_PATH") or os.getenv("NCCL_ID_PATH")
+    if nccl_id_path:
+        options["nccl_id_path"] = nccl_id_path
+    for item in namespace.backend_option or []:
+        key, separator, raw = str(item).partition("=")
+        if not separator or not key.strip():
+            raise SystemExit(f"--backend-option expects KEY=VALUE, got {item!r}")
+        try:
+            # JSON keeps numbers, booleans, and nested values typed; a bare
+            # string stays a string so paths do not need quoting.
+            value = json.loads(raw)
+        except ValueError:
+            value = raw
+        options[key.strip()] = value
+    return options
+
+
+def _args(namespace: argparse.Namespace) -> EngineArgs:
+    return EngineArgs(
+        model=namespace.model,
+        backend=namespace.backend,
+        tokenizer_path=namespace.tokenizer_path,
+        config_path=namespace.config_path,
+        model_format=namespace.model_format,
+        tensor_parallel_size=namespace.tensor_parallel_size,
+        tensor_parallel_rank=namespace.tensor_parallel_rank,
+        device=namespace.device,
+        device_ids=namespace.device_ids,
+        max_model_len=namespace.max_model_len,
+        dtype=namespace.dtype,
+        kv_cache_dtype=namespace.kv_cache_dtype,
+        prefill_chunk_tokens=namespace.prefill_chunk_tokens,
+        enable_prefix_caching=namespace.enable_prefix_caching,
+        max_batch_size=namespace.max_batch_size,
+        enable_batching=namespace.enable_batching,
+        attention_window=namespace.attention_window,
+        attention_sink_tokens=namespace.attention_sink_tokens,
+        speculative_method=namespace.speculative_method,
+        speculative_tokens=namespace.speculative_tokens,
+        backend_options=_backend_options(namespace),
+        # The flags generated from the runtimes' declarations, plus the host flags that spell one
+        # (`--prefill-chunk-tokens`). They are a separate field from `backend_options` because they
+        # are a different tier: `--backend-option` names an option outright and wins, which is the
+        # order `decode_options` states once for every runtime.
+        resolved_options=resolved_options(namespace),
+    )
+
+
+def _emit_readiness(rank: int) -> None:
+    """Emit the exact marker the supervisor waits for."""
+    print(f"POCKETLLM_RANK_READY rank={rank}", flush=True)
+
+
+def _supervised_command(original_argv: list[str]) -> list[str]:
+    """Build child argv from parent argv, preserving all serve arguments."""
+    result: list[str] = []
+    excluded = {
+        "--tensor-parallel-supervisor",
+        "--no-tensor-parallel-supervisor",
+        "--tensor-parallel-rank",
+        "--supervised-child",
+    }
+    skip_next = False
+    for index, item in enumerate(original_argv):
+        if skip_next:
+            skip_next = False
+            continue
+        if item in excluded:
+            if index + 1 < len(original_argv) and not original_argv[index + 1].startswith("-"):
+                skip_next = True
+            continue
+        if any(item.startswith(prefix + "=") for prefix in excluded):
+            continue
+        result.append(item)
+    result.extend(("--no-tensor-parallel-supervisor", "--supervised-child"))
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    if args.command != "serve":
+        return 2
+
+    engine_args = _args(args)
+    world = engine_args.tensor_parallel_size
+    rank = engine_args.tensor_parallel_rank
+    supervised = (
+        world > 1
+        and rank == 0
+        and getattr(args, "tensor_parallel_supervisor", True)
+        and not getattr(args, "supervised_child", False)
+    )
+
+    # Supervised parent: spawn ranks and monitor.
+    if world > 1 and rank == 0 and supervised:
+        # `--device` used to be refused here, and the refusal outlived its reason when U3 split the
+        # name in two. A *platform* has nothing to conflict with automatic supervision, and
+        # `--device-ids 2,3` is well defined under it -- rank r takes the r-th -- so both are
+        # forwarded to every child and the parent only has to say which runtime it is starting.
+        # Every adapter is dispatched by the same rule from here down, because every adapter takes
+        # its rank from the rendezvous the supervisor publishes. The V4.1 adapter in particular
+        # joins the group and loads inside the child, which is what the readiness marker below the
+        # spawn is waiting for.
+        #
+        # `cpp` used to be refused at this point, on the grounds that it exposed no worker entry
+        # point. It does: `CppBackend.run_worker` calls the engine's own `run_worker_loop`,
+        # `warmup_tp` forces the NCCL communicator up inside construction, `POCKETLLM_NCCL_ID_PATH`
+        # is read from the environment the supervisor sets, and the rank's card comes from
+        # `_native_rank_device`, which applies the rank offset precisely because the supervisor
+        # hands every rank the same visible device list. The refusal's remaining advice was to
+        # launch the ranks through the native binary instead -- the front end this refactor exists
+        # to delete.
+        #
+        # This resolves the backend and refuses an unroutable checkpoint here, in the parent, before
+        # any rank is started; a run whose ranks would each fail the same way is worse than one that
+        # fails once.
+        select_backend(engine_args)
+        supervisor = TensorParallelSupervisor(
+            command=[sys.executable, "-m", "relicllm", *_supervised_command(argv or sys.argv[1:])],
+            world_size=world,
+            startup_timeout=args.tensor_parallel_startup_timeout,
+            shutdown_timeout=args.tensor_parallel_shutdown_timeout,
+            master_addr=args.tensor_parallel_master_addr,
+            master_port=args.tensor_parallel_master_port,
+            rendezvous_dir=args.tensor_parallel_rendezvous_dir,
+        )
+        try:
+            return supervisor.run()
+        except KeyboardInterrupt:
+            supervisor.cleanup()
+            return 0
+
+    # Rank child or manual launch: construct one backend and dispatch by role.
+    backend = create_backend(engine_args)
+    try:
+        if rank == 0:
+            # A supervised rank 0 must join collectives and finish model loading
+            # before any worker can become ready. Single-rank and manual launches
+            # retain their existing lazy-loading behavior.
+            if getattr(args, "supervised_child", False):
+                backend.prepare()
+            model_name = args.served_model_name or args.model
+            on_ready = (lambda: _emit_readiness(rank)) if getattr(args, "supervised_child", False) else None
+            serve(backend, host=args.host, port=args.port, model=model_name, on_ready=on_ready)
+        else:
+            # Nonzero rank enters backend worker loop.
+            on_ready = (lambda: _emit_readiness(rank)) if getattr(args, "supervised_child", False) else None
+            try:
+                backend.run_worker(on_ready=on_ready)
+            except UnsupportedFeatureError as exc:
+                if supervised:
+                    raise ConfigurationError(
+                        f"{engine_args.backend} backend does not support automatic TP supervision; "
+                        f"use an external launcher or the legacy native executable: {exc}"
+                    ) from exc
+                raise
+    except KeyboardInterrupt:
+        pass
+    finally:
+        backend.close()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

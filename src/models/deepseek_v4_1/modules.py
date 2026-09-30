@@ -45,7 +45,7 @@ from src.models.deepseek_v4_1.attention import (
     canonical_device,
 )
 from src.models.deepseek_v4_1.config import V41TextConfig
-from src.kernels.ops import hc_split_sinkhorn
+from relic_core.kernels.ops import hc_split_sinkhorn
 
 __all__ = [
     "Backbone",

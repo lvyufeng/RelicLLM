@@ -6,11 +6,11 @@ installed on this host and neither will be, and the sm_75 cards here have no FP4
 the reference's own fallbacks. The reference therefore cannot execute here and there is **no
 numeric oracle** for a V4.1 forward pass on this machine.
 
-The response is not a second implementation. `src/kernels/ops.py` already implements all six ops
+The response is not a second implementation. `relic_core/kernels/ops.py` already implements all six ops
 the reference declares, and its torch paths were checked against the reference's arithmetic rather
 than assumed to match:
 
-| reference op | `src/kernels/ops.py` |
+| reference op | `relic_core/kernels/ops.py` |
 | --- | --- |
 | `act_quant` | `act_quant` — `eps=1e-4` amax floor and `round_scale_to_pow2` are the reference's `T.max(amax, 1e-4)` and `fast_round_scale` |
 | `fp4_act_quant` | `fp4_act_quant` — E8M0 scales, the branch the indexer takes |
@@ -22,7 +22,7 @@ than assumed to match:
 so this module re-exports them and adds the two things that are genuinely missing.
 
 **One op is not a re-export: `fp4_act_quant_e4m3`.** The reference's `fp4_quant_kernel` branches on
-its *scale dtype*, and `src/kernels/ops.py` implements only the E8M0 branch. The E4M3 branch is what
+its *scale dtype*, and `relic_core/kernels/ops.py` implements only the E8M0 branch. The E4M3 branch is what
 the compressed-KV path calls (`fp4_act_quant(latent, 16, True, scale_dtype=torch.float8_e4m3fn)` in
 `Attention._compress_kv`) and it is not a reformat of the E8M0 one — see the function below.
 
@@ -33,7 +33,7 @@ block scales are the only thing that says what its weights are. They are also wh
 weights checkable without a tensor core: `dequant(weight, scale)` against a fixture is a statement
 about the checkpoint, where a GEMM result on this host would be a statement about our own kernels.
 
-Why a facade rather than importing `src.kernels.ops` directly at each call site: the two
+Why a facade rather than importing `relic_core.kernels.ops` directly at each call site: the two
 implementations agree today, and the tests in `tests/test_models_deepseek_v4_1_kernels.py` are what
 makes that a checked property instead of an assumption. Two of those checks pin behaviour a
 plausible rewrite would silently lose — the empty-top-k row contract and the Sinkhorn
@@ -45,7 +45,7 @@ from __future__ import annotations
 
 import torch
 
-from src.kernels.ops import (
+from relic_core.kernels.ops import (
     Packed4BitWeightAlongK,
     act_quant,
     fp4_act_quant,

@@ -24,7 +24,7 @@ import torch.distributed as dist
 import torch.nn as nn
 
 import src.models.deepseek_v4.runtime as rt
-from src.kernels.ops import act_quant, sparse_attn
+from relic_core.kernels.ops import act_quant, sparse_attn
 from src.models.deepseek_v4.runtime import (
     Attention,
     Block,

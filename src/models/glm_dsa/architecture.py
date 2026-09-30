@@ -195,7 +195,7 @@ class RMSNorm:
         self.out_dtype = out_dtype
         import os as _os
 
-        from src.kernels.cuda_loader import load_cuda_kernel
+        from relic_core.kernels.cuda_loader import load_cuda_kernel
 
         # OFF by default: a real e2e showed the fused RMSNorm kernel is neutral
         # for GLM decode (0.66->0.64 tok/s, within noise) because GLM's per-token
@@ -802,7 +802,7 @@ class GLMDSARawBlockMoE:
         return buf
 
     def _routed_forward(self, x_flat: torch.Tensor, indices: torch.Tensor, weights: torch.Tensor) -> torch.Tensor:
-        from src.kernels.cuda_loader import load_cuda_kernel
+        from relic_core.kernels.cuda_loader import load_cuda_kernel
         from src.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
 
         cuda_mod = load_cuda_kernel()
