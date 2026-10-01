@@ -24,7 +24,7 @@ from relicllm.backends.base import (
     settled_text,
 )
 from relicllm.server.metrics import HISTOGRAMS, Metrics
-from relicllm.server.openai import OpenAIHandler, PocketLLMHTTPServer
+from relicllm.server.openai import OpenAIHandler, RelicLLMHTTPServer
 
 
 class ContractBackend(BackendBase):
@@ -63,7 +63,7 @@ class ContractBackend(BackendBase):
 
 def _server(fail: bool = False, backend: ContractBackend | None = None):
     backend = backend or ContractBackend(fail=fail)
-    server = PocketLLMHTTPServer(("127.0.0.1", 0), OpenAIHandler, backend, "fake-model")
+    server = RelicLLMHTTPServer(("127.0.0.1", 0), OpenAIHandler, backend, "fake-model")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return server, f"http://127.0.0.1:{server.server_address[1]}"

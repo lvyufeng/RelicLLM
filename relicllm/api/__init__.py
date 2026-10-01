@@ -1,10 +1,10 @@
-"""Public backend-neutral PocketLLM API types."""
+"""Public backend-neutral RelicLLM API types."""
 
 from .backend import EngineBackend
 from .errors import (
     BackendUnavailableError,
     ConfigurationError,
-    PocketLLMError,
+    RelicLLMError,
     RequestCancelledError,
     TensorParallelSupervisorError,
     UnsupportedFeatureError,
@@ -31,7 +31,7 @@ __all__ = [
     "GenerationRequest",
     "GenerationResult",
     "HealthStatus",
-    "PocketLLMError",
+    "RelicLLMError",
     "RequestCancelledError",
     "SamplingParams",
     "TensorParallelSupervisorError",
