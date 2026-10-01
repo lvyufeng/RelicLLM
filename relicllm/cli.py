@@ -39,7 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     serve_parser = subparsers.add_parser("serve", help="start the OpenAI-compatible server")
     serve_parser.add_argument("--model", required=True, help="checkpoint directory or model path")
-    serve_parser.add_argument("--backend", choices=["auto", "torch", "cpp", "v41", "mimo", "xing4"], default="auto")
+    serve_parser.add_argument("--backend", choices=["auto", "torch", "v41", "mimo", "xing4"], default="auto")
     serve_parser.add_argument("--tokenizer-path")
     serve_parser.add_argument("--config-path")
     serve_parser.add_argument("--model-format", choices=["auto", "safetensors", "gguf"], default="auto")
@@ -259,15 +259,6 @@ def main(argv: list[str] | None = None) -> int:
         # its rank from the rendezvous the supervisor publishes. The V4.1 adapter in particular
         # joins the group and loads inside the child, which is what the readiness marker below the
         # spawn is waiting for.
-        #
-        # `cpp` used to be refused at this point, on the grounds that it exposed no worker entry
-        # point. It does: `CppBackend.run_worker` calls the engine's own `run_worker_loop`,
-        # `warmup_tp` forces the NCCL communicator up inside construction, `POCKETLLM_NCCL_ID_PATH`
-        # is read from the environment the supervisor sets, and the rank's card comes from
-        # `_native_rank_device`, which applies the rank offset precisely because the supervisor
-        # hands every rank the same visible device list. The refusal's remaining advice was to
-        # launch the ranks through the native binary instead -- the front end this refactor exists
-        # to delete.
         #
         # This resolves the backend and refuses an unroutable checkpoint here, in the parent, before
         # any rank is started; a run whose ranks would each fail the same way is worse than one that

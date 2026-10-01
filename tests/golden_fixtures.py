@@ -66,7 +66,7 @@ CHILD_TAIL_LINES = 40
 
 #: Every entry point `tests/README.md` promises a fixture for. The set is asserted by a test, so a
 #: new backend cannot be added without recording one.
-ENTRY_POINTS = ("cpp", "v41", "mimo", "xing4", "torch")
+ENTRY_POINTS = ("v41", "mimo", "xing4", "torch")
 
 #: The opt-in gate for *running* a fixture. The completeness tests need no weights and always run;
 #: this one covers the runs, because the cost across the six spans seconds to the better part of an

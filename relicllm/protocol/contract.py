@@ -270,8 +270,8 @@ def structured_output_spec(response_format: Any) -> StructuredOutput | FieldRefu
     value: whether the running engine can constrain at all is the capability half
     (:attr:`ServedFields.structured_outputs`), and whether the schema is one the engine's validator
     supports is only knowable where the validator is. What stays here is the reading of the field,
-    which is the same on every runtime and is what both the host's audit and the ``cpp`` adapter need
-    -- read once, so a schema the audit passed is the schema the adapter builds from.
+    which is the same on every runtime and is what the host's audit and the adapters behind it both
+    need -- read once, so a schema the audit passed is the schema the adapter builds from.
     """
     if not isinstance(response_format, Mapping):
         return FieldRefusal.build(

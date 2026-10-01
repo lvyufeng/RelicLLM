@@ -8,8 +8,8 @@ which is what lets a runtime serve a model this repository has no bespoke encode
 That selection was written for the C++ front end's sidecar, where the C++ engine had no Python
 templating of its own, and it was the *only* place in the tree where a generated text was read back
 into ``content`` / ``reasoning_content`` / ``tool_calls``.  The Python host had no counterpart, so a
-request served through ``relicllm serve --backend cpp`` came back as one undifferentiated
-``content`` string while the same checkpoint served by the C++ front end came back split.  It lives
+request to a Python runtime came back as one undifferentiated ``content`` string while the same
+checkpoint served by the C++ front end came back split.  It lives
 here, in the shared protocol plane, so both hosts reach one implementation -- and so that deleting
 the C++ front end is not the same thing as deleting the reading.
 

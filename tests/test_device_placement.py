@@ -16,7 +16,7 @@ from relicllm.backends.runtime_engine import card_for_rank, visible_card_count
 
 
 def _args(**overrides) -> EngineArgs:
-    base = dict(model="checkpoint", backend="cpp")
+    base = dict(model="checkpoint", backend="torch")
     base.update(overrides)
     return EngineArgs(**base)
 

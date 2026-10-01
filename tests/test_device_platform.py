@@ -31,7 +31,7 @@ def _torch():
 
 
 def _args(**overrides) -> EngineArgs:
-    base = dict(model="checkpoint", backend="cpp")
+    base = dict(model="checkpoint", backend="torch")
     base.update(overrides)
     return EngineArgs(**base)
 
@@ -334,14 +334,13 @@ def test_a_platform_the_runtime_does_not_declare_is_refused() -> None:
 
 
 def test_a_platform_the_runtime_declares_is_selected() -> None:
-    """The other half: the check refuses `cuda`-only runtimes on an NPU and leaves the rest running.
+    """The other half: the check refuses `cuda`-only runtimes elsewhere and leaves the rest running.
 
-    `cpp` declares both accelerators, so the same `auto` resolves to `ascend` and is accepted --
-    which is what makes this a check on the declaration rather than a check on the host.
+    `torch` declares `("cuda", "cpu")`, so it is accepted on either of its own platforms -- which is
+    what makes this a check on the declaration rather than a check on the host.
     """
-    assert select_backend(_args(), accelerator=_accelerator("cuda")) == "cpp"
-    assert select_backend(_args(), accelerator=_accelerator("ascend")) == "cpp"
-    assert select_backend(_args(device="ascend"), accelerator=_accelerator("ascend")) == "cpp"
+    assert select_backend(_args(), accelerator=_accelerator("cuda")) == "torch"
+    assert select_backend(_args(backend="torch"), accelerator=_accelerator("cpu")) == "torch"
     assert (
         select_backend(_args(backend="mimo"), accelerator=_accelerator("cuda")) == "mimo"
     )
@@ -358,9 +357,9 @@ def test_a_cardless_host_still_serves_the_runtimes_that_declare_a_host_platform(
     does.
     """
     assert select_backend(_args(backend="torch"), accelerator=_accelerator("cpu")) == "torch"
-    # ... and `cpp`, which declares no host platform, is the one that stops.
+    # ... and `mimo`, which declares `("cuda",)` and no host platform, is the one that stops.
     with pytest.raises(UnsupportedFeatureError, match="--device auto resolved to"):
-        select_backend(_args(backend="cpp"), accelerator=_accelerator("cpu"))
+        select_backend(_args(backend="mimo"), accelerator=_accelerator("cpu"))
 
 
 # ----------------------------------------------------------------- binding a card, and waiting

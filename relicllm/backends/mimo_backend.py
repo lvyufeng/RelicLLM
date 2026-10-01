@@ -74,7 +74,6 @@ from .shared_options import (
 )
 from .runtime_engine import (
     RankedWorker,
-    SchedulerHost,
     card_for_rank,
     device_index,
     visible_card_count,
@@ -262,7 +261,7 @@ class _Options:
         )
 
 
-class MimoBackend(SchedulerHost, RuntimeAdapter):
+class MimoBackend(RuntimeAdapter):
     """One MiMo-V2.6-Flash checkpoint, one process a rank, one request at a time."""
 
     #: Read by `RuntimeAdapter._tokenize`, which is the only place a runtime's name is needed.
@@ -305,13 +304,6 @@ class MimoBackend(SchedulerHost, RuntimeAdapter):
         self._request_lock = threading.RLock()
         self._distributed = False
         self._details: dict[str, Any] = {}
-        # The one scheduler, when this runtime is driven by it. Built here rather than on the first
-        # request because `/capabilities` has to answer whether requests go through it, and a report
-        # that said no and then routed them through one is the same class of lie as a flag accepted
-        # and ignored. Off unless `enable_batching` asked for it -- see `SchedulerHost`.
-        self._scheduler: Any = None
-        self._native: Any = None
-        self._init_batch_scheduler()
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -563,19 +555,10 @@ class MimoBackend(SchedulerHost, RuntimeAdapter):
                 **self._details,
                 # After `_details`, because that one is built when the model is and says what the
                 # serialized path does. This one is read live, before anything is loaded.
-                "scheduler": (
-                    "BatchScheduler (width 1, continuous batching off)"
-                    if self._batching()
-                    else "one mutable KV cache, serialized at the backend boundary"
-                ),
+                "scheduler": "one mutable KV cache, serialized at the backend boundary",
                 "max_batch_size": 1,
             },
             reads_prefix_cache=self._prefix_cache is not None,
-            # Two different claims, and the honest one depends on the path: a runtime driven by
-            # the scheduler *is* submitting to a batch scheduler, on which this one declares a
-            # single slot; the serialized path serves one request at a time by its own lock.
-            # Either way the answer to "may this be called concurrently" is what the field reports.
-            supports_batch=self._batching(),
         )
 
     def metrics(self) -> dict[str, float]:
@@ -591,10 +574,8 @@ class MimoBackend(SchedulerHost, RuntimeAdapter):
         """
         experts = getattr(self._model, "experts", None)
         if experts is None:
-            # Nothing loaded, so there are no model counters to add. The scheduler's gauges are not
-            # the model's, though, and a scrape during loading is exactly when an operator wants to
-            # know whether this process has a scheduler at all -- so they are published either way.
-            return dict(self.scheduler_metrics())
+            # Nothing loaded, so there are no model counters to add yet.
+            return {}
         # Two arenas when there are two, and the counts are reported separately because they
         # answer different questions: a step's share is a property of the deal over the drawing
         # and a chunk's is a share of the expert set. The step module of a `sorted` run holds no
@@ -610,10 +591,6 @@ class MimoBackend(SchedulerHost, RuntimeAdapter):
             "mimo_kv_cache_bytes": float(self._cache.memory_bytes) if self._cache else 0.0,
             "mimo_world": float(self._world),
             **self._cache_metrics,
-            # The scheduler's own admission state, when this runtime is driven by one. Same series,
-            # same `Stats` struct and same names as the `cpp` backend publishes -- which is what
-            # makes the two readable as one scheduler rather than as two servers that agree.
-            **self.scheduler_metrics(),
         }
 
     # -------------------------------------------------------------------- requests
@@ -890,12 +867,6 @@ class MimoBackend(SchedulerHost, RuntimeAdapter):
             except Exception:
                 # A peer that already left is not this rank's problem, and close() must not raise.
                 pass
-        # Before the base class tears the rank down: the scheduler's thread runs this runtime's
-        # generation, and a step in flight is a collective the other ranks are already inside.
-        scheduler = self._scheduler
-        self._scheduler = None
-        if scheduler is not None:
-            scheduler.stop()
         super().close()
 
 

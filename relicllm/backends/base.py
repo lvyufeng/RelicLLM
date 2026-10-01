@@ -23,6 +23,8 @@ from relicllm.api import (
 from relicllm.choices import CHOICE_MARK
 from relicllm.protocol.contract import CHAT, FieldRefusal
 
+from .runtime_engine import RankedWorker, cancel_key
+
 
 #: What a byte-level tokenizer's decode puts where a token ended inside a character.
 _REPLACEMENT = "�"
@@ -31,17 +33,15 @@ _REPLACEMENT = "�"
 #:
 #: Six words for four outcomes, and the two groups do not overlap. A runtime's own loop reports
 #: ``eos`` / ``length`` / ``cancel`` (``src/models/mimo_v2/generate.py:160``) or ``eos`` /
-#: ``length`` / ``max_seq_len`` (``src/models/deepseek_v4_1/generate.py:273``), and
-#: ``BatchScheduler`` reports ``stop`` / ``length`` / ``cancelled``
-#: (``batch_scheduler.cpp:854``). So a mapping written for one family is silently wrong for the
-#: other's spelling -- which is what this table exists to make impossible: it covers every word
-#: either route emits, and its answer does not depend on which one produced the word.
+#: ``length`` / ``max_seq_len`` (``src/models/deepseek_v4_1/generate.py:273``), while this tree's
+#: own streamer path spells a stop ``stop`` and a cancellation ``cancelled``. So a mapping written
+#: for one family is silently wrong for the other's spelling -- which is what this table exists to
+#: make impossible: it covers every word either route emits, and its answer does not depend on
+#: which one produced the word.
 #:
-#: ``error`` is deliberately absent. It is not a stop at all: the scheduler keeps it in a separate
-#: field precisely so that callers report it as a failure rather than as a finish reason
-#: (``batch_scheduler.hpp:111``), and the scheduler host raises on that field before any result is
-#: built (``relicllm/backends/runtime_engine.py:789``). Mapping it here would give it a place to be
-#: quietly absorbed.
+#: ``error`` is deliberately absent. It is not a stop at all: a runtime keeps a failure in a
+#: separate field precisely so that callers report it as a failure rather than as a finish reason.
+#: Mapping it here would give it a place to be quietly absorbed.
 _STOPPED_FINISH_REASONS = {
     "eos": "stop",
     "stop": "stop",
@@ -276,10 +276,11 @@ class BackendBase:
         is ready to participate in collectives, immediately before entering the
         blocking worker loop.
 
-        The Python runtimes do not implement this; ``RankedWorker`` in
-        :mod:`relicllm.backends.runtime_engine` does, and this is the body every adapter
-        outside that family inherits -- ``torch`` and ``cpp`` have their own worker entries and
-        a backend that has none has to say so rather than return.
+        The Python-runtime family does not take this body: :class:`RuntimeAdapter` inherits
+        :class:`~relicllm.backends.runtime_engine.RankedWorker`'s loop, which is the same program
+        written once for all of them. This is what a backend outside that family falls back to --
+        ``cpp`` was the last one -- and a backend that has no worker entry has to say so rather
+        than return.
         """
         raise TensorParallelSupervisorError(
             "backend does not implement a supervised TP worker entry point"
@@ -290,7 +291,7 @@ class BackendBase:
         return dict(value) if isinstance(value, dict) else {}
 
 
-class RuntimeAdapter(BackendBase):
+class RuntimeAdapter(RankedWorker, BackendBase):
     """The request-lifecycle half that the torch-runtime adapters share.
 
     The adapters in this family -- ``v41``, ``mimo``, ``xing4``, ``torch`` -- serve a request the
@@ -311,9 +312,9 @@ class RuntimeAdapter(BackendBase):
     A subclass supplies its runtime's name through :attr:`_RUNTIME_LABEL`, and overrides whatever
     it does differently: ``_encode_chat`` where the checkpoint's format is not a jinja template,
     ``_budget`` and ``_tokenize`` where the arithmetic is not this one, ``_result`` where the answer
-    has a structure to read, ``_loop`` for the runtime's own generation call, ``_batch_dispatch``
-    where a scheduler serves the request instead.  What a subclass is left keeping is exactly that
-    list, which is the point of the base -- the parts that are left are the parts that differ.
+    has a structure to read, ``_loop`` for the runtime's own generation call.  What a subclass is
+    left keeping is exactly that list, which is the point of the base -- the parts that are left are
+    the parts that differ.
 
     The only state read here is ``_tokenizer`` and ``_max_seq_len``, which every adapter in this
     family has.
@@ -336,32 +337,14 @@ class RuntimeAdapter(BackendBase):
         self._ensure_open()
         self._ensure_loaded()
 
-    def _batch_dispatch(
-        self, requests: Sequence[GenerationRequest]
-    ) -> list[GenerationResult] | None:
-        """Serve these requests through a scheduler, or ``None`` when there is not one to serve them.
-
-        ``None`` is the default because the scheduler is a property of a runtime that has one, and
-        the answer arrives as a value rather than as a second predicate so that the two decisions --
-        *is there a scheduler* and *serve the batch* -- cannot be read apart. An adapter whose
-        scheduler lives on another base answers by building it there: ``SchedulerHost`` returns
-        ``self._generate_batched(requests)`` on exactly the condition ``generate`` would have tested,
-        and the search for the first of two superclasses that has one stays there instead of here.
-        """
-        return None
-
     def generate(self, requests: Sequence[GenerationRequest]) -> list[GenerationResult]:
-        """Answer every request, through a scheduler if one serves this runtime and serially if not.
+        """Answer every request, one at a time.
 
-        One body rather than a copy per adapter, because the choice and not the answering is what
-        this method is: the loop below is the same loop that stood in ``v41``, ``mimo`` and ``xing4``
-        -- a scheduler first, then one request at a time -- and the differences those three carried
-        are in :meth:`_run_serial` instead.
+        One body rather than a copy per adapter, because the loop below is the same loop that
+        stood in ``v41``, ``mimo`` and ``xing4``; the differences those three carry are in
+        :meth:`_run_serial` instead.
         """
         self._ensure_loaded()
-        batched = self._batch_dispatch(requests)
-        if batched is not None:
-            return batched
         return [self._generate_one(request) for request in requests]
 
     def _generate_one(self, request: GenerationRequest) -> GenerationResult:

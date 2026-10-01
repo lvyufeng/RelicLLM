@@ -94,7 +94,7 @@ def test_a_fixture_whose_checkpoint_exists_is_not_skipped(tmp_path: pathlib.Path
 
 def test_the_entry_point_set_is_the_one_the_readme_promises() -> None:
     """A new backend cannot be added without either recording a fixture or failing this test."""
-    assert ENTRY_POINTS == ("cpp", "v41", "mimo", "xing4", "torch")
+    assert ENTRY_POINTS == ("v41", "mimo", "xing4", "torch")
 
 
 def test_the_default_sampling_is_greedy() -> None:
