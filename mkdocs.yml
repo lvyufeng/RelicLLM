@@ -158,6 +158,7 @@ nav:
       - A max_tokens the context cannot hold is refused: migration/overlong-max-tokens-is-refused.md
       - A --max-batch-size that cannot be honoured is refused: migration/unhonourable-batch-width-is-refused.md
       - --device splits into a platform and a card list: migration/device-splits-into-platform-and-cards.md
+      - --device is checked against the runtime's declaration: migration/platform-is-checked.md
       - Batching is on by default for the cpp backend: migration/batching-default-on.md
   - Archive (Phase 2/3):
       - Backend auto-TP design: archive/phase2-phase3/cpp_backend_auto_tp.md

@@ -13,6 +13,10 @@ from typing import Any, Mapping, Sequence
 
 from .errors import ConfigurationError
 
+# The platform vocabulary, from the plane that resolves it. `relicllm -> src` is the direction this
+# package already runs in; see `src/runtime/device.py` for why the plane is not in `relicllm`.
+from src.runtime.device import PLATFORMS
+
 
 _BACKENDS = {"auto", "torch", "cpp", "v41", "mimo", "xing4"}
 _FORMATS = {"auto", "safetensors", "gguf"}
@@ -21,7 +25,14 @@ _FORMATS = {"auto", "safetensors", "gguf"}
 #: build for the four we omit: a value this build cannot serve is refused rather than retuned, which
 #: is the same reason upstream keeps a ``cpu`` in a list of accelerators. ``cpu`` is here because
 #: this repository really runs that way: the suite's scripted models, and a `torch` deployment.
-_DEVICES = ("auto", "cuda", "ascend", "cpu")
+#:
+#: Imported rather than spelled. It was spelled here and again in ``relicllm/cli.py`` -- two
+#: literals that had to agree, one of them rendering ``--help`` and the other validating the value
+#: ``--help`` had just offered -- and the device plane that resolves ``auto`` would have been a
+#: third. It is the only thing the device plane owns that the public API needs, and importing it
+#: costs no torch: ``src.runtime.device`` imports torch inside its functions, never at module scope,
+#: so this file still describes user intent without importing a device library to do it.
+_DEVICES = PLATFORMS
 
 
 def _env_bool(name: str, default: bool) -> bool:
