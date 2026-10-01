@@ -13,7 +13,6 @@ import os
 import torch
 import torch.nn.functional as F
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.qwen4_exp.config import Qwen4ExpTextConfig
 from src.models.qwen4_exp.layers import (
     RMSNorm,
@@ -21,6 +20,7 @@ from src.models.qwen4_exp.layers import (
     apply_rotary_pos_emb,
     prefill_linear,
 )
+from src.runtime.ops import load_ops
 
 
 def l2norm(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
@@ -110,7 +110,7 @@ def cuda_gated_delta_rule(
     ):
         return None
 
-    ext = load_cuda_kernel()
+    ext = load_ops()
     if ext is None or not hasattr(ext, "qwen4_exp_gated_delta_bf16_forward"):
         return None
 
@@ -169,7 +169,7 @@ def cuda_qsa_attention(
     ):
         return None
 
-    ext = load_cuda_kernel()
+    ext = load_ops()
     if ext is None or not hasattr(ext, "qwen4_exp_qsa_bf16_forward"):
         return None
     return ext.qwen4_exp_qsa_bf16_forward(

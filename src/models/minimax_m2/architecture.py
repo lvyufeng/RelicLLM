@@ -10,10 +10,10 @@ import torch.nn.functional as F
 
 from src.components.gguf.quantized_ops import QuantizedGGUFEmbedding, QuantizedGGUFLinear
 from src.components.gguf.tp_logits import distributed_argmax_local_logits, gather_sharded_logits
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.loader.gguf.bundle import GGUFBundle
 from src.models.minimax_m2.moe_runtime import MiniMaxM2DeviceResidentCache
 from src.models.minimax_m2.spec import MiniMaxM2Spec
+from src.runtime.ops import load_ops
 
 
 @dataclass(frozen=True)
@@ -59,7 +59,7 @@ class RMSNorm:
         self.weight = weight.float().contiguous()
         self.eps = float(eps)
         self.out_dtype = out_dtype
-        self._cuda = load_cuda_kernel()
+        self._cuda = load_ops()
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         # Fused RMSNorm CUDA kernel: ~5.7x faster than the 7-op PyTorch chain
@@ -175,8 +175,8 @@ class MiniMaxAttention:
 
         if use_fused:
             try:
-                from relic_core.kernels.cuda_loader import load_cuda_kernel
-                cuda_ext = load_cuda_kernel()
+                from src.runtime.ops import load_ops
+                cuda_ext = load_ops()
                 if hasattr(cuda_ext, "fused_minimax_rope_halfsplit_inplace"):
                     self._ensure_rope_freqs(end_pos)
                     if self._rope_freqs_cos is not None and self._rope_freqs_sin is not None:
@@ -284,7 +284,7 @@ class MiniMaxMoE:
         self.gate_bias = gate_bias.float().contiguous() if gate_bias is not None else None
         self.cache = cache
         self.dtype = dtype
-        self._cuda = load_cuda_kernel()
+        self._cuda = load_ops()
         if self._cuda is None:
             raise RuntimeError("CUDA extension is required for MiniMax MoE")
 

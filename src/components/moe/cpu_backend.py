@@ -9,7 +9,7 @@ import time
 import torch
 from torch.autograd.profiler import record_function
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
+from src.runtime.ops import load_ops
 from relic_core.kernels.ops import Packed4BitWeightAlongK, _dequant_fp4_weight_torch, _quantize_int8_weight_torch
 
 
@@ -886,7 +886,7 @@ class CPURoutedExpertsBackend:
         if not torch.cuda.is_available():
             return None
         if self._cuda_ext is None:
-            self._cuda_ext = load_cuda_kernel()
+            self._cuda_ext = load_ops()
         if self._cuda_ext is None or not hasattr(self._cuda_ext, "fp4_weight_to_int8_forward"):
             return None
         device = torch.device("cuda", torch.cuda.current_device())
@@ -957,7 +957,7 @@ class CPURoutedExpertsBackend:
         if fp4_arena is None or not torch.cuda.is_available():
             return False
         if self._cuda_ext is None:
-            self._cuda_ext = load_cuda_kernel()
+            self._cuda_ext = load_ops()
         if self._cuda_ext is None or not hasattr(self._cuda_ext, "fp4_weight_to_int8_forward"):
             return False
         int8_arena = self._allocate_int8_arena_from_fp4_arena(fp4_arena)

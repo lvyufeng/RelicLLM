@@ -14,8 +14,8 @@ import os
 import torch
 import torch.nn.functional as F
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.qwen4_exp.config import Qwen4ExpTextConfig
+from src.runtime.ops import load_ops
 
 
 # ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ def _cuda_hc_activation(
         or not x.is_contiguous()
     ):
         return None
-    ext = load_cuda_kernel()
+    ext = load_ops()
     if ext is None or not hasattr(ext, name):
         return None
     return getattr(ext, name)(x, groups)
@@ -191,7 +191,7 @@ def _cuda_grouped_rms_norm(
         or x.shape[-1] % group_size != 0
     ):
         return None
-    ext = load_cuda_kernel()
+    ext = load_ops()
     if ext is None or not hasattr(ext, "qwen4_exp_grouped_rms_norm"):
         return None
     return ext.qwen4_exp_grouped_rms_norm(x, weight, group_size, eps)
@@ -478,7 +478,7 @@ def inject_into_streams(
         and injection_weights.shape[:-1] == block_output.shape[:-1]
         and hyper_input.shape[-1] == groups * block_output.shape[-1]
     ):
-        ext = load_cuda_kernel()
+        ext = load_ops()
         if ext is not None and hasattr(ext, "qwen4_exp_inject"):
             return ext.qwen4_exp_inject(
                 block_output,

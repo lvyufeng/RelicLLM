@@ -267,8 +267,8 @@ from typing import Sequence
 
 import torch
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.deepseek_v4_1.modules import RoutedExperts
+from src.runtime.ops import load_ops
 
 __all__ = ["DeviceRoutedExperts", "device_experts_available"]
 
@@ -355,7 +355,7 @@ def rows_per_card(deal: str, topk: int, world: int) -> int:
 
 def device_experts_available() -> bool:
     """Whether the extension this class calls is loadable and carries the op it needs."""
-    extension = load_cuda_kernel()
+    extension = load_ops()
     return extension is not None and hasattr(extension, "moe_single_token_fp4_forward")
 
 
@@ -582,7 +582,7 @@ class DeviceRoutedExperts(RoutedExperts):
             raise ValueError(f"world must be at least 1, got {world}")
         if topk < 1:
             raise ValueError(f"topk must be at least 1, got {topk}")
-        extension = load_cuda_kernel()
+        extension = load_ops()
         if extension is None or not hasattr(extension, "moe_single_token_fp4_forward"):
             raise RuntimeError("moe_single_token_fp4_forward is not available in the built extension")
 

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import torch
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.loader.gguf.quantized_tensor import QuantizedGGUFTensor
+from src.runtime.ops import load_ops
 
 
 class QuantizedGGUFLinear:
@@ -12,7 +12,7 @@ class QuantizedGGUFLinear:
     def __init__(self, tensor: QuantizedGGUFTensor, *, out_dtype: torch.dtype = torch.float16):
         self.tensor = tensor
         self.out_dtype = out_dtype
-        self._cuda = load_cuda_kernel()
+        self._cuda = load_ops()
         if self._cuda is None:
             raise RuntimeError("CUDA extension is required for QuantizedGGUFLinear")
         self._grid = torch.empty(0, dtype=torch.int8, device=tensor.blocks.device)
@@ -100,7 +100,7 @@ class Q8_0GGUFLinear:
         self.source_name = source_name
         self.out_dtype = out_dtype
         self._row_start = int(row_start)
-        self._cuda = load_cuda_kernel()
+        self._cuda = load_ops()
         if self._cuda is None or not hasattr(self._cuda, "q8_0_gemm_forward"):
             raise RuntimeError("q8_0 CUDA extension is required for Q8_0GGUFLinear")
 
@@ -129,7 +129,7 @@ class QuantizedGGUFEmbedding:
     def __init__(self, tensor: QuantizedGGUFTensor, *, out_dtype: torch.dtype = torch.float16):
         self.tensor = tensor
         self.out_dtype = out_dtype
-        self._cuda = load_cuda_kernel()
+        self._cuda = load_ops()
         if self._cuda is None:
             raise RuntimeError("CUDA extension is required for QuantizedGGUFEmbedding")
         self._grid = torch.empty(0, dtype=torch.int8, device=tensor.blocks.device)

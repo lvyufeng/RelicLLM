@@ -35,7 +35,6 @@ from typing import Callable, Sequence
 import torch
 import torch.nn.functional as F
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.mimo_v2.config import MimoV2AttentionShape, MimoV2TextConfig
 from src.models.mimo_v2.layers import (
     apply_partial_rope,
@@ -44,6 +43,7 @@ from src.models.mimo_v2.layers import (
     split_fused_qkv,
 )
 from src.models.mimo_v2.quant import QKV_SHARDS
+from src.runtime.ops import load_ops
 
 __all__ = [
     "AttentionStats",
@@ -1026,7 +1026,7 @@ class MimoV2DeviceAttention:
         self._rope_table: tuple[torch.Tensor, torch.Tensor] | None = None
         #: The decode step's rotation as one C++ call, or `None` when the extension was not built
         #: -- in which case `rotate` takes `rope_rows`, which is the reference and stays it.
-        ops = load_cuda_kernel()
+        ops = load_ops()
         self._rope_ops = ops if (ops is not None and hasattr(ops, "mimo_rope_rows")) else None
         #: The decode step's attention as one C++ call, or `None` when the extension was not built
         #: -- in which case `decode_output` takes the torch block below it, which is the reference

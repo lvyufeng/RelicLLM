@@ -358,7 +358,7 @@ class MiniMaxM2DeviceResidentCache:
         tokens: int = 1,
         dtype: torch.dtype = torch.float16,
     ) -> tuple[torch.Tensor, MiniMaxM2CudaGemmSmokeResult]:
-        from relic_core.kernels.cuda_loader import load_cuda_kernel
+        from src.runtime.ops import load_ops
 
         tensor = self.load_role(int(layer), role)
         expert = self.expert_start if expert is None else int(expert)
@@ -370,7 +370,7 @@ class MiniMaxM2DeviceResidentCache:
         tokens = int(tokens)
         if tokens <= 0:
             raise ValueError(f"tokens must be positive, got {tokens}")
-        cuda_mod = load_cuda_kernel()
+        cuda_mod = load_ops()
         if cuda_mod is None or not hasattr(cuda_mod, "gguf_quant_gemm_forward"):
             raise RuntimeError("built CUDA extension with gguf_quant_gemm_forward is not available")
         expert_blocks = tensor.blocks[local_expert].contiguous()

@@ -80,8 +80,8 @@ from typing import Protocol, Sequence
 
 import torch
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.mimo_v2.ep import deal_rule, owned_experts, owned_positions, rows_per_card
+from src.runtime.ops import load_ops
 
 __all__ = [
     "MimoV2DeviceExperts",
@@ -380,9 +380,9 @@ class MimoV2DeviceExperts:
                 f"{self.inter_dim}"
             )
 
-        self._kernel = load_cuda_kernel()
+        self._kernel = load_ops()
         if self._kernel is None:
-            # `load_cuda_kernel` returns None both when nothing is built and when the build does
+            # `load_ops` returns None both when nothing is built and when the build does
             # not match this interpreter, and it swallows the reason. This path has no fallback
             # -- the expert arithmetic *is* the extension -- so the failure has to be here and
             # not an `AttributeError` on a `None` a hundred calls later.

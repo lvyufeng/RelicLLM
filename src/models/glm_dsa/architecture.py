@@ -195,7 +195,7 @@ class RMSNorm:
         self.out_dtype = out_dtype
         import os as _os
 
-        from relic_core.kernels.cuda_loader import load_cuda_kernel
+        from src.runtime.ops import load_ops
 
         # OFF by default: a real e2e showed the fused RMSNorm kernel is neutral
         # for GLM decode (0.66->0.64 tok/s, within noise) because GLM's per-token
@@ -204,7 +204,7 @@ class RMSNorm:
         # it off preserves bit-identical greedy output vs the DP4A baseline.
         # Opt in with GLM_FUSED_RMSNORM=1.
         self._use_fused = _os.getenv("GLM_FUSED_RMSNORM", "0") == "1"
-        self._cuda = load_cuda_kernel() if self._use_fused else None
+        self._cuda = load_ops() if self._use_fused else None
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         if (
@@ -802,10 +802,10 @@ class GLMDSARawBlockMoE:
         return buf
 
     def _routed_forward(self, x_flat: torch.Tensor, indices: torch.Tensor, weights: torch.Tensor) -> torch.Tensor:
-        from relic_core.kernels.cuda_loader import load_cuda_kernel
+        from src.runtime.ops import load_ops
         from src.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
 
-        cuda_mod = load_cuda_kernel()
+        cuda_mod = load_ops()
         if cuda_mod is None or not hasattr(cuda_mod, "gguf_moe_prefill_grouped_forward"):
             raise RuntimeError("CUDA grouped MoE kernel is required for GLMDSARawBlockMoE")
 
