@@ -14,6 +14,9 @@ neither proof needs a device of the kind it is proving.
 
 from __future__ import annotations
 
+import ast
+from pathlib import Path
+
 import pytest
 
 from relicllm.api import ConfigurationError, EngineArgs, UnsupportedFeatureError
@@ -358,3 +361,215 @@ def test_a_cardless_host_still_serves_the_runtimes_that_declare_a_host_platform(
     # ... and `cpp`, which declares no host platform, is the one that stops.
     with pytest.raises(UnsupportedFeatureError, match="--device auto resolved to"):
         select_backend(_args(backend="cpp"), accelerator=_accelerator("cpu"))
+
+
+# ----------------------------------------------------------------- binding a card, and waiting
+
+
+def test_binding_a_card_is_a_no_op_on_a_host_platform() -> None:
+    """`cpu` has no card to point at, and asking is not an error.
+
+    A launch with no accelerator in it reaches here legitimately -- `EngineArgs` has already refused
+    a `--device-ids` beside `--device cpu` -- so the honest answer is to do nothing rather than to
+    raise on a no-op.
+    """
+    _torch()
+    plane.bind_device(0, platform="cpu")
+
+
+def test_binding_an_unregistered_platform_is_refused_by_name() -> None:
+    """The Ascend experience on this box, and the reason it is a refusal and not an `ImportError`.
+
+    `_torch_module_for` reaches `torch.npu` through an `import torch_npu`, so without the check this
+    would surface as a `ModuleNotFoundError` from the middle of whichever setup function happened to
+    bind first -- naming a module the operator never asked for rather than the platform they did.
+    """
+    _torch()
+    for call in (
+        lambda: plane.bind_device(0, platform="ascend"),
+        lambda: plane.synchronize(platform="ascend"),
+        lambda: plane.device_count(platform="ascend"),
+    ):
+        with pytest.raises(plane.DeviceError) as raised:
+            call()
+        assert "torch_npu" in str(raised.value) and "'ascend'" in str(raised.value)
+
+
+def test_binding_a_cuda_card_points_this_process_at_it() -> None:
+    """And puts it back, so the rest of the suite runs on the card it started on.
+
+    The index is **non-zero and different from the one the process is already on**, which is the
+    half that makes this a test. Card 0 is where a fresh process already is, so asserting
+    ``current_device() == 0`` after binding 0 passes against a `bind_device` that does nothing at
+    all, and against one that drops its argument and always binds 0 -- which is every way this
+    function can be wrong. Binding a card the process is not on is what pins both the call and its
+    argument, and this host has four of them to move between.
+    """
+    torch = _torch()
+    count = torch.cuda.device_count()
+    if count < 2:
+        pytest.skip(f"needs two cards to tell a bind from a no-op; this host has {count}")
+    original = torch.cuda.current_device()
+    target = 1 if original != 1 else 0
+    try:
+        plane.bind_device(target, platform="cuda")
+        assert torch.cuda.current_device() == target, (
+            "bind_device did not move this process to the card it was handed. Card 0 is where a "
+            "process starts, so a test that binds 0 cannot tell this apart from a no-op"
+        )
+    finally:
+        torch.cuda.set_device(original)
+
+
+def test_the_card_count_is_zero_on_a_host_platform_and_a_number_here() -> None:
+    """`0` rather than an error, so the launcher's "a world of N needs the cards" check reads the
+    same on both platforms: the count is the fact and the refusal is the caller's sentence."""
+    torch = _torch()
+    assert plane.device_count(platform="cpu") == 0
+    assert plane.device_count(platform="cuda") >= (1 if torch.cuda.is_available() else 0)
+
+
+def test_synchronize_is_a_no_op_on_a_host_platform() -> None:
+    """What the call sites write by hand today as
+    `torch.cuda.synchronize if dev.type == "cuda" else lambda *a: None`."""
+    _torch()
+    plane.synchronize(platform="cpu")
+
+
+# ------------------------------------------------ the two entry points that bind and join
+
+
+def test_setup_dist_names_what_it_needs_when_the_host_has_neither_accelerator(monkeypatch) -> None:
+    """`src/runtime/generation.py`'s entry point, on a host with no card of either kind.
+
+    The sentence was `"GGUF raw-block runtime requires CUDA"`, which named one vendor for a runtime
+    that is about to be able to run on another. What it needs is an accelerator; whose is the device
+    plane's question.
+    """
+    from src.runtime import generation
+
+    monkeypatch.delenv("WORLD_SIZE", raising=False)
+    monkeypatch.setattr(generation, "probe_accelerator", lambda: _accelerator("cpu"))
+    with pytest.raises(RuntimeError, match="needs an accelerator"):
+        generation.setup_dist()
+
+
+def test_setup_dist_returns_a_device_of_the_platforms_type(monkeypatch) -> None:
+    """`world, rank, local_rank, device` -- and the device is the accelerator's, not `cuda`'s.
+
+    Single rank, so no process group is built and the test needs no rendezvous; the claim is about
+    the tuple the entry point hands on, which is where every downstream `torch.device(...)` starts.
+
+    `local_rank` is 0 here because nothing set `LOCAL_RANK`, so the assertion on
+    `current_device()` says the entry point bound the card it was told to -- which is a fact about
+    the *environment*, not about the binding. `test_binding_a_cuda_card_points_this_process_at_it`
+    is the one that moves a process between cards and can tell a bind from a no-op.
+    """
+    torch = _torch()
+    from src.runtime import generation
+
+    for name in ("WORLD_SIZE", "RANK", "LOCAL_RANK"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(generation, "probe_accelerator", lambda: _accelerator("cuda"))
+
+    world, rank, local_rank, device = generation.setup_dist()
+    assert (world, rank, local_rank) == (1, 0, 0)
+    assert device.type == "cuda" and device.index == 0
+    assert torch.cuda.current_device() == 0
+
+
+def test_the_qwen4_entry_point_binds_the_card_the_plane_named(monkeypatch) -> None:
+    """One of the five entry points, called for real, on whatever host is reading this.
+
+    This is the call the move onto the plane got wrong: `src/models/qwen4_exp/runtime.py` read
+    `probe_accelerator()` with no import for it, so `init_distributed()` -- the first thing this
+    runtime's own entry point runs -- died on a `NameError` before it could print a line. Single
+    rank, so nothing rendezvouses and no weights are loaded; the claim is the context the caller
+    then builds a model on.
+    """
+    from src.models.qwen4_exp import runtime as qwen4
+
+    for name in ("WORLD_SIZE", "RANK", "LOCAL_RANK"):
+        monkeypatch.delenv(name, raising=False)
+    accelerator = plane.probe_accelerator()
+
+    ctx = qwen4.init_distributed()
+    assert (ctx.rank, ctx.world_size, ctx.initialized) == (0, 1, False)
+    assert ctx.device.type == accelerator.torch_device_type
+    if accelerator.is_accelerator:
+        assert ctx.device.index == 0
+
+
+# ------------------------------------------------------------------------ the call sites
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _shipped_python_files() -> list[Path]:
+    """Every `.py` this repository ships: `src/` and `relicllm/`, and not `tests/`.
+
+    The suite calls the plane too, but a test that drops an import fails in the test rather than in
+    a process that was asked to serve a request, so it is not what this check is watching.
+    """
+    paths: list[Path] = []
+    for root in (_REPO_ROOT / "src", _REPO_ROOT / "relicllm"):
+        paths.extend(path for path in root.rglob("*.py") if "__pycache__" not in path.parts)
+    return sorted(paths)
+
+
+def _bound_names(tree: ast.AST) -> set[str]:
+    """Every name this module brings into scope, by any route.
+
+    Imports, assignments, arguments, comprehension and loop targets, `except ... as`, definitions.
+    Being generous is deliberate: the check is for a name that is *read* and bound nowhere, and a
+    false negative hides a regression while a false positive is a test nobody trusts.
+    """
+    bound: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            bound.update((alias.asname or alias.name).split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            bound.update(alias.asname or alias.name for alias in node.names)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
+            bound.add(node.id)
+        elif isinstance(node, ast.arg):
+            bound.add(node.arg)
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            bound.add(node.name)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound.add(node.name)
+    return bound
+
+
+def test_every_caller_of_the_plane_imports_what_it_calls() -> None:
+    """A module that calls the plane without importing it is a `NameError`, and only at the call.
+
+    That is the shape of the one defect the move onto the plane left behind: the missing import in
+    `src/models/qwen4_exp/runtime.py` was invisible to the whole suite, because nothing under
+    `tests/` imports that module and an unread name is a name nobody notices. A static check is
+    what catches it without loading six engines to ask each one a question about its own text.
+
+    Read from the module's own `__all__`, so a name added to the plane is covered the day it is
+    added rather than the day someone remembers to list it here.
+    """
+    vocabulary = frozenset(plane.__all__)
+    offenders: dict[str, set[str]] = {}
+    for path in _shipped_python_files():
+        if path == _REPO_ROOT / "src" / "runtime" / "device.py":
+            continue
+        tree = ast.parse(path.read_text(), filename=str(path))
+        used = {
+            node.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+        }
+        missing = (used & vocabulary) - _bound_names(tree)
+        if missing:
+            offenders[str(path.relative_to(_REPO_ROOT))] = missing
+
+    assert not offenders, (
+        "these modules call the device plane without importing it: "
+        + "; ".join(f"{name} uses {', '.join(sorted(names))}" for name, names in offenders.items())
+        + ". The import belongs with the module's other imports, not inside the function that uses "
+        "it -- which is where it would have to be for a call site to stay working by accident"
+    )

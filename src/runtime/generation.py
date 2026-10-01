@@ -24,26 +24,34 @@ import numpy as np
 import torch
 import torch.distributed as dist
 
+from src.runtime.device import bind_device, probe_accelerator, synchronize
+
 
 def setup_dist() -> tuple[int, int, int, torch.device]:
     world = int(os.environ.get("WORLD_SIZE", "1"))
     rank = int(os.environ.get("RANK", "0"))
     local_rank = int(os.environ.get("LOCAL_RANK", str(rank)))
-    if not torch.cuda.is_available():
-        raise RuntimeError("GGUF raw-block runtime requires CUDA")
-    torch.cuda.set_device(local_rank)
+    accelerator = probe_accelerator()
+    if not accelerator.is_accelerator:
+        # Named for what it needs rather than for one vendor: this runtime places its weights on a
+        # card, and which vendor's card is the device plane's question.
+        raise RuntimeError(
+            "the GGUF raw-block runtime needs an accelerator, and this host has neither a CUDA "
+            "device nor an Ascend one"
+        )
+    bind_device(local_rank, platform=accelerator.platform)
     if world > 1 and not dist.is_initialized():
         # A long timeout so a slow one-time step on a single rank (e.g. reading
         # a multi-hundred-GB GGUF into the page cache while the other ranks wait
         # at the first barrier) does not trip the default 10-minute store
-        # timeout and tear down the NCCL communicator.
-        dist.init_process_group("nccl", timeout=timedelta(hours=2))
-    return world, rank, local_rank, torch.device("cuda", local_rank)
+        # timeout and tear down the collective.
+        dist.init_process_group(accelerator.distributed_backend, timeout=timedelta(hours=2))
+    return world, rank, local_rank, torch.device(accelerator.torch_device_type, local_rank)
 
 
 def sync() -> None:
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
+    if probe_accelerator().is_accelerator:
+        synchronize()
     if dist.is_available() and dist.is_initialized():
         dist.barrier()
 

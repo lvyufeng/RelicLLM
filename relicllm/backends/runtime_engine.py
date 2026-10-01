@@ -50,6 +50,8 @@ from relicllm.api import (
     Usage,
 )
 
+from src.runtime.device import bind_device
+
 #: How long the scheduler's side waits for a runtime to hand back a token before failing the
 #: request. It is a backstop against a wedged runtime, not a deadline: a 64K prefill on one of
 #: these models takes minutes, and a timeout that fired on a slow but working run would turn a
@@ -180,13 +182,17 @@ class RuntimeRun:
             self._tokens.put(_DONE)
 
     def _bind_device(self) -> None:
-        """Select the runtime's card on this thread, which is the thread the forwards run on."""
+        """Select the runtime's card on this thread, which is the thread the forwards run on.
+
+        The card is an index and the *platform* is a property of the process, so the device plane is
+        asked the second half rather than the spec carrying it. That also makes this the one place
+        the serving bridge touched a vendor namespace directly, which it no longer does.
+        """
         device = self._device() if callable(self._device) else self._device
         if device is None or int(device) < 0:
             return
-        import torch
 
-        torch.cuda.set_device(int(device))
+        bind_device(int(device))
 
     # -- the scheduler's side -------------------------------------------------------------------
 

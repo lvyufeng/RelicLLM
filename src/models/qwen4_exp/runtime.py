@@ -34,6 +34,7 @@ from src.models.qwen4_exp.builder import build_heterogeneous
 from src.models.qwen4_exp.config import Qwen4ExpConfig
 from src.models.qwen4_exp.model import Qwen4ExpModel
 from src.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
+from src.runtime.device import bind_device, probe_accelerator
 
 
 @dataclass
@@ -158,17 +159,30 @@ def init_distributed() -> TPContext:
     rank = int(os.environ.get("RANK", "0"))
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     local_rank = int(os.environ.get("LOCAL_RANK", str(rank)))
+    accelerator = probe_accelerator()
 
     if world_size > 1:
         if not dist.is_initialized():
-            dist.init_process_group(backend="nccl", rank=rank, world_size=world_size)
-        torch.cuda.set_device(local_rank)
-        return TPContext(rank, world_size, torch.device(f"cuda:{local_rank}"), True)
+            dist.init_process_group(
+                backend=accelerator.distributed_backend, rank=rank, world_size=world_size
+            )
+        bind_device(local_rank, platform=accelerator.platform)
+        return TPContext(
+            rank,
+            world_size,
+            torch.device(accelerator.torch_device_type, local_rank),
+            True,
+        )
 
-    device = torch.device(f"cuda:{local_rank}" if torch.cuda.is_available() else "cpu")
-    if torch.cuda.is_available():
-        torch.cuda.set_device(local_rank)
-    return TPContext(rank, world_size, device, False)
+    # Single rank, and the only branch here that keeps a host fallback: with no group to join a
+    # run on a host with no accelerator is a legitimate configuration rather than a misconfiguration,
+    # which is why this one asks the accelerator rather than insisting on it.
+    if not accelerator.is_accelerator:
+        return TPContext(rank, world_size, torch.device("cpu"), False)
+    bind_device(local_rank, platform=accelerator.platform)
+    return TPContext(
+        rank, world_size, torch.device(accelerator.torch_device_type, local_rank), False
+    )
 
 
 def make_all_reduce(ctx: TPContext):

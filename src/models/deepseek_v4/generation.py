@@ -11,6 +11,7 @@ import torch
 import torch.distributed as dist
 from transformers import AutoTokenizer
 from src.components.moe.shared_weights import SharedCPUMoEWeightArena
+from src.runtime.device import bind_device, probe_accelerator
 from src.runtime.prefix_snapshot import PrefixSnapshotCache
 from src.models.deepseek_v4.runtime import (
     Transformer,
@@ -1029,14 +1030,19 @@ def main(
     rank = int(os.getenv("RANK", "0"))
     local_rank = int(os.getenv("LOCAL_RANK", "0"))
     load_barrier_group = None
+    accelerator = probe_accelerator()
     if world_size > 1:
-        dist.init_process_group("nccl", timeout=timedelta(days=7))
+        dist.init_process_group(accelerator.distributed_backend, timeout=timedelta(days=7))
         load_barrier_group = dist.new_group(backend="gloo", timeout=timedelta(days=7))
     global print
     if rank != 0:
         print = lambda *_, **__: None
-    torch.cuda.set_device(local_rank)
-    torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+    bind_device(local_rank, platform=accelerator.platform)
+    if accelerator.platform == "cuda":
+        # A CUDA-allocator knob with no NPU counterpart: expandable segments are how the caching
+        # allocator holds an expert arena larger than one segment. Asking an NPU for it is not a
+        # retune, so it is guarded rather than translated.
+        torch.cuda.memory._set_allocator_settings("expandable_segments:True")
     torch.set_default_dtype(torch.bfloat16)
     if routed_experts_device == "cpu":
         omp_threads_env = os.getenv("DEEPSEEK_CPU_OMP_THREADS")
@@ -1082,7 +1088,7 @@ def main(
     print(args)
     shared_cpu_moe_arena = None
     init_start = time.perf_counter()
-    with torch.device("cuda"):
+    with torch.device(accelerator.torch_device_type):
         model = Transformer(args)
     if routed_experts_device == "cpu" and SharedCPUMoEWeightArena.enabled():
         if os.getenv("DEEPSEEK_CPU_MOE_SHARED_WEIGHT_NUMA_INTERLEAVE", "0").lower() in {"1", "true", "yes"}:
@@ -1120,7 +1126,7 @@ def main(
         torch.cuda.synchronize()
     print(f"load time: {time.perf_counter() - load_start:.3f}s", flush=True)
     _maybe_print_cuda_memory("after_load", rank)
-    torch.set_default_device("cuda")
+    torch.set_default_device(accelerator.torch_device_type)
     print("I'm DeepSeek 👋")
 
     pd_scheduler_obj = None
