@@ -15,6 +15,7 @@ from src.models.minimax_m2.moe_planning import (
     MiniMaxM2MoETensorPlan,
     build_minimax_m2_moe_runtime_plan,
 )
+from src.runtime.device import require_device
 
 
 GGUF_DEVICE_TYPE_IDS = {
@@ -161,17 +162,6 @@ class MiniMaxM2RoutedBlockLoader:
         )
 
 
-def _canonical_cuda_device(device: str | torch.device) -> torch.device:
-    resolved = torch.device(device)
-    if resolved.type != "cuda":
-        raise ValueError(f"MiniMax-M2 device-resident cache requires a CUDA device, got {resolved}")
-    if not torch.cuda.is_available():
-        raise RuntimeError("CUDA is not available for MiniMax-M2 device-resident cache")
-    if resolved.index is None:
-        resolved = torch.device("cuda", torch.cuda.current_device())
-    return resolved
-
-
 def _gguf_cuda_quant_grid(type_name: str, device: torch.device) -> torch.Tensor:
     if type_name == "iq2_xxs":
         from src.loader.gguf.tensor_reader import get_iq2xxs_signed_grid_tensor
@@ -206,7 +196,7 @@ class MiniMaxM2DeviceResidentCache:
         expert_start: int = 0,
         expert_count: int | None = None,
     ):
-        self.device = _canonical_cuda_device(device)
+        self.device = require_device(device, platform="cuda")
         self.bundle = read_gguf_bundle(bundle_or_path) if not isinstance(bundle_or_path, GGUFBundle) else bundle_or_path
         self.plan = plan or build_minimax_m2_moe_runtime_plan(self.bundle)
         if not self.plan.ok:

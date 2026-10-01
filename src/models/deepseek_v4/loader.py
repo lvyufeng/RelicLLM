@@ -18,6 +18,7 @@ from src.models.deepseek_v4.partition import (
     shard_tensor_for_rank,
 )
 from src.models.deepseek_v4.runtime import Transformer
+from src.runtime.device import accelerator_device
 
 
 _ROUTED_ORIGINAL_FORMAT_ROLES = {"routed_w1", "routed_w2", "routed_w3"}
@@ -270,12 +271,6 @@ def _maybe_bind_routed_fp4_arena(
     backend._release_expert_parameter_storage(expert)
 
 
-def _cuda_quant_device() -> torch.device | None:
-    if not torch.cuda.is_available():
-        return None
-    return torch.device("cuda", torch.cuda.current_device())
-
-
 def _scale_key_for_weight(key: str, state_dict: dict[str, torch.Tensor]) -> str | None:
     if not key.endswith(".weight"):
         return None
@@ -386,7 +381,7 @@ def _copy_loaded_tensor(
         if scale is not None:
             tensor = soft_fp8_blockfp8_weight_dequant(tensor, scale)
     if target.dtype == torch.float8_e4m3fn:
-        quant_device = _cuda_quant_device()
+        quant_device = accelerator_device()
         if quant_device is not None:
             tensor = tensor.to(device=quant_device, non_blocking=True)
     if key.endswith(".weight"):
@@ -571,7 +566,7 @@ def load_original_hf_model(model: Transformer, ckpt_path: str, world_size: int, 
                 scale = scale_tensor
                 if weight is None or scale is None:
                     continue
-                quant_device = _cuda_quant_device()
+                quant_device = accelerator_device()
                 if quant_device is not None:
                     weight = weight.to(device=quant_device, non_blocking=True)
                     scale = scale.to(device=quant_device, non_blocking=True)

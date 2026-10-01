@@ -43,6 +43,13 @@ from src.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
 from src.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3
 from src.models.deepseek_v4_1.tp import indexer_row_split
 
+# Re-exported rather than defined here. Every node in this stack builds its own copy of the rope
+# table and they share one by asking for the same key, and `torch.device("cuda")` is not the same
+# key as `torch.device("cuda", 0)` -- so what the first node to be built resolved is what the other
+# thirty-nine read their roperies from. That is why the resolution is one function in the device
+# plane and not five; this name stays because `modules.py` and this file's own call sites import it.
+from src.runtime.device import canonical_device
+
 __all__ = [
     "Attention",
     "AttentionStack",
@@ -112,23 +119,6 @@ class RMSNorm(nn.Module):
         x = x.float()
         x = x * torch.rsqrt(x.square().mean(-1, keepdim=True) + self.eps)
         return (self.weight * x).to(dtype)
-
-
-def canonical_device(device: torch.device | str | None) -> torch.device | None:
-    """`device` with an unindexed `cuda` resolved to the card we are actually on.
-
-    Every node in the tree builds its own copy of the rope table, and they share one by asking for
-    the same key. `torch.device("cuda")` is not the same key as `torch.device("cuda", 0)` and lands
-    wherever the current device happens to point, so it is resolved here rather than at each cache
-    lookup -- otherwise the first node to be built would decide, silently, which card the other
-    thirty-nine read their roperies from.
-    """
-    if device is None:
-        return None
-    resolved = torch.device(device)
-    if resolved.type == "cuda" and resolved.index is None:
-        resolved = torch.device("cuda", torch.cuda.current_device())
-    return resolved
 
 
 @lru_cache(16)

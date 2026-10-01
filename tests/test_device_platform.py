@@ -212,6 +212,108 @@ def test_an_unknown_device_type_is_torchs_business_to_refuse() -> None:
     assert plane.canonical_device("meta") == torch.device("meta")
 
 
+# ------------------------------------------------- the two policies beside the resolution
+
+
+def test_a_strict_caller_gets_the_card_it_asked_for() -> None:
+    """`require_device` resolves the same way `canonical_device` does, because it *is* that call.
+
+    The caller here is a runtime that has to put weights somewhere, so an unindexed `cuda` has to
+    come back as the card this process is on -- which is the half of the five copies that was
+    identical in all five, and the half that is now written once.
+    """
+    torch = _torch()
+    device = plane.require_device(
+        "cuda", platform="cuda", accelerator=_accelerator("cuda"), current_index=lambda: 2
+    )
+    assert device == torch.device("cuda", 2)
+    assert plane.require_device(
+        torch.device("cuda", 3), platform="cuda", accelerator=_accelerator("cuda")
+    ) == torch.device("cuda", 3)
+
+
+def test_a_strict_caller_is_refused_a_card_of_another_kind() -> None:
+    """The branch the llama.cpp-shaped `device="cuda"` default produces on an Ascend host.
+
+    `require_device` is told which platform it needs and answers a device of the other kind by
+    name, rather than by handing back something the caller will use as if it were right -- which is
+    what a shared resolution with no policy on top of it would do.
+    """
+    torch = _torch()
+    with pytest.raises(plane.DeviceError, match=r"resolved to .*cpu.*not one"):
+        plane.require_device("cpu", platform="cuda", accelerator=_accelerator("cuda"))
+    assert plane.require_device(
+        "cuda:0", platform="cuda", accelerator=_accelerator("cuda")
+    ) == torch.device("cuda", 0)
+
+
+def test_a_strict_caller_is_refused_on_a_host_that_has_no_such_card() -> None:
+    """The other refusal: the device is right, the *host* is not -- and this one named a different
+    exception in the copy it replaces.
+
+    `_canonical_cuda_device` raised `RuntimeError("CUDA is not available ...")` here and
+    `ValueError` one line above, so a caller had to catch two types for one question. Both are
+    `DeviceError` now, and the message says which platform the host does have and which device type
+    torch would need -- which on an Ascend box is `torch_npu`'s name, not this host's.
+    """
+    _torch()
+    with pytest.raises(plane.DeviceError, match=r"has no ascend accelerator.*'npu'"):
+        plane.require_device("cuda:0", platform="ascend", accelerator=_accelerator("cpu"))
+    with pytest.raises(plane.DeviceError, match="has no cuda accelerator"):
+        plane.require_device("cuda:0", platform="cuda", accelerator=_accelerator("cpu"))
+
+
+def test_a_strict_caller_on_an_ascend_host_still_needs_torch_npu() -> None:
+    """The boundary this suite cannot cross, stated as a refusal rather than as a skip.
+
+    On a host whose accelerator *is* an Ascend one, `require_device("npu:0")` still cannot build
+    the device here: naming `npu` is `torch_npu`'s job, and this box has no `torch_npu`. So the
+    claim that is testable on a CUDA box is the refusal, and the reading it names is the one an
+    operator needs -- which package would make this call succeed.
+    """
+    with pytest.raises(plane.DeviceError, match="torch_npu"):
+        plane.require_device("npu:0", platform="ascend", accelerator=_accelerator("ascend"))
+
+
+def test_a_strict_caller_needs_an_accelerator_platform() -> None:
+    """`require_device(..., platform="cpu")` is a contradiction: a host platform is not a card."""
+    with pytest.raises(plane.DeviceError, match="needs an accelerator platform"):
+        plane.require_device("cpu", platform="cpu", accelerator=_accelerator("cpu"))
+
+
+def test_the_nullable_reading_answers_none_when_the_host_has_no_card() -> None:
+    """`accelerator_device` is the third policy: no card is an answer, not a failure.
+
+    This is the loader's question -- a checkpoint read into card memory with a host-memory fallback
+    is a different thing from a runtime that requires a card, and the two must not be folded onto
+    one refusal or a legitimate host-resident load becomes an exception.
+    """
+    _torch()
+    assert plane.accelerator_device(accelerator=_accelerator("cpu")) is None
+    assert plane.accelerator_device("cuda:1", accelerator=_accelerator("cpu")) is None
+
+
+def test_the_nullable_reading_answers_the_current_card_when_asked_for_nothing() -> None:
+    """No argument means "whichever card this process is on" -- and `None` is what a host answers.
+
+    Two `None`s on the same line of a signature, saying different things: the argument's `None`
+    asks for the current card, and the return's `None` says there is no card to give.
+    """
+    torch = _torch()
+    device = plane.accelerator_device(accelerator=_accelerator("cuda"), current_index=lambda: 1)
+    assert device == torch.device("cuda", 1)
+    assert plane.accelerator_device(
+        "cuda", platform="cuda", accelerator=_accelerator("cuda"), current_index=lambda: 1
+    ) == torch.device("cuda", 1)
+
+
+def test_the_nullable_reading_still_refuses_a_device_the_caller_named_wrongly() -> None:
+    """Only the *host* is allowed to answer `None`; a named device of the wrong kind is a mistake."""
+    _torch()
+    with pytest.raises(plane.DeviceError, match="not a cuda device"):
+        plane.accelerator_device("cpu", accelerator=_accelerator("cuda"))
+
+
 # ------------------------------------------------------------- the declaration, enforced
 
 
