@@ -1097,7 +1097,7 @@ class CppBackend(BackendBase):
 
         Both hosts of `BatchScheduler` are the same library with the same stats struct, and the
         server prefixes what it publishes, so the two agree when the *suffix* does: the native
-        host's `pocket_requests_running` is this server's `pocketllm_requests_running`, and the
+        host's `pocket_requests_running` is this server's `relicllm_requests_running`, and the
         comparison is a prefix substitution rather than a translation table. That is the same
         reason the histogram bucket bounds here are transcribed from vLLM's rather than chosen.
 

@@ -17,7 +17,7 @@ from contextlib import contextmanager
 from typing import Iterator
 
 # Histogram bucket upper bounds, transcribed verbatim from vLLM's
-# vllm/v1/metrics/buckets.py so that a `pocketllm_*_bucket` line can be lined up
+# vllm/v1/metrics/buckets.py so that a `relicllm_*_bucket` line can be lined up
 # against the `vllm:*_bucket` line it corresponds to.  The point of copying
 # rather than choosing them is comparability: bounds invented here would put the
 # same sample in a different bucket than vLLM puts it in, which is exactly the
