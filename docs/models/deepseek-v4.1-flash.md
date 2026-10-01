@@ -122,7 +122,7 @@ the second waits for the slot, where the serialized path admits both and makes e
 other's lock. The gauges are the evidence that it was the scheduler -- peak `requests_running` 1 and
 `requests_waiting` 1 out of two clients, against no series at all on the other arm.
 
-`scripts/bench_cpp_scheduler_metrics.py --backend v41 --tp 4` is the harness. It needs
+`tests/bench_cpp_scheduler_metrics.py --backend v41 --tp 4` is the harness. It needs
 `--startup-timeout` well above the supervisor's 300 s default: a first run that has to *fill* the
 457.8 GiB bank takes about seven minutes, and the supervisor's timeout fires while the fill is still
 running and reports the ranks as missing. Filling it once with a long-budget run leaves

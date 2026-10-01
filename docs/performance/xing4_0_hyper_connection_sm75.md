@@ -8,7 +8,7 @@ reason is dispatch count rather than arithmetic.
 | Hardware | 1 x RTX 2080 Ti (sm_75, 616 GB/s peak) |
 | Checkpoint | `XingChen-AGI/Xing4.0-29B-A4B`, released BF16 shard 3 — layer 2's `attn_hc` |
 | Weights | real, at the released widths; cast to fp16 |
-| Invocation | `python scripts/bench_xing4_0_block.py --device cuda:2` |
+| Invocation | `python tests/bench_xing4_0_block.py --device cuda:2` |
 | Date | 2026-09-26 |
 
 One call is `attn_hc` or `ffn_hc`; the trunk makes two per layer over 40 layers, so a per-token

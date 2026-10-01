@@ -2,9 +2,9 @@
 
 **Date:** 2026-09-15
 **Commit:** `043b981`
-**Script:** `scripts/profile_cpu_offload.py`
+**Script:** `tests/profile_cpu_offload.py`
 **Artifact:** `/tmp/cpu_offload_profile.json` from
-`python scripts/profile_cpu_offload.py --stage all --json /tmp/cpu_offload_profile.json`
+`python tests/profile_cpu_offload.py --stage all --json /tmp/cpu_offload_profile.json`
 **Issue:** #156 (CPU Offloading with Prefetch Pipeline), roadmap entry 15 of #151
 
 Issue #156 promises four things for layer-granularity CPU offloading: a 70B FP4 model
@@ -88,7 +88,7 @@ bug was found and fixed during this work and the rates below are from after the 
 | `/mnt/data2` | `/dev/sdb1` | ST1000DM003-1SB1 | rotational | **0.194** (10.28 s) | 3.08 | 11.65 |
 | `/mnt/data3` | `/dev/sda` | HGST HSH721414AL | rotational | **0.209** (9.59 s) | 4.15 | 11.86 |
 
-Producing command: `python scripts/profile_cpu_offload.py --stage storage`.
+Producing command: `python tests/profile_cpu_offload.py --stage storage`.
 
 Cold is single-threaded after evicting the sampled range; warm is the same read
 repeated (page cache); 4-thread is four threads over disjoint 8 MiB chunks of the
@@ -126,7 +126,7 @@ budget below is what is left to argue about.
 | 64 MiB | 10.51 | 9.40 | 1.12 |
 | 256 MiB | 10.53 | 8.27 | 1.27 |
 
-Producing command: `python scripts/profile_cpu_offload.py --stage h2d`.
+Producing command: `python tests/profile_cpu_offload.py --stage h2d`.
 
 One GPU (`cuda:0`), pinned source allocated with `pin_memory=True` and pageable source
 with a plain `torch.empty`; both sources are written before timing, because a
@@ -235,7 +235,7 @@ bound is the last column.
 Copy rate is 10.46–10.64 GiB/s in all four rows, matching the sweep's plateau.
 
 Producing command:
-`python scripts/profile_cpu_offload.py --stage overlap --overlap-rows 1 512`.
+`python tests/profile_cpu_offload.py --stage overlap --overlap-rows 1 512`.
 
 The GLM row carries 6.07 GiB through PCIe to run 1.18 ms of arithmetic. The pipeline
 cannot hide what is not there to hide behind: when `compute < copy` the most a
@@ -344,13 +344,13 @@ shipped and measured, not one that is still available to win.
 
 ```bash
 # The full run behind this page (~84 s wall, GPU-side allocations of a few GiB)
-python scripts/profile_cpu_offload.py --stage all --json /tmp/cpu_offload_profile.json
+python tests/profile_cpu_offload.py --stage all --json /tmp/cpu_offload_profile.json
 
 # Individual stages
-python scripts/profile_cpu_offload.py --stage storage --storage-sample-mb 2048
-python scripts/profile_cpu_offload.py --stage h2d
-python scripts/profile_cpu_offload.py --stage overlap --overlap-rows 1 512
-python scripts/profile_cpu_offload.py --stage budget
+python tests/profile_cpu_offload.py --stage storage --storage-sample-mb 2048
+python tests/profile_cpu_offload.py --stage h2d
+python tests/profile_cpu_offload.py --stage overlap --overlap-rows 1 512
+python tests/profile_cpu_offload.py --stage budget
 ```
 
 `--stage budget` looks for the checkpoints it knows about at fixed paths; pass

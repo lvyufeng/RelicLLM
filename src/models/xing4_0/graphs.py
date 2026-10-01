@@ -207,7 +207,7 @@ class DecodeGraphs:
         # tensors are on. Naming a card in a command line does not set the current device, and with
         # the current device left at 0 and the weights on 2 every capture fails with
         # `cudaErrorStreamCaptureUnsupported` reported at whatever call happened to come next.
-        # `scripts/probe_xing4_0_decode_graph.py` hit exactly that before this line existed.
+        # `tests/probe_xing4_0_decode_graph.py` hit exactly that before this line existed.
         torch.cuda.set_device(device.index)
         self.device = device
         self.capacity = min(int(layer.capacity) for layer in layers)

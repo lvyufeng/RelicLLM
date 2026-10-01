@@ -111,7 +111,7 @@ gauges are the evidence — peak `requests_running` 1 and `requests_waiting` 1 o
 the scheduler arm, and no series at all on the other. Raising the width is what would move these
 numbers, and that is R3 of [#432](https://github.com/lvyufeng/PocketLLM/issues/432).
 
-`scripts/bench_cpp_scheduler_metrics.py --backend mimo --tp 4` is the harness. It needs the bank to
+`tests/bench_cpp_scheduler_metrics.py --backend mimo --tp 4` is the harness. It needs the bank to
 exist before the ranks start: a cold host has every rank take the fill path at once and the fill
 aborts partway (see [#456](https://github.com/lvyufeng/PocketLLM/issues/456)), which costs the
 thirteen minutes. Fill it once from a single process and the ranks attach in milliseconds.

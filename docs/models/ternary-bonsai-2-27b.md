@@ -155,7 +155,7 @@ diagnosed ([#406](https://github.com/lvyufeng/PocketLLM/issues/406)). See
 Decode falls 7% from a 4,096- to a 22,389-token context — the 48 recurrent layers do not grow with
 depth and the 16 attention layers do.
 
-`scripts/bench_pocketllm_serve_phases.py` produced these rows from the server's own `/metrics`
+`tests/bench_pocketllm_serve_phases.py` produced these rows from the server's own `/metrics`
 deltas rather than from chunk arrival times; the command is in
 [the design document](../architecture/bonsai_2_27b_design.md#evidence).
 

@@ -63,7 +63,7 @@ its geometry and refuses it by name, which is deliberate — reading a 2.13-bit 
 
 ## The measurement harness
 
-`scripts/bench_pocketllm_serve_phases.py` splits one served request into prefill and decode from the
+`tests/bench_pocketllm_serve_phases.py` splits one served request into prefill and decode from the
 **engine's own clock**, not from chunk arrival times: `pocketllm_ttft_seconds_sum/_count` is the time to
 the first generated token, `pocketllm_request_duration_seconds_sum` the whole request. By this
 repository's [timing convention](../guides/benchmarking.md) the first token is produced by the prompt
@@ -71,7 +71,7 @@ forward and therefore belongs to prefill, so `prefill_tps = prompt_tokens / ttft
 to report a row whose metric deltas are not exactly one request's — the trap being a stray health
 check or a second client landing inside the window.
 
-`scripts/bench_pocketllm_serve_concurrency.py` is the third of these server benchmarks: several
+`tests/bench_pocketllm_serve_concurrency.py` is the third of these server benchmarks: several
 simultaneous non-streamed requests, aggregate tokens a second against the same figure at concurrency
 1. It is non-streamed on purpose — the streaming path holds one lock for a whole generation, because
 the engine has a single mutable KV session, so a streamed run would measure the lock.
@@ -499,11 +499,11 @@ python -m pocketllm serve --model /path/to/Ternary-Bonsai-2-27B-PTQ1_0.gguf \
   --served-model-name bonsai --max-model-len 32768 --port 8123
 
 # the phase split, from the engine's own clock; one request at a time
-python scripts/bench_pocketllm_serve_phases.py --url http://127.0.0.1:8123 \
+python tests/bench_pocketllm_serve_phases.py --url http://127.0.0.1:8123 \
   --prompt-file docs/architecture/ternary_bonsai_2_dense_gemm.md --max-tokens 64
 
 # several requests at once, aggregate against concurrency 1
-python scripts/bench_pocketllm_serve_concurrency.py --url http://127.0.0.1:8123 \
+python tests/bench_pocketllm_serve_concurrency.py --url http://127.0.0.1:8123 \
   --concurrency 1 2 4 --max-tokens 64
 
 # the alignment probe: a repository document cut to an exact token count with

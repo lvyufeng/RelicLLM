@@ -494,8 +494,8 @@ Every number above is a measurement on one x86_64 box with 4×RTX 2080 Ti, on th
 
 | Claim | Command |
 | --- | --- |
-| Prefill and decode rates on real prose | `scripts/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
-| The hyper-connection's 2.17× | `scripts/bench_xing4_0_hyper_connection.py --device cuda:2 --steps 8 --arms 3 --warmup 2` |
+| Prefill and decode rates on real prose | `tests/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
+| The hyper-connection's 2.17× | `tests/bench_xing4_0_hyper_connection.py --device cuda:2 --steps 8 --arms 3 --warmup 2` |
 | The per-chunk peak, and the two-term formula | a 128/256/512/1024 sweep at a fixed 8192-token context, `torch.cuda.max_memory_allocated` per chunk |
 | The context ceiling | allocate the cache, then run a 128-token chunk at `ctx - 128` |
 | The decode step's launch count and per-kernel device time | `torch.profiler` over 10 steps at a 4096-token context |

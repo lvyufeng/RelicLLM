@@ -32,7 +32,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-BENCH_SERVING = REPO_ROOT / "scripts" / "bench_serving.py"
+BENCH_SERVING = REPO_ROOT / "tests" / "bench_serving.py"
 
 ROLE_CHUNK = (
     b'data: {"id":"r","object":"chat.completion.chunk","choices":'
@@ -41,7 +41,7 @@ ROLE_CHUNK = (
 
 
 def _load_bench_serving():
-    """Import scripts/bench_serving.py by path; scripts/ is not a package."""
+    """Import tests/bench_serving.py by path; tests/ is not a package."""
     spec = importlib.util.spec_from_file_location("bench_serving_under_test", BENCH_SERVING)
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module

@@ -15,11 +15,11 @@ logits** — measured at a frozen position, before any of the work a real decode
 | Context | **4,096 tokens**, the prompt the e2e bench builds, `--max-model-len 8192`, greedy, one request |
 | Commit | `perf/xing4-0-decode-graph-probe`, the tree of PR #428 |
 | Question | [#427][issue]: what is the ceiling on a graphed decode step, before committing to the work of building one |
-| Run | 2026-09-26, `scripts/probe_xing4_0_decode_graph.py --device cuda:2 --context 4096 --steps 20` |
+| Run | 2026-09-26, `tests/probe_xing4_0_decode_graph.py --device cuda:2 --context 4096 --steps 20` |
 
 ## Where a step's time goes, by name
 
-Profiling one step (`scripts/profile_xing4_0_decode_launches.py --context 4096`, both activities)
+Profiling one step (`tests/profile_xing4_0_decode_launches.py --context 4096`, both activities)
 gives a shape that is different from what §6 assumed, in a way that changes what the fix is:
 
 **The step hands the host 22,155 ATen dispatches, and 10,508 of them launch no kernel at all.**
@@ -212,8 +212,8 @@ they feed are **16.5 ms of its device time on their own**.
 
 | Claim | Command |
 | --- | --- |
-| The dispatch distribution, per step | `scripts/profile_xing4_0_decode_launches.py --device cuda:2 --context 4096 --steps 3` |
-| The three arms, the parity, the pool, the submissions | `scripts/probe_xing4_0_decode_graph.py --device cuda:2 --context 4096 --steps 20` |
+| The dispatch distribution, per step | `tests/profile_xing4_0_decode_launches.py --device cuda:2 --context 4096 --steps 3` |
+| The three arms, the parity, the pool, the submissions | `tests/probe_xing4_0_decode_graph.py --device cuda:2 --context 4096 --steps 20` |
 | The bincount sync, its cost and its guards | `python -m pytest tests/test_xing4_0_moe.py -q`, and the A/B on `plan_routes` recorded above |
 
 One thing about the numbers a reader should not have to reconstruct: **the eager column is a host
