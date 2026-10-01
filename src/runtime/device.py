@@ -56,11 +56,15 @@ if TYPE_CHECKING:  # torch is imported lazily: this module is on the ``--help`` 
 
 
 class DeviceError(ValueError):
-    """A device question this build cannot answer: an unknown platform, or an unregistered type.
+    """A device question this build cannot answer: an unknown platform, an unregistered type, or a
+    card this host does not have.
 
-    A ``ValueError`` because that is what the functions this replaces raise today -- see
-    ``_canonical_cuda_device`` in ``src/models/minimax_m2/moe_runtime.py`` -- so a caller that
-    already catches the old behaviour keeps catching it.
+    A ``ValueError`` because that is what the five copies of this question raised before they were
+    folded here -- ``_canonical_cuda_device``, ``_cuda_quant_device`` and the two inline versions of
+    it in the GLM-DSA and MiniMax loaders -- so a caller that already catches a bad device keeps
+    catching it. The one exception is that function's "no CUDA here" branch, which was a
+    ``RuntimeError`` and is now this; nothing in the tree catches either, and one type for every
+    refusal the plane makes is worth more than the difference between the two.
     """
 
 
@@ -270,6 +274,93 @@ def canonical_device(
     return resolved
 
 
+def require_device(
+    device: torch.device | str,
+    *,
+    platform: str = "cuda",
+    accelerator: Accelerator | None = None,
+    current_index: Callable[[], int] | None = None,
+) -> torch.device:
+    """``device`` as a card of ``platform``, or a refusal naming which half is wrong.
+
+    Two callers in this tree need a card and cannot proceed without one -- the MiniMax-M2
+    device-resident cache and the GLM-DSA raw-block runtime -- and each wrote its own version of
+    this check next to its own copy of the resolution. The resolution is now
+    :func:`canonical_device`'s, and what is left here is the *policy*, which is the half that
+    genuinely differs between callers:
+
+    * a device of the wrong kind is refused, which is the case the llama.cpp-shaped default
+      ``device="cuda"`` produces on a host whose accelerator is an NPU;
+    * a host that has no such card is refused, because a caller that requires one has no fallback
+      to be handed.
+
+    Both were ``ValueError`` and ``RuntimeError`` respectively in the copies; both are
+    :class:`DeviceError` here, so that a caller can catch one type for every refusal the plane
+    makes. Nothing in the tree catches either.
+
+    ``accelerator`` is injected rather than probed for the reason every other function here takes
+    its answers: it is what makes the Ascend arm reachable from a host that has never seen an
+    Ascend device. A caller who supplies one is answering "is this host an Ascend host", and the
+    device it hands in is then resolved on the host's behalf rather than checked against it.
+    """
+    resolved_platform = _checked(platform)
+    if resolved_platform not in ACCELERATORS:
+        raise DeviceError(f"require_device needs an accelerator platform, not {resolved_platform!r}")
+    host = probe_accelerator() if accelerator is None else accelerator
+    if host.platform != resolved_platform:
+        raise DeviceError(
+            f"this host has no {resolved_platform} accelerator to put the tensor on -- the device "
+            f"plane answers {host.platform!r} here. The device type torch would need is "
+            f"{torch_device_type(resolved_platform)!r}"
+            + (" (torch_npu, which is what registers it)" if resolved_platform == "ascend" else "")
+        )
+    resolved = canonical_device(device, current_index=current_index)
+    expected = torch_device_type(resolved_platform)
+    if resolved is None or resolved.type != expected:
+        raise DeviceError(
+            f"a {resolved_platform} device was required and {device!r} resolved to "
+            f"{resolved!r}, which is not one"
+        )
+    return resolved
+
+
+def accelerator_device(
+    device: torch.device | str | None = None,
+    *,
+    platform: str = "cuda",
+    accelerator: Accelerator | None = None,
+    current_index: Callable[[], int] | None = None,
+) -> torch.device | None:
+    """The card of ``platform`` to put this tensor on, or ``None`` when the host has none.
+
+    The third policy, and the one the loader uses: ``None`` is not a failure, it is the answer
+    "keep this on the host". A checkpoint that is read into card memory and can fall back to host
+    memory is a different thing from a runtime that *requires* a card, and folding the two
+    together would turn a legitimate host-resident load into an exception.
+
+    No argument means "whichever card this process is on", which is how the original read the
+    current device, and it is the same question :func:`canonical_device` resolves for an unindexed
+    name. That is why ``device=None`` is expanded here rather than passed through: for this policy
+    ``None`` in the *argument* means the current card while ``None`` out means no card at all.
+    """
+    resolved_platform = _checked(platform)
+    if resolved_platform not in ACCELERATORS:
+        raise DeviceError(f"accelerator_device needs an accelerator platform, not {resolved_platform!r}")
+    host = probe_accelerator() if accelerator is None else accelerator
+    if host.platform != resolved_platform:
+        return None
+    if device is None:
+        device = torch_device_type(resolved_platform)
+    resolved = canonical_device(device, current_index=current_index)
+    if resolved is None or resolved.type != torch_device_type(resolved_platform):
+        raise DeviceError(
+            f"{device!r} is not a {resolved_platform} device, and only the *host* is allowed to "
+            f"answer None here -- a device that is named and of the wrong kind is a caller's mistake "
+            f"rather than a host without the card"
+        )
+    return resolved
+
+
 def _current_index(device_type: str) -> int:
     """The card torch is currently pointed at, for ``device_type``.
 
@@ -290,10 +381,12 @@ __all__ = [
     "PLATFORMS",
     "Accelerator",
     "DeviceError",
+    "accelerator_device",
     "canonical_device",
     "device_type_registered",
     "probe_accelerator",
     "process_group_backend",
+    "require_device",
     "resolve_platform",
     "torch_device_type",
 ]

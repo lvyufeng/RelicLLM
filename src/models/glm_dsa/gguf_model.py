@@ -20,6 +20,7 @@ from src.models.glm_dsa.architecture import (
     ReferenceEmbedding,
     ReferenceLinear,
 )
+from src.runtime.device import require_device
 
 
 class GLMDSAGGUFModelLoader:
@@ -48,12 +49,7 @@ class GLMDSAGGUFModelLoader:
         rank: int = 0,
     ):
         self.bundle = read_gguf_bundle(bundle_or_path) if not isinstance(bundle_or_path, GGUFBundle) else bundle_or_path
-        resolved = torch.device(device)
-        if resolved.type != "cuda":
-            raise ValueError(f"GLM-DSA reference runtime currently requires CUDA device, got {resolved}")
-        if resolved.index is None:
-            resolved = torch.device("cuda", torch.cuda.current_device())
-        self.device = resolved
+        self.device = require_device(device, platform="cuda")
         self.dtype = dtype
         self.args = GLMDSAArgs.from_bundle(self.bundle, n_layers=n_layers)
         self.allow_moe_layers = bool(allow_moe_layers)
