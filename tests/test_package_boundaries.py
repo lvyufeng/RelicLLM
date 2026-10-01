@@ -5,35 +5,35 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = REPO_ROOT / "src"
+PACKAGE_ROOT = REPO_ROOT / "relicllm"
 
 REMOVED_IMPORT_PREFIXES = (
-    "src.gguf",
-    "src.models.moe",
-    "src.runtime.deepseek_v4",
-    "src.runtime.moe",
-    "src.moe",
-    "src.moe_model",
+    "relicllm.gguf",
+    "relicllm.models.moe",
+    "relicllm.runtime.deepseek_v4",
+    "relicllm.runtime.moe",
+    "relicllm.moe",
+    "relicllm.moe_model",
 )
 
 RUNTIME_FORBIDDEN_IMPORT_PREFIXES = (
     "safetensors",
-    "src.loader",
-    "src.models",
+    "relicllm.loader",
+    "relicllm.models",
 )
 
 LOADER_FORBIDDEN_IMPORT_PREFIXES = (
-    "src.models",
-    "src.runtime",
+    "relicllm.models",
+    "relicllm.runtime",
 )
 
 COMPONENTS_MOE_ALLOWED_MODEL_IMPORTS = {
-    # Exactly the specs `src/components/moe/registry.py::_init_specs` imports to build its
+    # Exactly the specs `relicllm/components/moe/registry.py::_init_specs` imports to build its
     # `general.architecture` table. GLM-DSA was registered there and left out of this set, so the
     # test failed on a registry that is doing the one thing it is allowed to do.
-    "src.models.deepseek_v4.spec",
-    "src.models.glm_dsa.spec",
-    "src.models.minimax_m2.spec",
+    "relicllm.models.deepseek_v4.spec",
+    "relicllm.models.glm_dsa.spec",
+    "relicllm.models.minimax_m2.spec",
 }
 
 COMPONENTS_MOE_FORBIDDEN_MODEL_MODULES = (
@@ -75,7 +75,7 @@ def _format_violations(violations: list[tuple[Path, str]]) -> str:
 
 def test_removed_namespaces_are_not_imported_from_source() -> None:
     violations: list[tuple[Path, str]] = []
-    for path in _python_files(SRC_ROOT):
+    for path in _python_files(PACKAGE_ROOT):
         for module in _imported_modules(path):
             if _starts_with_any(module, REMOVED_IMPORT_PREFIXES):
                 violations.append((path, module))
@@ -85,7 +85,7 @@ def test_removed_namespaces_are_not_imported_from_source() -> None:
 
 def test_runtime_stays_model_and_checkpoint_format_agnostic() -> None:
     violations: list[tuple[Path, str]] = []
-    for path in _python_files(SRC_ROOT / "runtime"):
+    for path in _python_files(PACKAGE_ROOT / "runtime"):
         for module in _imported_modules(path):
             if _starts_with_any(module, RUNTIME_FORBIDDEN_IMPORT_PREFIXES):
                 violations.append((path, module))
@@ -95,7 +95,7 @@ def test_runtime_stays_model_and_checkpoint_format_agnostic() -> None:
 
 def test_loader_does_not_depend_on_runtime_or_model_packages() -> None:
     violations: list[tuple[Path, str]] = []
-    for path in _python_files(SRC_ROOT / "loader"):
+    for path in _python_files(PACKAGE_ROOT / "loader"):
         for module in _imported_modules(path):
             if _starts_with_any(module, LOADER_FORBIDDEN_IMPORT_PREFIXES):
                 violations.append((path, module))
@@ -105,9 +105,9 @@ def test_loader_does_not_depend_on_runtime_or_model_packages() -> None:
 
 def test_components_moe_only_imports_model_specs_for_registry_discovery() -> None:
     violations: list[tuple[Path, str]] = []
-    for path in _python_files(SRC_ROOT / "components" / "moe"):
+    for path in _python_files(PACKAGE_ROOT / "components" / "moe"):
         for module in _imported_modules(path):
-            if not _starts_with_any(module, ("src.models",)):
+            if not _starts_with_any(module, ("relicllm.models",)):
                 continue
             if path.name == "registry.py" and module in COMPONENTS_MOE_ALLOWED_MODEL_IMPORTS:
                 continue
@@ -118,9 +118,9 @@ def test_components_moe_only_imports_model_specs_for_registry_discovery() -> Non
 
 def test_components_moe_does_not_import_model_runtime_loader_or_servers() -> None:
     violations: list[tuple[Path, str]] = []
-    for path in _python_files(SRC_ROOT / "components" / "moe"):
+    for path in _python_files(PACKAGE_ROOT / "components" / "moe"):
         for module in _imported_modules(path):
-            if module.startswith("src.models") and module.endswith(COMPONENTS_MOE_FORBIDDEN_MODEL_MODULES):
+            if module.startswith("relicllm.models") and module.endswith(COMPONENTS_MOE_FORBIDDEN_MODEL_MODULES):
                 violations.append((path, module))
 
     assert not violations, _format_violations(violations)

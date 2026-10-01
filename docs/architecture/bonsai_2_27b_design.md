@@ -511,7 +511,7 @@ python tests/bench_pocketllm_serve_concurrency.py --url http://127.0.0.1:8123 \
 # is 64 x 64; 4,080 renders to 4,097 and pays the tail. Serve each on a restarted
 # server, because the second prompt is a prefix of nothing but the first is of it.
 python - <<'PY'
-from src.encoding.gguf_tokenizer import build_gguf_bpe_tokenizer
+from relicllm.encoding.gguf_tokenizer import build_gguf_bpe_tokenizer
 tok, _ = build_gguf_bpe_tokenizer("/path/to/Ternary-Bonsai-2-27B-PTQ1_0.gguf")
 ids = tok.encode(open("README.md", encoding="utf-8").read()).ids
 for raw, name in ((4079, "aligned.txt"), (4080, "tail.txt")):

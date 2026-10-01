@@ -6,7 +6,7 @@ import pytest
 import torch
 
 from relic_core.kernels.cuda_loader import load_cuda_kernel
-from src.models.qwen4_exp.attention import recurrent_gated_delta_rule
+from relicllm.models.qwen4_exp.attention import recurrent_gated_delta_rule
 
 
 def _extension():

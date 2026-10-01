@@ -24,15 +24,15 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.mimo_v2.device_experts import (  # noqa: E402
+from relicllm.models.mimo_v2.device_experts import (  # noqa: E402
     MimoV2DeviceExperts,
     MmapExpertSource,
     _Residents,
 )
-from src.models.mimo_v2.layers import gate_and_route  # noqa: E402
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
-from src.models.mimo_v2.quant import dequant_mxfp4  # noqa: E402
-from src.models.mimo_v2.weights import router_weights  # noqa: E402
+from relicllm.models.mimo_v2.layers import gate_and_route  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.quant import dequant_mxfp4  # noqa: E402
+from relicllm.models.mimo_v2.weights import router_weights  # noqa: E402
 
 RELEASE = os.environ.get("POCKETLLM_MIMO_CHECKPOINT", "/mnt/data3/MiMo-V2.6-Flash-RL")
 HAS_RELEASE = os.path.isfile(os.path.join(RELEASE, "config.json"))

@@ -18,7 +18,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.models.xing4_0.gguf_model import Xing4_0GGUFModel
+from relicllm.models.xing4_0.gguf_model import Xing4_0GGUFModel
 
 DEFAULT_GGUF = "/mnt/data2/Xing4.0-29B-A4B-GGUF/xing4_0-29b-IQ4_NL.gguf"
 DEFAULT_RELEASE = "/mnt/data2/Xing4.0-29B-A4B"

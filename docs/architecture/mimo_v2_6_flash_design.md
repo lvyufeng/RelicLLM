@@ -235,7 +235,7 @@ test that only compares shapes passes on all three readings.
 
 ## Implemented execution path
 
-`src/models/mimo_v2/` is the whole text model: a host reference that runs on the
+`relicllm/models/mimo_v2/` is the whole text model: a host reference that runs on the
 release, and the device path built next to it.
 
 | Module | What it is |
@@ -1605,7 +1605,7 @@ peak of 17.45**, and the same argmax at all six positions.
 
 ```bash
 # the checkpoint's own config, read through the schema
-python -m src.models.mimo_v2.config /mnt/data3/MiMo-V2.6-Flash-RL
+python -m relicllm.models.mimo_v2.config /mnt/data3/MiMo-V2.6-Flash-RL
 
 # parity, layout, the host bridge, the bank, the device experts, the attention, the model,
 # the deal, the prefill and the served adapter
@@ -1847,7 +1847,7 @@ golden holds and how it was captured.
 - **Greedy by default, and the sampler that was missing is here.** This section used to read "greedy
   only, and no sampler" — `argmax`, stopping at the config's own end-of-turn tokens, with no
   temperature, top-p or repetition penalty — and that was true of the loop it was written against.
-  `sample_token` in `src/models/mimo_v2/generate.py` now takes a `temperature`, a `top_k`, a `top_p`
+  `sample_token` in `relicllm/models/mimo_v2/generate.py` now takes a `temperature`, a `top_k`, a `top_p`
   and a `seed`, and the HTTP adapter passes all four through, so the served path draws from a
   distribution when a request asks for one and is greedy when it does not. `top_k` is applied as a
   cutoff on the row before the softmax and `top_p` as a nucleus over the sorted probabilities, both
@@ -1861,7 +1861,7 @@ golden holds and how it was captured.
   but it also means the host cannot be run at a long context to check the device's
   cache at one.
 - **Serving is one request, one sequence and no scheduler, but it does reuse a prefix.** The adapter
-  is an OpenAI-compatible schema over the single-sequence loop in `src/models/mimo_v2/generate.py`,
+  is an OpenAI-compatible schema over the single-sequence loop in `relicllm/models/mimo_v2/generate.py`,
   with a cancel that is agreed across the ranks and a stop string that is agreed for the same reason.
   A second request waits on a lock rather than being scheduled, and a cancelled request's KV cache is
   reset — but a *repeated* prefix is no longer prefilled again: the loop snapshots the state a
@@ -1877,7 +1877,7 @@ golden holds and how it was captured.
 
 ## Evidence and related notes
 
-- `src/models/mimo_v2/` — the host reference and the pieces of the device path: the bank,
+- `relicllm/models/mimo_v2/` — the host reference and the pieces of the device path: the bank,
   the routed experts, the attention, the model, the deal over the ranks and the chunk path.
 - `tests/test_models_mimo_v2_qkv_layout.py` — the fused projection's row order,
   which the config does not carry and which no shape check can catch.
@@ -1885,9 +1885,9 @@ golden holds and how it was captured.
   and what parity means at fixture scale.
 - `tests/test_models_mimo_v2_loader.py`, `tests/test_models_mimo_v2_real_weights.py`
   — the checkpoint's layout and the host bridge, on the release.
-- `src/models/mimo_v2/bank.py`, `src/models/mimo_v2/device_experts.py`,
-  `src/models/mimo_v2/device_attention.py`, `src/models/mimo_v2/device_model.py`,
-  `src/models/mimo_v2/ep.py` — the device path, and the measurements in this page.
+- `relicllm/models/mimo_v2/bank.py`, `relicllm/models/mimo_v2/device_experts.py`,
+  `relicllm/models/mimo_v2/device_attention.py`, `relicllm/models/mimo_v2/device_model.py`,
+  `relicllm/models/mimo_v2/ep.py` — the device path, and the measurements in this page.
   `ep.py` carries the two deals and the arithmetic that picks one; it is the only file
   in the tree whose *default* was set by a four-rank measurement.
 - `tests/bench_mimo_v2_attention.py`, `tests/bench_mimo_v2_model.py`,
@@ -2003,12 +2003,12 @@ golden holds and how it was captured.
   dispatches, and that a worker runs what it was sent.
 - `pocketllm/backends/mimo_backend.py` — the served adapter, the one broadcast a request that
   keeps the ranks symmetric, and the cancel and the stop string that have to be collectives;
-  `src/models/mimo_v2/generate.py` is the prompt-and-answer loop it drives, kept out of the adapter
+  `relicllm/models/mimo_v2/generate.py` is the prompt-and-answer loop it drives, kept out of the adapter
   so two adapters cannot disagree about what `max_new_tokens` means.
-- `src/models/mimo_v2/device_experts.py:forward_chunk` — the chunk layout, why `bincount` is
-  not in it, and what the bands are; `src/models/deepseek_v4_1/device_experts.py:_issue_chunk`
+- `relicllm/models/mimo_v2/device_experts.py:forward_chunk` — the chunk layout, why `bincount` is
+  not in it, and what the bands are; `relicllm/models/deepseek_v4_1/device_experts.py:_issue_chunk`
   is the same call in the other heterogeneous path in this tree, with the 3.04x/3.69x
   batched-against-per-row measurement that made it a swap there.
-- `src/models/deepseek_v4_1/tp.py` — the same collectives and the same
+- `relicllm/models/deepseek_v4_1/tp.py` — the same collectives and the same
   injected-closure shape for the other heterogeneous path in this tree.
 - The support matrix in [models/README.md](../models/README.md).

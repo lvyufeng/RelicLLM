@@ -30,7 +30,7 @@ is why wiring this into `pocketllm/backends/xing4_backend.py` is its own change 
 
 ## The position, in the two forms it is read in
 
-`src/models/xing4_0/decode_pos.py` is one number in two spellings, and the split is forced rather than
+`relicllm/models/xing4_0/decode_pos.py` is one number in two spellings, and the split is forced rather than
 stylistic. A slice's bounds are Python values at *record* time, so `latent[:, start_pos:end]`,
 `arange(start_pos, start_pos + seq)` and `k_pos > start_pos` each freeze the position they were
 recorded at. What a capture can hold is an index tensor.

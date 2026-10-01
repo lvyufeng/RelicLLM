@@ -1,4 +1,4 @@
-"""Contract tests for `src/models/deepseek_v4_1/resident_bank.py`.
+"""Contract tests for `relicllm/models/deepseek_v4_1/resident_bank.py`.
 
 The bank exists to make one claim true: after it is filled, a routed expert's bytes and an Engram
 row's bytes come from host memory and not from `/mnt/data3`. Two things can make that claim false
@@ -42,8 +42,8 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.loader.safetensors import TensorEntry
-from src.models.deepseek_v4_1 import resident_bank as rb
+from relicllm.loader.safetensors import TensorEntry
+from relicllm.models.deepseek_v4_1 import resident_bank as rb
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -409,7 +409,7 @@ def test_a_filled_bank_hands_back_what_the_shard_holds(tmp_path) -> None:
     established. The Engram half is the half that matters here: `rows` is called once per gather and
     it is where "no disk in the steady state" is either true or not.
     """
-    from src.models.deepseek_v4_1.loader import V41Checkpoint
+    from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
     root = _synthetic_checkpoint(os.path.join(str(tmp_path), "ckpt"))
     checkpoint = V41Checkpoint(root)
@@ -476,14 +476,14 @@ def test_the_segment_outlives_the_process_that_filled_it(tmp_path) -> None:
     be paid again on every restart and `bank.ready` would mark a segment no run can attach to. The
     claim is cross-process, so the check is too -- a second object in the same process proves nothing.
     """
-    from src.models.deepseek_v4_1.loader import V41Checkpoint
+    from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
     root = _synthetic_checkpoint(os.path.join(str(tmp_path), "ckpt"))
     bank_dir = os.path.join(str(tmp_path), "shm")
     child = (
         "import sys\n"
-        "from src.models.deepseek_v4_1.loader import V41Checkpoint\n"
-        "from src.models.deepseek_v4_1 import resident_bank as rb\n"
+        "from relicllm.models.deepseek_v4_1.loader import V41Checkpoint\n"
+        "from relicllm.models.deepseek_v4_1 import resident_bank as rb\n"
         "checkpoint = V41Checkpoint(sys.argv[1])\n"
         "layers, tables, size, n = rb.layout(checkpoint.reader)\n"
         "name = rb._shm_name(checkpoint)\n"
@@ -542,7 +542,7 @@ def test_a_ready_marker_with_no_segment_is_refilled(tmp_path, monkeypatch) -> No
     the segment, and `SharedMemory(name, create=False)` then raises `FileNotFoundError` on every
     start, forever, with a `bank.ready` file present to argue that it should not.
     """
-    from src.models.deepseek_v4_1.loader import V41Checkpoint
+    from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
     root = _synthetic_checkpoint(os.path.join(str(tmp_path), "ckpt"))
     bank_dir = os.path.join(str(tmp_path), "bank")
@@ -628,7 +628,7 @@ def test_a_filled_segment_matches_the_checkpoint_tensor_for_tensor() -> None:
     device path read through, and one that changed what it returns when a bank showed up would break
     both at once. Attaching afterwards is checked by provenance, further down.
     """
-    from src.models.deepseek_v4_1.loader import V41Checkpoint
+    from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
     checkpoint = V41Checkpoint(CHECKPOINT)
     layers, _, n_experts = rb._layout(checkpoint.reader)
@@ -683,7 +683,7 @@ def test_the_real_engram_runs_point_at_the_tables_and_not_at_the_shards() -> Non
     at the end of a 91.55 GiB run it is wrong by 91.55 GiB rather than by 258 KiB, which is what the
     tail comparison is for.
     """
-    from src.models.deepseek_v4_1.loader import V41Checkpoint
+    from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
     checkpoint = V41Checkpoint(CHECKPOINT)
     try:
@@ -730,7 +730,7 @@ def test_the_real_engram_runs_point_at_the_tables_and_not_at_the_shards() -> Non
 @pytest.mark.skipif(not os.path.isdir(CHECKPOINT), reason=f"no checkpoint at {CHECKPOINT}")
 def test_the_real_layout_is_what_the_release_holds() -> None:
     """40 layers, 384 experts, 18,800,640 bytes each, 80 runs, one shard per layer."""
-    from src.models.deepseek_v4_1.loader import V41Checkpoint
+    from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
     checkpoint = V41Checkpoint(CHECKPOINT)
     try:

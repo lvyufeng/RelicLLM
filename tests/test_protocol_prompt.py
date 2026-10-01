@@ -181,6 +181,6 @@ def test_no_template_uses_deepseek_fallback_when_requested():
         deepseek_fallback=True,
     )
 
-    from src.encoding.deepseek_v4 import encode_messages
+    from relicllm.encoding.deepseek_v4 import encode_messages
 
     assert result == [len(encode_messages(messages, thinking_mode="chat", reasoning_effort=None))]

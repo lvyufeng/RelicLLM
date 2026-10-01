@@ -228,7 +228,7 @@ Per-tensor shapes, with the MLA names mapped onto the path this repository alrea
 not merely similar to GLM-5.2's — it is **identical**, because both GGUF conversions go through
 llama.cpp's `DeepseekV2Model` converter:
 
-| GGUF tensor | Shape (ggml) | Role | Already in `src/loader/mappings/glm_dsa.py` |
+| GGUF tensor | Shape (ggml) | Role | Already in `relicllm/loader/mappings/glm_dsa.py` |
 | --- | --- | --- | --- |
 | `attn_q_a.weight` | `[3584, 768]` | down-project to the q LoRA rank | `attn_q_a` |
 | `attn_q_a_norm.weight` | `[768]` | RMSNorm on the q latent | `attn_q_a_norm` |

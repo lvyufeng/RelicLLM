@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.loader.gguf.prism_hadamard import HadamardSpec, parse_hadamard_spec
+from relicllm.loader.gguf.prism_hadamard import HadamardSpec, parse_hadamard_spec
 
 FIXTURE_PATH = Path(__file__).parent / "data" / "ternary_bonsai_hadamard.json"
 

@@ -61,7 +61,7 @@ Elbe for the better part of a week. The station was quiet, the platform lamps st
 
 Six sites in `attention.py` are shaped by the position, and every one of them had to accept either a
 Python int — what the eager path passes today — or a 0-dim CUDA int64 tensor, without the eager path
-changing at all. `src/models/deepseek_v4_1/decode_pos.py` is that: a `Pos` with `row`, `span`,
+changing at all. `relicllm/models/deepseek_v4_1/decode_pos.py` is that: a `Pos` with `row`, `span`,
 `slot`, `pick`, `upto`, `group`, `first` and `emits`, each returning the *same kind of index object
 the site already builds by hand*.
 
@@ -89,9 +89,9 @@ is a fix worth having outside the graph: `ops._fp4_levels` and `kernels._fp4_cod
 built a codebook with `torch.tensor(<python list>, device=...)` on every call. Inside a capture that
 is not slow, it is a hard failure.
 
-`src/models/deepseek_v4_1/graphs.py` owns the forty pairs, the shared pool, the capture pass and the
+`relicllm/models/deepseek_v4_1/graphs.py` owns the forty pairs, the shared pool, the capture pass and the
 snapshot/restore; `Block.forward` hands itself to it when a decode step is being replayed and
-otherwise runs unchanged. `--decode-graphs` on the existing `src/cli/generate_v41.py` selects the
+otherwise runs unchanged. `--decode-graphs` on the existing `relicllm/cli/generate_v41.py` selects the
 path, and it is **off by default**.
 
 ## The A-A control is the bar, and it is 3%

@@ -1,6 +1,6 @@
 """Does `Pos` return the objects the lines it replaces used to build, on both paths?
 
-`src/models/deepseek_v4_1/decode_pos.py` exists for one reason: a CUDA graph freezes every Python
+`relicllm/models/deepseek_v4_1/decode_pos.py` exists for one reason: a CUDA graph freezes every Python
 value it records, so `start_pos` has to reach the card as an index tensor before a decode step can be
 replayed at a moving position. The whole risk of that change is that the *eager* path -- which is
 what every number on the V4.1 pages was measured with, and the column the graph is compared against
@@ -34,7 +34,7 @@ from __future__ import annotations
 import pytest
 import torch
 
-from src.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
+from relicllm.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
 
 CUDA = pytest.mark.skipif(not torch.cuda.is_available(), reason="the device path needs a card")
 

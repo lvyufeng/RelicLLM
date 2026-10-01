@@ -22,7 +22,7 @@ import pytest
 from relicllm.api import ConfigurationError, EngineArgs, UnsupportedFeatureError
 from relicllm.backends.factory import select_backend
 from relicllm.cli import DEVICE_PLATFORMS
-from src.runtime import device as plane
+from relicllm.runtime import device as plane
 
 
 def _torch():
@@ -439,13 +439,13 @@ def test_synchronize_is_a_no_op_on_a_host_platform() -> None:
 
 
 def test_setup_dist_names_what_it_needs_when_the_host_has_neither_accelerator(monkeypatch) -> None:
-    """`src/runtime/generation.py`'s entry point, on a host with no card of either kind.
+    """`relicllm/runtime/generation.py`'s entry point, on a host with no card of either kind.
 
     The sentence was `"GGUF raw-block runtime requires CUDA"`, which named one vendor for a runtime
     that is about to be able to run on another. What it needs is an accelerator; whose is the device
     plane's question.
     """
-    from src.runtime import generation
+    from relicllm.runtime import generation
 
     monkeypatch.delenv("WORLD_SIZE", raising=False)
     monkeypatch.setattr(generation, "probe_accelerator", lambda: _accelerator("cpu"))
@@ -465,7 +465,7 @@ def test_setup_dist_returns_a_device_of_the_platforms_type(monkeypatch) -> None:
     is the one that moves a process between cards and can tell a bind from a no-op.
     """
     torch = _torch()
-    from src.runtime import generation
+    from relicllm.runtime import generation
 
     for name in ("WORLD_SIZE", "RANK", "LOCAL_RANK"):
         monkeypatch.delenv(name, raising=False)
@@ -480,13 +480,13 @@ def test_setup_dist_returns_a_device_of_the_platforms_type(monkeypatch) -> None:
 def test_the_qwen4_entry_point_binds_the_card_the_plane_named(monkeypatch) -> None:
     """One of the five entry points, called for real, on whatever host is reading this.
 
-    This is the call the move onto the plane got wrong: `src/models/qwen4_exp/runtime.py` read
+    This is the call the move onto the plane got wrong: `relicllm/models/qwen4_exp/runtime.py` read
     `probe_accelerator()` with no import for it, so `init_distributed()` -- the first thing this
     runtime's own entry point runs -- died on a `NameError` before it could print a line. Single
     rank, so nothing rendezvouses and no weights are loaded; the claim is the context the caller
     then builds a model on.
     """
-    from src.models.qwen4_exp import runtime as qwen4
+    from relicllm.models.qwen4_exp import runtime as qwen4
 
     for name in ("WORLD_SIZE", "RANK", "LOCAL_RANK"):
         monkeypatch.delenv(name, raising=False)
@@ -544,7 +544,7 @@ def test_every_caller_of_the_plane_imports_what_it_calls() -> None:
     """A module that calls the plane without importing it is a `NameError`, and only at the call.
 
     That is the shape of the one defect the move onto the plane left behind: the missing import in
-    `src/models/qwen4_exp/runtime.py` was invisible to the whole suite, because nothing under
+    `relicllm/models/qwen4_exp/runtime.py` was invisible to the whole suite, because nothing under
     `tests/` imports that module and an unread name is a name nobody notices. A static check is
     what catches it without loading six engines to ask each one a question about its own text.
 

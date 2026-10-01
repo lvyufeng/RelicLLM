@@ -47,7 +47,7 @@ def inventory(path: str) -> list[tuple[tuple[int, int], list[str]]]:
     The GGUF dimensions are `(ne0, ne1) = (K, N)`, so a tensor is `[N, K]` row-major
     with K fastest -- which is the layout both kernels read.
     """
-    from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+    from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 
     groups: dict[tuple[int, int], list[str]] = collections.defaultdict(list)
     with GGUFTensorDataReader(path) as reader:
@@ -83,8 +83,8 @@ def main() -> None:
     args = parser.parse_args()
 
     from relic_core.kernels.cuda_loader import load_cuda_kernel
-    from src.loader.gguf import ptq1_0
-    from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+    from relicllm.loader.gguf import ptq1_0
+    from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 
     cuda = load_cuda_kernel()
     if cuda is None or not hasattr(cuda, "gguf_ptq1_0_dp4a_decode_forward"):

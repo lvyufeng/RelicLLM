@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.components.moe.registry import detect_spec, get_spec, known_architectures, load_bundle
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.components.moe.registry import detect_spec, get_spec, known_architectures, load_bundle
 from tests.gguf_test_utils import write_gguf, write_minimax_bundle
 
 
@@ -52,8 +52,8 @@ def test_unknown_architecture_error(tmp_path: Path) -> None:
 
 
 def test_load_bundle_is_the_registry_reachable_way_to_read_a_checkpoint(tmp_path: Path) -> None:
-    """`src/runtime/` must not name a container format, so the generation driver cannot import
-    `src.loader` -- and the registry is the one thing above the loader it is allowed to import. That
+    """`relicllm/runtime/` must not name a container format, so the generation driver cannot import
+    `relicllm.loader` -- and the registry is the one thing above the loader it is allowed to import. That
     only works if the reading path is reachable from here, which is what this pins: the same file
     through both spellings, and the architecture resolved off the result, so the seam is a full
     substitute for the import it replaced rather than a partial one."""

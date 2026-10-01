@@ -11,23 +11,30 @@ and [PocketLLM](https://github.com/lvyufeng/PocketLLM) depend on.
 `.md` file. A Chinese version of a document is a separate file (`README.md` / `README_CN.md`), never
 a mixed-language one.
 
-## The two top-level packages, and why there are two
+## One package
 
-`relicllm/` and `src/` are not an accident and not a layering claim — they are inherited, from the
-monorepo's `pocketllm/` + `src/` split, and the split kept them.
+**There is one top-level package: `relicllm`.** It was two — `relicllm/` beside a second package
+literally named `src/` — inherited from the monorepo's `pocketllm/` + `src/` split. The split was not
+a layering claim and not enforced: `relicllm` imported `src` in 8 files and `src` imported `relicllm`
+in 1, so they were two packages that called each other. `src` also had no console entry point and no
+`__version__`, and it occupied the generic name `src` in `site-packages`. It was merged in.
 
-| Package | Contents | Role |
-|---|---|---|
-| `relicllm/` | `api/`, `backends/`, `protocol/`, `server/`, `cli.py`, `engine.py`, `supervisor.py` | the **runtime and serving shell** — request lifecycle, HTTP front end, backend adapters, the CLI |
-| `src/` | `models/`, `loader/`, `components/`, `encoding/`, `runtime/`, `cli/` | the **model side** — architectures, weight loaders, per-model kernels' call sites |
+The two halves are now subpackages, and the old files are where you would look for them:
 
-The dependency runs **one way**: `relicllm → src` in 8 files, `src → relicllm` in 1
-(`src/models/deepseek_v4/serving.py`, which imports `relicllm.protocol`). If you add a second reverse
-edge, that is a cycle forming — put the shared piece in `relicllm/protocol/` instead.
+| Subpackage | Role |
+|---|---|
+| `api/`, `backends/`, `protocol/`, `server/`, `cli/`, `engine.py`, `supervisor.py` | the **runtime and serving shell** — request lifecycle, HTTP front end, backend adapters, the CLI |
+| `models/`, `loader/`, `components/`, `encoding/`, `runtime/` | the **model side** — architectures, weight loaders, per-model kernels' call sites |
 
-`relicllm` is the installed console entry point (`relicllm = "relicllm.cli:main"`); `src` is a
-namespace package carried alongside it. Both are listed in `setup.py`'s `find_namespace_packages`,
-and `src.csrc` / `src.gguf` / `src.moe` are excluded — there is no C++ tree here.
+`relicllm` is the installed console entry point (`relicllm = "relicllm.cli:main"`, and
+`cli/` is a package so that both that entry point and `python -m relicllm.cli.generate_v41` work).
+`setup.py` resolves the subpackage list with `find_namespace_packages`.
+
+**The one import that needs care.** `relicllm/__init__.py` eagerly imports `relicllm.api`, so a
+module-level import *inside* that chain which resolves back through `relicllm.<something>` runs
+against a half-initialized package. Today `relicllm/runtime/device.py` is a leaf (stdlib and torch
+only) and `relicllm/runtime/__init__.py` is empty, so the eager chain is safe. Keep it that way, or
+make the offending import lazy.
 
 `docs/` is the published site's source (`mkdocs.yml`), 66 pages indexed by `docs/README.md` — model
 guides, per-model design records, performance measurements, and migration notes.
@@ -41,16 +48,15 @@ Provenance below), and mixing it into the relocation would bury which pages actu
 
 ## What is deliberately not here
 
-- **No kernels.** `src/csrc/` does not exist. Every op comes through
+- **No kernels.** There is no C++ or CUDA tree in the package. Every op comes through
   `relic_core.kernels.cuda_loader.load_cuda_kernel()` or `relic_core.kernels.ops`. If a change needs
   a kernel edit, it belongs in relic-core, and this repository gets the new binding.
-- **No C++ engine.** `cpp_engine/` was retired with the split. `relicllm/backends/cpp_backend.py`
-  survives as an adapter that looks for the native module at runtime — `pocketllm_cpp` is a binary
-  contract, so the name is unchanged — but nothing here builds it. The build-surface tests that
-  covered `cpp_engine` were removed, not left failing.
+- **No C++ engine.** `cpp_engine/` was retired with the split, and the `cpp` backend that fronted it
+  was removed afterwards. The four remaining runtimes are pure PyTorch: `v41`, `mimo`, `xing4` and
+  `torch`.
 - **The kernel test suite.** `tests/` here is the model-runtime half; relic-core carries its own.
-  The partition is mechanical: a test lives here if it imports anything from `src` or `relicllm`
-  beyond `relic_core.kernels.*`.
+  The partition is mechanical: a test lives here if it imports anything from `relicllm` beyond
+  `relic_core.kernels.*`.
 
 ## Install order
 
@@ -137,4 +143,5 @@ goes for `/dev/shm/pocketllm_*_experts*` (bank names that survive between runs) 
 ## Provenance
 
 Extracted with `git-filter-repo` from the PocketLLM monorepo, history preserved. The `pocketllm`
-package was renamed `relicllm`; `src/` moved unchanged.
+package was renamed `relicllm`. The `src/` tree arrived alongside it unchanged and was later merged
+into `relicllm/`; that merge used `git mv`, so a file's history survives at its new path.

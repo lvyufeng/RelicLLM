@@ -30,8 +30,8 @@ def _load_qk_weight_rows(tensor_name: str, row_count: int):
 
     Returns (blocks[N, blocks_per_row, block_bytes] uint8 on cuda, row_elems, type_id).
     """
-    from src.loader.gguf.bundle import read_gguf_bundle
-    from src.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
+    from relicllm.loader.gguf.bundle import read_gguf_bundle
+    from relicllm.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
 
     bundle = read_gguf_bundle(REAL_MINIMAX_PATH)
     # Find the shard that actually holds this tensor name.

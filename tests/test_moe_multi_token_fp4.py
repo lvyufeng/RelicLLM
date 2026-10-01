@@ -230,7 +230,7 @@ class _FakeCPUBackend:
 
 def _backend_with_arena(device, n_local, seed):
     """A GPUPrefillMoEBackend wired to host-pinned FP4 weights."""
-    from src.components.moe.gpu_prefill_backend import GPUPrefillMoEBackend
+    from relicllm.components.moe.gpu_prefill_backend import GPUPrefillMoEBackend
 
     w1q, w1s = _random_fp4_weights(n_local, INTER_DIM, DIM, device, seed + 1)
     w3q, w3s = _random_fp4_weights(n_local, INTER_DIM, DIM, device, seed + 2)

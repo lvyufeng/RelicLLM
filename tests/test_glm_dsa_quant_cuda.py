@@ -6,8 +6,8 @@ import pytest
 import torch
 
 from relic_core.kernels.cuda_loader import load_cuda_kernel
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.loader.gguf.tensor_reader import (
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.loader.gguf.tensor_reader import (
     GGUFTensorDataReader,
     get_iq2xs_iq3xxs_signed_grid_tensor,
 )
@@ -199,7 +199,7 @@ def test_glm_lm_head_vocab_sharding() -> None:
     """lm_head vocab sharding: each rank loads a disjoint vocab row slice that
     tiles the full vocab, and every rank's local logits match the full lm_head's
     corresponding slice."""
-    from src.models.glm_dsa.gguf_model import GLMDSAGGUFModelLoader
+    from relicllm.models.glm_dsa.gguf_model import GLMDSAGGUFModelLoader
 
     bundle = read_gguf_bundle(REAL_GLM_PATH)
     world = 4

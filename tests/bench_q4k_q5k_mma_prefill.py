@@ -13,8 +13,8 @@ from pathlib import Path
 
 import torch
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
 
 REAL_MINIMAX_PATH = Path("/mnt/data1/dsv4_inference/gguf_hfd/MiniMax-M2.7-GGUF/UD-IQ1_M")
 

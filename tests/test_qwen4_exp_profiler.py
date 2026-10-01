@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.models.qwen4_exp.profiler import Profiler
+from relicllm.models.qwen4_exp.profiler import Profiler
 
 
 def test_aggregate_sums_layer_children() -> None:

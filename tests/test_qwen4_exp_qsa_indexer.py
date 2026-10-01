@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from src.models.qwen4_exp.attention import QSAIndexer
+from relicllm.models.qwen4_exp.attention import QSAIndexer
 
 
 @pytest.fixture

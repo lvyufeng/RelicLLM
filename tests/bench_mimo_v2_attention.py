@@ -35,11 +35,11 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.models.mimo_v2.device_attention import (  # noqa: E402
+from relicllm.models.mimo_v2.device_attention import (  # noqa: E402
     MimoV2DeviceAttention,
     MimoV2KVCache,
 )
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
 
 DEFAULT_CHECKPOINT = "/mnt/data3/MiMo-V2.6-Flash-RL"
 #: One layer of each family: 5 is a global layer with no sink, 2 is a windowed one.

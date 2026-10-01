@@ -32,16 +32,16 @@ import numpy as np
 import pytest
 import torch
 
-from src.loader.gguf import iq4_nl
-from src.loader.gguf.quant_types import (
+from relicllm.loader.gguf import iq4_nl
+from relicllm.loader.gguf.quant_types import (
     GGUF_ADDRESSABLE_TYPE_NAMES,
     GGUF_DENSE_TYPE_IDS,
     GGUF_DENSE_TYPE_NAMES,
     GGUF_LOADER_TYPE_NAMES,
 )
-from src.loader.gguf.quantized_loader import GGUFQuantizedTensorLoader
-from src.loader.gguf.reader import GGML_TYPES, GGUFReader, tensor_nbytes
-from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+from relicllm.loader.gguf.quantized_loader import GGUFQuantizedTensorLoader
+from relicllm.loader.gguf.reader import GGML_TYPES, GGUFReader, tensor_nbytes
+from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 from tests.gguf_test_utils import GGML_F32, GGML_IQ4_NL, write_gguf
 
 
@@ -401,7 +401,7 @@ def test_inspect_gguf_reports_iq4_nl(tmp_path: Path) -> None:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(REPO_ROOT)
     result = subprocess.run(
-        [sys.executable, "-m", "src.cli.inspect_gguf", "--gguf-path", str(path)],
+        [sys.executable, "-m", "relicllm.cli.inspect_gguf", "--gguf-path", str(path)],
         cwd=REPO_ROOT,
         env=env,
         text=True,

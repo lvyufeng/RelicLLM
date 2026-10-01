@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src.loader.gguf.prewarm import prewarm_paths
+from relicllm.loader.gguf.prewarm import prewarm_paths
 
 REAL_GLM_PATH = Path("/mnt/data3/GLM-5.2-GGUF/UD-Q2_K_XL")
 
@@ -52,7 +52,7 @@ def test_prewarm_rejects_nonpositive_chunk(tmp_path):
 
 @pytest.mark.skipif(not REAL_GLM_PATH.exists(), reason="real GLM bundle not present")
 def test_prewarm_bundle_smoke():
-    from src.loader.gguf.bundle import read_gguf_bundle
+    from relicllm.loader.gguf.bundle import read_gguf_bundle
 
     bundle = read_gguf_bundle(REAL_GLM_PATH)
     # Only warm the small header shard (00001, ~9 MB) to avoid reading 49 GB.

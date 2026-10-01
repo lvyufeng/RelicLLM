@@ -40,7 +40,7 @@ ROPE_HEAD_DIM = 64
 
 def _make_compressor():
     """A small real Compressor with deterministic weights, no checkpoint."""
-    from src.models.deepseek_v4.runtime import Compressor, ModelArgs
+    from relicllm.models.deepseek_v4.runtime import Compressor, ModelArgs
 
     args = ModelArgs.__new__(ModelArgs)
     args.dim = DIM

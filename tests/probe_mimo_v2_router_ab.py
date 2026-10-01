@@ -30,7 +30,7 @@ import torch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from relic_core.kernels.cuda_loader import load_cuda_kernel  # noqa: E402
-from src.models.mimo_v2.layers import gate_and_route  # noqa: E402
+from relicllm.models.mimo_v2.layers import gate_and_route  # noqa: E402
 
 DIM = 4096
 N_EXPERTS = 256

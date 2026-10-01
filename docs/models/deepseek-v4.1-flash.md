@@ -139,12 +139,12 @@ a 256K prefill.
 
 ```bash
 # the whole backbone on the host CPU -- a correctness check, not a benchmark
-python -m src.models.deepseek_v4_1.generate \
+python -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash \
   --prompt "The capital of France is" --max-new-tokens 8
 
 # the dense tree cut across the four cards, one process a rank
-torchrun --nproc_per_node=4 -m src.cli.generate_v41 \
+torchrun --nproc_per_node=4 -m relicllm.cli.generate_v41 \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash \
   --prompt "The capital of France is" --max-new-tokens 8
 
@@ -189,7 +189,7 @@ Two contrast rows, both from the same four cards and neither a served path. On t
 generated token costs **15 to 42 s**, and 99.7% of it is turning the fp4 expert codes into bf16
 numbers rather than reading them. With the routed experts on the cards and the dense tree still on the
 host, a step is **1.06–1.14 s**; with the dense tree cut across the cards as well, **722–747 ms**,
-which is what `torchrun -m src.cli.generate_v41` does.
+which is what `torchrun -m relicllm.cli.generate_v41` does.
 
 ## Hardware and memory
 

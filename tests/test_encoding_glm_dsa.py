@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.encoding.glm_dsa import (
+from relicllm.encoding.glm_dsa import (
     build_glm_dsa_tokenizer,
     decode_glm_dsa_ids,
     encode_glm_dsa_prompt,
@@ -107,7 +107,7 @@ def test_real_glm_number_split_matches_glm4_pre() -> None:
 
 
 def test_glm_tokenizer_rejects_wrong_architecture(monkeypatch) -> None:
-    import src.encoding.glm_dsa as glm_mod
+    import relicllm.encoding.glm_dsa as glm_mod
 
     monkeypatch.setattr(
         glm_mod,

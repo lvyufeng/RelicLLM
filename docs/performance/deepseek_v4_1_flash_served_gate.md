@@ -4,9 +4,9 @@
 number for this checkpoint existed: `deepseek_v41` has no registered engine in `cpp_engine` and no
 entry in pocketllm's engine map, its dimensions sit under `text_config` where
 `ModelConfig::from_hf_config` does not read, and `engram` appears nowhere under `cpp_engine/` — so
-`src/cli/generate_v41.py` under `torchrun` was the only thing that ran it. This page is the other
+`relicllm/cli/generate_v41.py` under `torchrun` was the only thing that ran it. This page is the other
 path. `pocketllm serve --backend v41` puts the OpenAI-compatible server in front of the same
-`src/models/deepseek_v4_1` runtime, four ranks, one process a card, and this is what it costs.
+`relicllm/models/deepseek_v4_1` runtime, four ranks, one process a card, and this is what it costs.
 
 **On the reference's own short-context configuration the server clears the deployment gate: 137.5,
 140.8 and 138.3 tok/s of prefill over three back-to-back requests at a 1364-token prompt, at 4.53,

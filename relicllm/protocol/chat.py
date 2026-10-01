@@ -7,7 +7,7 @@ detection, tool-call normalization, and stop-string truncation.
 
 Both servers re-exported these so there was one implementation rather than a
 simplified copy in the unified one, and with a single front end that is now just
-where they live: `src/models/deepseek_v4/serving.py` imports them by name because
+where they live: `relicllm/models/deepseek_v4/serving.py` imports them by name because
 its payload builder and streaming decoder are the callers.
 """
 

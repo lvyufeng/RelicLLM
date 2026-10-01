@@ -3,7 +3,7 @@
 A MiMo checkpoint needs its own adapter rather than a flag on :mod:`torch_backend`, because it is
 neither of the runtimes already here: this one serves Xiaomi's 48-layer text backbone -- nine
 global-attention layers and thirty-nine sliding-window ones, 256 routed experts a layer, MXFP4
-weights out of a host-resident bank -- through ``src/models/mimo_v2/``, and nothing in that package
+weights out of a host-resident bank -- through ``relicllm/models/mimo_v2/``, and nothing in that package
 reads a GGUF file or a Qwen-shaped safetensors tree.
 
 What this adapter adds over ``tests/bench_mimo_v2_prefill.py`` is a process that outlives one prompt.
@@ -326,7 +326,7 @@ class MimoBackend(RuntimeAdapter):
         """
         if self._distributed:
             return
-        from src.models.mimo_v2.ep import EpGroup
+        from relicllm.models.mimo_v2.ep import EpGroup
 
         # Which card this rank drives. `--device-ids` is the launch's answer and `torchrun`'s
         # `LOCAL_RANK` is the fallback, and the group is asked before either is used: a world of one
@@ -383,9 +383,9 @@ class MimoBackend(RuntimeAdapter):
         pays the pin. Both are startup work, and both are why the supervisor's rendezvous timeout
         is measured in hours rather than in minutes.
         """
-        from src.models.mimo_v2.bank import open_expert_bank
-        from src.models.mimo_v2.device_model import MimoV2DeviceModel
-        from src.models.mimo_v2.loader import MimoV2Checkpoint
+        from relicllm.models.mimo_v2.bank import open_expert_bank
+        from relicllm.models.mimo_v2.device_model import MimoV2DeviceModel
+        from relicllm.models.mimo_v2.loader import MimoV2Checkpoint
 
         options = self._options
         if not os.path.isdir(self._checkpoint_dir):
@@ -437,7 +437,7 @@ class MimoBackend(RuntimeAdapter):
             )
 
         self._details = {
-            "execution": "src/models/mimo_v2 PyTorch runtime",
+            "execution": "relicllm/models/mimo_v2 PyTorch runtime",
             "scheduler": "one mutable KV cache, serialized at the backend boundary",
             "experts": (
                 "host-resident bank over PCIe; one draw a step"
@@ -525,7 +525,7 @@ class MimoBackend(RuntimeAdapter):
                     "off: this run's cache describes no state to snapshot"
                 )
                 return
-            from src.models.mimo_v2.prefix_cache import PrefixCache, geometry_tag
+            from relicllm.models.mimo_v2.prefix_cache import PrefixCache, geometry_tag
 
             head = int(self._options.prefix_cache_head_tokens)
             self._prefix_cache = PrefixCache(
@@ -731,7 +731,7 @@ class MimoBackend(RuntimeAdapter):
         ``_step_sync`` is a collective on this runtime, not a local flag -- and that is why a
         serial request passes a ``stop`` as well.
         """
-        from src.models.mimo_v2.generate import generate
+        from relicllm.models.mimo_v2.generate import generate
 
         self._ensure_loaded()
         self._ensure_prefix_cache()
@@ -835,7 +835,7 @@ class MimoBackend(RuntimeAdapter):
         about when they enter it is not a wrong answer but a hang. Nothing is broadcast to enforce
         it, because the store is a function of the request and the options and of nothing local.
         """
-        from src.models.mimo_v2.generate import generate
+        from relicllm.models.mimo_v2.generate import generate
 
         self._ensure_prefix_cache()
         prompt_ids = [int(token) for token in payload["prompt_ids"]]

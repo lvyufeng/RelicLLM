@@ -26,11 +26,11 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from src.encoding.engram import EngramLayout
-from src.models.deepseek_v4_1 import modules as modules_module
-from src.models.deepseek_v4_1.config import V41TextConfig
-from src.models.deepseek_v4_1.decode_pos import Pos
-from src.models.deepseek_v4_1.modules import (
+from relicllm.encoding.engram import EngramLayout
+from relicllm.models.deepseek_v4_1 import modules as modules_module
+from relicllm.models.deepseek_v4_1.config import V41TextConfig
+from relicllm.models.deepseek_v4_1.decode_pos import Pos
+from relicllm.models.deepseek_v4_1.modules import (
     Backbone,
     Block,
     Engram,

@@ -39,10 +39,10 @@ time and `decode_seconds` over-reports by exactly as much. The size of that erro
 it follows the width of the last prefill chunk and the depth of the context, so it distorts the two
 rates against each other and distorts a decode-versus-context trend most of all.
 
-So a timed path has to drain at the seam. `src/models/xing4_0/generate.py`'s `_drain` is that, and
+So a timed path has to drain at the seam. `relicllm/models/xing4_0/generate.py`'s `_drain` is that, and
 what it removes is measured in
 [Xing4.0-29B-A4B: the prefill/decode seam](../performance/xing4_0_rate_clock_split.md). The same seam
-is in `src/models/mimo_v2/generate.py`, where it has not been re-measured.
+is in `relicllm/models/mimo_v2/generate.py`, where it has not been re-measured.
 
 This is one of two conventions in this repository. For client-observed serving
 numbers — TTFT, TPOT, ITL, E2EL, throughput and goodput, defined the way vLLM

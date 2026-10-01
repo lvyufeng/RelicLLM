@@ -12,14 +12,14 @@ import os
 
 import pytest
 
-from src.loader.gguf.prism_hadamard import (
+from relicllm.loader.gguf.prism_hadamard import (
     GDN_GROUPED_WIDTH,
     HadamardSpec,
     HadamardSpecError,
     has_hadamard_block,
     parse_hadamard_spec,
 )
-from src.loader.gguf.reader import GGUFArraySummary, GGUFReader
+from relicllm.loader.gguf.reader import GGUFArraySummary, GGUFReader
 from tests.hadamard_test_utils import (
     load_hadamard_fixture as _load_fixture,
     hadamard_metadata as _metadata,

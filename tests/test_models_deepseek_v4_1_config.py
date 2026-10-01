@@ -1,4 +1,4 @@
-"""Tests for `src/models/deepseek_v4_1/config.py`.
+"""Tests for `relicllm/models/deepseek_v4_1/config.py`.
 
 The released checkpoint describes one model in two layouts: `config.json`, where
 the text hyper-parameters sit under `text_config` and the vision tower under
@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pytest
 
-from src.models.deepseek_v4_1.config import (
+from relicllm.models.deepseek_v4_1.config import (
     _ALIASES,
     _SEQUENCE_FIELDS,
     V41TextConfig,
@@ -491,12 +491,12 @@ def test_the_released_values_are_what_they_were_measured_to_be():
 def test_the_engram_derivation_reads_the_nested_config():
     """The consumer that was broken before the schema existed.
 
-    `src/encoding/engram.py` needs the six engram keys and the pad id under the
+    `relicllm/encoding/engram.py` needs the six engram keys and the pad id under the
     flat names. It reads them through `engram_block`, and the block has to be the
     same object whichever file it came from -- that is the whole point, since the
     row counts are 189 GiB of table.
     """
-    from src.encoding.engram import EngramLayout
+    from relicllm.encoding.engram import EngramLayout
 
     nested = load_config(str(HF_CONFIG)).engram_block()
     flat = load_config(str(FLAT_CONFIG)).engram_block()

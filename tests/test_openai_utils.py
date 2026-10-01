@@ -1,7 +1,7 @@
 import json
 
-from src.encoding.deepseek_v4 import REASONING_EFFORT_PROMPTS, encode_messages
-from src.models.deepseek_v4.serving import (
+from relicllm.encoding.deepseek_v4 import REASONING_EFFORT_PROMPTS, encode_messages
+from relicllm.models.deepseek_v4.serving import (
     _completion_response,
     _make_payload,
     _normalize_tool_calls,
@@ -258,7 +258,7 @@ class _CharTokenizer:
 
 
 def test_streaming_decoder_hides_dsml_tool_call_prefix():
-    from src.encoding.deepseek_v4 import dsml_token
+    from relicllm.encoding.deepseek_v4 import dsml_token
 
     tokenizer = _CharTokenizer()
     chunks = ["hi", "\n", "\n", "<", dsml_token, "tool", "_calls", ">"]

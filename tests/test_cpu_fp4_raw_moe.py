@@ -7,8 +7,8 @@ sys.path.insert(0, str(REPO_ROOT))
 import torch
 
 from relic_core.kernels.ops import Packed4BitWeightAlongK
-from src.components.moe.cpu_backend import _load_native_mod
-from src.models.deepseek_v4.runtime import _pack_fp4_weight_rows_for_tile_decode, fp4_block_size
+from relicllm.components.moe.cpu_backend import _load_native_mod
+from relicllm.models.deepseek_v4.runtime import _pack_fp4_weight_rows_for_tile_decode, fp4_block_size
 
 
 def _raw_to_fp4(raw: torch.Tensor) -> torch.Tensor:

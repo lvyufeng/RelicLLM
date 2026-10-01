@@ -174,7 +174,7 @@ class FakeFront:
 
 
 class ScriptedGenerate:
-    """Stands in for ``src.models.deepseek_v4_1.generate.generate``.
+    """Stands in for ``relicllm.models.deepseek_v4_1.generate.generate``.
 
     Records the call, then replays a fixed token list through the caller's hook -- which is the
     adapter's own per-step hook, so the stop-string and cancellation decisions under test are the
@@ -216,7 +216,7 @@ class ScriptedGenerate:
         prefill_chunk=None,
         prefix_cache=None,
     ):
-        from src.models.deepseek_v4_1.generate import Generation
+        from relicllm.models.deepseek_v4_1.generate import Generation
 
         self.calls.append({
             "front": front,
@@ -251,7 +251,7 @@ class ScriptedGenerate:
 def loop(monkeypatch):
     """Install a scripted loop, and hand back an installer that keeps the stub reachable."""
 
-    import src.models.deepseek_v4_1.generate as module
+    import relicllm.models.deepseek_v4_1.generate as module
 
     def install(**kwargs) -> ScriptedGenerate:
         stub = ScriptedGenerate(**kwargs)

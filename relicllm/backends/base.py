@@ -32,8 +32,8 @@ _REPLACEMENT = "�"
 #: How each vocabulary this tree produces spells "why the loop ended", folded onto the API's.
 #:
 #: Six words for four outcomes, and the two groups do not overlap. A runtime's own loop reports
-#: ``eos`` / ``length`` / ``cancel`` (``src/models/mimo_v2/generate.py:160``) or ``eos`` /
-#: ``length`` / ``max_seq_len`` (``src/models/deepseek_v4_1/generate.py:273``), while this tree's
+#: ``eos`` / ``length`` / ``cancel`` (``relicllm/models/mimo_v2/generate.py:160``) or ``eos`` /
+#: ``length`` / ``max_seq_len`` (``relicllm/models/deepseek_v4_1/generate.py:273``), while this tree's
 #: own streamer path spells a stop ``stop`` and a cancellation ``cancelled``. So a mapping written
 #: for one family is silently wrong for the other's spelling -- which is what this table exists to
 #: make impossible: it covers every word either route emits, and its answer does not depend on

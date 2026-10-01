@@ -1,6 +1,6 @@
 """Feed a checkpoint into the V4.1 tree, and check the three things a load can get wrong.
 
-`src/models/deepseek_v4_1/loader.py` is the only place that knows which name in a shard is which
+`relicllm/models/deepseek_v4_1/loader.py` is the only place that knows which name in a shard is which
 parameter in the tree, which of them are quantized, and how an Engram row is addressed. None of that
 can be checked against the released 476 GiB checkpoint from a test that has to run anywhere, so what
 is here is a *miniature* checkpoint written to `tmp_path`: the same names in the same layouts, over a
@@ -18,7 +18,7 @@ to real properties of the release:
 * the vision tower, the aligner, the image tokens and the DSpark draft layers are wanted by nothing
   the text backbone builds, and the report counts them rather than passing over them in silence.
 
-`EngramHashIds` needs none of that. It is a second *formulation* of `src/encoding/engram.NgramHasher`
+`EngramHashIds` needs none of that. It is a second *formulation* of `relicllm/encoding/engram.NgramHasher`
 -- which is stdlib-only, and therefore a real oracle -- and the tests below hold the two to the same
 ids on a token stream split across a prefill and a decode. That comparison is the reason the tensor
 version is allowed to exist, and the split is the case a cache exists for: a port that re-reads the
@@ -34,12 +34,12 @@ import pytest
 import torch
 import torch.nn as nn
 
-from src.encoding.engram import EngramLayout, NgramHasher
-from src.loader.safetensors import MmapSafetensors
-from src.models.deepseek_v4_1.config import V41TextConfig
-from src.models.deepseek_v4_1.kernels import _fp4_values
-from src.models.deepseek_v4_1 import loader as loader_module
-from src.models.deepseek_v4_1.loader import (
+from relicllm.encoding.engram import EngramLayout, NgramHasher
+from relicllm.loader.safetensors import MmapSafetensors
+from relicllm.models.deepseek_v4_1.config import V41TextConfig
+from relicllm.models.deepseek_v4_1.kernels import _fp4_values
+from relicllm.models.deepseek_v4_1 import loader as loader_module
+from relicllm.models.deepseek_v4_1.loader import (
     CheckpointEngramTable,
     CheckpointRoutedExperts,
     EngramHashIds,
@@ -48,7 +48,7 @@ from src.models.deepseek_v4_1.loader import (
     load_backbone,
     scale_key,
 )
-from src.models.deepseek_v4_1.modules import (
+from relicllm.models.deepseek_v4_1.modules import (
     Backbone,
     ResidentEngramTable,
     ResidentRoutedExperts,

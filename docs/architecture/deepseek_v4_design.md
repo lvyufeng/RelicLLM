@@ -120,7 +120,7 @@ bash scripts/run_gguf_q2_layer_pp.sh
 Inspect a GGUF checkpoint:
 
 ```bash
-PYTHONPATH=$PWD python -m src.cli.inspect_gguf \
+PYTHONPATH=$PWD python -m relicllm.cli.inspect_gguf \
   --gguf-path /path/to/deepseek-v4.gguf \
   --summary --validate-ds4-q2
 ```

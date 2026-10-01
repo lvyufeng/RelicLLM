@@ -48,12 +48,12 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.models.mimo_v2.device_attention import (  # noqa: E402
+from relicllm.models.mimo_v2.device_attention import (  # noqa: E402
     MimoV2DeviceAttention,
     MimoV2KVCache,
 )
-from src.models.mimo_v2.ep import ATTENTION_SHARDS, EpGroup  # noqa: E402
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.ep import ATTENTION_SHARDS, EpGroup  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
 
 #: The layers to probe: one of each family. Layer 0 is a global layer, layer 1 carries the sliding
 #: window and the sink, and the two are the two arithmetic shapes this checkpoint has.

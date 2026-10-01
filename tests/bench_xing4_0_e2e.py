@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import torch
 
-from src.models.xing4_0.gguf_model import Xing4_0GGUFModel
+from relicllm.models.xing4_0.gguf_model import Xing4_0GGUFModel
 from relicllm.backends.xing4_backend import (
     PREFILL_DEVICE_RESERVE,
     PREFILL_SCORE_BUDGET,
@@ -88,7 +88,7 @@ def main() -> int:
 
     tokenizer = AutoTokenizer.from_pretrained(args.release, trust_remote_code=True)
 
-    from src.models.xing4_0.generate import generate
+    from relicllm.models.xing4_0.generate import generate
 
     started = time.perf_counter()
     model = Xing4_0GGUFModel(
@@ -121,7 +121,7 @@ def main() -> int:
     stepper = None
     holder = None
     if args.decode != "eager":
-        from src.models.xing4_0.graphs import DecodeGraphs
+        from relicllm.models.xing4_0.graphs import DecodeGraphs
 
         holder = DecodeGraphs(model, cache, device=args.device)
         print(f"decode graphs: rungs {holder.ladder} over {holder.capacity} positions")

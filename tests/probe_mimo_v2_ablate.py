@@ -110,10 +110,10 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.models.mimo_v2.bank import open_expert_bank  # noqa: E402
-from src.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
-from src.models.mimo_v2.ep import EpGroup  # noqa: E402
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.bank import open_expert_bank  # noqa: E402
+from relicllm.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
+from relicllm.models.mimo_v2.ep import EpGroup  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
 
 DEFAULT_CHECKPOINT = "/mnt/data3/MiMo-V2.6-Flash-RL"
 PROMPT_IDS = [8374, 4021, 95012, 1288, 77431, 5502, 19904, 61783]
@@ -152,7 +152,7 @@ def install(model, arm: str) -> callable:
     if arm == "shipped":
         return lambda: None
 
-    import src.models.mimo_v2.device_model as device_model_module
+    import relicllm.models.mimo_v2.device_model as device_model_module
 
     if arm in ("copies", "copyfloor"):
         # Everything that is not the expert copy: the attention is a zero of the right shape down
@@ -244,7 +244,7 @@ def install(model, arm: str) -> callable:
         # printed hit rate beside the arm is the size of that term;
         # `probe_mimo_v2_attention_ab.py` is the same two arms with the draws recorded off one
         # replay and handed to both, which is the clean price.
-        from src.models.mimo_v2.device_attention import MimoV2DeviceAttention
+        from relicllm.models.mimo_v2.device_attention import MimoV2DeviceAttention
 
         kept: list[tuple[object, object]] = []
         for layer in model.layers:
@@ -260,7 +260,7 @@ def install(model, arm: str) -> callable:
         return unreach
 
     if arm == "chunk-decode":
-        from src.models.mimo_v2.device_attention import MimoV2DeviceAttention
+        from relicllm.models.mimo_v2.device_attention import MimoV2DeviceAttention
 
         was = MimoV2DeviceAttention.decode_foldable
         MimoV2DeviceAttention.decode_foldable = lambda self, start_pos, cache: False
@@ -289,7 +289,7 @@ def install(model, arm: str) -> callable:
     stub_experts = arm in ("experts", "all")
 
     if stub_kv:
-        from src.models.mimo_v2.device_attention import MimoV2KVCache
+        from relicllm.models.mimo_v2.device_attention import MimoV2KVCache
 
         def no_append(cache, layer, key, value):  # noqa: ANN001
             """The write cursor and the ring's trim, without the two `index_copy_`."""
@@ -350,7 +350,7 @@ def install(model, arm: str) -> callable:
         set_(device_model_module, "normalise", lambda hidden, weight, eps: hidden)
 
     if stub_rope:
-        import src.models.mimo_v2.device_attention as attention_module
+        import relicllm.models.mimo_v2.device_attention as attention_module
 
         # The rotation is skipped and the unrotated row is handed back, which is the wrong answer
         # in exactly the way the arm is supposed to be: the shape, the dtype and the cache

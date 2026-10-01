@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.loader.gguf.imatrix import _rank_output_path, _write_imatrix_gguf, merge_imatrix_files
-from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+from relicllm.loader.gguf.imatrix import _rank_output_path, _write_imatrix_gguf, merge_imatrix_files
+from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 
 
 def test_layer_capture_helper_respects_collector_filters(monkeypatch) -> None:
-    import src.loader.gguf.imatrix as imatrix
-    from src.components.moe.cpu_backend import _layer_imatrix_capture_enabled
+    import relicllm.loader.gguf.imatrix as imatrix
+    from relicllm.components.moe.cpu_backend import _layer_imatrix_capture_enabled
 
     monkeypatch.setenv("DEEPSEEK_IMATRIX_CAPTURE", "1")
     monkeypatch.setenv("DEEPSEEK_IMATRIX_LAYERS", "0")

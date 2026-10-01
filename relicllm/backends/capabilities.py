@@ -166,7 +166,7 @@ def gguf_architecture(path: str) -> str | None:
             candidate = found[0]
         if not candidate.is_file() or candidate.suffix.lower() != ".gguf":
             return None
-        from src.loader.gguf.bundle import read_gguf_bundle
+        from relicllm.loader.gguf.bundle import read_gguf_bundle
 
         metadata = read_gguf_bundle(candidate).metadata
         return str(metadata.get("general.architecture") or "") or None
@@ -386,7 +386,7 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
             args, "v41", is_v41_config, "DeepSeek-V4.1-Flash"
         ),
         details={
-            "execution": "src/models/deepseek_v4_1 PyTorch runtime",
+            "execution": "relicllm/models/deepseek_v4_1 PyTorch runtime",
             "scheduler": "one mutable KV state, serialized at the backend boundary",
             "cancellation": "per-step collective; not inside the prompt's forward",
         },

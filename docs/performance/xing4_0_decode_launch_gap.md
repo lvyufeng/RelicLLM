@@ -100,7 +100,7 @@ reproducible is the pair of commands in the run record, and it is what the rest 
 Capturing the step did not work at first, and what blocked it is worth its own paragraph because it
 was invisible to every other kind of measurement.
 
-`plan_routes` (`src/models/xing4_0/mlp.py`) called `torch.bincount(flat_expert, minlength=n_experts)`.
+`plan_routes` (`relicllm/models/xing4_0/mlp.py`) called `torch.bincount(flat_expert, minlength=n_experts)`.
 `minlength` already fixes the output's length, but `bincount` still sizes its output from the data's
 own maximum, which it reads back to the host. It runs **once per MoE block, 38 times a step**, and
 measured **76 device-to-host copies and 78 stream synchronisations a step** — two of each a call.

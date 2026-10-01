@@ -6,8 +6,8 @@ import pytest
 import torch
 
 from relic_core.kernels.cuda_loader import load_cuda_kernel
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 
 
 REAL_MINIMAX_PATH = Path("/mnt/data1/dsv4_inference/gguf_hfd/MiniMax-M2.7-GGUF/UD-IQ1_M")

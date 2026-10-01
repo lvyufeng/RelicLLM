@@ -1026,7 +1026,7 @@ def scan_checkpoint(name: str, path: str) -> CheckpointFacts:
 
 
 def _scan_gguf(name: str, path: str, shards: list[str]) -> CheckpointFacts:
-    from src.loader.gguf.reader import GGUFReader
+    from relicllm.loader.gguf.reader import GGUFReader
 
     facts = CheckpointFacts(name=name, path=path, kind="gguf")
     sizes: dict[str, int] = {}

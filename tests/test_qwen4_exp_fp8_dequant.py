@@ -7,9 +7,9 @@ import os
 import pytest
 import torch
 
-from src.models.qwen4_exp.layers import dequant_fp8_block
-from src.models.qwen4_exp.quant import FP8Tensor
-from src.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
+from relicllm.models.qwen4_exp.layers import dequant_fp8_block
+from relicllm.models.qwen4_exp.quant import FP8Tensor
+from relicllm.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
 
 FP8_MODEL = os.environ.get(
     "QWEN4EXP_FP8_MODEL", "/mnt/data1/modelscope/Qwen/Qwen3.8-Flash-Next-FP8"

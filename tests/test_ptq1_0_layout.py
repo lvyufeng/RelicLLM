@@ -3,14 +3,14 @@
 Every case below is 28 bytes read out of `Ternary-Bonsai-2-27B-PTQ1_0.gguf` at
 a stated (row, block) position, together with the scale and the 128 trits the
 fork's own reference decoder (ggml/src/ggml-quants.c @ 842b188, unmodified)
-produces for them.  See `src/loader/gguf/ptq1_0.py` for the format.)"""
+produces for them.  See `relicllm/loader/gguf/ptq1_0.py` for the format.)"""
 
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from src.loader.gguf.ptq1_0 import (
+from relicllm.loader.gguf.ptq1_0 import (
     PTQ1_0_BLOCK_BYTES,
     QK_PTQ1_0,
     block_scale_fp16,

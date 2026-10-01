@@ -41,8 +41,8 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.models.xing4_0.attention import KVLatentCache, MLAAttention, MLAAttentionWeights  # noqa: E402
-from src.models.xing4_0.config import Xing4_0Params  # noqa: E402
+from relicllm.models.xing4_0.attention import KVLatentCache, MLAAttention, MLAAttentionWeights  # noqa: E402
+from relicllm.models.xing4_0.config import Xing4_0Params  # noqa: E402
 
 CHECKPOINT = Path("/mnt/data2/Xing4.0-29B-A4B")
 SHARD = CHECKPOINT / "model-00003-of-00041.safetensors"

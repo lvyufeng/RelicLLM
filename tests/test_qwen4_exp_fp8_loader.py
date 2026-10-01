@@ -7,9 +7,9 @@ import os
 import pytest
 import torch
 
-from src.models.qwen4_exp.config import FP8QuantSpec, Qwen4ExpConfig
-from src.models.qwen4_exp.quant import FP8Tensor, pack_gate_up_fp8
-from src.models.qwen4_exp.weights import (
+from relicllm.models.qwen4_exp.config import FP8QuantSpec, Qwen4ExpConfig
+from relicllm.models.qwen4_exp.quant import FP8Tensor, pack_gate_up_fp8
+from relicllm.models.qwen4_exp.weights import (
     HostExpertShard,
     HostNGramTable,
     MmapSafetensors,

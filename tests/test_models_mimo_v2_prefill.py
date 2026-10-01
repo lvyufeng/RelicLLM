@@ -33,11 +33,11 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.mimo_v2.device_experts import MimoV2DeviceExperts  # noqa: E402
-from src.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
-from src.models.mimo_v2.ep import EpGroup, owned_experts  # noqa: E402
-from src.models.mimo_v2.layers import gate_and_route  # noqa: E402
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.device_experts import MimoV2DeviceExperts  # noqa: E402
+from relicllm.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
+from relicllm.models.mimo_v2.ep import EpGroup, owned_experts  # noqa: E402
+from relicllm.models.mimo_v2.layers import gate_and_route  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
 from tests.test_models_mimo_v2_device_model import (  # noqa: E402
     DEVICE,
     HIDDEN,
@@ -568,7 +568,7 @@ def test_the_released_two_layers_prefill_as_one_token_at_a_time():
     """
     checkpoint = MimoV2Checkpoint(RELEASE)
     config = checkpoint.layer
-    from src.models.mimo_v2.device_experts import MmapExpertSource
+    from relicllm.models.mimo_v2.device_experts import MmapExpertSource
 
     model = MimoV2DeviceModel(
         checkpoint,

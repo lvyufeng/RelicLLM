@@ -13,9 +13,9 @@ from typing import Any, Mapping, Sequence
 
 from .errors import ConfigurationError
 
-# The platform vocabulary, from the plane that resolves it. `relicllm -> src` is the direction this
-# package already runs in; see `src/runtime/device.py` for why the plane is not in `relicllm`.
-from src.runtime.device import PLATFORMS
+# The platform vocabulary, from the plane that resolves it, so `--help` and validation cannot drift
+# apart. See `relicllm/runtime/device.py`.
+from relicllm.runtime.device import PLATFORMS
 
 
 _BACKENDS = {"auto", "torch", "v41", "mimo", "xing4"}
@@ -30,7 +30,7 @@ _FORMATS = {"auto", "safetensors", "gguf"}
 #: literals that had to agree, one of them rendering ``--help`` and the other validating the value
 #: ``--help`` had just offered -- and the device plane that resolves ``auto`` would have been a
 #: third. It is the only thing the device plane owns that the public API needs, and importing it
-#: costs no torch: ``src.runtime.device`` imports torch inside its functions, never at module scope,
+#: costs no torch: ``relicllm.runtime.device`` imports torch inside its functions, never at module scope,
 #: so this file still describes user intent without importing a device library to do it.
 _DEVICES = PLATFORMS
 

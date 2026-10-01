@@ -3,7 +3,7 @@
 A Xing4 checkpoint needs its own adapter rather than a flag on
 :mod:`torch_backend`, because it is none of the runtimes already here: this one
 serves a 40-block MLA trunk with four residual streams a block and 64 routed
-experts a layer out of ``src/models/xing4_0/``, and nothing in that package reads
+experts a layer out of ``relicllm/models/xing4_0/``, and nothing in that package reads
 a Qwen-shaped safetensors tree or the DeepSeek runtime's own plan.
 
 **One card, and that is the interesting number.** The released IQ4_NL export is
@@ -21,7 +21,7 @@ that resends its history pays for the history on every turn;
 ``--enable-prefix-caching`` (on by default) holds each prompt's cache state on
 the host keyed by the prompt's own tokens, and a later request restores the
 longest prefix it shares with one already served and forwards only the rest. See
-:mod:`src.models.xing4_0.prefix_cache` for what is stored and why the whole
+:mod:`relicllm.models.xing4_0.prefix_cache` for what is stored and why the whole
 latent a layer is enough.
 
 **Requests serialize.** The trunk's forward flattens its input to one token axis
@@ -399,7 +399,7 @@ class Xing4Backend(RuntimeAdapter):
         at the same seam whether the cancel came from there or from the scheduler retiring the
         request, so the two are asked together.
         """
-        from src.models.xing4_0.generate import generate
+        from relicllm.models.xing4_0.generate import generate
 
         self._ensure_loaded()
         self._ensure_prefix_cache()
@@ -454,7 +454,7 @@ class Xing4Backend(RuntimeAdapter):
         if self._loader is not None:
             self._model = self._loader(self._model_path, self._options)
         else:
-            from src.models.xing4_0.gguf_model import Xing4_0GGUFModel
+            from relicllm.models.xing4_0.gguf_model import Xing4_0GGUFModel
 
             gguf, directory = resolve_paths(self._model_path, self._options, self._tokenizer_path)
             self._say(f"reading {gguf}")
@@ -530,7 +530,7 @@ class Xing4Backend(RuntimeAdapter):
             return
         if self._model is None:
             return
-        from src.models.xing4_0.prefix_cache import LatentPrefixCache
+        from relicllm.models.xing4_0.prefix_cache import LatentPrefixCache
 
         self._prefix_cache = LatentPrefixCache(
             budget_bytes=self._options.prefix_cache_bytes,
@@ -543,7 +543,7 @@ class Xing4Backend(RuntimeAdapter):
 
     def _build_details(self) -> None:
         self._details = {
-            "execution": "src/models/xing4_0 PyTorch runtime, IQ4_NL raw blocks in place",
+            "execution": "relicllm/models/xing4_0 PyTorch runtime, IQ4_NL raw blocks in place",
             "scheduler": "one mutable KV cache, serialized at the backend boundary",
             "experts": "64 routed top-4 plus one shared, every expert resident on the card",
             "prefill": (
@@ -694,7 +694,7 @@ class Xing4Backend(RuntimeAdapter):
         correctly, because the two routes never overlap. An ``on_step`` parameter that every caller
         left as ``None`` was a parameter with no caller, so it is gone.
         """
-        from src.models.xing4_0.generate import generate
+        from relicllm.models.xing4_0.generate import generate
 
         self._ensure_loaded()
         self._ensure_prefix_cache()

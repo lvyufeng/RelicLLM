@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.components.moe.registry import detect_spec, known_architectures
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.models.glm_dsa.spec import GLMDSASpec
+from relicllm.components.moe.registry import detect_spec, known_architectures
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.models.glm_dsa.spec import GLMDSASpec
 from tests.gguf_test_utils import GGML_F32, glm_dsa_metadata, write_gguf, write_glm_dsa_bundle
 
 

@@ -2,7 +2,7 @@
 
 The [device experts page](deepseek_v4_1_flash_device_experts.md) closes its decode section with a
 paragraph about what it does not claim, and this page exists to answer it: *"The 512-token prefill is
-the probe rather than the launcher — `src/cli/generate_v41.py` does not print a prefill wall — so the
+the probe rather than the launcher — `relicllm/cli/generate_v41.py` does not print a prefill wall — so the
 prefill column is the instrumented library at the launcher's own configuration, and the decode column
 is the launcher undecorated."* Both columns here are the launcher, over four prompt lengths, one leg
 to a process, every figure derived from lines the CLI itself prints.
@@ -124,7 +124,7 @@ configuration** and must not be subtracted: that page's tree is `e70cc12` (2026-
 arena through `_stage`. The device experts page prices exactly that removal at **200/202 ms a decode
 token against 341–348 without it**, and its eager arm's 341–348 ms is this page's eager 354–364 ms
 as much as its graphed 200/202 is this page's 201/202. What is new here is not the number: it is
-that the number comes out of `src/cli/generate_v41.py`'s own two lines, on the merged tree, with the
+that the number comes out of `relicllm/cli/generate_v41.py`'s own two lines, on the merged tree, with the
 eight-way text parity below as the acceptance.
 
 | Leg | `--expert-pool-rows` | Evictions | Staged draws | Card peak allocated |
@@ -263,9 +263,9 @@ bash /tmp/run_cap_e2e3.sh
 
 ## These rates are the launcher's, and the native route is still closed to this checkpoint
 
-Every number on this page comes out of `src/cli/generate_v41.py`, one request at a time. That is a
+Every number on this page comes out of `relicllm/cli/generate_v41.py`, one request at a time. That is a
 choice rather than the only possibility: [`pocketllm serve --backend v41`](deepseek_v4_1_flash_served_gate.md)
-serves this checkpoint over the same `src/models/deepseek_v4_1` runtime and takes its own readings of
+serves this checkpoint over the same `relicllm/models/deepseek_v4_1` runtime and takes its own readings of
 the two columns. What these numbers still have no counterpart in, and what no flag opens, is
 `cpp_engine/`: nothing under it can load `/mnt/data3/DeepSeek-V4.1-Flash`, so a *native-engine*
 deployment is gated on a runtime that does not exist. Three separate things would each stop it, and
@@ -296,7 +296,7 @@ the first is reachable by name:
   ([inventory](../architecture/deepseek_v4_1_flash_design.md#tensor-inventory-verified-from-the-shard-headers)).
 
 A fourth gap was the one this page's subject lived in, and that one has closed. `prefill_chunk` used
-to be plumbed through `src/models/deepseek_v4_1/generate.py` and `generate_v41.py` and nowhere else,
+to be plumbed through `relicllm/models/deepseek_v4_1/generate.py` and `generate_v41.py` and nowhere else,
 so the 4096-token chunk these rates are built on — and with it a 262144-token context at a 22 GiB
 card — had no counterpart in either server; `--backend v41` now takes it as
 `--backend-option prefill_chunk=4096`, and [the served gate page](deepseek_v4_1_flash_served_gate.md)

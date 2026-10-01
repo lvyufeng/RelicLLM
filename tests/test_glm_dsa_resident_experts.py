@@ -16,10 +16,10 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.loader.gguf.quant_types import GGUF_DENSE_TYPE_IDS
-from src.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
-from src.models.glm_dsa import architecture as arch
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.loader.gguf.quant_types import GGUF_DENSE_TYPE_IDS
+from relicllm.loader.gguf.tensor_reader import get_cached_gguf_tensor_reader
+from relicllm.models.glm_dsa import architecture as arch
 
 
 REAL_GLM_PATH = Path("/mnt/data3/GLM-5.2-GGUF/UD-Q2_K_XL")

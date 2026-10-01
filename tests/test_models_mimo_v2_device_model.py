@@ -38,17 +38,17 @@ torch = pytest.importorskip("torch")
 import torch.nn.functional as F  # noqa: E402
 
 from relic_core.kernels.cuda_loader import load_cuda_kernel  # noqa: E402
-from src.models.mimo_v2.config import MimoV2TextConfig  # noqa: E402
-from src.models.mimo_v2.device_experts import MmapExpertSource  # noqa: E402
-from src.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
-from src.models.mimo_v2.layers import (  # noqa: E402
+from relicllm.models.mimo_v2.config import MimoV2TextConfig  # noqa: E402
+from relicllm.models.mimo_v2.device_experts import MmapExpertSource  # noqa: E402
+from relicllm.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
+from relicllm.models.mimo_v2.layers import (  # noqa: E402
     MimoV2HostModel,
     build_attention_masks,
     rms_norm,
 )
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
-from src.models.mimo_v2.quant import dequant_mxfp4  # noqa: E402
-from src.models.mimo_v2.weights import host_model_from_checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.quant import dequant_mxfp4  # noqa: E402
+from relicllm.models.mimo_v2.weights import host_model_from_checkpoint  # noqa: E402
 
 RELEASE = os.environ.get("POCKETLLM_MIMO_CHECKPOINT", "/mnt/data3/MiMo-V2.6-Flash-RL")
 HAS_RELEASE = os.path.isfile(os.path.join(RELEASE, "config.json"))
@@ -325,7 +325,7 @@ def test_a_fused_norm_is_the_reference_norm():
     *not* take the fast path -- a host tensor, and a weight of another width from the input -- and
     they are checked against the reference for equality rather than against a number.
     """
-    from src.models.mimo_v2.device_model import normalise
+    from relicllm.models.mimo_v2.device_model import normalise
 
     torch.manual_seed(3)
     width = 4096

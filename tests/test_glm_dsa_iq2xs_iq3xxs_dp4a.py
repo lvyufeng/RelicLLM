@@ -18,8 +18,8 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.loader.gguf.tensor_reader import (
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.loader.gguf.tensor_reader import (
     GGUFTensorDataReader,
     get_iq2xs_iq3xxs_signed_grid_tensor,
 )
@@ -48,7 +48,7 @@ def _stack_expert_blocks(reader, name, experts):
 
 
 def _type_id(tn: str) -> int:
-    from src.loader.gguf.quant_types import GGUF_DENSE_TYPE_IDS
+    from relicllm.loader.gguf.quant_types import GGUF_DENSE_TYPE_IDS
 
     return GGUF_DENSE_TYPE_IDS[tn]
 

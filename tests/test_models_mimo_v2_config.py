@@ -1,4 +1,4 @@
-"""Tests for `src/models/mimo_v2/config.py`.
+"""Tests for `relicllm/models/mimo_v2/config.py`.
 
 The checkpoint is a hybrid: 9 global-attention layers and 39 sliding-window ones
 inside one 48-layer stack, and the two families differ in KV head count, in RoPE
@@ -31,7 +31,7 @@ from pathlib import Path
 
 import pytest
 
-from src.models.mimo_v2.config import (
+from relicllm.models.mimo_v2.config import (
     MimoV2Config,
     MimoV2DraftConfig,
     MimoV2QuantSpec,
@@ -592,7 +592,7 @@ def test_describe_names_both_families_and_the_moe_shape():
 def test_cli_prints_the_shape_table_and_checks_the_config(tmp_path):
     (tmp_path / "config.json").write_text(json.dumps({**RELEASED, "architectures": ["MiMoV2ForCausalLM"]}))
     result = subprocess.run(
-        [sys.executable, "-m", "src.models.mimo_v2.config", str(tmp_path)],
+        [sys.executable, "-m", "relicllm.models.mimo_v2.config", str(tmp_path)],
         cwd=REPO, capture_output=True, text=True,
     )
     assert result.returncode == 0, result.stderr
@@ -606,7 +606,7 @@ def test_cli_prints_the_shape_table_and_checks_the_config(tmp_path):
 def test_cli_exits_nonzero_on_a_config_the_reference_cannot_run(tmp_path):
     (tmp_path / "config.json").write_text(json.dumps({**RELEASED, "scoring_func": "softmax"}))
     result = subprocess.run(
-        [sys.executable, "-m", "src.models.mimo_v2.config", str(tmp_path)],
+        [sys.executable, "-m", "relicllm.models.mimo_v2.config", str(tmp_path)],
         cwd=REPO, capture_output=True, text=True,
     )
     assert result.returncode == 1

@@ -25,8 +25,8 @@ from __future__ import annotations
 import pytest
 import torch
 
-from src.models.deepseek_v4_1 import attention as attention_module
-from src.models.deepseek_v4_1.prefix_cache import (
+from relicllm.models.deepseek_v4_1 import attention as attention_module
+from relicllm.models.deepseek_v4_1.prefix_cache import (
     BLOCK_TOKENS,
     PrefixCache,
     geometry_tag,

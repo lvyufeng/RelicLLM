@@ -7,7 +7,7 @@ import os
 
 import torch
 
-from src.models.qwen4_exp import runtime
+from relicllm.models.qwen4_exp import runtime
 
 
 def test_parse_cpu_list() -> None:

@@ -5,7 +5,7 @@ from that which no measurement on the cards can hold still: the number itself, a
 is a size *on the device path only* -- a host run has no arena, so the flag has to resolve to the off
 state there rather than to a number the loader warns about and then ignores. Both are asserted here.
 
-The numbers behind the default are in `src/cli/generate_v41.py`'s module docstring and
+The numbers behind the default are in `relicllm/cli/generate_v41.py`'s module docstring and
 `docs/performance/deepseek_v4_1_flash_device_experts.md`; what these tests pin is that the launcher
 still asks for them, and that `--expert-pool-rows 0` is still reachable, since it is the control
 column every pooled number on that page was read against.
@@ -29,8 +29,8 @@ import inspect
 
 import pytest
 
-from src.cli.generate_v41 import build_arg_parser, resolve_pool_rows, resolve_prompt
-from src.models.deepseek_v4_1.loader import load_backbone
+from relicllm.cli.generate_v41 import build_arg_parser, resolve_pool_rows, resolve_prompt
+from relicllm.models.deepseek_v4_1.loader import load_backbone
 
 # The width the default, the batched path's end-to-end number and the 512-token pool sweeps were all
 # taken at. Pinned as a literal rather than imported so that changing it means changing this line

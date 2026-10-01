@@ -27,8 +27,8 @@ from __future__ import annotations
 import pytest
 import torch
 
-from src.models.mimo_v2.config import MimoV2TextConfig
-from src.models.mimo_v2.layers import split_fused_qkv
+from relicllm.models.mimo_v2.config import MimoV2TextConfig
+from relicllm.models.mimo_v2.layers import split_fused_qkv
 
 #: The released geometry, for the two attention families. A global-attention
 #: layer fuses 64 query heads of width 192 with 4 key/value heads of width

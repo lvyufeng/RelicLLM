@@ -41,10 +41,10 @@ from __future__ import annotations
 import pytest
 import torch
 
-from src.models.deepseek_v4_1 import attention as attention_module
-from src.models.deepseek_v4_1.attention import AttentionStack, get_window_topk_idxs
-from src.models.deepseek_v4_1.config import V41TextConfig
-from src.models.deepseek_v4_1.decode_pos import Pos
+from relicllm.models.deepseek_v4_1 import attention as attention_module
+from relicllm.models.deepseek_v4_1.attention import AttentionStack, get_window_topk_idxs
+from relicllm.models.deepseek_v4_1.config import V41TextConfig
+from relicllm.models.deepseek_v4_1.decode_pos import Pos
 
 # Every activation below is drawn at `attention_module.LINEAR_DTYPE` rather than at a literal. What
 # these tests compare is where the forward boundaries fell, so the width has to be one both orderings

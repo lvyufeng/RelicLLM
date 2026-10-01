@@ -43,11 +43,11 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from src.models.deepseek_v4_1 import modules as modules_module
-from src.models.deepseek_v4_1.config import V41TextConfig
-from src.models.deepseek_v4_1.loader import V41Checkpoint, load_backbone
-from src.models.deepseek_v4_1.modules import RoutedExperts
-from src.models.deepseek_v4_1.tp import (
+from relicllm.models.deepseek_v4_1 import modules as modules_module
+from relicllm.models.deepseek_v4_1.config import V41TextConfig
+from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, load_backbone
+from relicllm.models.deepseek_v4_1.modules import RoutedExperts
+from relicllm.models.deepseek_v4_1.tp import (
     INDEXER_ROW_SPLIT_ENV,
     REDUCE_BITS_ENV,
     ShardPlan,
@@ -456,7 +456,7 @@ def test_a_row_band_is_the_whole_chunk_for_every_length_it_cannot_cut(trees) -> 
     model does not have. The bands that *are* taken have to cover the chunk exactly once, which is the
     property the gather's `cat` depends on for its order.
     """
-    from src.models.deepseek_v4_1.attention import Indexer
+    from relicllm.models.deepseek_v4_1.attention import Indexer
 
     with pytest.MonkeyPatch.context() as patch:
         patch.setenv(INDEXER_ROW_SPLIT_ENV, "1")
@@ -687,7 +687,7 @@ def test_the_deal_is_the_same_partition_whichever_way_it_is_driven(trees) -> Non
     Called unbound, on a stub, because the deal is arithmetic on two integers and everything else in
     the class needs a packed checkpoint and four cards to exist at all.
     """
-    from src.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
 
     ids = [30, 10, 60, 20, 50, 40]
     order = sorted(range(len(ids)), key=lambda slot: ids[slot])
@@ -731,7 +731,7 @@ def test_the_resident_set_is_this_cards_own_deal_counted() -> None:
     Called unbound, on a stub, the way the deal test above calls `_split`: this is arithmetic on a
     host tensor, and everything else in the class needs the packed checkpoint and four cards.
     """
-    from src.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
 
     world, topk, n_experts = 4, 6, 512
 
@@ -840,7 +840,7 @@ def test_a_row_names_the_arena_row_of_every_route_it_was_dealt() -> None:
     two halves the batched path runs for a whole batch -- the resolution that must move nothing and
     the staging that must happen exactly once a row.
     """
-    from src.models.deepseek_v4_1.device_experts import DeviceRoutedExperts, ResidentSet
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts, ResidentSet
 
     world, topk, hot_rows = 4, 6, 3
     # Sorted: 10(slot1), 20(slot3), 30(slot0), 40(slot5), 50(slot4), 60(slot2), dealt round-robin
@@ -1020,9 +1020,9 @@ def test_the_stage_copies_nothing_and_the_upload_reads_the_bank(monkeypatch) -> 
     """
     import contextlib
 
-    from src.models.deepseek_v4_1 import device_experts
-    from src.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
-    from src.models.deepseek_v4_1.loader import scale_key
+    from relicllm.models.deepseek_v4_1 import device_experts
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
+    from relicllm.models.deepseek_v4_1.loader import scale_key
 
     kinds = (("w1", "q"), ("w1", "s"), ("w2", "q"), ("w2", "s"), ("w3", "q"), ("w3", "s"))
     rows, width, layer_id = 8, 8, 7
@@ -1149,7 +1149,7 @@ def test_a_chunk_is_cut_where_a_later_row_would_re_draw_an_arena_row() -> None:
     pool driven through `_resolve_row`, because what is under test is where the line falls and not
     how a row comes to be on one side of it -- the pool would have to be made to evict on cue.
     """
-    from src.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
 
     one = SimpleNamespace(ranks=[0])
     two = SimpleNamespace(ranks=[0, 1])
@@ -1249,7 +1249,7 @@ def test_a_batched_pass_resolves_the_whole_batch_before_it_stages_any_of_it() ->
     Counted on a stub whose resolve, chunk and stage are the real ones and whose issue and drain are
     recorded instead of run, since the point is the order of the calls and not what is on the cards.
     """
-    from src.models.deepseek_v4_1.device_experts import DeviceRoutedExperts, ResidentSet
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts, ResidentSet
 
     world, topk, layer_id = 4, 6, 7
 

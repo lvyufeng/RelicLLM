@@ -25,7 +25,7 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from relic_core.kernels.cuda_loader import load_cuda_kernel  # noqa: E402
-from src.models.mimo_v2.layers import gate_and_route  # noqa: E402
+from relicllm.models.mimo_v2.layers import gate_and_route  # noqa: E402
 
 DIM = 4096
 N_EXPERTS = 256
@@ -170,7 +170,7 @@ def test_the_released_configuration_is_the_one_this_kernel_implements():
     release = os.environ.get("POCKETLLM_MIMO_CHECKPOINT", "/mnt/data3/MiMo-V2.6-Flash-RL")
     if not os.path.isfile(os.path.join(release, "config.json")):
         pytest.skip(f"no MiMo-V2.6 checkpoint at {release}")
-    from src.models.mimo_v2.config import load_config
+    from relicllm.models.mimo_v2.config import load_config
 
     config = load_config(os.path.join(release, "config.json")).text
     assert config.scoring_func == "sigmoid"

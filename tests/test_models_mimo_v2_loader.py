@@ -36,14 +36,14 @@ import pytest
 torch = pytest.importorskip("torch")
 from safetensors.torch import save_file  # noqa: E402
 
-from src.models.mimo_v2.config import MimoV2Config  # noqa: E402
-from src.models.mimo_v2.loader import (  # noqa: E402
+from relicllm.models.mimo_v2.config import MimoV2Config  # noqa: E402
+from relicllm.models.mimo_v2.loader import (  # noqa: E402
     EXPERT_PROJECTIONS,
     MimoV2Checkpoint,
     dense_weight_keys,
     layer_weight_keys,
 )
-from src.models.mimo_v2.quant import (  # noqa: E402
+from relicllm.models.mimo_v2.quant import (  # noqa: E402
     E2M1_LEVELS,
     QKV_SHARDS,
     dequant_fp8_block,

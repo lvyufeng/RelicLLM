@@ -44,9 +44,9 @@ import pytest
 import torch
 from safetensors import safe_open
 
-from src.loader.gguf.ptq1_0 import dequantize_blocks
-from src.loader.gguf.prism_hadamard import parse_hadamard_spec
-from src.loader.gguf.reader import GGUFReader
+from relicllm.loader.gguf.ptq1_0 import dequantize_blocks
+from relicllm.loader.gguf.prism_hadamard import parse_hadamard_spec
+from relicllm.loader.gguf.reader import GGUFReader
 
 GGUF_PATH = Path("/mnt/data2/Bonsai-2-27B-gguf/Ternary-Bonsai-2-27B-PTQ1_0.gguf")
 SIBLING_DIR = Path("/mnt/data2/Qwen3.8-27B-FP8")

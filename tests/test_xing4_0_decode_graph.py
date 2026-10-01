@@ -1,6 +1,6 @@
 """The bucketed, captured decode step, held against the eager one it replaces.
 
-`src/models/xing4_0/graphs.py` makes three claims and each has a test here rather than a comment:
+`relicllm/models/xing4_0/graphs.py` makes three claims and each has a test here rather than a comment:
 
 * **a bucket is free at its end** — a step at the last position of a bucket reads exactly the rows it
   would read unbucketed and masks nothing, so its logits are bit-identical to the eager path's;
@@ -34,10 +34,10 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.models.xing4_0.decode_pos import Pos
-from src.models.xing4_0.gguf_model import Xing4_0GGUFModel
-from src.models.xing4_0.generate import generate
-from src.models.xing4_0.graphs import CAPTURE_WARMUP, MIN_BUCKET, DecodeGraphs, bucket_ladder
+from relicllm.models.xing4_0.decode_pos import Pos
+from relicllm.models.xing4_0.gguf_model import Xing4_0GGUFModel
+from relicllm.models.xing4_0.generate import generate
+from relicllm.models.xing4_0.graphs import CAPTURE_WARMUP, MIN_BUCKET, DecodeGraphs, bucket_ladder
 
 
 CHECKPOINT_DIR_ENV = "POCKETLLM_XING4_DIR"

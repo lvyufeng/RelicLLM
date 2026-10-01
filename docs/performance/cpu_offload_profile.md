@@ -211,7 +211,7 @@ like pinning a checkpoint.
 
 Real layer byte counts and real GEMM shapes, on `cuda:0`, fp16, timed over 4 layers
 per iteration of a double-buffered two-stream pipeline modelled on
-`src/models/qwen4_exp/moe.py:360-426`. `hidden` is
+`relicllm/models/qwen4_exp/moe.py:360-426`. `hidden` is
 `(serial − overlap) / copy_only`: zero when the pipeline saves nothing, and 1.0 when
 the copy is entirely hidden, which needs `compute ≥ copy`. When `compute < copy` the
 best it can reach is `compute / copy`, because a pipeline cannot beat the transfer it

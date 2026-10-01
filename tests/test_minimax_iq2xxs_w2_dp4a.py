@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.models.minimax_m2.moe_runtime import MiniMaxM2DeviceResidentCache
-from src.models.minimax_m2.moe_planning import build_minimax_m2_moe_runtime_plan
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.models.minimax_m2.moe_runtime import MiniMaxM2DeviceResidentCache
+from relicllm.models.minimax_m2.moe_planning import build_minimax_m2_moe_runtime_plan
 
 
 REAL_MINIMAX_PATH = Path("/mnt/data1/dsv4_inference/gguf_hfd/MiniMax-M2.7-GGUF/UD-IQ1_M")

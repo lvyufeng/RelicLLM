@@ -1,6 +1,6 @@
 """The sm_75 ternary GEMM: ``PTQ1_0`` prefill and decode, against the decoded weights.
 
-``src/loader/gguf/ptq1_0.py`` decodes the packing and ``tests/test_ptq1_0_layout.py``
+``relicllm/loader/gguf/ptq1_0.py`` decodes the packing and ``tests/test_ptq1_0_layout.py``
 pins that decoder against blocks read out of the released checkpoint, so the packing
 is not in question here.  What is in question is the two kernels that consume it: a
 tensor-core tile walk for prefill and a DP4A GEMV for decode.
@@ -35,8 +35,8 @@ import numpy as np
 import pytest
 import torch
 
-from src.loader.gguf import ptq1_0
-from src.loader.gguf.quant_types import GGUF_TERNARY_FILE_TYPE_IDS
+from relicllm.loader.gguf import ptq1_0
+from relicllm.loader.gguf.quant_types import GGUF_TERNARY_FILE_TYPE_IDS
 from relic_core.kernels.cuda_loader import load_cuda_kernel
 
 PTQ1_0_TYPE_ID = GGUF_TERNARY_FILE_TYPE_IDS["ptq1_0"]
@@ -402,7 +402,7 @@ def test_the_released_weights_agree_with_their_own_decode() -> None:
     if not os.path.exists(path):
         pytest.skip(f"set {CHECKPOINT_ENV} or place the checkpoint at {CHECKPOINT_DEFAULT}")
 
-    from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+    from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 
     cuda = _cuda()
     device = torch.device("cuda", 0)

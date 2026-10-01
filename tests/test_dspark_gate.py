@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.models.deepseek_v4.dspark_gate import DSparkGate
+from relicllm.models.deepseek_v4.dspark_gate import DSparkGate
 
 
 def make_gate(**kw) -> DSparkGate:

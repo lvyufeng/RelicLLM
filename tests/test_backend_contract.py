@@ -951,8 +951,8 @@ def test_every_stop_word_this_tree_emits_maps_to_the_same_finish_reason():
     """One table, covering every word this tree produces.
 
     The words come from two places and they do not overlap: a runtime's own loop reports ``eos`` /
-    ``length`` / ``cancel`` (``src/models/mimo_v2/generate.py:160``) or ``eos`` / ``length`` /
-    ``max_seq_len`` (``src/models/deepseek_v4_1/generate.py:273``), while the streamer path spells
+    ``length`` / ``cancel`` (``relicllm/models/mimo_v2/generate.py:160``) or ``eos`` / ``length`` /
+    ``max_seq_len`` (``relicllm/models/deepseek_v4_1/generate.py:273``), while the streamer path spells
     a stop ``stop`` and a cancellation ``cancelled``. A map written for one family is silently
     wrong for the other's spelling -- which is what this pins: whichever route produced the word,
     the answer is the same.

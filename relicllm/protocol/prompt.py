@@ -170,7 +170,7 @@ def _encode_with_deepseek(
 ) -> list[int] | None:
     """Use the legacy DeepSeek encoder only for no-template tokenizers."""
     try:
-        from src.encoding.deepseek_v4 import encode_messages
+        from relicllm.encoding.deepseek_v4 import encode_messages
     except Exception:
         return None
     text = encode_messages(

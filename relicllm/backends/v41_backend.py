@@ -3,10 +3,10 @@
 A V4.1 checkpoint needs its own adapter rather than a flag on :mod:`torch_backend`, because the two
 are different architectures and different runtimes: this one serves the released multimodal wrapper
 -- a 40-layer, 5120-hidden text stack with 384 routed experts, two Engram layers and 32 index heads
--- out of ``src/models/deepseek_v4_1/``, while ``torch_backend`` loads the 0731 model through
-``src/models/deepseek_v4/serving.py``. Nothing in that runtime can read this checkpoint.
+-- out of ``relicllm/models/deepseek_v4_1/``, while ``torch_backend`` loads the 0731 model through
+``relicllm/models/deepseek_v4/serving.py``. Nothing in that runtime can read this checkpoint.
 
-What this adapter adds over ``src/cli/generate_v41.py`` is a process that outlives one prompt: the
+What this adapter adds over ``relicllm/cli/generate_v41.py`` is a process that outlives one prompt: the
 checkpoint is read once at startup, the tree is built once, and requests then arrive as
 :class:`~relicllm.api.GenerationRequest` through the OpenAI-compatible server. What it does not add
 is concurrency. ``generate.py``'s loop opens with ``front.reset_state(1)`` and then drives one
@@ -254,7 +254,7 @@ def _split_running(text: str, thinking: bool) -> tuple[str, str]:
     """
     if not thinking:
         return "", text
-    from src.encoding.deepseek_v4_1 import THINKING_END
+    from relicllm.encoding.deepseek_v4_1 import THINKING_END
 
     index = text.find(THINKING_END)
     if index < 0:
@@ -360,7 +360,7 @@ class V41Backend(RuntimeAdapter):
     """Serve one DeepSeek-V4.1-Flash checkpoint, one request at a time.
 
     ``loader`` and ``front`` are injection points for tests: a unit test supplies a callable that
-    returns a stand-in for :class:`~src.models.deepseek_v4_1.loader.LoadedBackbone` so the request
+    returns a stand-in for :class:`~relicllm.models.deepseek_v4_1.loader.LoadedBackbone` so the request
     path can be exercised without a 476 GiB checkpoint or four cards.
     """
 
@@ -591,8 +591,8 @@ class V41Backend(RuntimeAdapter):
 
         from transformers import AutoTokenizer
 
-        from src.models.deepseek_v4_1.config import load_config, resolve_config
-        from src.models.deepseek_v4_1.loader import (
+        from relicllm.models.deepseek_v4_1.config import load_config, resolve_config
+        from relicllm.models.deepseek_v4_1.loader import (
             DEFAULT_EXPERT_CACHE,
             V41Checkpoint,
             build_hasher,
@@ -601,7 +601,7 @@ class V41Backend(RuntimeAdapter):
 
         # Fail before the 476 GiB read rather than after it: a checkpoint without the encoder this
         # adapter renders prompts with is a configuration error, not a runtime one.
-        from src.encoding.deepseek_v4_1 import encoder_path
+        from relicllm.encoding.deepseek_v4_1 import encoder_path
 
         if encoder_path(self._checkpoint) is None:
             raise ConfigurationError(
@@ -704,7 +704,7 @@ class V41Backend(RuntimeAdapter):
         budget = int(self._options.prefix_cache_bytes)
         if budget <= 0:
             return
-        from src.models.deepseek_v4_1.prefix_cache import PrefixCache, geometry_tag
+        from relicllm.models.deepseek_v4_1.prefix_cache import PrefixCache, geometry_tag
 
         # `LoadedBackbone` wraps the tree rather than being an `nn.Module`, and the buffers the
         # geometry is read off are the tree's -- the same `getattr` `generate` takes.
@@ -738,7 +738,7 @@ class V41Backend(RuntimeAdapter):
         return declared_capabilities(
             self.name,
             details={
-                "execution": "src/models/deepseek_v4_1 PyTorch runtime",
+                "execution": "relicllm/models/deepseek_v4_1 PyTorch runtime",
                 "scheduler": "one mutable KV state, serialized at the backend boundary",
                 "max_batch_size": 1,
                 "cancellation": "per-step collective; not inside the prompt's forward",
@@ -828,9 +828,9 @@ class V41Backend(RuntimeAdapter):
         format is a Python module under ``<checkpoint>/encoding/`` -- so the jinja path has nothing
         to apply, and the fallback in :mod:`relicllm.protocol.chat` would render a generic prompt
         the model was not trained on. The tools the control plane attached to the first system
-        message ride along inside it; see :mod:`src.encoding.deepseek_v4_1`.
+        message ride along inside it; see :mod:`relicllm.encoding.deepseek_v4_1`.
         """
-        from src.encoding.deepseek_v4_1 import EncoderUnavailableError, encode_messages
+        from relicllm.encoding.deepseek_v4_1 import EncoderUnavailableError, encode_messages
 
         try:
             text = encode_messages(
@@ -985,7 +985,7 @@ class V41Backend(RuntimeAdapter):
 
             threading.Thread(target=run, name="relicllm-v41-stream", daemon=True).start()
 
-            from src.encoding.deepseek_v4_1 import cut_tool_calls
+            from relicllm.encoding.deepseek_v4_1 import cut_tool_calls
 
             token_ids: list[int] = []
             previous_reasoning = ""
@@ -1075,7 +1075,7 @@ class V41Backend(RuntimeAdapter):
         on_token: Callable[[int, Any], None] | None,
         marks: _Marks | None = None,
     ) -> GenerationResult:
-        from src.models.deepseek_v4_1.generate import generate
+        from relicllm.models.deepseek_v4_1.generate import generate
 
         request_id = str(payload["request_id"])
         hook = self._step_hook(request_id, request, on_token, marks)
@@ -1267,7 +1267,7 @@ class V41Backend(RuntimeAdapter):
         decode ended in the middle of is dropped here rather than by the stream that would have to
         hold it back. Both are what a client is entitled to: the answer, and only the answer.
         """
-        from src.encoding.deepseek_v4_1 import cut_tool_calls, parse_strict, split_completion
+        from relicllm.encoding.deepseek_v4_1 import cut_tool_calls, parse_strict, split_completion
 
         structured = None
         if not authoritative and token_ids:

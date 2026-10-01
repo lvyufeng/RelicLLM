@@ -28,7 +28,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.mimo_v2.quant import (  # noqa: E402
+from relicllm.models.mimo_v2.quant import (  # noqa: E402
     E2M1_LEVELS,
     E2M1_LEVELS_BY_NIBBLE,
     FP8_BLOCK,

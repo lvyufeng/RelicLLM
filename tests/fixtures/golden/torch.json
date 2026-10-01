@@ -29,5 +29,5 @@
   },
   "commit": "832ca8c",
   "taken_at": "2026-09-26",
-  "notes": "the legacy src/ runtime over the Q2 GGUF with host-resident experts: four ranks, driven through the same adapter the other backends use"
+  "notes": "the model-side PyTorch runtime over the Q2 GGUF with host-resident experts: four ranks, driven through the same adapter the other backends use"
 }

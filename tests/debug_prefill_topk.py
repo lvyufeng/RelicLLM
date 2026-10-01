@@ -19,9 +19,9 @@ sys.path.insert(0, str(REPO_ROOT))
 import torch
 import torch.distributed as dist
 
-from src.models.deepseek_v4.dspark_loop import attach_dspark, dspark_state_dict_filter
-from src.models.deepseek_v4.loader import load_model
-from src.models.deepseek_v4.runtime import Transformer
+from relicllm.models.deepseek_v4.dspark_loop import attach_dspark, dspark_state_dict_filter
+from relicllm.models.deepseek_v4.loader import load_model
+from relicllm.models.deepseek_v4.runtime import Transformer
 
 from tests.bench_dspark_cpp_pytorch import (
     load_model_args,
