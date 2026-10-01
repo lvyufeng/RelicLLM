@@ -177,7 +177,7 @@ def _error_status(exc: BaseException) -> tuple[int, str]:
     return 500, "server_error"
 
 
-def _publish_backend_metrics(server: "PocketLLMHTTPServer") -> None:
+def _publish_backend_metrics(server: "RelicLLMHTTPServer") -> None:
     """Fold the backend's own metric values into the exporter, before rendering.
 
     Some numbers belong to the engine rather than to the request path -- a prompt cache's occupancy,
@@ -205,7 +205,7 @@ def _publish_backend_metrics(server: "PocketLLMHTTPServer") -> None:
             server.metrics.set(str(name), float(value))
 
 
-class PocketLLMHTTPServer(ThreadingHTTPServer):
+class RelicLLMHTTPServer(ThreadingHTTPServer):
     def __init__(self, address, handler_class, backend: EngineBackend, model: str, metrics: Metrics | None = None):
         super().__init__(address, handler_class)
         self.backend = backend
@@ -215,10 +215,10 @@ class PocketLLMHTTPServer(ThreadingHTTPServer):
 
 
 class OpenAIHandler(BaseHTTPRequestHandler):
-    server_version = "PocketLLM/0.1"
+    server_version = "RelicLLM/0.1"
 
     @property
-    def pocket_server(self) -> PocketLLMHTTPServer:
+    def relic_server(self) -> RelicLLMHTTPServer:
         return self.server  # type: ignore[return-value]
 
     def log_message(self, fmt: str, *args: Any) -> None:
@@ -264,7 +264,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = urlparse(self.path).path
-        server = self.pocket_server
+        server = self.relic_server
         if path in {"/health", "/alive"}:
             health = server.backend.health()
             status = 200 if health.alive else 503
@@ -303,7 +303,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             self._send_json(404, _openai_error("not found"))
             return
         request_id = path.rsplit("/", 1)[-1]
-        cancelled = self.pocket_server.backend.cancel(request_id)
+        cancelled = self.relic_server.backend.cancel(request_id)
         self._send_json(200 if cancelled else 404, {"id": request_id, "cancelled": cancelled})
 
     def do_POST(self) -> None:
@@ -311,7 +311,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
         if path not in {"/v1/chat/completions", "/v1/completions"}:
             self._send_json(404, _openai_error("not found"))
             return
-        server = self.pocket_server
+        server = self.relic_server
         started = time.perf_counter()
         server.metrics.inc("requests_total")
         server.metrics.add("requests_active", 1)
@@ -356,7 +356,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             server.metrics.observe("request_duration_seconds", time.perf_counter() - started)
 
     def _stream(self, request: GenerationRequest, *, started: float, completion: bool = False) -> None:
-        server = self.pocket_server
+        server = self.relic_server
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-cache")
@@ -463,7 +463,7 @@ def serve(
     request loop starts. It is used by the local TP supervisor; ordinary callers
     can leave it unset.
     """
-    server = PocketLLMHTTPServer((host, port), OpenAIHandler, backend, model, metrics)
+    server = RelicLLMHTTPServer((host, port), OpenAIHandler, backend, model, metrics)
     try:
         if on_ready is not None:
             on_ready()

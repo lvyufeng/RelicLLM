@@ -1,4 +1,4 @@
-"""PocketLLM: one user-facing API over independent Torch and C++ backends."""
+"""RelicLLM: one user-facing API over independent Torch and C++ backends."""
 
 __version__ = "0.1.0.dev0"
 
@@ -11,7 +11,7 @@ from .api import (
     GenerationRequest,
     GenerationResult,
     HealthStatus,
-    PocketLLMError,
+    RelicLLMError,
     RequestCancelledError,
     TensorParallelSupervisorError,
     SamplingParams,
@@ -42,7 +42,7 @@ __all__ = [
     "GenerationResult",
     "HealthStatus",
     "LLM",
-    "PocketLLMError",
+    "RelicLLMError",
     "RequestCancelledError",
     "TensorParallelSupervisorError",
     "SamplingParams",

@@ -36,7 +36,7 @@ def _device_platform(value: str) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="relicllm", description="PocketLLM unified inference interface")
+    parser = argparse.ArgumentParser(prog="relicllm", description="RelicLLM unified inference interface")
     subparsers = parser.add_subparsers(dest="command", required=True)
     serve_parser = subparsers.add_parser("serve", help="start the OpenAI-compatible server")
     serve_parser.add_argument("--model", required=True, help="checkpoint directory or model path")

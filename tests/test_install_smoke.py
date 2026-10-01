@@ -22,7 +22,7 @@ def test_public_api_available():
     assert hasattr(relicllm, 'GenerationResult')
 
     # Exception classes
-    assert hasattr(relicllm, 'PocketLLMError')
+    assert hasattr(relicllm, 'RelicLLMError')
     assert hasattr(relicllm, 'BackendUnavailableError')
     assert hasattr(relicllm, 'ConfigurationError')
     assert hasattr(relicllm, 'UnsupportedFeatureError')
