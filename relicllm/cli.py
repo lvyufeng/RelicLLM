@@ -13,12 +13,11 @@ from .backends.factory import create_backend, select_backend
 from .server.openai import serve
 from .supervisor import TensorParallelSupervisor
 
-
-#: The platforms ``--device`` accepts, which is ``EngineArgs``'s set: ``auto`` asks the build, and
-#: an explicit value this build cannot serve is refused rather than retuned. Spelled here as well
-#: because the parser has to render the set in ``--help`` and refuse a bad one before anything is
-#: constructed -- and it is the *choices* that make the refusal reachable at all.
-DEVICE_PLATFORMS = ("auto", "cuda", "ascend", "cpu")
+# The one spelling of the platform set. It used to be a literal here and another in
+# `relicllm/api/types.py`: two copies that had to agree, one rendering `--help` and the other
+# validating the value `--help` had just offered. The device plane that resolves `auto` is the
+# concept's owner, so the name comes from there.
+from src.runtime.device import PLATFORMS as DEVICE_PLATFORMS
 
 
 def _device_platform(value: str) -> str:

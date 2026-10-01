@@ -85,6 +85,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [A max_tokens the context cannot hold is refused](https://lvyufeng.github.io/RelicLLM/migration/overlong-max-tokens-is-refused/)
 - [A --max-batch-size that cannot be honoured is refused](https://lvyufeng.github.io/RelicLLM/migration/unhonourable-batch-width-is-refused/)
 - [--device splits into a platform and a card list](https://lvyufeng.github.io/RelicLLM/migration/device-splits-into-platform-and-cards/)
+- [--device is checked against the runtime's declaration](https://lvyufeng.github.io/RelicLLM/migration/platform-is-checked/)
 - [Batching is on by default for the cpp backend](https://lvyufeng.github.io/RelicLLM/migration/batching-default-on/)
 
 ## Archive (Phase 2/3)

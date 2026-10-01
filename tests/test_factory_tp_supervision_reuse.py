@@ -58,7 +58,7 @@ def supervised(monkeypatch):
 
     monkeypatch.setattr(supervisor_module, "TensorParallelSupervisor", FakeSupervisor)
     monkeypatch.setattr(factory, "CppBackend", FakeBackend)
-    monkeypatch.setattr(factory, "select_backend", lambda args: "cpp")
+    monkeypatch.setattr(factory, "select_backend", lambda args, **kwargs: "cpp")
     monkeypatch.delenv("POCKETLLM_NCCL_ID_PATH", raising=False)
     return FakeSupervisor
 

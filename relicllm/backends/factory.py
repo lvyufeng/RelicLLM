@@ -27,6 +27,12 @@ from .v41_backend import V41Backend
 from .worker import WORKERS, program
 from .xing4_backend import Xing4Backend
 
+# The device vocabulary and the probe, from the model side. `relicllm -> src` is the direction this
+# package already runs in -- see `src/runtime/device.py`'s own note on why the module is not in
+# `relicllm/protocol/`.
+from src.runtime.device import Accelerator, resolve_platform
+from src.runtime.device import probe_accelerator as _probe_accelerator
+
 
 # ---------------------------------------------------------------------------------------------
 # Selection
@@ -93,7 +99,42 @@ def _refuse_options_the_runtime_does_not_read(name: str, args: EngineArgs) -> No
     )
 
 
-def select_backend(args: EngineArgs) -> str:
+def _refuse_a_platform_the_runtime_lacks(
+    name: str, args: EngineArgs, *, accelerator: Accelerator | None = None
+) -> Accelerator:
+    """Resolve ``--device`` and refuse a platform the runtime does not declare.
+
+    Two things were true of ``--device`` before this and both were wrong in the same direction. The
+    ``auto`` default was *stored*, never read -- nothing in the tree resolved it, so the flag's own
+    help text ("``auto`` asks the build") described behaviour that did not exist. And
+    ``RuntimeCapabilities.devices`` was a declaration no one consulted, so ``--backend mimo
+    --device cpu`` was accepted on a runtime whose own declaration says ``("cuda",)``.
+
+    Both are answered here because this is the only place that has both halves: the requested
+    platform lives on ``args`` and the declared set lives on the runtime's capabilities. The
+    resolved :class:`Accelerator` is returned rather than probed twice, so a caller that needs the
+    device type or the collective asks for the same answer this check was made against.
+
+    An empty ``devices`` is read as *unconstrained* rather than as *nothing*: the field defaults to
+    ``()``, and a runtime that has not stated a set has not excluded one.
+    """
+    accelerator = _probe_accelerator() if accelerator is None else accelerator
+    platform = resolve_platform(args.device, accelerator)
+    declared = runtime_capabilities(name).devices
+    if not declared or platform in declared:
+        return accelerator
+    raise UnsupportedFeatureError(
+        f"backend={name!r} declares devices={declared!r}, so it cannot run on {platform!r}"
+        + (
+            f", which is what --device auto resolved to on this host"
+            if args.device == "auto"
+            else ""
+        )
+        + f". Ask for one of {', '.join(declared)}, or use a runtime that serves {platform!r}"
+    )
+
+
+def select_backend(args: EngineArgs, *, accelerator: Accelerator | None = None) -> str:
     """Select a backend without silently changing an explicit user choice.
 
     Both questions -- which checkpoint is this, and can this runtime serve it -- are answered from
@@ -106,6 +147,7 @@ def select_backend(args: EngineArgs) -> str:
         if refusal:
             raise UnsupportedFeatureError(refusal)
         _refuse_a_capability_the_runtime_lacks(args.backend, args)
+        _refuse_a_platform_the_runtime_lacks(args.backend, args, accelerator=accelerator)
         _refuse_options_the_runtime_does_not_read(args.backend, args)
         return args.backend
     # `auto` asks a different question than the explicit path does: not "is this provably not
@@ -117,6 +159,7 @@ def select_backend(args: EngineArgs) -> str:
             continue
         if capabilities.identify(name, args).routes_here:
             _refuse_a_capability_the_runtime_lacks(name, args)
+            _refuse_a_platform_the_runtime_lacks(name, args, accelerator=accelerator)
             _refuse_options_the_runtime_does_not_read(name, args)
             return name
     raise AssertionError("capabilities.AUTO_ORDER has no fallback")
@@ -127,8 +170,11 @@ def create_backend(args: EngineArgs, **injected: Any):
 
     ``injected`` is intentionally useful for tests and embedding applications;
     production callers normally only pass ``EngineArgs``.
+
+    ``accelerator=`` is the one injection that is not an adapter: it answers "what does this host
+    have", which a test on a CUDA box has to be able to answer differently to reach the Ascend arm.
     """
-    selected = select_backend(args)
+    selected = select_backend(args, accelerator=injected.get("accelerator"))
     if selected == "torch":
         return TorchBackend(
             args,
