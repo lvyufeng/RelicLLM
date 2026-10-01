@@ -1,0 +1,93 @@
+# RelicLLM
+
+> Multi-GPU inference runtime for older accelerators: model implementations, serving adapters and schedulers on PyTorch, over the relic-core operator library
+
+This is the index of every page the documentation site publishes. It is generated from `mkdocs.yml`
+by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script.
+
+## Pages
+
+- [Home](https://lvyufeng.github.io/RelicLLM/)
+- [Getting started](https://lvyufeng.github.io/RelicLLM/getting-started/)
+
+## Model guides
+
+- [Support matrix](https://lvyufeng.github.io/RelicLLM/models/)
+- [DeepSeek-V4](https://lvyufeng.github.io/RelicLLM/models/deepseek-v4/)
+- [DeepSeek-V4 GGUF Q2 on one GPU](https://lvyufeng.github.io/RelicLLM/models/deepseek-v4-gguf-q2-single-gpu/)
+- [MiniMax-M2.7](https://lvyufeng.github.io/RelicLLM/models/minimax-m2.7/)
+- [GLM-5.2](https://lvyufeng.github.io/RelicLLM/models/glm-5.2/)
+- [Qwen3.8-27B-FP8](https://lvyufeng.github.io/RelicLLM/models/qwen3.8-27b-fp8/)
+- [Qwen3.8-27B-NVFP4](https://lvyufeng.github.io/RelicLLM/models/qwen3.8-27b-nvfp4/)
+- [Qwen3.8-27B-BF16](https://lvyufeng.github.io/RelicLLM/models/qwen3.8-27b-bf16/)
+- [DeepSeek-V4.1-Flash](https://lvyufeng.github.io/RelicLLM/models/deepseek-v4.1-flash/)
+- [MiMo-V2.6-Flash](https://lvyufeng.github.io/RelicLLM/models/mimo-v2.6-flash/)
+- [Ternary-Bonsai-2-27B](https://lvyufeng.github.io/RelicLLM/models/ternary-bonsai-2-27b/)
+- [Xing4.0-29B-A4B](https://lvyufeng.github.io/RelicLLM/models/xing4.0-29b-a4b/)
+
+## Guides
+
+- [Overview](https://lvyufeng.github.io/RelicLLM/guides/)
+- [Benchmarking and reporting](https://lvyufeng.github.io/RelicLLM/guides/benchmarking/)
+- [Serving latency metrics](https://lvyufeng.github.io/RelicLLM/guides/latency_metrics/)
+- [Native engine API](https://lvyufeng.github.io/RelicLLM/guides/pocketllm_api/)
+
+## Performance
+
+- [Overview](https://lvyufeng.github.io/RelicLLM/performance/)
+- [DSpark speculative decoding](https://lvyufeng.github.io/RelicLLM/performance/dspark/)
+- [MiniMax decode bottleneck](https://lvyufeng.github.io/RelicLLM/performance/minimax_decode_bottleneck_analysis/)
+- [Qwen4-Exp expert placement](https://lvyufeng.github.io/RelicLLM/performance/qwen4_exp_performance/)
+- [CPU offload and prefetch ceiling](https://lvyufeng.github.io/RelicLLM/performance/cpu_offload_profile/)
+- [Qwen KV cache at 65K](https://lvyufeng.github.io/RelicLLM/performance/qwen_kv_cache_65k_tg512/)
+- [Qwen drafter acceptance](https://lvyufeng.github.io/RelicLLM/performance/qwen_drafter_acceptance/)
+- [DeepSeek-V4.1 shard audit](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_shard_audit/)
+- [DeepSeek-V4.1-Flash host run](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_host_run/)
+- [DeepSeek-V4.1-Flash device experts](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_device_experts/)
+- [DeepSeek-V4.1-Flash remaining bottlenecks](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_remaining_bottlenecks/)
+- [DeepSeek-V4.1-Flash decode graph](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_decode_graph/)
+- [DeepSeek-V4.1-Flash graphed decode, live](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_decode_graph_live/)
+- [DeepSeek-V4.1-Flash chunked prefill](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_chunked_prefill/)
+- [DeepSeek-V4.1-Flash prefill stack](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_prefill_stack/)
+- [DeepSeek-V4.1-Flash single-request capability](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_single_request_capability/)
+- [DeepSeek-V4.1-Flash behind the server](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_served_gate/)
+- [DeepSeek-V4.1-Flash dense stack in fp16, withdrawn](https://lvyufeng.github.io/RelicLLM/performance/v41_dense_gemm_dtype/)
+- [Xing4.0-29B-A4B MLA attention on sm_75](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_attention_sm75/)
+- [Xing4.0-29B-A4B hyper-connection on sm_75](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_hyper_connection_sm75/)
+- [Xing4.0-29B-A4B decode launch gap](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_decode_launch_gap/)
+- [Xing4.0-29B-A4B prefill/decode seam](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_rate_clock_split/)
+- [Xing4.0-29B-A4B decode graph](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_decode_graph/)
+
+## Architecture
+
+- [Overview](https://lvyufeng.github.io/RelicLLM/architecture/)
+- [MiMo-V2.6-Flash design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/mimo_v2_6_flash_design/)
+- [DeepSeek-V4.1-Flash design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/deepseek_v4_1_flash_design/)
+- [Qwen3.8-27B-FP8 design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/qwen3_8_27b_fp8_design/)
+- [Qwen3.8-27B-NVFP4 design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/qwen3_8_27b_nvfp4_design/)
+- [Qwen3.8-27B BF16 design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/qwen3_8_27b_bf16_design/)
+- [DeepSeek-V4-Flash design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/deepseek_v4_design/)
+- [GLM-5.2 design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/glm_5_2_design/)
+- [MiniMax-M2.7 design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/minimax_m2_7_design/)
+- [Cross-request prefix caching on V4.1](https://lvyufeng.github.io/RelicLLM/architecture/v41_prefix_cache/)
+- [Cross-request prefix caching on MiMo-V2.6-Flash](https://lvyufeng.github.io/RelicLLM/architecture/mimo_v2_6_flash_prefix_cache/)
+- [Ternary-Bonsai-2-27B reference gate](https://lvyufeng.github.io/RelicLLM/architecture/ternary_bonsai_2_reference_gate/)
+- [Xing4.0-29B-A4B checkpoint audit](https://lvyufeng.github.io/RelicLLM/architecture/xing4_0_29b_a4b_audit/)
+- [Xing4.0-29B-A4B design and measurements](https://lvyufeng.github.io/RelicLLM/architecture/xing4_0_29b_a4b_design/)
+- [Ternary-Bonsai-2-27B served runtime](https://lvyufeng.github.io/RelicLLM/architecture/bonsai_2_27b_design/)
+- [GLM-5.3-Flash checkpoint audit](https://lvyufeng.github.io/RelicLLM/architecture/glm_5_3_flash_audit/)
+- [The command-line surface against vLLM and SGLang](https://lvyufeng.github.io/RelicLLM/architecture/cli_surface_design_2026_09/)
+- [Per-method duplication across the five adapters](https://lvyufeng.github.io/RelicLLM/architecture/per_method_duplication_2026_09/)
+
+## Migration
+
+- [Overview](https://lvyufeng.github.io/RelicLLM/migration/)
+- [A max_tokens the context cannot hold is refused](https://lvyufeng.github.io/RelicLLM/migration/overlong-max-tokens-is-refused/)
+- [A --max-batch-size that cannot be honoured is refused](https://lvyufeng.github.io/RelicLLM/migration/unhonourable-batch-width-is-refused/)
+- [--device splits into a platform and a card list](https://lvyufeng.github.io/RelicLLM/migration/device-splits-into-platform-and-cards/)
+- [Batching is on by default for the cpp backend](https://lvyufeng.github.io/RelicLLM/migration/batching-default-on/)
+
+## Archive (Phase 2/3)
+
+- [Backend auto-TP design](https://lvyufeng.github.io/RelicLLM/archive/phase2-phase3/cpp_backend_auto_tp/)
+- [Phase 3.5 auto-TP results](https://lvyufeng.github.io/RelicLLM/archive/phase2-phase3/phase3_5_auto_tp_results/)

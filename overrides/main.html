@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{#
+  Material renders `{% block announce %}` through its own `md-banner` markup, and
+  only when the block is non-empty, so a blank override is the same as having none.
+
+  A banner is HTML, not a page, so these are absolute site URLs rather than the
+  relative links the Markdown uses, and `<strong>` rather than `**`.
+
+  Unlike the monorepo's banner, this one names no checkpoint and no issue number.
+  It is the one element on the page with no page next to it to go stale in step, and
+  a runtime that supports twelve checkpoints cannot say so in one line without that
+  line aging. `theme.features` carries `announce.dismiss`, which is Material's own
+  close button -- it remembers the dismissal in localStorage and needs no script of
+  ours.
+#}
+{% block announce %}
+  <p><strong>RelicLLM</strong> serves twelve checkpoints on 4&times;RTX&nbsp;2080&nbsp;Ti and
+  8&times;Ascend&nbsp;910B, taking its kernels from
+  <a href="https://lvyufeng.github.io/relic-core/">relic-core</a>:
+  <a href="https://lvyufeng.github.io/RelicLLM/models/">support matrix</a> ·
+  <a href="https://lvyufeng.github.io/RelicLLM/getting-started/">getting started</a></p>
+{% endblock %}
