@@ -184,6 +184,7 @@ from typing import Sequence
 import torch
 
 from src.models.deepseek_v4_1.generate import generate
+from src.runtime.device import bind_device, device_count, probe_accelerator
 
 __all__ = ["main", "resolve_pool_rows", "setup_distributed"]
 
@@ -219,21 +220,22 @@ def setup_distributed() -> tuple[int, int, int, torch.device | None]:
     local_rank = int(os.environ.get("LOCAL_RANK", str(rank)))
     if world <= 1:
         return 1, 0, 0, None
-    if not torch.cuda.is_available():
+    accelerator = probe_accelerator()
+    if not accelerator.is_accelerator:
         raise RuntimeError(f"a TP world of {world} needs the cards, and this host has none")
-    count = torch.cuda.device_count()
+    count = device_count(platform=accelerator.platform)
     if local_rank >= count:
         raise RuntimeError(f"rank {rank} was told to drive card {local_rank} of {count} on this host")
 
     import torch.distributed as dist
 
-    torch.cuda.set_device(local_rank)
+    bind_device(local_rank, platform=accelerator.platform)
     if not dist.is_initialized():
         # Two hours, not the ten-minute default: rank 0 may be paying the resident bank's one-time
         # fill -- 36 minutes of an SMR disk -- while the rest wait at the first collective, and a
         # store timeout would tear the communicator down underneath a run that is behaving.
-        dist.init_process_group("nccl", timeout=timedelta(hours=2))
-    return world, rank, local_rank, torch.device("cuda", local_rank)
+        dist.init_process_group(accelerator.distributed_backend, timeout=timedelta(hours=2))
+    return world, rank, local_rank, torch.device(accelerator.torch_device_type, local_rank)
 
 
 def resolve_pool_rows(requested: int, expert_device: str | None) -> int:

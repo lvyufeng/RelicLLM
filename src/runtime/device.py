@@ -376,17 +376,100 @@ def _current_index(device_type: str) -> int:
     return int(torch.npu.current_device())
 
 
+def _torch_module_for(device_type: str):
+    """``torch.cuda``, ``torch.npu`` or ``torch.cpu`` -- the namespace holding a card's verbs.
+
+    Torch gives each accelerator a namespace with the same shape, so reading it once is what lets
+    :func:`bind_device` and :func:`synchronize` be one function each rather than a branch per call
+    site. The import of ``torch_npu`` is what registers the backend and is therefore load-bearing for
+    the ``getattr`` to find anything.
+    """
+    import torch
+
+    if device_type == "cuda":
+        return torch.cuda
+    if device_type == "cpu":
+        return torch.cpu
+    import torch_npu  # noqa: F401
+
+    return getattr(torch, device_type, None)
+
+
+def _accelerator_module(platform: str) -> Any | None:
+    """The torch namespace for ``platform``, or ``None`` for a host platform.
+
+    Where :func:`bind_device` and :func:`synchronize` agree, which is the part worth writing once: a
+    platform whose device type this build has not registered is refused by name, so an Ascend launch
+    without ``torch_npu`` reads as that rather than as an ``AttributeError`` on a namespace that does
+    not exist -- or, worse, as an ``ImportError`` from the middle of a collective.
+    """
+    device_type = torch_device_type(platform)
+    if device_type == "cpu":
+        return None
+    if not device_type_registered(device_type):
+        raise DeviceError(
+            f"the {platform!r} platform needs the {device_type!r} device type, which this torch "
+            f"build has not registered. That is what torch_npu provides."
+        )
+    return _torch_module_for(device_type)
+
+
+def bind_device(index: int, *, platform: str | None = None) -> None:
+    """Point this thread at card ``index`` for the platform this process runs on.
+
+    The per-thread binding is not bookkeeping. ``torch`` reads a *thread's* current device, so a rank
+    that resolved its card correctly in one thread and then runs its forwards in another allocates on
+    card 0 -- which is why the serving bridge binds inside the run thread rather than where the
+    runtime was constructed, and why each ``setup_dist`` body binds once before anything else.
+
+    A host platform has no card to bind, so this is a no-op there rather than a refusal: the caller
+    that reached here is a launch with no accelerator in it, and `EngineArgs` has already refused a
+    `--device-ids` beside `--device cpu` before any of this ran.
+    """
+    resolved = probe_accelerator().platform if platform is None else platform
+    module = _accelerator_module(resolved)
+    if module is not None:
+        module.set_device(int(index))
+
+
+def synchronize(*, platform: str | None = None) -> None:
+    """Wait for the accelerator's queued work, on the platform this process runs on.
+
+    The host platform has nothing to wait for, so this is the no-op the call sites already write by
+    hand as ``torch.cuda.synchronize if dev.type == "cuda" else lambda *a: None``.
+    """
+    resolved = probe_accelerator().platform if platform is None else platform
+    module = _accelerator_module(resolved)
+    if module is not None:
+        module.synchronize()
+
+
+def device_count(*, platform: str | None = None) -> int:
+    """How many cards of this process's platform are visible, or ``0`` on a host platform.
+
+    ``0`` rather than an error, so that the "a world of N needs the cards, and this host has none"
+    check a launcher already makes reads the same on both platforms -- the count is the fact, and the
+    refusal is the caller's sentence.
+    """
+    resolved = probe_accelerator().platform if platform is None else platform
+    module = _accelerator_module(resolved)
+    return 0 if module is None else int(module.device_count())
+
+
 __all__ = [
     "ACCELERATORS",
     "PLATFORMS",
     "Accelerator",
     "DeviceError",
     "accelerator_device",
+    "bind_device",
     "canonical_device",
+    "device_count",
     "device_type_registered",
     "probe_accelerator",
     "process_group_backend",
     "require_device",
     "resolve_platform",
+    "synchronize",
     "torch_device_type",
 ]

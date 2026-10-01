@@ -68,6 +68,8 @@ from typing import Callable, Sequence
 
 import torch
 
+from src.runtime.device import bind_device, device_count, probe_accelerator
+
 __all__ = [
     "ATTENTION_SHARDS",
     "DEALS",
@@ -389,20 +391,23 @@ class EpGroup:
             return cls(device=device)
         import torch.distributed as dist
 
-        if not torch.cuda.is_available():
+        accelerator = probe_accelerator()
+        if not accelerator.is_accelerator:
             raise RuntimeError(f"a world of {world} needs the cards, and this host has none")
-        count = torch.cuda.device_count()
+        count = device_count(platform=accelerator.platform)
         if local_rank >= count:
             raise RuntimeError(
                 f"rank {rank} was told to drive card {local_rank} of {count} on this host"
             )
-        torch.cuda.set_device(local_rank)
+        bind_device(local_rank, platform=accelerator.platform)
         if not dist.is_initialized():
-            dist.init_process_group("nccl", timeout=timedelta(hours=timeout_hours))
+            dist.init_process_group(
+                accelerator.distributed_backend, timeout=timedelta(hours=timeout_hours)
+            )
         # `device` is resolved *after* the group exists so that the caller's own card and the
         # group's rank agree; a caller that named a card explicitly keeps it.
         if device is None:
-            device = torch.device("cuda", local_rank)
+            device = torch.device(accelerator.torch_device_type, local_rank)
         return cls(
             world=world,
             rank=rank,

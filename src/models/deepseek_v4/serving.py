@@ -77,6 +77,7 @@ from src.models.deepseek_v4.generation import (
     load_model,
 )
 from src.models.deepseek_v4.runtime import ModelArgs, Transformer
+from src.runtime.device import bind_device, probe_accelerator, torch_device_type
 from src.runtime.pd_scheduler import PDExecutionFacade, PDScheduler
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -136,13 +137,16 @@ def _init_runtime(args):
         raise ValueError("partition_policy=layer_pp_4gpu requires torchrun with WORLD_SIZE=2 or 4")
     rank = int(os.getenv("RANK", "0"))
     local_rank = int(os.getenv("LOCAL_RANK", "0"))
+    accelerator = probe_accelerator()
     if world_size > 1:
-        dist.init_process_group("nccl", timeout=timedelta(days=7))
+        dist.init_process_group(accelerator.distributed_backend, timeout=timedelta(days=7))
     global print
     if rank != 0:
         print = lambda *_, **__: None
-    torch.cuda.set_device(local_rank)
-    torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+    bind_device(local_rank, platform=accelerator.platform)
+    if accelerator.platform == "cuda":
+        # A CUDA-allocator knob with no NPU counterpart -- see the note in `generation.py`.
+        torch.cuda.memory._set_allocator_settings("expandable_segments:True")
     torch.set_default_dtype(torch.bfloat16)
     _setup_cpu_runtime(args.routed_experts_device, local_rank, world_size)
     torch.manual_seed(33377335)
@@ -189,7 +193,7 @@ def _init_runtime(args):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     print(f"load time: {time.perf_counter() - load_start:.3f}s", flush=True)
-    torch.set_default_device("cuda")
+    torch.set_default_device(accelerator.torch_device_type)
 
     control_group = dist.new_group(backend="gloo", timeout=timedelta(days=7)) if world_size > 1 else None
     scheduler = PDScheduler() if args.pd_mode == "scheduler" else None
@@ -203,6 +207,10 @@ def _init_runtime(args):
         "rank": rank,
         "local_rank": local_rank,
         "world_size": world_size,
+        # The worker payload rebinds its own card, in a process of its own, so the platform has to
+        # travel with the rest of the runtime rather than being re-probed there -- a worker that
+        # probed independently would be answering a question about a differently configured host.
+        "platform": accelerator.platform,
         "control_group": control_group,
         "shared_cpu_moe_arena": shared_cpu_moe_arena,
     }
@@ -309,8 +317,8 @@ def _format_completion_result(tokenizer, thinking_mode: str, prompt_ids: list[in
 
 
 def _run_payload(runtime: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any] | list[dict[str, Any]]:
-    torch.cuda.set_device(runtime["local_rank"])
-    torch.set_default_device("cuda")
+    bind_device(int(runtime["local_rank"]), platform=runtime["platform"])
+    torch.set_default_device(torch_device_type(runtime["platform"]))
     model = runtime["model"]
     tokenizer = runtime["tokenizer"]
     executor = runtime["executor"]
@@ -487,8 +495,8 @@ def _make_payload(body: dict[str, Any]) -> dict[str, Any]:
 
 
 def _run_payload_stream(runtime: dict[str, Any], payload: dict[str, Any]):
-    torch.cuda.set_device(runtime["local_rank"])
-    torch.set_default_device("cuda")
+    bind_device(int(runtime["local_rank"]), platform=runtime["platform"])
+    torch.set_default_device(torch_device_type(runtime["platform"]))
     model = runtime["model"]
     tokenizer = runtime["tokenizer"]
     executor = runtime["executor"]
