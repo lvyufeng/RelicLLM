@@ -20,7 +20,6 @@ from relicllm.api import (
 
 from . import capabilities, cli_surface
 from .capabilities import runtime_capabilities
-from .cpp_backend import CppBackend
 from .mimo_backend import MimoBackend
 from .torch_backend import TorchBackend
 from .v41_backend import V41Backend
@@ -64,8 +63,8 @@ def _refuse_a_capability_the_runtime_lacks(name: str, args: EngineArgs) -> None:
     raise UnsupportedFeatureError(
         f"backend={name!r} declares supports_batch=False: it runs one request at a time, so "
         f"{' and '.join(asked)} asks for concurrency it cannot deliver. Drop "
-        f"{'that' if len(asked) == 1 else 'those'}, or use backend='cpp', which owns the batch "
-        f"scheduler"
+        f"{'that' if len(asked) == 1 else 'those'}; no runtime here serves more than one request "
+        f"at a time"
     )
 
 
@@ -155,8 +154,6 @@ def select_backend(args: EngineArgs, *, accelerator: Accelerator | None = None) 
     # through to the generic runtime rather than being routed on the strength of a backend being
     # importable.
     for name in capabilities.AUTO_ORDER:
-        if name == "cpp" and not CppBackend.native_available():
-            continue
         if capabilities.identify(name, args).routes_here:
             _refuse_a_capability_the_runtime_lacks(name, args)
             _refuse_a_platform_the_runtime_lacks(name, args, accelerator=accelerator)
@@ -238,18 +235,6 @@ def create_backend(args: EngineArgs, **injected: Any):
                 torch_rendezvous=True,
             )
         return construct(args)
-    if selected == "cpp":
-        def build(resolved: EngineArgs) -> CppBackend:
-            return CppBackend(
-                resolved,
-                native_module=injected.get("native_module"),
-                engine=injected.get("engine"),
-                tokenizer=injected.get("tokenizer"),
-            )
-
-        if _needs_supervision(args, injected):
-            return _supervise_rank_zero(args, worker="cpp", build=build)
-        return build(args)
     raise BackendUnavailableError(f"unsupported backend {selected!r}")
 
 
@@ -352,16 +337,14 @@ def _environment(values: Mapping[str, str]) -> Iterator[None]:
             _restore_env(name, value)
 
 
-# EngineArgs fields that change control flow or memory layout inside the native
-# engine.  Ranks must agree on all of them; see the comment at the worker_env
-# construction site.  Fields that are per-rank (tensor_parallel_rank, device) or
-# already forwarded explicitly are deliberately absent.
+# EngineArgs fields a worker rank has to agree with rank 0 on.  Fields that are
+# per-rank (tensor_parallel_rank, device) or already forwarded explicitly are
+# deliberately absent.
 #
-# `enable_batching` belongs here even though only rank 0 ever runs a scheduler: a
-# worker rank still builds the engine, and the batch decision is what the engine
-# sizes its KV cache from, so a rank that resolved the default instead of the
-# operator's `--no-enable-batching` would allocate a different number of slots
-# than rank 0 under the same process group.
+# `enable_batching` and `max_batch_size` stay for the same reason as the rest: they
+# are refused on a runtime that cannot honour them, so a worker rank has to resolve
+# them the way rank 0 did or the two would disagree about whether the launch is even
+# legal.
 _WORKER_SHARED_ARGS = (
     "prefill_chunk_tokens",
     "enable_prefix_caching",

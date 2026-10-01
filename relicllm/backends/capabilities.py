@@ -222,10 +222,11 @@ def refused(reason: str) -> Identification:
 #: for every backend. Every *other* unknown key is a refusal, because a tuning option that silently
 #: does nothing is how a run ends up measured on the wrong lever.
 #:
-#: ``enable_batching`` and ``scheduler_timeout_ms`` are carried for the same reason and are *not*
-#: ignored: `SchedulerHost` reads both, and they decide whether this runtime joins the shared
-#: scheduler and how long it waits on it. They are here so a launch can name them without the model
-#: option parser refusing them as unknown, which is the treatment every other key still gets.
+#: ``enable_batching`` and ``scheduler_timeout_ms`` are carried for the same reason and are
+#: *not* ignored: the factory reads the first to refuse a batch path no runtime here owns, and
+#: the second is the timeout a launch may name. They are here so a launch can name them without
+#: the model option parser refusing them as unknown, which is the treatment every other key still
+#: gets.
 IGNORED_OPTIONS = frozenset(
     {
         "engine_kind",
@@ -307,35 +308,6 @@ def _identify_v41_or_mimo(
     return READ
 
 
-def _identify_cpp(args: EngineArgs) -> Identification:
-    if requested_gguf(args):
-        # The native reader opens one GGUF file and the registry routes it to the Qwen3.5 engine,
-        # so a GGUF is servable when both hold: one file, and an architecture that engine claims.
-        # Anything else -- shards, a directory of two models, another architecture -- is refused
-        # here rather than at the loader, because the reason is about the checkpoint format and
-        # the refusal is what tells the caller which backend to ask for instead.
-        #
-        # Imported here rather than at the top of the module: `gguf_is_servable` lives beside the
-        # adapter it belongs to, and that adapter imports *this* module for its declaration, so a
-        # module-level import would be a cycle. The dispatcher's `native_available()` gate still
-        # covers the availability half, which is why this is the last place it is needed.
-        from .cpp_backend import gguf_is_servable
-
-        if not gguf_is_servable(args.checkpoint_dir):
-            return refused(
-                "the native C++ adapter serves the Qwen3.5 GGUF export, as a single .gguf file "
-                "declaring general.architecture=qwen35; other GGUF checkpoints must use "
-                "backend='torch'"
-            )
-        return READ
-    config = read_config(args.checkpoint_dir, args.config_path)
-    if config is None:
-        return UNKNOWN
-    if not is_qwen35_config(config):
-        return refused("the native C++ adapter supports Qwen3.5 checkpoints only")
-    return READ
-
-
 _XING4_ONLY = (
     "backend='xing4' serves Xing4.0-29B-A4B checkpoints only: a directory whose "
     "config.json says model_type=xing4_0, or a .gguf whose general.architecture is xing4_0"
@@ -388,24 +360,6 @@ def _identify_torch(_args: EngineArgs) -> Identification:
 
 
 RUNTIMES: dict[str, RuntimeCapabilities] = {
-    "cpp": RuntimeCapabilities(
-        name="cpp",
-        models=("qwen3_5", "qwen3_5_moe_vl"),
-        model_formats=("safetensors", "gguf"),
-        devices=("cuda", "ascend"),
-        # The one runtime with a batch scheduler. Which path it runs -- and therefore whether this
-        # instance really holds more than one request -- is the instance's answer, reported through
-        # `supports_batch` in `declared_capabilities`.
-        supports_batch=True,
-        supports_cancellation=True,
-        supports_speculative_decoding=("mtp", "dspark", "dflash2"),
-        reads_prefix_cache=True,
-        identifies=_identify_cpp,
-        details={
-            "execution": "native C++",
-            "cancellation": "safe boundary only",
-        },
-    ),
     "torch": RuntimeCapabilities(
         name="torch",
         model_formats=("safetensors", "gguf"),
@@ -465,10 +419,10 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
 }
 
 
-#: The order ``auto`` asks them in: the architecture-specific readers before the native one, and
-#: the native one before the generic runtime, which is the specificity of the reader. ``torch`` is
-#: last and identifies everything, so the loop's fallback and its last candidate are one answer.
-AUTO_ORDER: tuple[str, ...] = ("v41", "mimo", "xing4", "cpp", "torch")
+#: The order ``auto`` asks them in: the architecture-specific readers before the generic runtime,
+#: which is the specificity of the reader. ``torch`` is last and identifies everything, so the
+#: loop's fallback and its last candidate are one answer.
+AUTO_ORDER: tuple[str, ...] = ("v41", "mimo", "xing4", "torch")
 
 
 def runtime_capabilities(name: str) -> RuntimeCapabilities:
@@ -497,8 +451,7 @@ def declared_capabilities(
     their configuration while the field is documented as being about reuse.
 
     A runtime whose gate is open passes ``True`` (the default). One that can resume but is not
-    configured to passes ``False``, and so does one on a code path that does not resume -- the
-    ``cpp`` adapter's batch scheduler, which does not consult the prefix cache at all.
+    configured to passes ``False``, and so does one on a code path that does not resume.
 
     ``overrides`` names any other field the instance knows better than the declaration does -- the
     architectures a build actually registered, the device backend it linked, whether it built a

@@ -31,6 +31,7 @@ class FakeSupervisor:
         self.started = 0
         self.stopped = 0
         self.nccl_id_path = f"/tmp/fake-nccl-id-{len(FakeSupervisor.instances)}"
+        self.master_port = 29500 + len(FakeSupervisor.instances)
         FakeSupervisor.instances.append(self)
 
     def start(self) -> None:
@@ -48,6 +49,10 @@ class FakeBackend:
         self.seen_nccl_id_path = args.backend_options.get("nccl_id_path")
         self.seen_env = os.environ.get("POCKETLLM_NCCL_ID_PATH")
 
+    def prepare(self) -> None:
+        # Rank 0 loads inside the rendezvous window, for the reason the real adapters do.
+        pass
+
 
 @pytest.fixture
 def supervised(monkeypatch):
@@ -57,8 +62,10 @@ def supervised(monkeypatch):
     import relicllm.supervisor as supervisor_module
 
     monkeypatch.setattr(supervisor_module, "TensorParallelSupervisor", FakeSupervisor)
-    monkeypatch.setattr(factory, "CppBackend", FakeBackend)
-    monkeypatch.setattr(factory, "select_backend", lambda args, **kwargs: "cpp")
+    monkeypatch.setattr(factory, "V41Backend", FakeBackend)
+    # `**kwargs` because the device plane gave `select_backend` an `accelerator` keyword; the
+    # launch under test constructs no backend, so the stub only has to answer with a name.
+    monkeypatch.setattr(factory, "select_backend", lambda args, **kwargs: "v41")
     monkeypatch.delenv("POCKETLLM_NCCL_ID_PATH", raising=False)
     return FakeSupervisor
 
@@ -66,7 +73,7 @@ def supervised(monkeypatch):
 def _args(**overrides) -> EngineArgs:
     base = dict(
         model="/nonexistent/checkpoint",
-        backend="cpp",
+        backend="v41",
         tensor_parallel_size=4,
     )
     base.update(overrides)
@@ -87,7 +94,7 @@ def test_tp2_supervision_keeps_full_world_and_spawns_rank_one(supervised):
 
 
 def test_every_supervised_child_is_told_which_runtime_it_is(supervised):
-    """The child program is the same one for all three, so the name has to travel separately.
+    """The child program is the same one for every runtime, so the name has to travel separately.
 
     It comes from what ``select_backend`` resolved and not from ``args.backend``, which is what
     the operator typed and may have been ``auto`` -- a child that resolved ``auto`` for itself
@@ -96,7 +103,7 @@ def test_every_supervised_child_is_told_which_runtime_it_is(supervised):
     factory.create_backend(_args(backend="auto"))
 
     env = supervised.instances[0].config.env
-    assert env["POCKETLLM_WORKER_BACKEND"] == "cpp"
+    assert env["POCKETLLM_WORKER_BACKEND"] == "v41"
 
 
 def test_second_backend_still_spawns_workers(supervised):
@@ -154,7 +161,7 @@ def test_workers_stopped_when_rank0_fails(supervised, monkeypatch):
         def __init__(self, args, **kwargs) -> None:
             raise RuntimeError("rank 0 failed to allocate")
 
-    monkeypatch.setattr(factory, "CppBackend", Boom)
+    monkeypatch.setattr(factory, "V41Backend", Boom)
 
     with pytest.raises(RuntimeError, match="rank 0 failed"):
         factory.create_backend(_args())

@@ -71,7 +71,6 @@ from .shared_options import (
 )
 from .runtime_engine import (
     RankedWorker,
-    SchedulerHost,
     cancel_key,
     card_for_rank,
     device_index,
@@ -357,7 +356,7 @@ class _Options:
         return options
 
 
-class V41Backend(SchedulerHost, RuntimeAdapter):
+class V41Backend(RuntimeAdapter):
     """Serve one DeepSeek-V4.1-Flash checkpoint, one request at a time.
 
     ``loader`` and ``front`` are injection points for tests: a unit test supplies a callable that
@@ -422,13 +421,6 @@ class V41Backend(SchedulerHost, RuntimeAdapter):
         self._details: dict[str, Any] = {}
         self._bell: Bell | None = None
         self._prefix_cache: Any = None
-        # The one scheduler, when this runtime is driven by it. Built here rather than on the first
-        # request because `/capabilities` has to answer whether requests go through it, and a report
-        # that said no and then routed them through one is the same class of lie as a flag accepted
-        # and ignored. Off unless `enable_batching` asked for it -- see `SchedulerHost`.
-        self._scheduler: Any = None
-        self._native: Any = None
-        self._init_batch_scheduler()
 
     # ------------------------------------------------------------------ construction
 
@@ -747,22 +739,13 @@ class V41Backend(SchedulerHost, RuntimeAdapter):
             self.name,
             details={
                 "execution": "src/models/deepseek_v4_1 PyTorch runtime",
-                "scheduler": (
-                    "BatchScheduler (width 1, continuous batching off)"
-                    if self._batching()
-                    else "one mutable KV state, serialized at the backend boundary"
-                ),
+                "scheduler": "one mutable KV state, serialized at the backend boundary",
                 "max_batch_size": 1,
                 "cancellation": "per-step collective; not inside the prompt's forward",
                 "prompt_format": "the checkpoint's own encoding/encoding.py, loaded by path",
                 **self._details,
             },
             reads_prefix_cache=self._options.prefix_cache_bytes > 0,
-            # Two different claims, and the honest one depends on the path: a runtime driven by
-            # the scheduler *is* submitting to a batch scheduler, on which this one declares a
-            # single slot; the serialized path serves one request at a time by its own lock.
-            # Either way the answer to "may this be called concurrently" is what the field reports.
-            supports_batch=self._batching(),
         )
 
     # ------------------------------------------------------------------ requests
@@ -832,41 +815,9 @@ class V41Backend(SchedulerHost, RuntimeAdapter):
                 raise _AbortGeneration("cancel")
 
         # `request=None`: the per-step hook reads stop *strings* off it, and this route applies
-        # none -- `SchedulerHost._batch_sampling` records why. The engine's own stop check is
-        # token-level and is what ends the row.
+        # none. The engine's own stop check is token-level.
         with self._request_lock:
             self._run(payload, None, on_token=emit)
-
-    def _batched_result(
-        self, request: GenerationRequest, result: Any
-    ) -> GenerationResult:
-        """A scheduler result as this backend's own, through this runtime's own result builder.
-
-        Overridden rather than inherited because this checkpoint's answer is not the decoded text:
-        `_result` splits a finished generation into reasoning, answer and tool calls, and the
-        inherited builder would return the same tokens with that reading dropped -- a client would
-        see the reasoning arrive as prose on this route and as `reasoning_content` on the other.
-
-        One field is not the same on the two routes: `usage.cached_tokens`, which the prefix store
-        reports to the serial path and which the scheduler has no way to carry back. The token ids,
-        the text and the finish reason are the same, which is what the two routes are compared on.
-
-        The scheduler's stop word is passed through as it stands rather than translated here. It is
-        one of `stop` / `length` / `cancelled` (`batch_scheduler.cpp:854-856`), and `_finish_reason`
-        knows all three; the hand-written mapping that stood here named only the words its author had
-        in mind, which is how `cancelled` arrived as `stop` -- this backend reporting a generation
-        the scheduler had abandoned as one that finished.
-        """
-        prompt_ids = self._tokenize(request)
-        return self._result(
-            request.request_id,
-            self._payload(request, prompt_ids),
-            list(result.generated_tokens),
-            self._decode(list(result.generated_tokens)),
-            str(result.finish_reason),
-            float(result.decode_seconds) or None,
-            None,
-        )
 
     def _encode_chat(
         self, tokenizer: Any, messages: Any, metadata: Mapping[str, Any]
@@ -1185,10 +1136,7 @@ class V41Backend(SchedulerHost, RuntimeAdapter):
         """
         if self._rank:
             return {}
-        # The scheduler's own admission state, when this runtime is driven by one. Same series,
-        # same `Stats` struct and same names as the `cpp` backend publishes -- which is what makes
-        # the two readable as one scheduler rather than as two servers that happen to agree.
-        return {**self._cache_metrics, **self.scheduler_metrics()}
+        return dict(self._cache_metrics)
 
     @staticmethod
     def _release_graphs(driver: Any) -> None:
@@ -1479,13 +1427,6 @@ class V41Backend(SchedulerHost, RuntimeAdapter):
         # as the end of the group, and it has to be handed the shutdown it was sent first.
         if self._bell is not None:
             self._bell.close()
-        # Before the rest of the teardown, and after the shutdown above: the scheduler's thread
-        # runs this runtime's generation, so it has to be joined while the model it drives is still
-        # resident -- and a worker parked on its bell has to have been sent the shutdown first.
-        scheduler = self._scheduler
-        self._scheduler = None
-        if scheduler is not None:
-            scheduler.stop()
         super().close()
 
 

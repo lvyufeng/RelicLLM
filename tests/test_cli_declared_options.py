@@ -265,7 +265,7 @@ def test_a_flag_the_selected_runtime_does_not_read_is_refused(tmp_path):
 
 
 def test_a_runtime_that_declares_no_options_reads_no_generated_flag():
-    """`cpp` and `torch` take their tuning from fields and from flags of their own."""
+    """`torch` takes its tuning from `EngineArgs` fields and from flags of its own."""
     with pytest.raises(ConfigurationError, match="does not read --prefix-cache-bytes"):
         factory.select_backend(
             EngineArgs(
@@ -277,10 +277,10 @@ def test_a_runtime_that_declares_no_options_reads_no_generated_flag():
 
 
 def test_the_host_flag_is_exempt_because_a_runtime_of_its_own_reads_it():
-    """``--prefill-chunk-tokens`` is the native engine's field; a native launch that names it is
-    naming something that exists, and the declarations have nothing to do with the question."""
+    """``--prefill-chunk-tokens`` is the host's field; a runtime that names it is naming something
+    that exists, and the declarations have nothing to do with the question."""
     assert cli_surface.unread_options(
-        "cpp", EngineArgs(model="m", backend="cpp", resolved_options={"prefill_chunk": 4096})
+        "torch", EngineArgs(model="m", backend="torch", resolved_options={"prefill_chunk": 4096})
     ) == []
     assert cli_surface.unread_options(
         "v41", EngineArgs(model="m", backend="v41", resolved_options={"prefill_chunk": 4096})

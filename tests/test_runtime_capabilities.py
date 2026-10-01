@@ -26,7 +26,6 @@ from relicllm.backends.capabilities import (
     identify,
     route,
 )
-from relicllm.backends.cpp_backend import DEFAULT_BATCH_SLOTS, CppBackend
 from relicllm.backends.factory import select_backend
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -69,8 +68,8 @@ def test_the_ignored_options_have_one_definition() -> None:
 
     The pinned set is the second half of that. A key added here is a key every *model* options
     parser stops refusing, so it is the one place a launch option can become universally accepted
-    by accident. The four the CLI and the supervisor fill in, plus the two `SchedulerHost` reads,
-    are the whole list; nothing else belongs."""
+    by accident. The four the CLI and the supervisor fill in, plus the two batch flags the factory
+    reads, are the whole list; nothing else belongs."""
     keys = sorted(IGNORED_OPTIONS)
     literal = re.compile(r"frozenset\(\s*\{[^}]*\}\)", re.S)
     offenders = []
@@ -88,8 +87,9 @@ def test_the_ignored_options_have_one_definition() -> None:
         "routed_experts_device",
         "pd_mode",
         "nccl_id_path",
-        # Not ignored: `SchedulerHost` reads both. They are in this set so a launch can name them
-        # without the model option parser refusing them, which is the same treatment as the four.
+        # Read by the factory to refuse a batch path no runtime here owns. They are in this set so
+        # a launch can name them without the model option parser refusing them, the same treatment
+        # as the four.
         "enable_batching",
         "scheduler_timeout_ms",
     }
@@ -123,109 +123,6 @@ def test_the_prefix_capability_is_the_declaration_anded_with_the_gate(name: str)
 
     assert open_gate.supports_prefix_caching is RUNTIMES[name].reads_prefix_cache
     assert closed_gate.supports_prefix_caching is False
-
-
-class _FakeTokenizer:
-    def encode(self, text: str) -> list[int]:
-        return [len(text)]
-
-    def decode(self, token_ids: list[int]) -> str:
-        return "".join(f"<{token}>" for token in token_ids)
-
-
-class _FakeEngine:
-    def close(self) -> None:
-        pass
-
-
-class _FakeScheduler:
-    def __init__(self, engine: object, width: int) -> None:
-        self.engine = engine
-        self.width = width
-
-
-class _FakeNativeWithScheduler:
-    QwenBatchScheduler = _FakeScheduler
-
-    def registered_architectures(self) -> list[str]:
-        return ["qwen3_5"]
-
-
-def _cpp_backend(**engine_args) -> CppBackend:
-    return CppBackend(
-        EngineArgs(model="model", backend="cpp", **engine_args),
-        native_module=_FakeNativeWithScheduler(),
-        engine=_FakeEngine(),
-        tokenizer=_FakeTokenizer(),
-    )
-
-
-def test_the_cpp_batch_path_reports_no_prefix_reuse() -> None:
-    """The field says "a repeated prefix is resumed", and the scheduler's prefill path does not
-    consult the cache at all -- `BatchScheduler::run_prefill_batch` issues `QwenEngine::batch_prefill`,
-    which never enters the prefix lookup in `QwenEngine::prefill`. So the batch path, now the
-    default, answers False; reporting True would be the field answering a different question on
-    this path than on the serialized one."""
-    serial = _cpp_backend(enable_batching=False)
-    batched = _cpp_backend(enable_batching=True)
-
-    assert serial._batching_enabled is False
-    assert serial.capabilities.supports_prefix_caching is True
-
-    assert batched._batching_enabled is True
-    assert batched.capabilities.supports_prefix_caching is False
-
-
-def test_the_prefix_capability_follows_the_flag_on_the_serial_path_too() -> None:
-    backend = _cpp_backend(enable_batching=False, enable_prefix_caching=False)
-
-    assert backend.capabilities.supports_prefix_caching is False
-
-
-# --------------------------------------------------------------------------------------------------
-# a capability mismatch fails at selection
-# --------------------------------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("name", ["v41", "mimo", "xing4", "torch"])
-def test_a_batch_width_on_a_runtime_without_a_scheduler_is_refused_at_selection(name: str) -> None:
-    """R1 taught the CLI to say a backend without a scheduler refuses a width rather than accepting
-    one it cannot honour. This is where that promise is kept, and it costs a process start instead
-    of a model load -- for `v41` a 476 GiB one."""
-    with pytest.raises(UnsupportedFeatureError, match="supports_batch=False"):
-        select_backend(EngineArgs(model="missing", backend=name, max_batch_size=4))
-
-
-@pytest.mark.parametrize("name", ["v41", "mimo", "xing4", "torch"])
-def test_the_batch_flag_alone_is_refused_too(name: str) -> None:
-    """A width is one way to ask for rows; `--enable-batching` at width 1 is a request for the
-    batch *path*, which a runtime that runs one request at a time does not have."""
-    with pytest.raises(UnsupportedFeatureError, match="--enable-batching"):
-        select_backend(EngineArgs(model="missing", backend=name, enable_batching=True))
-
-
-@pytest.mark.parametrize("name", ["v41", "mimo", "xing4", "torch"])
-def test_the_ordinary_command_line_is_not_refused(name: str) -> None:
-    """The width defaults to 1 and the flag to "nobody asked", so a plain launch is untouched."""
-    assert select_backend(EngineArgs(model="missing", backend=name)) == name
-
-
-def test_the_refusal_names_the_runtime_that_refused_it() -> None:
-    with pytest.raises(UnsupportedFeatureError, match="backend='mimo' declares supports_batch=False"):
-        select_backend(EngineArgs(model="missing", backend="mimo", max_batch_size=2))
-
-
-def test_the_cpp_runtime_is_not_refused_because_it_declares_the_capability() -> None:
-    """The refusal is about the declaration, not about the flag: `cpp` declares the capability, so
-    the width is its business -- and the instance reports whether it really got one."""
-    assert (
-        select_backend(EngineArgs(model="missing", backend="cpp", max_batch_size=4)) == "cpp"
-    )
-
-
-# --------------------------------------------------------------------------------------------------
-# what a checkpoint says about which runtime should serve it
-# --------------------------------------------------------------------------------------------------
 
 
 def _write_config(directory: Path, payload: dict) -> None:
@@ -328,139 +225,4 @@ def test_a_contradiction_in_the_arguments_is_still_a_configuration_error() -> No
     """The refusal added here is about a runtime's declaration; the argument check stays where it
     was, so the two are not reported as each other."""
     with pytest.raises(ConfigurationError, match="serialized session runs one request"):
-        EngineArgs(model="m", backend="cpp", max_batch_size=2, enable_batching=False)
-
-
-# --------------------------------------------------------------------------------------------------
-# the two declarations agreeing
-# --------------------------------------------------------------------------------------------------
-
-
-class _FakeEngineCaps:
-    """A stand-in for the binding's ``Capabilities``: the fields the adapter reads, and no more."""
-
-    def __init__(
-        self,
-        *,
-        max_slots: int,
-        paged_kv: bool = False,
-        logprobs: bool = False,
-        structured_outputs: bool = True,
-    ) -> None:
-        self.max_slots = max_slots
-        self.continuous_batching = max_slots > 1
-        self.chunked_prefill = True
-        self.paged_kv = paged_kv
-        self.per_request_sampling = True
-        self.per_request_top_k = True
-        self.structured_outputs = structured_outputs
-        self.logprobs = logprobs
-
-
-class _FakeSchedulerWithCaps(_FakeScheduler):
-    def __init__(self, engine: object, width: int, **caps) -> None:
-        super().__init__(engine, width)
-        self.width = width
-        self._caps = _FakeEngineCaps(max_slots=width, **caps)
-
-    def engine_caps(self) -> _FakeEngineCaps:
-        return self._caps
-
-
-class _FakeNativeWithEngineCaps(_FakeNativeWithScheduler):
-    """The same extension with a scheduler that can be asked about its engine.
-
-    ``QwenBatchScheduler`` is bound on the *instance* rather than reached through
-    ``__getattr__``: the base fake carries it as a class attribute, so a
-    subclass hook would never run -- lookup finds the inherited plain scheduler
-    first and the adapter would silently report no engine declaration at all.
-    """
-
-    def __init__(self, **caps) -> None:
-        self.QwenBatchScheduler = lambda engine, width: _FakeSchedulerWithCaps(engine, width, **caps)
-
-
-def _cpp_backend_with_engine_caps(**caps) -> CppBackend:
-    return CppBackend(
-        EngineArgs(model="model", backend="cpp"),
-        native_module=_FakeNativeWithEngineCaps(**caps),
-        engine=_FakeEngine(),
-        tokenizer=_FakeTokenizer(),
-    )
-
-
-def test_the_width_comes_from_the_engine_when_the_engine_can_be_asked() -> None:
-    """The one fact the two declarations share, reported from the engine's side: `max_slots` is what
-    the KV arena was built with, so a Python adapter computing its own would be a second answer."""
-    backend = _cpp_backend_with_engine_caps()
-
-    assert backend.capabilities.details["max_batch_size"] == DEFAULT_BATCH_SLOTS
-    assert backend.capabilities.details["engine_declares"]["continuous_batching"] is True
-
-
-def test_constrained_decoding_is_reported_from_where_it_is_refused() -> None:
-    """The field a client is refused and the capability it reads are one answer, not two.
-
-    Whether this instance holds an answer to a schema is per *instance* and in two parts: a scheduler
-    to carry the constraint and an engine that applies the mask. A runtime-level declaration could
-    only ever be a claim about the best case, so the capability comes from the serving table -- and
-    the engine's half stops being published as a gap, because it is no longer one.
-    """
-    backend = _cpp_backend_with_engine_caps()
-
-    assert backend.capabilities.supports_structured_outputs is True
-    assert "structured_outputs" not in backend.capabilities.details["engine_declares"]
-
-
-def test_an_engine_that_applies_no_mask_reports_no_structured_outputs() -> None:
-    """The engine's own word, and it is the one that counts: the mask is applied by the per-row
-    sampler, so an engine sampling at engine-wide values cannot hold an answer to a schema however
-    willing the adapter is to build the constraint."""
-    backend = _cpp_backend_with_engine_caps(structured_outputs=False)
-
-    assert backend.capabilities.supports_structured_outputs is False
-
-
-def test_logprobs_is_gated_on_the_scheduler_and_the_engines_word_is_published_beside_it() -> None:
-    """The one field whose two questions really are separate, held here so the difference is a
-    decision rather than an oversight.
-
-    The ranking comes off the scheduler's result rather than out of the sampler, so what gates the
-    *field* is the scheduler -- where `response_format` additionally needs the engine's own answer,
-    because a constraint is applied by the sampler. The engine's word about ranking is published
-    under `engine_declares` to be compared with, rather than copied over the serving gate.
-    """
-    backend = _cpp_backend_with_engine_caps(logprobs=True)
-
-    assert backend._served_fields().logprobs is True
-    assert backend.capabilities.details["engine_declares"]["logprobs"] is True
-
-
-def test_a_build_with_no_scheduler_reports_neither_carried_field() -> None:
-    """No scheduler, nothing to carry a ranking or a constraint -- whatever the engine could do.
-
-    This is `batching=false`, the serialized compatibility session, and the two fields are the ones
-    whose answer is the instance's rather than the runtime's.
-    """
-    backend = _cpp_backend(enable_batching=False)
-
-    assert backend._batching_enabled is False
-    assert backend.capabilities.supports_logprobs is False
-    assert backend.capabilities.supports_structured_outputs is False
-
-
-def test_paging_is_read_from_the_engine_rather_than_from_the_option() -> None:
-    """`caps().paged_kv` reports the cache the engine was actually built with, which is the same
-    question and does not depend on the option still being where it was left."""
-    backend = _cpp_backend_with_engine_caps(paged_kv=True)
-
-    assert backend.capabilities.details["kv_paged"] is True
-
-
-def test_a_scheduler_without_the_binding_falls_back_instead_of_failing() -> None:
-    """Older extensions, and the fakes the flag tests use, have no `engine_caps`. A capability
-    report is not the place to propagate that."""
-    backend = _cpp_backend()  # `_FakeScheduler` has no `engine_caps`
-
-    assert backend.capabilities.details["max_batch_size"] == DEFAULT_BATCH_SLOTS
-    assert backend.capabilities.details["engine_declares"] == {}
+        EngineArgs(model="m", backend="mimo", max_batch_size=2, enable_batching=False)

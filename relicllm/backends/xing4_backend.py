@@ -24,16 +24,12 @@ longest prefix it shares with one already served and forwards only the rest. See
 :mod:`src.models.xing4_0.prefix_cache` for what is stored and why the whole
 latent a layer is enough.
 
-**Requests serialize, and now they can serialize under the shared scheduler.** The trunk's
-forward flattens its input to one token axis (``gguf_model.embed`` reshapes to
-``[-1]`` and expands a single batch axis), so two sequences handed to it together
-would attend to each other, and serving them one at a time is the honest answer.
-``--enable-batching`` routes that one-at-a-time serving through the same
-``BatchScheduler`` the ``cpp`` backend drives, at the width this runtime declares
-(``max_slots = 1``, ``continuous_batching = False``); without it, serialization is the
-lock at the backend boundary, where :class:`~relicllm.backends.base.BackendBase` says
-it belongs. ``capabilities.supports_batch`` reports which of the two is live, and it is
-the same answer either way.
+**Requests serialize.** The trunk's forward flattens its input to one token axis
+(``gguf_model.embed`` reshapes to ``[-1]`` and expands a single batch axis), so two
+sequences handed to it together would attend to each other, and serving them one at a
+time is the honest answer. The serialization is the lock at the backend boundary, where
+:class:`~relicllm.backends.base.BackendBase` says it belongs, and
+``capabilities.supports_batch`` is False accordingly.
 
 Stage 5 of [#388](https://github.com/lvyufeng/PocketLLM/issues/388).
 """
@@ -58,7 +54,6 @@ from .capabilities import IGNORED_OPTIONS, declared_capabilities
 from .options import BackendOption, Group, Kind, decode_args
 from .shared_options import PREFILL_CHUNK, PREFIX_CACHE_BYTES
 from .runtime_engine import (
-    SchedulerHost,
     cancel_key,
     card_for_rank,
     device_index,
@@ -307,7 +302,7 @@ def _is_xing4_release(directory: Path) -> bool:
     return str(config.get("model_type", "")).lower() == "xing4_0" 
 
 
-class Xing4Backend(SchedulerHost, RuntimeAdapter):
+class Xing4Backend(RuntimeAdapter):
     """One Xing4.0-29B-A4B checkpoint on one card, one request at a time."""
 
     #: Read by `RuntimeAdapter._tokenize`, which is the only place a runtime's name is needed.
@@ -364,16 +359,6 @@ class Xing4Backend(SchedulerHost, RuntimeAdapter):
         self._heads = 0
         self._request_lock = threading.RLock()
         self._details: dict[str, Any] = {}
-        # The one scheduler, when this runtime is driven by it. Built here rather than on the first
-        # request because `/capabilities` has to answer whether requests go through it, and a
-        # report that said no and then routed them through one would be the same class of lie as a
-        # flag accepted and ignored.
-        self._scheduler: Any = None
-        self._native: Any = None
-        self._poll_timeout_ms = int(
-            getattr(args, "backend_options", {}).get("scheduler_timeout_ms", 600_000)
-        )
-        self._init_batch_scheduler()
 
     def _runtime_device(self) -> int:
         """The card the runtime bound, read from the model rather than from the option.
@@ -620,20 +605,11 @@ class Xing4Backend(SchedulerHost, RuntimeAdapter):
             self.name,
             details={
                 **self._details,
-                "scheduler": (
-                    "BatchScheduler (width 1, continuous batching off)"
-                    if self._batching()
-                    else "serialized session"
-                ),
+                "scheduler": "serialized session",
                 "max_batch_size": 1,
                 "device": str(self._device),
             },
             reads_prefix_cache=self._prefix_cache is not None,
-            # Two different claims, and the honest one depends on the path: a runtime driven by the
-            # scheduler *is* submitting to a batch scheduler, on which this one declares one slot;
-            # the serialized path serves one request at a time by its own lock. Either way the
-            # answer to "may this be called concurrently" is what the field reports.
-            supports_batch=self._batching(),
         )
 
     def metrics(self) -> dict[str, float]:
@@ -647,19 +623,13 @@ class Xing4Backend(SchedulerHost, RuntimeAdapter):
         store itself, because the HTTP thread is not under the request lock.
         """
         if self._model is None:
-            # No model counters yet -- but the scheduler's gauges are not the model's, and a scrape
-            # during loading is when an operator most wants to know this process has one.
-            return dict(self.scheduler_metrics())
+            # No model counters yet.
+            return {}
         return {
             "xing4_resident_bytes": float(self._model.nbytes),
             "xing4_kv_cache_bytes": float(self._cache_bytes()),
             "xing4_context_positions": float(self._max_seq_len),
             **self._cache_metrics,
-            # The scheduler's own admission state, when this runtime is driven by one. Same
-            # series, same `Stats` struct and same names as the `cpp` backend publishes -- which is
-            # what makes the two readable as one scheduler rather than as two servers that happen
-            # to agree.
-            **self.scheduler_metrics(),
         }
 
     # -------------------------------------------------------------------- requests
@@ -752,12 +722,6 @@ class Xing4Backend(SchedulerHost, RuntimeAdapter):
             self._publish_cache_metrics()
 
     def close(self) -> None:
-        # Before the rest: the scheduler's thread runs this runtime's generation, so it has to be
-        # joined while the model it drives is still resident.
-        scheduler = self._scheduler
-        self._scheduler = None
-        if scheduler is not None:
-            scheduler.stop()
         super().close()
         self._prefix_cache = None
 

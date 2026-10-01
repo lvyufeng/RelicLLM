@@ -60,7 +60,7 @@ def worker_env(monkeypatch):
         "POCKETLLM_NCCL_ID_PATH": "/tmp/nccl-id",
         "POCKETLLM_BACKEND_OPTIONS": '{"threads": 22}',
         "POCKETLLM_RESOLVED_OPTIONS": '{"prefix_cache_bytes": "2g"}',
-        "POCKETLLM_WORKER_ARGS": '{"enable_batching": true, "max_batch_size": 4}',
+        "POCKETLLM_WORKER_ARGS": '{"enable_batching": false, "max_batch_size": 1}',
         "POCKETLLM_TOKENIZER_PATH": "/nonexistent/tokenizer",
         "TP_RANK": "2",
     }
@@ -110,8 +110,10 @@ def test_a_worker_rebuilds_the_args_rank_zero_resolved(worker_env):
     # while rank 0 honoured the flag would evict a different prefix at a different time.
     assert args.resolved_options == {"prefix_cache_bytes": "2g"}
     # The shared fields arrive as one object precisely so a rank cannot default them separately.
-    assert args.enable_batching is True
-    assert args.max_batch_size == 4
+    # Held at the values no runtime here can serve a batch width for: the point is the object
+    # travels, and a rank that re-derived either field could disagree with rank 0 about the launch.
+    assert args.enable_batching is False
+    assert args.max_batch_size == 1
     assert args.tokenizer_path == "/nonexistent/tokenizer"
     assert args.config_path is None
 
@@ -143,8 +145,26 @@ def test_a_runtime_that_loads_lazily_announces_from_the_load(worker_env):
 
 
 def test_a_runtime_that_loads_eagerly_announces_before_the_loop(worker_env, monkeypatch):
-    """The native engine loads in the constructor, so there is no later moment to announce."""
-    monkeypatch.setenv("POCKETLLM_WORKER_BACKEND", "cpp")
+    """A constructor that loads has no later moment to announce from.
+
+    No runtime here loads eagerly any more -- both join the group inside `run_worker` -- but the
+    branch in `main` is what a future one takes, so it is driven through a registry entry rather
+    than left as dead code behind a runtime that no longer exists.
+    """
+    monkeypatch.setitem(
+        worker.WORKERS,
+        "eager",
+        worker.WorkerSpec(
+            entry_point="relicllm.backends.torch_backend:TorchBackend",
+            ready_at_construction=True,
+        ),
+    )
+    monkeypatch.setenv("POCKETLLM_WORKER_BACKEND", "eager")
+    # A registry key doubles as the `EngineArgs.backend` name, so a stub key cannot get past
+    # `EngineArgs`'s own validation; the stub supplies the args the two real runtimes would.
+    monkeypatch.setattr(
+        worker, "_args_from_environment", lambda name, spec: EngineArgs(model="m", backend="torch")
+    )
 
     worker.main()
 

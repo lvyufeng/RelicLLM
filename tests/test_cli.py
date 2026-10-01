@@ -297,36 +297,6 @@ def test_device_ids_are_one_card_per_rank_in_rank_order() -> None:
         _args(_parse("--tensor-parallel-size", "2", "--device-ids", "2,2"))
 
 
-def test_supervised_parent_spawns_the_cpp_backend_too(monkeypatch) -> None:
-    """The native adapter is launched by the supervisor like every other one.
-
-    It used to be refused here, because it exposed no worker entry point -- and the advice that came
-    with the refusal was to launch the ranks through `pocketllm_engine` instead. That binary's front
-    end is what this repository is collapsing onto one, so the refusal outlived its reason:
-    `CppBackend.run_worker`, `warmup_tp`, `POCKETLLM_NCCL_ID_PATH` and `_native_rank_device`'s rank
-    offset are the four things that make the child path work, and this test is the statement that
-    they are wired to the same spawn the other adapters use.
-    """
-    captured: dict[str, object] = {}
-
-    class FakeSupervisor:
-        def __init__(self, **kwargs):
-            captured.update(kwargs)
-
-        def run(self):
-            return 0
-
-    monkeypatch.setattr(cli, "TensorParallelSupervisor", FakeSupervisor)
-    monkeypatch.setattr(cli, "select_backend", lambda args: "cpp")
-    monkeypatch.setattr(cli, "create_backend", lambda args: pytest.fail("backend was constructed"))
-
-    assert cli.main([
-        "serve", "--model", "checkpoint", "--backend", "cpp", "--tensor-parallel-size", "4",
-    ]) == 0
-    assert captured["world_size"] == 4
-    assert "--supervised-child" in captured["command"]
-
-
 def test_supervised_parent_allows_a_v41_selection(monkeypatch) -> None:
     """The V4.1 adapter is Python-side, so the parent spawns it like the torch one.
 
@@ -432,7 +402,7 @@ def test_backend_options_include_supervisor_nccl_path(monkeypatch) -> None:
     assert _args(_parse("--backend", "torch")).backend_options["nccl_id_path"] == "/run/nccl-id"
 
 
-def test_cpp_worker_error_is_preserved_for_manual_launch(monkeypatch) -> None:
+def test_the_worker_error_is_preserved_for_manual_launch(monkeypatch) -> None:
     class UnsupportedBackend(_FakeBackend):
         def run_worker(self, on_ready=None):
             raise UnsupportedFeatureError("worker unavailable")

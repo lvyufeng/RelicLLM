@@ -108,7 +108,7 @@ to reproduce it:
 
 | Field | What it is |
 | --- | --- |
-| `entry` | the entry point: `cpp`, `v41`, `mimo`, `xing4` or `torch` |
+| `entry` | the entry point: `v41`, `mimo`, `xing4` or `torch` |
 | `checkpoint` | the checkpoint directory or GGUF, as an absolute path |
 | `env` | the environment variables the run needs (`POCKETLLM_CPP_BATCHED_DECODE`, `CUDA_VISIBLE_DEVICES`, …) |
 | `argv` | the command line, **as an operator types it**, minus `--prompt` |

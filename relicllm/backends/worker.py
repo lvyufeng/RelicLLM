@@ -49,14 +49,14 @@ class WorkerSpec:
     entry_point: str
     #: Whether the checkpoint is loaded by the time the adapter is constructed.
     #:
-    #: True for the native adapter: its engine loads in the constructor, so the rank can announce
-    #: itself before entering the loop.
+    #: False for every runtime here: they join the process group and load *inside* `run_worker`.
+    #: "Constructed" is not a state worth announcing, and the marker is emitted from `on_ready`
+    #: once the load's closing barrier has been passed. Announcing early would tell the parent a
+    #: rank is up while it is still inside a barrier, and no supervisor can recover from a
+    #: readiness marker that is a lie.
     #:
-    #: False for the Python runtimes, which join the process group and load *inside* `run_worker`.
-    #: "Constructed" is not a state worth announcing there, and the marker is emitted from
-    #: `on_ready` once the load's closing barrier has been passed. Announcing early would tell the
-    #: parent a rank is up while it is still inside a barrier, and no supervisor can recover from
-    #: a readiness marker that is a lie.
+    #: The field remains because it is what `main` branches on, and a runtime whose engine loads
+    #: in its constructor would set it True.
     ready_at_construction: bool
     #: `EngineArgs` fields whose value is a *path* rank 0 resolved and the child has to reach the
     #: same one by, as ``(environment variable, field)``. A rank that resolved a different
@@ -69,10 +69,6 @@ class WorkerSpec:
 
 
 WORKERS: dict[str, WorkerSpec] = {
-    "cpp": WorkerSpec(
-        entry_point="relicllm.backends.cpp_backend:CppBackend",
-        ready_at_construction=True,
-    ),
     "mimo": WorkerSpec(
         entry_point="relicllm.backends.mimo_backend:MimoBackend",
         ready_at_construction=False,
