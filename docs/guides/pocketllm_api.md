@@ -284,7 +284,7 @@ the process has a scheduler in it at all — which is the question the series an
 `requests_running` is the one to watch. Two concurrent clients reaching a server that serializes
 them under a lock and two reaching a scheduler produce identical tokens and identical responses; the
 only place they differ is this gauge, which is why it is the reading the concurrency acceptance
-measurements take. `scripts/bench_cpp_scheduler_metrics.py` samples it while a group of requests is
+measurements take. `tests/bench_cpp_scheduler_metrics.py` samples it while a group of requests is
 in flight and reports the peak.
 
 On the serialized path there is no scheduler, so none of these series is exported — not as zero.

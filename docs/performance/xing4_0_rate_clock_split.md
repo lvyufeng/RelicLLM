@@ -19,7 +19,7 @@ and the corrected trend is flat.
 | Context | 512, 512, 4,096, 16,384, 32,768 tokens — real prose, `--max-model-len 32768`, chunk 128, greedy, one request, 32 generated tokens |
 | Commit | `fix/xing4-0-prefill-decode-clock`, the tree of PR #430 |
 | Question | how much of `decode_seconds` was the prompt, and where in a request it is |
-| Run | 2026-09-26, `scripts/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
+| Run | 2026-09-26, `tests/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
 
 ## The seam, measured directly
 
@@ -146,7 +146,7 @@ correcting it means re-measuring that model's tables and this page is about this
 
 | Claim | Command |
 | --- | --- |
-| The corrected table | `scripts/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
+| The corrected table | `tests/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
 | The two-card table | the same script with `--device cuda:0 --lengths 512,512 --max-model-len 8192 --chunk 128`, alone and then concurrently with `--device cuda:1` |
 | The drain, measured directly at three contexts | the two timings of one last chunk, per context, recorded above |
 | The seam's position | `python -m pytest tests/test_xing4_0_serving.py -q` |

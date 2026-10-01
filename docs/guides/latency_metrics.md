@@ -12,7 +12,7 @@ vLLM row can go in one table without an argument about what the words mean. The
 formulas below were read from the upstream source, not from documentation prose;
 the file and line each came from is in [Provenance](#provenance).
 
-Client: `scripts/bench_serving.py`. Server: `pocketllm serve`, whose `/metrics` carries the counters.
+Client: `tests/bench_serving.py`. Server: `pocketllm serve`, whose `/metrics` carries the counters.
 
 ## The metrics
 
@@ -77,7 +77,7 @@ entire queue-and-prefill cost.
 vLLM's own client has this blind spot: it latches on the first chunk with a
 non-empty `choices` array and explicitly tolerates an empty `text`
 (`endpoint_request_func.py:236-245`). So strict parity and honest measurement are
-**different numbers**, and `scripts/bench_serving.py` reports both:
+**different numbers**, and `tests/bench_serving.py` reports both:
 
 | Reported field | Latches on |
 | --- | --- |
@@ -217,7 +217,7 @@ python -m pocketllm serve --model /path/to/checkpoint --backend cpp \
     --tensor-parallel-size 4 --device-ids 0,1,2,3 --port 8000
 
 # 2. Measure it.
-python scripts/bench_serving.py --base-url http://127.0.0.1:8000 \
+python tests/bench_serving.py --base-url http://127.0.0.1:8000 \
     --random-input-len 512 --random-output-len 128 \
     --num-prompts 32 --request-rate 4 --max-concurrency 8 \
     --goodput ttft:2000 tpot:60 --json-out /tmp/serve.json

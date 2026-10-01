@@ -8,7 +8,7 @@ is `src/models/xing4_0/attention.py` — the staging form of [#391][issue], not 
 | Hardware | 1 x RTX 2080 Ti (sm_75, 22528 MiB, 616 GB/s peak) |
 | Checkpoint | `XingChen-AGI/Xing4.0-29B-A4B`, the released BF16 shard 3 — layer 2 |
 | Weights | `model.layers.2.*`, cast to fp16; the release's own tensors, unmodified |
-| Invocation | `python scripts/bench_xing4_0_attention.py --device cuda:2` |
+| Invocation | `python tests/bench_xing4_0_attention.py --device cuda:2` |
 | Date | 2026-09-26 |
 
 One layer is every layer's attention, so the per-layer figures below are scaled by the trunk's **40

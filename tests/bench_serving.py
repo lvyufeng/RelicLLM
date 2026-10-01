@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Serving benchmark for PocketLLM's OpenAI-compatible servers, on vLLM's terms.
 
-`scripts/bench_pocketllm_serve_concurrency.py` answers "does the server
+`tests/bench_pocketllm_serve_concurrency.py` answers "does the server
 multiplex requests correctly, and how much faster is it under load" - it fires a
 fixed number of requests at once and reports wall seconds and a per-request
 latency. That answers an acceptance question, not the question a serving number
@@ -16,7 +16,7 @@ one table without an argument about what the words mean. The definitions, and
 the upstream file and line each one was read from, are in
 `docs/guides/latency_metrics.md`.
 
-Client side is reused from `scripts/serve_client.py` rather than reimplemented
+Client side is reused from `tests/serve_client.py` rather than reimplemented
 (the same reason `bench_qwen_vllm_concurrency.py` imports it): the prompt
 generator and the completion validators then match the existing measurements, so
 a difference between two records comes from the engine.
@@ -50,7 +50,7 @@ because vLLM's are `numpy`'s (population standard deviation, linear-interpolated
 percentiles) and matching them by hand would be a bug farm.
 
 Example:
-    python scripts/bench_serving.py --base-url http://127.0.0.1:8123 --model Qwen3.8-27B \
+    python tests/bench_serving.py --base-url http://127.0.0.1:8123 --model Qwen3.8-27B \
         --random-input-len 128 --random-output-len 32 --num-prompts 16 \
         --request-rate 2 --goodput ttft:2000 tpot:60 --json-out /tmp/serve.json
 """
@@ -700,7 +700,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     started = time.perf_counter()
     record: dict[str, Any] = {
-        "script": "scripts/bench_serving.py",
+        "script": "tests/bench_serving.py",
         "endpoint": args.endpoint,
         "stream": args.stream,
         "token_latch": args.token_latch,

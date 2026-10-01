@@ -152,7 +152,7 @@ with admission, cancellation, per-request timings and the `/metrics` gauges comi
 library instead of from a second implementation of them. The bridge's own account is in
 `pocketllm/backends/runtime_engine.py`; what it costs and what it buys is below.
 
-Measured on one RTX 2080 Ti, `cuda:0` through `scripts/bench_runtime_scheduler_path.py`: the released
+Measured on one RTX 2080 Ti, `cuda:0` through `tests/bench_runtime_scheduler_path.py`: the released
 `xing4_0-29b-IQ4_NL.gguf`, `--max-model-len 8192`, 32 greedy tokens, one warmup request and four
 measured ones per arm, **one arm per process** (a second engine in the same process runs about 10%
 slower than the first, which would be the order the arms were built in rather than the thing being
@@ -178,7 +178,7 @@ a freshly loaded checkpoint pays the kernel-module load and the allocator growth
 entirely on whichever arm ran first. That is why the table above has a warmup round, four measured
 runs and a spread instead of two numbers, and why the two arms are run in both orders.
 
-**The routed path is visible from outside the process.** `scripts/bench_cpp_scheduler_metrics.py`
+**The routed path is visible from outside the process.** `tests/bench_cpp_scheduler_metrics.py`
 serves this backend and samples `/metrics` while two clients are in flight. With `--enable-batching`
 the exposition carries `pocketllm_requests_running` and `pocketllm_requests_waiting` — the same
 `BatchScheduler::Stats` fields the `cpp` host publishes as `pocket_…`, at this runtime's declared
@@ -197,10 +197,10 @@ python -m pytest tests/test_xing4_0_hyper_connection.py -q
 python -m pytest tests/test_xing4_0_moe.py -q
 
 # the prefill rate and the decode rate on real prose, one card
-python scripts/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,4096,32768
+python tests/bench_xing4_0_e2e.py --device cuda:2 --lengths 512,4096,32768
 
 # the kernel's own cost, priced by in-process A-B-A-B interleaving
-python scripts/bench_xing4_0_hyper_connection.py --device cuda:2 --steps 8
+python tests/bench_xing4_0_hyper_connection.py --device cuda:2 --steps 8
 ```
 
 ## What is supported

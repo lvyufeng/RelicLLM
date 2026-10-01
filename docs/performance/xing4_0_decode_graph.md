@@ -218,7 +218,7 @@ the holder, so a served process pays this on its first request and no request af
 | Claim | Command |
 | --- | --- |
 | The three arms, the rung, the pool, the two parities | `scripts/step_arms_xing4.py --device cuda:2 --context 4096 --steps 24 --rounds 2 --capacity 8192` |
-| The end-to-end table and the answer digests | `scripts/bench_xing4_0_e2e.py --device cuda:2 --decode {eager,bucket,graph} --lengths 512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
+| The end-to-end table and the answer digests | `tests/bench_xing4_0_e2e.py --device cuda:2 --decode {eager,bucket,graph} --lengths 512,4096,16384,32768 --decode-steps 32 --max-model-len 32768` |
 | The bucket's delta against depth, and the 0.4375 | a scratch sweep over `Xing4_0GGUFModel(..., block_count=n)` for n in 2/4/8/16/40, transcribed above: each depth run at a 1.27× and a 2.55× rung over 16 positions, one fresh cache a position |
 | The position's two spellings, and the capture's refusal | `python -m pytest tests/test_xing4_0_decode_pos.py -q` |
 | The parities, the ladder and the lifetime | `python -m pytest tests/test_xing4_0_decode_graph.py -q` |
