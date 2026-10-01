@@ -1010,7 +1010,7 @@ def scheduler_gauges(scheduler: Any) -> dict[str, float]:
     a lock: two concurrent clients reaching either one produce identical tokens and identical
     responses, and the difference is visible only from inside the process. The same `Stats` struct,
     the same field, read here and published under the same suffix the native server uses -- so the
-    two hosts are compared by substituting `pocketllm_` for `pocket_` rather than through a
+    two hosts are compared by substituting `relicllm_` for `pocket_` rather than through a
     translation table.
 
     Nothing is published on a serialized path -- not zeros. There is no scheduler there, and a zero

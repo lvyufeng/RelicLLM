@@ -185,7 +185,7 @@ def _get_scale_min_k4(scales: np.ndarray, idx: int) -> tuple[np.ndarray, np.ndar
 
 def _extract_ggml_table(table_name: str, *, dtype: str, expected: int) -> np.ndarray:
     """Parse a vendored llama.cpp IQ lookup table without duplicating constants."""
-    header = Path(__file__).parents[2] / "csrc" / "llama_mmq" / "ggml-common.h"
+    header = iq4_nl._GGML_COMMON
     text = header.read_text(encoding="utf-8")
     match = re.search(
         rf"GGML_TABLE_BEGIN\([^,]+,\s*{re.escape(table_name)},\s*{expected}\)(.*?)GGML_TABLE_END\(\)",
