@@ -78,6 +78,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [GLM-5.3-Flash checkpoint audit](https://lvyufeng.github.io/RelicLLM/architecture/glm_5_3_flash_audit/)
 - [The command-line surface against vLLM and SGLang](https://lvyufeng.github.io/RelicLLM/architecture/cli_surface_design_2026_09/)
 - [Per-method duplication across the five adapters](https://lvyufeng.github.io/RelicLLM/architecture/per_method_duplication_2026_09/)
+- [The device plane](https://lvyufeng.github.io/RelicLLM/architecture/device_plane/)
 
 ## Migration
 
