@@ -1,0 +1,227 @@
+# Documentation site for RelicLLM, published to GitHub Pages by
+# .github/workflows/pages.yml.
+#
+# `docs_dir` points at the `docs/` tree the repository already had, so publishing the
+# site moves no files: the same markdown is the GitHub directory index and the site
+# source. `docs/README.md` is the site home -- MkDocs treats a README.md as the index
+# page of its directory, and if both index.md and README.md existed here the README
+# would be ignored instead.
+site_name: RelicLLM
+site_url: https://lvyufeng.github.io/RelicLLM/
+site_description: >-
+  Multi-GPU inference runtime for older accelerators: model implementations, serving
+  adapters and schedulers on PyTorch, over the relic-core operator library
+site_author: lvyufeng
+copyright: MIT licensed. Model weights and third-party components keep their own licenses.
+
+repo_url: https://github.com/lvyufeng/RelicLLM
+repo_name: lvyufeng/RelicLLM
+edit_uri: edit/master/docs/
+
+docs_dir: docs
+use_directory_urls: true
+
+theme:
+  name: material
+  language: en
+  favicon: assets/favicon.svg
+  # Only overrides/main.html lives here, and it does nothing except fill
+  # `{% block announce %}`. Material's own main.html is four lines that just
+  # extend base.html, so overriding it drops no other block.
+  custom_dir: overrides
+
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+  features:
+    - announce.dismiss
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/lvyufeng/RelicLLM
+      name: RelicLLM on GitHub
+
+plugins:
+  # Chinese search is broken without this block, and it matters here: several of these
+  # documents carry Chinese headings, and a query in Chinese against them returns
+  # nothing at all rather than ranking badly. Material segments CJK with jieba and
+  # joins the pieces with U+200B, which its built-in separator "[\s\-]+" does not
+  # match, so every CJK term that was indexed is unreachable by its own words.
+  #
+  # The separator below is the one Material itself ships in
+  # templates/partials/languages/zh.html. It is written with backslash-u escapes
+  # rather than the literal characters so that the zero-width space stays visible in
+  # review; Python's `re` and the worker's `new RegExp` both accept the escapes.
+  #
+  # Declaring `plugins:` at all means this list is the whole list. A plugin added
+  # later has to be listed here, or it will not run.
+  - search:
+      lang:
+        - en
+        - zh
+      separator: '[\s\u200b\u3000\-、。，．？！；]+'
+
+nav:
+  - Home: README.md
+  - Getting started: getting-started.md
+  - Model guides:
+      - Support matrix: models/README.md
+      - DeepSeek-V4: models/deepseek-v4.md
+      - DeepSeek-V4 GGUF Q2 on one GPU: models/deepseek-v4-gguf-q2-single-gpu.md
+      - MiniMax-M2.7: models/minimax-m2.7.md
+      - GLM-5.2: models/glm-5.2.md
+      - Qwen3.8-27B-FP8: models/qwen3.8-27b-fp8.md
+      - Qwen3.8-27B-NVFP4: models/qwen3.8-27b-nvfp4.md
+      - Qwen3.8-27B-BF16: models/qwen3.8-27b-bf16.md
+      - DeepSeek-V4.1-Flash: models/deepseek-v4.1-flash.md
+      - MiMo-V2.6-Flash: models/mimo-v2.6-flash.md
+      - Ternary-Bonsai-2-27B: models/ternary-bonsai-2-27b.md
+      - Xing4.0-29B-A4B: models/xing4.0-29b-a4b.md
+  - Guides:
+      - Overview: guides/index.md
+      - Benchmarking and reporting: guides/benchmarking.md
+      - Serving latency metrics: guides/latency_metrics.md
+      - Native engine API: guides/pocketllm_api.md
+  - Performance:
+      - Overview: performance/index.md
+      - DSpark speculative decoding: performance/dspark.md
+      - MiniMax decode bottleneck: performance/minimax_decode_bottleneck_analysis.md
+      - Qwen4-Exp expert placement: performance/qwen4_exp_performance.md
+      - CPU offload and prefetch ceiling: performance/cpu_offload_profile.md
+      - Qwen KV cache at 65K: performance/qwen_kv_cache_65k_tg512.md
+      - Qwen drafter acceptance: performance/qwen_drafter_acceptance.md
+      - DeepSeek-V4.1 shard audit: performance/deepseek_v4_1_shard_audit.md
+      - DeepSeek-V4.1-Flash host run: performance/deepseek_v4_1_flash_host_run.md
+      - DeepSeek-V4.1-Flash device experts: performance/deepseek_v4_1_flash_device_experts.md
+      - DeepSeek-V4.1-Flash remaining bottlenecks: performance/deepseek_v4_1_flash_remaining_bottlenecks.md
+      - DeepSeek-V4.1-Flash decode graph: performance/deepseek_v4_1_flash_decode_graph.md
+      - DeepSeek-V4.1-Flash graphed decode, live: performance/deepseek_v4_1_flash_decode_graph_live.md
+      - DeepSeek-V4.1-Flash chunked prefill: performance/deepseek_v4_1_flash_chunked_prefill.md
+      - DeepSeek-V4.1-Flash prefill stack: performance/deepseek_v4_1_flash_prefill_stack.md
+      - DeepSeek-V4.1-Flash single-request capability: performance/deepseek_v4_1_flash_single_request_capability.md
+      - DeepSeek-V4.1-Flash behind the server: performance/deepseek_v4_1_flash_served_gate.md
+      - DeepSeek-V4.1-Flash dense stack in fp16, withdrawn: performance/v41_dense_gemm_dtype.md
+      - Xing4.0-29B-A4B MLA attention on sm_75: performance/xing4_0_attention_sm75.md
+      - Xing4.0-29B-A4B hyper-connection on sm_75: performance/xing4_0_hyper_connection_sm75.md
+      - Xing4.0-29B-A4B decode launch gap: performance/xing4_0_decode_launch_gap.md
+      - Xing4.0-29B-A4B prefill/decode seam: performance/xing4_0_rate_clock_split.md
+      - Xing4.0-29B-A4B decode graph: performance/xing4_0_decode_graph.md
+  - Architecture:
+      - Overview: architecture/index.md
+      - MiMo-V2.6-Flash design and measurements: architecture/mimo_v2_6_flash_design.md
+      - DeepSeek-V4.1-Flash design and measurements: architecture/deepseek_v4_1_flash_design.md
+      - Qwen3.8-27B-FP8 design and measurements: architecture/qwen3_8_27b_fp8_design.md
+      - Qwen3.8-27B-NVFP4 design and measurements: architecture/qwen3_8_27b_nvfp4_design.md
+      - Qwen3.8-27B BF16 design and measurements: architecture/qwen3_8_27b_bf16_design.md
+      - DeepSeek-V4-Flash design and measurements: architecture/deepseek_v4_design.md
+      - GLM-5.2 design and measurements: architecture/glm_5_2_design.md
+      - MiniMax-M2.7 design and measurements: architecture/minimax_m2_7_design.md
+      - Cross-request prefix caching on V4.1: architecture/v41_prefix_cache.md
+      - Cross-request prefix caching on MiMo-V2.6-Flash: architecture/mimo_v2_6_flash_prefix_cache.md
+      - Ternary-Bonsai-2-27B reference gate: architecture/ternary_bonsai_2_reference_gate.md
+      - Xing4.0-29B-A4B checkpoint audit: architecture/xing4_0_29b_a4b_audit.md
+      - Xing4.0-29B-A4B design and measurements: architecture/xing4_0_29b_a4b_design.md
+      - Ternary-Bonsai-2-27B served runtime: architecture/bonsai_2_27b_design.md
+      - GLM-5.3-Flash checkpoint audit: architecture/glm_5_3_flash_audit.md
+      - The command-line surface against vLLM and SGLang: architecture/cli_surface_design_2026_09.md
+      - Per-method duplication across the five adapters: architecture/per_method_duplication_2026_09.md
+  - Migration:
+      - Overview: migration/index.md
+      - A max_tokens the context cannot hold is refused: migration/overlong-max-tokens-is-refused.md
+      - A --max-batch-size that cannot be honoured is refused: migration/unhonourable-batch-width-is-refused.md
+      - --device splits into a platform and a card list: migration/device-splits-into-platform-and-cards.md
+      - Batching is on by default for the cpp backend: migration/batching-default-on.md
+  - Archive (Phase 2/3):
+      - Backend auto-TP design: archive/phase2-phase3/cpp_backend_auto_tp.md
+      - Phase 3.5 auto-TP results: archive/phase2-phase3/phase3_5_auto_tp_results.md
+
+# MkDocs hooks. One, and it is a build-time check rather than a feature: it warns
+# when `docs/llms.txt` is out of date with the nav above, which `--strict` turns
+# into a failure. CI runs no pytest, so the docs build is the only check that
+# runs on a documentation change, and this is where that check has to live.
+hooks:
+  - hooks/llms_txt_staleness.py
+
+# The build is the link checker: `mkdocs build --strict` runs in CI and promotes
+# every warning below to a failure. Anything omitted from `nav` also fails, so no
+# document can be reachable only by guessing its filename.
+#
+# What it cannot check is a link that leaves the repository. The pages here cite
+# measurements and designs that went to relic-core, relic-engine and PocketLLM, and
+# those are written as absolute URLs on purpose -- a relative path into another
+# repository is unresolvable from a published page and would pass this build
+# precisely by never being inspected. See the note in `docs/README.md`.
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    absolute_links: warn
+    unrecognized_links: warn
+    anchors: warn
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  # Chinese headings appear in a dozen of these documents, so slugify has to keep
+  # non-ASCII instead of stripping it the way the Markdown default does.
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tilde
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+watch:
+  - docs
+  - mkdocs.yml

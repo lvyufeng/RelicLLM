@@ -6,3 +6,6 @@ dist/
 *.egg-info/
 .eggs/
 .pytest_cache/
+
+# The documentation site build output (mkdocs.yml -> .github/workflows/pages.yml).
+/site

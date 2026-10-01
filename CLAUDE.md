@@ -29,6 +29,16 @@ edge, that is a cycle forming — put the shared piece in `relicllm/protocol/` i
 namespace package carried alongside it. Both are listed in `setup.py`'s `find_namespace_packages`,
 and `src.csrc` / `src.gguf` / `src.moe` are excluded — there is no C++ tree here.
 
+`docs/` is the published site's source (`mkdocs.yml`), 66 pages indexed by `docs/README.md` — model
+guides, per-model design records, performance measurements, and migration notes.
+
+**Those pages still say `PocketLLM`, `pocketllm_*` and `scripts/*.py`.** The rename to `relicllm`
+was applied to `CLAUDE.md`, the README and the package, not to the bodies of 347 lines across 52
+document pages: a page's prose names the thing it was written about. Rewriting them is tracked as
+its own piece of work rather than folded into the move — it is a large diff with no mechanical
+answer (`pocketllm_*` metric prefixes and `POCKETLLM_*` variables must *not* be renamed, per
+Provenance below), and mixing it into the relocation would bury which pages actually changed.
+
 ## What is deliberately not here
 
 - **No kernels.** `src/csrc/` does not exist. Every op comes through
@@ -79,8 +89,15 @@ invoked.
 Several modules are also run as scripts directly (`python tests/test_x.py`), which is why their
 imports carry an explicit `sys.path` insert and why there is no `conftest.py`.
 
-**No CI runs the suite.** There is no workflow in this repository, so the baseline check is a manual
-step.
+**No CI runs the suite.** The only workflow here is `.github/workflows/pages.yml`, which builds the
+documentation site, so the baseline check is a manual step.
+
+That workflow runs `mkdocs build --strict`, which is the repository's link checker — but only
+*within* `docs/`. It also fails when `docs/llms.txt` is stale with the nav, because
+`hooks/llms_txt_staleness.py` checks it on every build and `--strict` promotes the warning. So a nav
+edit and the regenerated `docs/llms.txt` (`python scripts/gen_llms_txt.py`) belong in the same
+commit. Links leaving the repository are absolute URLs the build cannot see; `docs/README.md` says
+why they are written that way.
 
 ## Git workflow
 
