@@ -5,7 +5,7 @@ from typing import Optional
 
 import torch
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
+from src.runtime.ops import load_ops
 
 
 class _ExpertSlabBudget:
@@ -282,7 +282,7 @@ class GPUPrefillMoEBackend:
             elif prefer_fp4 and self._staged_arena_format != "fp4" and hasattr(self.cpu_backend, "get_fp4_arena") and self.cpu_backend.get_fp4_arena() is not None:
                 self.release_cache()
         if self._cuda_ext is None:
-            self._cuda_ext = load_cuda_kernel()
+            self._cuda_ext = load_ops()
         if self._cuda_ext is None or not hasattr(self._cuda_ext, "int8_gemm_pair_forward"):
             raise RuntimeError("cuda_kernel int8 GEMM extension is unavailable")
         expert_ids = self._expert_ids_for_stage(local_experts)
@@ -652,7 +652,7 @@ class GPUPrefillMoEBackend:
         if not x.is_cuda:
             raise RuntimeError("GPU prefill MoE requires CUDA input")
         if self._cuda_ext is None:
-            self._cuda_ext = load_cuda_kernel()
+            self._cuda_ext = load_ops()
             if self._cuda_ext is None or not hasattr(self._cuda_ext, "int8_gemm_pair_forward"):
                 raise RuntimeError("cuda_kernel int8 GEMM extension is unavailable")
         t0 = time.perf_counter() if self.profile_enabled else 0.0

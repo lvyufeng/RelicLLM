@@ -109,9 +109,9 @@ def _load_hyper_connection_kernel():
     is correct, just slower.  The op's absence is the only thing being tolerated
     here -- an op that exists and fails still raises.
     """
-    from relic_core.kernels.cuda_loader import load_cuda_kernel
+    from src.runtime.ops import load_ops
 
-    module = load_cuda_kernel()
+    module = load_ops()
     if module is None or not hasattr(module, "xing4_hyper_connection_forward"):
         return None
     return module

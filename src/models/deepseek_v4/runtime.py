@@ -16,7 +16,7 @@ from torch.autograd.profiler import record_function
 from src.components.moe.cpu_backend import CPURoutedExpertsBackend, start_in_process_cpu_moe_server
 from src.components.moe.gpu_prefill_backend import GPUPrefillMoEBackend
 from relic_core.kernels.ops import act_quant, fp4_act_quant, fp8_gemm, fp4_gemm, sparse_attn, hc_split_sinkhorn, Packed4BitWeightAlongK, _quantize_int8_weight_torch, soft_bf16_weight_gemm_int8, soft_bf16_weight_gemm_int8_pair_cuda_ext, _SHARED_EXPERT_PAIR_INT8_CUDA, _dequant_fp4_weight_torch, soft_fp8_blockfp8_weight_dequant, q8_0_weight_gemm
-from relic_core.kernels.cuda_loader import load_cuda_kernel
+from src.runtime.ops import load_ops
 
 
 world_size = 1
@@ -214,7 +214,7 @@ class _DecodeCustomAllreduce:
             for dst_dev in range(world_size):
                 if src_dev != dst_dev and not torch.cuda.can_device_access_peer(src_dev, dst_dev):
                     raise RuntimeError(f"CUDA peer access is not supported between device {src_dev} and {dst_dev}")
-        self.ext = load_cuda_kernel()
+        self.ext = load_ops()
         if self.ext is None:
             raise RuntimeError("cuda_kernel extension is not available")
         for name in (
@@ -305,7 +305,7 @@ def _maybe_fused_moe_finalize(y_reduce: torch.Tensor, shared: torch.Tensor, out_
     out_code = _dtype_code(out_dtype)
     if out_code == 0 or not y_reduce.is_cuda or not shared.is_cuda or y_reduce.shape != shared.shape:
         return None
-    ext = load_cuda_kernel()
+    ext = load_ops()
     if ext is None or not hasattr(ext, "moe_finalize_reduce_forward"):
         return None
     return ext.moe_finalize_reduce_forward(y_reduce.contiguous(), shared.contiguous(), out_code)
@@ -944,7 +944,7 @@ def apply_rotary_emb(x: torch.Tensor, freqs_cis: torch.Tensor, inverse: bool = F
 
 def rotate_activation(x: torch.Tensor) -> torch.Tensor:
     assert x.dtype == torch.bfloat16
-    ext = load_cuda_kernel() if x.is_cuda and x.size(-1) == 128 else None
+    ext = load_ops() if x.is_cuda and x.size(-1) == 128 else None
     if ext is not None and hasattr(ext, "hadamard128_forward"):
         return ext.hadamard128_forward(x)
     return x
@@ -1146,7 +1146,7 @@ class Indexer(torch.nn.Module):
         self.register_buffer("kv_cache", torch.zeros(args.max_batch_size, args.max_seq_len // compress_ratio, self.head_dim), persistent=False)
         self.freqs_cis = None
         self.fused_c4_indexer_enabled = _env_enabled("DEEPSEEK_FUSED_C4_INDEXER_CUDA")
-        self._fused_c4_indexer_ext = load_cuda_kernel() if self.fused_c4_indexer_enabled else None
+        self._fused_c4_indexer_ext = load_ops() if self.fused_c4_indexer_enabled else None
         self._prefill_chunk_tokens = max(
             1, int(os.getenv("DEEPSEEK_INDEXER_PREFILL_CHUNK_TOKENS", "512"))
         )
@@ -1338,7 +1338,7 @@ class Attention(nn.Module):
         self.wo_a_bmm_enabled = _env_enabled("DEEPSEEK_WO_A_BMM")
         self._wo_a_int8_ready = False
         self._wo_a_phase_env_enabled = preload_wo_a
-        self._wo_a_cuda_ext = load_cuda_kernel() if self.wo_a_int8_enabled else None
+        self._wo_a_cuda_ext = load_ops() if self.wo_a_int8_enabled else None
         self._wo_a_cuda_enabled = self._wo_a_cuda_ext is not None
         self.wo_b = RowParallelLinear(self.n_groups * args.o_lora_rank, self.dim, dtype=torch.int8 if args.attn_int8 else None)
         self.wo_b.phase_env_suffix = "WO_B_INT8"
@@ -1362,7 +1362,7 @@ class Attention(nn.Module):
         self.attn_profile_enabled = _env_enabled("DEEPSEEK_ATTN_PROFILE")
         # Plan B-小-v2: fused attention decode prefuse kernels (q rmsnorm+rope; kv norm+rope+actquant).
         self._fused_attn_prefuse_enabled = _env_enabled("DEEPSEEK_FUSED_ATTN_PREFUSE")
-        self._fused_attn_prefuse_ext = load_cuda_kernel() if self._fused_attn_prefuse_enabled else None
+        self._fused_attn_prefuse_ext = load_ops() if self._fused_attn_prefuse_enabled else None
         if self._fused_attn_prefuse_ext is not None and (
             not hasattr(self._fused_attn_prefuse_ext, "fused_q_rmsnorm_rope_inplace")
             or not hasattr(self._fused_attn_prefuse_ext, "fused_kv_rope_actquant_inplace")
@@ -2019,7 +2019,7 @@ class Expert(nn.Module):
         try:
             cuda_mod = self._gguf_cuda_mod
             if cuda_mod is None:
-                cuda_mod = load_cuda_kernel()
+                cuda_mod = load_ops()
                 if cuda_mod is None or not hasattr(cuda_mod, "gguf_quant_gemm_forward"):
                     return None
                 self._gguf_cuda_mod = cuda_mod
@@ -2489,7 +2489,7 @@ class Expert(nn.Module):
         try:
             cuda_mod = self._gguf_cuda_mod
             if cuda_mod is None:
-                cuda_mod = load_cuda_kernel()
+                cuda_mod = load_ops()
                 if cuda_mod is None or not hasattr(cuda_mod, "gguf_quant_gemm_forward"):
                     return None
                 self._gguf_cuda_mod = cuda_mod
@@ -3229,7 +3229,7 @@ class MoE(nn.Module):
         )
 
     def _forward_gguf_decode_grouped(self, x: torch.Tensor, indices: torch.Tensor, weights: torch.Tensor) -> torch.Tensor | None:
-        cuda_mod = load_cuda_kernel()
+        cuda_mod = load_ops()
         if cuda_mod is None or not hasattr(cuda_mod, "gguf_moe_prefill_grouped_forward"):
             return None
         profile = self.gpu_gguf_decode_grouped_profile
@@ -3716,7 +3716,7 @@ class MoE(nn.Module):
             grouped = None
             grouped_routes = 0
             expert_ids_order = []
-            cuda_mod = load_cuda_kernel()
+            cuda_mod = load_ops()
             if cuda_mod is not None and hasattr(cuda_mod, "moe_group_routes"):
                 grouped = cuda_mod.moe_group_routes(
                     indices.contiguous(),
@@ -4304,7 +4304,7 @@ class Block(nn.Module):
         self.hc_post_cuda_enabled = _env_enabled_default_on("DEEPSEEK_HC_POST_CUDA")
         self.hc_fp16_mode = os.getenv("DEEPSEEK_HC_FP16", "0").lower()
         self._hc_int8_ready = False
-        self._hc_cuda_ext = load_cuda_kernel() if self.hc_int8_enabled or self.hc_pre_cuda_enabled or self.hc_post_cuda_enabled else None
+        self._hc_cuda_ext = load_ops() if self.hc_int8_enabled or self.hc_pre_cuda_enabled or self.hc_post_cuda_enabled else None
         self._hc_cuda_enabled = self._hc_cuda_ext is not None
         self._hc_pre_cuda_available = self._hc_cuda_enabled and hasattr(self._hc_cuda_ext, "hc_split_pre_forward")
         self._hc_post_cuda_available = self._hc_cuda_enabled and hasattr(self._hc_cuda_ext, "hc_post_forward")

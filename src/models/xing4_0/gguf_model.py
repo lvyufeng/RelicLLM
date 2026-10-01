@@ -206,9 +206,9 @@ class Xing4_0GGUFModel:
         return self.loader.tensor_ref(name).type_name
 
     def _cuda(self):
-        from relic_core.kernels.cuda_loader import load_cuda_kernel
+        from src.runtime.ops import load_ops
 
-        module = load_cuda_kernel()
+        module = load_ops()
         if module is None:
             raise RuntimeError("the cuda_kernel extension is required to run the MoE")
         return module

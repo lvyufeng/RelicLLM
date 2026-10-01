@@ -52,12 +52,12 @@ from typing import Sequence
 import torch
 import torch.nn.functional as F
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.mimo_v2.config import MimoV2TextConfig
 from src.models.mimo_v2.device_attention import MimoV2DeviceAttention, MimoV2KVCache
 from src.models.mimo_v2.device_experts import MimoV2DeviceExperts, MimoV2ExpertSource
 from src.models.mimo_v2.ep import EpGroup, deal_rule
 from src.models.mimo_v2.layers import gate_and_route, rms_norm, swiglu_mlp
+from src.runtime.ops import load_ops
 
 __all__ = [
     "MimoV2DeviceLayer",
@@ -199,7 +199,7 @@ class MimoV2DeviceLayer:
             #: The router as one C++ call, or `None` for a config the transcription does not
             #: cover -- in which case `route` takes the reference path, which is the one that
             #: refuses a scoring function or a `topk` method this checkpoint does not use.
-            ops = load_cuda_kernel()
+            ops = load_ops()
             self._route_ops = (
                 ops
                 if (

@@ -25,9 +25,9 @@ from typing import Protocol
 
 import torch
 
-from relic_core.kernels.cuda_loader import load_cuda_kernel
 from src.models.qwen4_exp.layers import swiglu_expert
 from src.models.qwen4_exp.quant import FP8Tensor
+from src.runtime.ops import load_ops
 
 
 @dataclass
@@ -300,7 +300,7 @@ class HostExpertMoE:
             # unnecessarily large, so keep the per-expert path there.
             return None
         if self._cuda_ext is None:
-            self._cuda_ext = load_cuda_kernel()
+            self._cuda_ext = load_ops()
         if self._cuda_ext is None or not hasattr(
             self._cuda_ext, "qwen4_exp_moe_prefill_bf16_forward"
         ):
