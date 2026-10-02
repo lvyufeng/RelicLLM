@@ -24,7 +24,7 @@ import os
 
 import pytest
 
-from src.encoding.deepseek_v4_1 import (
+from relicllm.encoding.deepseek_v4_1 import (
     THINKING_END,
     TOOL_CALLS_START,
     cut_tool_calls,

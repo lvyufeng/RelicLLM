@@ -5,7 +5,7 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from src.models.qwen4_exp.layers import prefill_linear
+from relicllm.models.qwen4_exp.layers import prefill_linear
 
 
 def test_prefill_linear_cpu_is_exact(monkeypatch) -> None:

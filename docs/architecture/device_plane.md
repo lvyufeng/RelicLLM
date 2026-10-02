@@ -33,7 +33,7 @@ port that has never run anywhere should not start by spanning four chips.
 
 ## The plane, and what it is made of
 
-`src/runtime/device.py`. Everything above it asks *this* module which platform it is on; nothing
+`relicllm/runtime/device.py`. Everything above it asks *this* module which platform it is on; nothing
 above it names a vendor.
 
 Three things are pure, and each is pure for a reason a test uses:
@@ -84,55 +84,59 @@ by [`migration/platform-is-checked.md`](../migration/platform-is-checked.md).
 
 ### The six entry points
 
-The plane answers a question at 324 `torch.cuda` sites under `src/` and `relicllm/`. Six of them
+The plane answers a question at 325 `torch.cuda` sites in the package. Six of them
 *decide*: the place a process becomes bound to a card, and the place a collective backend is named.
 Those six ask the plane now, plus the two worker payloads that make the same decision again in a
 child process:
 
 | Entry point | What it decides |
 |---|---|
-| `src/runtime/generation.py::setup_dist` | the GGUF raw-block runtime's device and collective |
-| `src/cli/generate_v41.py::setup_distributed` | the same, for the V4.1 launcher |
-| `src/models/mimo_v2/ep.py::EpGroup.from_env` | the MiMo expert-parallel group |
-| `src/models/qwen4_exp/runtime.py::init_distributed` | the Qwen4-Exp TP context |
-| `src/models/deepseek_v4/generation.py::main` | the DeepSeek-V4 runtime's rank setup |
-| `src/models/deepseek_v4/serving.py::_init_runtime` | the served path's rank setup |
+| `relicllm/runtime/generation.py::setup_dist` | the GGUF raw-block runtime's device and collective |
+| `relicllm/cli/generate_v41.py::setup_distributed` | the same, for the V4.1 launcher |
+| `relicllm/models/mimo_v2/ep.py::EpGroup.from_env` | the MiMo expert-parallel group |
+| `relicllm/models/qwen4_exp/runtime.py::init_distributed` | the Qwen4-Exp TP context |
+| `relicllm/models/deepseek_v4/generation.py::main` | the DeepSeek-V4 runtime's rank setup |
+| `relicllm/models/deepseek_v4/serving.py::_init_runtime` | the served path's rank setup |
 | `serving.py::_run_payload`, `_run_payload_stream` | the platform, carried to the worker process |
 | `relicllm/backends/runtime_engine.py::_bind_device` | the serving bridge's one hard `torch.cuda` |
 
 The platform travels *with* the worker payload rather than being re-probed there, because a worker
 that probed independently would be answering a question about a differently configured host.
 
-## Why the plane lives in `src/`
+## Why the plane lives in `relicllm/runtime/`
 
-`CLAUDE.md` names `relicllm/protocol/` as the home for a piece shared between the two top-level
-packages, and warns that a second `src/ → relicllm/` edge is a cycle forming. The device question is
-asked by the model side — seventeen files under `src/models/` still name `torch.cuda` — and by
-`relicllm/backends/`. Sitting the module in `relicllm/protocol/` would have added that many reverse
-edges — precisely what that rule exists to prevent. In `src/runtime/`, the model side is an
-intra-package import and the serving side is the direction that already runs. `src → relicllm` is
-still exactly one file (`src/models/deepseek_v4/serving.py`, importing `relicllm.protocol`).
+The device question is asked by the model side — seventeen files under `relicllm/models/` still name
+`torch.cuda` — and by `relicllm/backends/`. Those two halves were separate top-level packages when
+this module was written, and `CLAUDE.md` named `relicllm/protocol/` as the home for anything shared
+across that boundary, warning that a second `src/ → relicllm/` edge would be a cycle forming.
+Sitting the module in `relicllm/protocol/` would have added seventeen reverse edges, which is
+precisely what that rule existed to prevent.
+
+The rule is gone: `src/` was merged into `relicllm/`, so there is one package and no boundary to
+respect. The module stays where it was put. `relicllm/runtime/` is still the right shelf — it is the
+layer that holds Torch-and-collectives facts rather than model facts, next to `generation.py` and
+`ops.py` — and the model side reaching up into it is an ordinary intra-package import.
 
 ## The operator seam
 
 Kernels are not in this repository. Every op arrives as a named binding on one extension module from
 `relic-core`, and before this work each call site asked for it directly: `load_cuda_kernel()`, 56
-times across 16 files under `src/`. That is the wrong shape the moment a second answer exists,
+times across 16 files. That is the wrong shape the moment a second answer exists,
 because "give me the ops" has a different reply per platform while the *asking* should not.
 
-`src/runtime/ops.py` is that question, asked once. It is a registry, a lookup and a list — not a
+`relicllm/runtime/ops.py` is that question, asked once. It is a registry, a lookup and a list — not a
 wrapper, and it translates nothing. On CUDA, `load_ops()` returns **the same object**
 `load_cuda_kernel()` returns, by identity, so the `hasattr(ops, ...)` probes the call sites already
 use keep working and the change is a no-op there. After it, `load_cuda_kernel` appears in exactly
-one file under `src/`.
+one file, `relicllm/runtime/ops.py` — which is where its name comes from now.
 
 `BINDINGS` is measured rather than recalled: the intersection of the built extension's public names
-with the names this tree references anywhere under `src/`, which was **46 of the extension's 57**.
+with the names this tree references anywhere in the package, which was **46 of the extension's 57**.
 The eleven it leaves out are a mix of second spellings of a kernel the runtime already has
 (`int8_gemm_forward` beside `int8_gemm_pair_forward`, `moe_single_token_int8_forward_v2` beside
 `moe_single_token_int8_forward`, `gguf_q2k_gemm_dp4a_forward`), six sparse-attention variants no
-call site under `src/` names, and the two `PTQ1_0` ternary kernels — whose GGUF type this tree *can*
-read (`src/loader/gguf/ptq1_0.py`) while the runtime that consumes it is the retired C++ engine, so
+call site names, and the two `PTQ1_0` ternary kernels — whose GGUF type this tree *can*
+read (`relicllm/loader/gguf/ptq1_0.py`) while the runtime that consumes it is the retired C++ engine, so
 no Python call site here reaches them.
 
 Two postures already existed in the tree, and the seam has to keep both:
@@ -165,7 +169,7 @@ as a checklist with 46 entries and zero of them answered for Ascend.
 | Pinned memory (66 occurrences) | `pin_memory` is a CUDA concept. An NPU has its own host-pinning story and the same call is not it |
 | The custom all-reduce (`deepseek_v4/runtime.py`, `custom_allreduce_*` in `BINDINGS`) | A hand-written IPC all-reduce has to be *replaced*, not ported. It exists because 2080 Ti machines lack NVLink-scale collectives; the NPU equivalent is HCCL's own |
 | NUMA/PCI affinity (`qwen4_exp/runtime.py`) | It reads `/sys/bus/pci/devices/*/numa_node` and pins CPU cores per card. There is no NPU equivalent of that file |
-| The remaining `torch.cuda` sites | 324 occurrences across 27 files under `src/` and `relicllm/`; 34 are `is_available()` gates. A mechanical series, one PR per subpackage — `src/models` alone is the bulk of it. Measured with `git grep -o torch.cuda -- 'src/**/*.py' 'relicllm/**/*.py' \| wc -l`, which is the command to re-run |
+| The remaining `torch.cuda` sites | 325 occurrences across 26 files; 34 are `is_available()` gates. A mechanical series, one PR per subpackage — `models/` alone is the bulk of it. Measured with `git grep -o torch.cuda -- 'relicllm/**/*.py' \| wc -l`, which is the command to re-run |
 | Real validation on a 910A | Not possible here: no CANN, no NPU, and `torch.device("npu")` does not even construct |
 
 Three hazards upstream in `relic-core` will bite before any provider does, and they are **another

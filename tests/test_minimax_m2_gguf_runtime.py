@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.components.gguf.tp_logits import tp_vocab_row_range
+from relicllm.components.gguf.tp_logits import tp_vocab_row_range
 from relic_core.kernels.cuda_loader import load_cuda_kernel
-from src.models.minimax_m2.gguf_model import MiniMaxM2GGUFModelLoader
+from relicllm.models.minimax_m2.gguf_model import MiniMaxM2GGUFModelLoader
 
 
 REAL_MINIMAX_PATH = Path("/mnt/data1/dsv4_inference/gguf_hfd/MiniMax-M2.7-GGUF/UD-IQ1_M")

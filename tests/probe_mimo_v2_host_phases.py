@@ -53,10 +53,10 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.models.mimo_v2.bank import open_expert_bank  # noqa: E402
-from src.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
-from src.models.mimo_v2.ep import EpGroup  # noqa: E402
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.bank import open_expert_bank  # noqa: E402
+from relicllm.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
+from relicllm.models.mimo_v2.ep import EpGroup  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
 from tests.bench_mimo_v2_model import fill_cache, tokenize  # noqa: E402
 
 DEFAULT_CHECKPOINT = "/mnt/data3/MiMo-V2.6-Flash-RL"
@@ -107,7 +107,7 @@ class Meter:
 
 def instrument(model, meter: Meter) -> None:
     """Wrap each named region where the model calls it, so the arms are the shipped paths."""
-    from src.models.mimo_v2 import device_model as device_model_module
+    from relicllm.models.mimo_v2 import device_model as device_model_module
 
     for layer in model.layers:
         layer.forward = meter.region("layer", layer.forward)

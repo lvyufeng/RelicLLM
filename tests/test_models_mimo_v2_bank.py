@@ -29,9 +29,9 @@ import pytest
 torch = pytest.importorskip("torch")
 from safetensors.torch import save_file  # noqa: E402
 
-from src.models.mimo_v2 import bank as bank_module  # noqa: E402
-from src.models.mimo_v2.config import MimoV2Config  # noqa: E402
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2 import bank as bank_module  # noqa: E402
+from relicllm.models.mimo_v2.config import MimoV2Config  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
 
 # The miniature's backbone tensors are the loader test's: the bank cares only that the
 # checkpoint is one this loader will open, and a second copy of that list would be a second

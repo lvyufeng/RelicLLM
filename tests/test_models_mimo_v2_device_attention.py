@@ -26,7 +26,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.mimo_v2.device_attention import (  # noqa: E402
+from relicllm.models.mimo_v2.device_attention import (  # noqa: E402
     DECODE_KEYS,
     FOLD_KEYS,
     MimoV2DeviceAttention,
@@ -36,15 +36,15 @@ from src.models.mimo_v2.device_attention import (  # noqa: E402
     fused_qkv_row_order,
     single_pass_attention,
 )
-from src.models.mimo_v2.layers import (  # noqa: E402
+from relicllm.models.mimo_v2.layers import (  # noqa: E402
     MimoV2DecoderLayer,
     attention as host_attention,
     build_attention_masks,
     repeat_kv,
     split_fused_qkv,
 )
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
-from src.models.mimo_v2.weights import layer_weights_from_checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.weights import layer_weights_from_checkpoint  # noqa: E402
 
 RELEASE = os.environ.get("POCKETLLM_MIMO_CHECKPOINT", "/mnt/data3/MiMo-V2.6-Flash-RL")
 HAS_RELEASE = os.path.isfile(os.path.join(RELEASE, "config.json"))

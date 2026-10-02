@@ -1,6 +1,6 @@
 # Cross-request prefix caching on the MiMo-V2.6-Flash serving path
 
-**Served behavior.** `src/models/mimo_v2/generate.py`'s loop opened with `cache.reset()`, so every
+**Served behavior.** `relicllm/models/mimo_v2/generate.py`'s loop opened with `cache.reset()`, so every
 request began at position zero and a chat loop that resends its history forward-passed the history
 again on every turn. On this runtime that is expensive in a way it is not on a card-resident model:
 a prefill chunk reaches nearly every routed expert, so the tokens already in the prompt are paid for
@@ -12,7 +12,7 @@ The store is the same one V4.1 serves from, and
 the `Entry.logits` row are described — none of it is restated here. What is different is **what a
 snapshot is**: V4.1 stores a window ring plus compressed tables, and this model's cache is two
 buffers a layer where a windowed layer is a ring and a global layer is the context. That difference
-is the whole of `src/models/mimo_v2/prefix_cache.py`.
+is the whole of `relicllm/models/mimo_v2/prefix_cache.py`.
 
 ## What a stored prefix is
 

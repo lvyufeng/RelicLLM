@@ -26,11 +26,11 @@ from .v41_backend import V41Backend
 from .worker import WORKERS, program
 from .xing4_backend import Xing4Backend
 
-# The device vocabulary and the probe, from the model side. `relicllm -> src` is the direction this
-# package already runs in -- see `src/runtime/device.py`'s own note on why the module is not in
-# `relicllm/protocol/`.
-from src.runtime.device import Accelerator, resolve_platform
-from src.runtime.device import probe_accelerator as _probe_accelerator
+# The device vocabulary and the probe. The module is a leaf -- stdlib and torch, nothing from this
+# package -- so importing it here is free of the half-initialized-`relicllm` hazard that
+# `relicllm/api/types.py` has to watch for.
+from relicllm.runtime.device import Accelerator, resolve_platform
+from relicllm.runtime.device import probe_accelerator as _probe_accelerator
 
 
 # ---------------------------------------------------------------------------------------------

@@ -60,7 +60,7 @@ Homepage = "https://github.com/lvyufeng/RelicLLM"
 Repository = "https://github.com/lvyufeng/RelicLLM"
 Issues = "https://github.com/lvyufeng/RelicLLM/issues"
 
-# Both the `relicllm` package and the `src` tree are shipped. The tree is
-# resolved in setup.py via find_namespace_packages() so the list cannot drift.
+# One package is shipped. Its subpackages are resolved in setup.py via
+# find_namespace_packages() so the list cannot drift.
 [tool.setuptools]
 include-package-data = true

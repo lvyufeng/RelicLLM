@@ -720,7 +720,7 @@ initialization instead of failing deep inside the native loader.
 `backend="v41"` is the third adapter and the first thing `auto` tests for: a checkpoint whose config
 says `deepseek_v41` — at the root, or `deepseek_v41_text` under `text_config`, which is where the
 released V4.1 file keeps it — goes to it before the native adapter is even considered, because the
-native engine has no factory for that architecture. It runs the `src/models/deepseek_v4_1` PyTorch
+native engine has no factory for that architecture. It runs the `relicllm/models/deepseek_v4_1` PyTorch
 runtime over the checkpoint's safetensors shards, one process a rank under `--tensor-parallel-size`,
 and it reports `supports_batch=False`: one mutable KV state, serialized at the backend boundary.
 `--backend v41` on a GGUF checkpoint, or on a config that is not V4.1, raises
@@ -737,7 +737,7 @@ interrupt a prompt's forward.
 `backend="mimo"` is the adapter for MiMo-V2.6-Flash. `--backend mimo` names it, and `auto` reaches it
 too — the checkpoint's `model_type` is `mimo_v2`, which the factory recognizes the way it recognizes
 `deepseek_v41`, so a MiMo release gets this adapter from either. What it runs is
-[MiMo-V2.6-Flash](../models/mimo-v2.6-flash.md)'s runtime: `src/models/mimo_v2` over the release,
+[MiMo-V2.6-Flash](../models/mimo-v2.6-flash.md)'s runtime: `relicllm/models/mimo_v2` over the release,
 the routed experts in host memory, one process a rank under `--tensor-parallel-size`, and it reports
 `supports_batch=False`. Two things about it are not the other adapters':
 
@@ -760,16 +760,16 @@ the routed experts in host memory, one process a rank under `--tensor-parallel-s
 flattening, tool attachment and `tool_choice` instructions, `reasoning`/`reasoning_effort` handling,
 tool-call shaping, and stop-string truncation. There is one implementation, and it imports neither
 Torch nor the native module. It used to be shared with a second, model-owned server
-(`src.server.openai`, since retired with the rest of the duplicate front ends — see
+(`relicllm.server.openai`, since retired with the rest of the duplicate front ends — see
 [#447](https://github.com/lvyufeng/PocketLLM/issues/447)); the module that server's runtime half
-became is `src/models/deepseek_v4/serving.py`.
+became is `relicllm/models/deepseek_v4/serving.py`.
 
 `/v1/chat/completions` puts the normalized messages, thinking mode, reasoning effort, and tool
 metadata in `GenerationRequest.metadata`. The shared prompt boundary first asks the selected
 checkpoint tokenizer to apply its own `chat_template` with an assistant generation prompt. This is
 the same model-owned-template contract used by vLLM/SGLang and preserves model-specific special
 tokens, reasoning controls, and tool formatting. For DeepSeek checkpoints whose tokenizer has no
-chat template, the validated legacy `src.encoding.deepseek_v4.encode_messages` format is used instead.
+chat template, the validated legacy `relicllm.encoding.deepseek_v4.encode_messages` format is used instead.
 `GenerationRequest.prompt` still carries a deterministic `role: content` rendering only as a last-resort
 fallback for generic tokenizers that provide neither format. `/v1/completions` passes `prompt` through
 unchanged and validates that a list prompt contains only strings.

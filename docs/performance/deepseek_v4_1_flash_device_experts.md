@@ -1,6 +1,6 @@
 # DeepSeek-V4.1-Flash: the routed experts on the four cards
 
-`src/models/deepseek_v4_1/device_experts.py` holds one backbone layer's routed experts as fixed
+`relicllm/models/deepseek_v4_1/device_experts.py` holds one backbone layer's routed experts as fixed
 arenas on `world` cards and consumes the checkpoint's packed fp4 directly: the kernel
 `moe_single_token_fp4_forward` takes `[E, N, K/2]` uint8 codes beside `[E, N, K/32]` E8M0 scales and
 dequantizes inside the kernel, so no bf16 expert matrix is ever built anywhere. That is the whole
@@ -17,9 +17,9 @@ other half: the same model with the experts on the CPU, at 15 to 42 s per genera
 | --- | --- |
 | Model | DeepSeek-V4.1-Flash, released checkpoint, fp8 dense + packed-fp4 experts |
 | Checkpoint | `/mnt/data3/DeepSeek-V4.1-Flash`, 48 shards, 475.24 GiB (SMR disk, `/dev/sda`) |
-| Runtime | PyTorch resident, `src/models/deepseek_v4_1`, no native engine; `moe_single_token_fp4_forward` from the built `pocketllm_cpp` CUDA extension |
+| Runtime | PyTorch resident, `relicllm/models/deepseek_v4_1`, no native engine; `moe_single_token_fp4_forward` from the built `pocketllm_cpp` CUDA extension |
 | Commit | `df3ed3d` on `feature/v41-backbone-runtime` plus the uncommitted `device_experts.py`; the ordering fix and its re-measured step are in [the launch](#the-launch-was-four-kernels-serialized-not-one-plus-copies) |
-| TP4 | The same path with the dense tree cut across the four cards — one process per card under `torchrun --nproc_per_node=4`, `src/cli/generate_v41.py`. It is a different configuration of the same measurements, not a later commit of them, and [the section below](#the-dense-tree-across-the-four-cards-tp4) is what it changes |
+| TP4 | The same path with the dense tree cut across the four cards — one process per card under `torchrun --nproc_per_node=4`, `relicllm/cli/generate_v41.py`. It is a different configuration of the same measurements, not a later commit of them, and [the section below](#the-dense-tree-across-the-four-cards-tp4) is what it changes |
 | GPUs | 4 x RTX 2080 Ti, 22528 MiB each; expert-parallel `world=4` across all four and `world=1` on `cuda:0`, both measured |
 | CPU / RAM | 2 x Xeon E5-2696 v4, 88 hardware threads, 1007 GiB RAM |
 | Software | Python 3.11.14, torch 2.9.1+cu128, `deepseek` conda env |
@@ -135,7 +135,7 @@ flag.
 16.79 GiB, it worked first, and moving it is worth 0.4–0.6 s/token on its own; doing both at once
 would have put two independent sources of divergence inside one debugging session. It has since been
 cut across the four cards — a different launcher and a different process shape,
-`src/cli/generate_v41.py` under `torchrun --nproc_per_node=4` — and [that section](#the-dense-tree-across-the-four-cards-tp4)
+`relicllm/cli/generate_v41.py` under `torchrun --nproc_per_node=4` — and [that section](#the-dense-tree-across-the-four-cards-tp4)
 has the numbers. Everything above it and everything under *What a step costs* is the
 tree-on-host configuration.
 
@@ -387,7 +387,7 @@ ordering and a wider gap than the pre-stack pair's 1.19x against 1.22x.
 
 #### The flip's own two questions, answered through the launcher
 
-Every measurement above is the deal on a probe. Which deal `src/cli/generate_v41.py` reaches when
+Every measurement above is the deal on a probe. Which deal `relicllm/cli/generate_v41.py` reaches when
 nobody passes `--expert-deal` is a different claim, and it has two parts none of those instruments can
 reach: whether `id` fits the **documented short-prompt configuration**, and what it does to decode at a
 length where the prompt is the run. `/tmp/run_deal_default.sh` is the sitting — **six legs, three
@@ -569,7 +569,7 @@ And the end of it, the checked-in generation loop, greedy, `--max-new-tokens 4`,
 verbatim tail of each run:
 
 ```text
-$ ... -m src.models.deepseek_v4_1.generate --checkpoint /mnt/data3/DeepSeek-V4.1-Flash \
+$ ... -m relicllm.models.deepseek_v4_1.generate --checkpoint /mnt/data3/DeepSeek-V4.1-Flash \
       --prompt "The capital of France is" --max-new-tokens 4 --expert-device cuda --expert-world 4
 loaded in 73.7 s
 routed experts: DeviceRoutedExperts on 40 layers, world 4
@@ -884,10 +884,10 @@ Everything above this section is the tree on the host. The configuration the rou
 cut across the cards — one process per card, the experts dealt to the same cards — and this is what it
 measures.
 
-The launcher is `src/cli/generate_v41.py`:
+The launcher is `relicllm/cli/generate_v41.py`:
 
 ```bash
-torchrun --nproc_per_node=4 -m src.cli.generate_v41 \
+torchrun --nproc_per_node=4 -m relicllm.cli.generate_v41 \
     --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" \
     --max-new-tokens 8 --threads 22
 ```
@@ -1156,7 +1156,7 @@ the wiring is worth.
 `V41Checkpoint.packed` already falls through to `resident_bank` when one is attached, so the class's
 staging has read from that segment since the bank was written; what was missing was a run that had
 both. The segment is filled once per boot of it — one process, 457.78 GiB, 36.6 minutes of
-`/mnt/data3`, `src/models/deepseek_v4_1/resident_bank.py` is the module and its docstring is the
+`/mnt/data3`, `relicllm/models/deepseek_v4_1/resident_bank.py` is the module and its docstring is the
 account of it — and any later run attaches in milliseconds by environment:
 
 ```bash
@@ -2008,7 +2008,7 @@ and `sample(logits, self.temperature)` (`modules.py:668`) therefore takes its no
 `probs.div_(torch.empty_like(probs).exponential_(1)).argmax(dim=-1)` (`modules.py:677`), an unseeded
 Gumbel-max over the whole vocabulary at temperature 1.0. The probe calls `front(...)` directly, so the
 model samples at its own default; the checked-in loop is the greedy one because
-`src/models/deepseek_v4_1/generate.py:105` zeroes `model.temperature` around `_decode`, and the token
+`relicllm/models/deepseek_v4_1/generate.py:105` zeroes `model.temperature` around `_decode`, and the token
 columns on this page that come out of *that* loop are argmaxes. Every token column taken with
 `probe_v41_hot_ab.py` — the pre-fix table above, the four sittings under "the same configuration was
 run four times", the pool's own runs — is a draw.
@@ -2043,7 +2043,7 @@ allocated at that height once, and `DeviceRoutedExperts.__init__` accepts a shar
 own width matches and raises otherwise — so nothing raises the pool after the fact, and the number the
 launcher hands `load_backbone` is the number the run gets. The library level is deliberately
 unchanged: `load_backbone(expert_pool_rows=...)` still defaults to 0, because it cannot tell whether
-its caller has an arena to spend, and `src/cli/generate_v41.py` is the caller that can. It also
+its caller has an arena to spend, and `relicllm/cli/generate_v41.py` is the caller that can. It also
 resolves the flag to 0 on the host path, where `--expert-device` is unset and there is no arena to
 pool rows in, so the size becomes the off state there instead of a number the loader would warn about
 and then ignore.
@@ -2155,7 +2155,7 @@ it, and it is returned on exit. It is a *registration* and not a copy, so proces
 the bank was already mapped.
 
 **The decode is the A-B-A-B, on the shipped CLI in the shipped configuration.** One process a leg,
-`python -m src.cli.generate_v41`, the 1024-token prompt, `--decode-graphs`, 64 greedy tokens, and the
+`python -m relicllm.cli.generate_v41`, the 1024-token prompt, `--decode-graphs`, 64 greedy tokens, and the
 four legs ordered default / off / default / off so a drift on the node lands across a pair rather than
 inside one:
 
@@ -2222,7 +2222,7 @@ argmax agreement**, on every pair; and `read_bytes` out of `/proc/<pid>/io` is *
 segment rather than off `/mnt/data3`.
 
 **Two things this section does not claim.** The 512-token prefill is the probe rather than the
-launcher — `src/cli/generate_v41.py` does not print a prefill wall — so the prefill column is the
+launcher — `relicllm/cli/generate_v41.py` does not print a prefill wall — so the prefill column is the
 instrumented library at the launcher's own configuration (288 pooled rows, batched, bank attached),
 and the decode column is the launcher undecorated. [What one request costs, through the
 launcher](deepseek_v4_1_flash_single_request_capability.md) is the launcher's answer to both columns
@@ -2490,16 +2490,16 @@ PYTHONPATH=. /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_launc
 
 # the checked-in loop on the device path, which is what the text above is produced by -- the
 # `routed experts:` line it prints is the flag's own report that it did not fall back
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m src.models.deepseek_v4_1.generate \
+/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" \
   --max-new-tokens 4 --expert-device cuda --expert-world 4
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m src.models.deepseek_v4_1.generate \
+/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" \
   --max-new-tokens 4 --expert-device cuda --expert-world 1
 
 # the same flags off, so the host path and the default -- this is what the whole-request comparison
 # above is against, and the check that this work did not move it
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m src.models.deepseek_v4_1.generate \
+/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" --max-new-tokens 4
 
 # the distribution behind the first three tokens, on either path -- this is what says the one token
@@ -2570,13 +2570,13 @@ DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/lvyufeng/miniconda3/envs/deepseek/bin/pyth
   /tmp/probe_engram_bank.py
 
 # the checked-in TP4 launcher, which is what `--threads` is about
-torchrun --nproc_per_node=4 -m src.cli.generate_v41 \
+torchrun --nproc_per_node=4 -m relicllm.cli.generate_v41 \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" \
   --max-new-tokens 3 --threads 22
 
 # ... and the same launcher with a per-layer resident expert set, which is the prefill column's
 # whole configuration. It reports its own hit rate and its capping at the end of the run
-DEEPSEEK_V41_RESIDENT_EXPERTS=1 torchrun --nproc_per_node=4 -m src.cli.generate_v41 \
+DEEPSEEK_V41_RESIDENT_EXPERTS=1 torchrun --nproc_per_node=4 -m relicllm.cli.generate_v41 \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" \
   --max-new-tokens 3 --threads 22 --expert-hot-rows 64
 

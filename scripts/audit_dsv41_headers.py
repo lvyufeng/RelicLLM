@@ -72,7 +72,7 @@ import sys
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 
-# The config is read through `src.models.deepseek_v4_1.config`, which is itself
+# The config is read through `relicllm.models.deepseek_v4_1.config`, which is itself
 # standard library only, so the "runs under any interpreter" property holds --
 # but running this file as a script puts `scripts/` on sys.path rather than the
 # repository root, so the root has to be added before that import resolves.
@@ -426,7 +426,7 @@ def load_config(path: str) -> dict:
     out, so every check below this line sees the same keys whichever file was
     passed and only one place has to know how the two relate.
     """
-    from src.models.deepseek_v4_1.config import from_dict
+    from relicllm.models.deepseek_v4_1.config import from_dict
 
     with open(path, encoding="utf-8") as handle:
         raw = json.load(handle)

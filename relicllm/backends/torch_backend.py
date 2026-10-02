@@ -32,7 +32,7 @@ from .capabilities import declared_capabilities
 
 
 #: What the legacy runtime generates when a request carries no budget of its own
-#: (``src/models/deepseek_v4/serving.py`` reads ``payload.get("max_tokens") or 512``).  This adapter has to name
+#: (``relicllm/models/deepseek_v4/serving.py`` reads ``payload.get("max_tokens") or 512``).  This adapter has to name
 #: the number rather than leave the field absent, because the same field is what the legacy
 #: serving queue's admission check counts against its token budget; a missing one would be read
 #: there as zero and the request would be admitted on a promise the runtime does not keep.
@@ -40,7 +40,7 @@ _LEGACY_DEFAULT_MAX_TOKENS = 512
 
 
 class TorchBackend(BackendBase):
-    """Backend adapter over ``src.server`` and model generation functions.
+    """Backend adapter over ``relicllm.server`` and model generation functions.
 
     ``runtime`` and ``serving_engine`` are injectable to keep API tests
     independent of model checkpoints.  The normal constructor loads the
@@ -141,7 +141,7 @@ class TorchBackend(BackendBase):
         if self._runtime_loader is not None:
             loader = self._runtime_loader
         else:
-            from src.models.deepseek_v4.serving import _init_runtime
+            from relicllm.models.deepseek_v4.serving import _init_runtime
 
             loader = _init_runtime
         self._runtime = loader(self._runtime_namespace())
@@ -153,8 +153,8 @@ class TorchBackend(BackendBase):
             return
         runtime = self._load_runtime()
         if self._serving_engine is None:
-            from src.server.engine import DeepSeekServingEngine
-            from src.models.deepseek_v4.serving import _broadcast_payload, _run_payload, _run_payload_stream
+            from relicllm.server.engine import DeepSeekServingEngine
+            from relicllm.models.deepseek_v4.serving import _broadcast_payload, _run_payload, _run_payload_stream
 
             self._serving_engine = DeepSeekServingEngine(
                 runtime,
@@ -414,7 +414,7 @@ class TorchBackend(BackendBase):
         if on_ready is not None:
             on_ready()
         # Delegate to the existing Gloo/NCCL broadcast worker protocol.
-        from src.models.deepseek_v4.serving import _worker_loop
+        from relicllm.models.deepseek_v4.serving import _worker_loop
 
         _worker_loop(runtime)
 

@@ -26,7 +26,7 @@ import numpy as np
 import pytest
 import torch
 
-from src.loader.gguf.prism_hadamard import (
+from relicllm.loader.gguf.prism_hadamard import (
     DEFAULT_GDN_GEOMETRY,
     GDN_GROUPED_WIDTH,
     GdnGeometry,

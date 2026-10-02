@@ -19,8 +19,8 @@ from pathlib import Path
 import torch
 import torch.distributed as dist
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.models.minimax_m2.spec import MiniMaxM2Spec
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.models.minimax_m2.spec import MiniMaxM2Spec
 
 
 def sync():

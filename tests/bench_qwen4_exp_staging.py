@@ -29,10 +29,10 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.models.qwen4_exp.config import Qwen4ExpConfig
-from src.models.qwen4_exp.layers import swiglu_expert
-from src.models.qwen4_exp.moe import ShardedMoE
-from src.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
+from relicllm.models.qwen4_exp.config import Qwen4ExpConfig
+from relicllm.models.qwen4_exp.layers import swiglu_expert
+from relicllm.models.qwen4_exp.moe import ShardedMoE
+from relicllm.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
 
 MODEL = os.environ.get("QWEN4EXP_MODEL", "/mnt/data1/modelscope/Qwen/Qwen3.8-Flash-Next")
 MIB = float(2**20)

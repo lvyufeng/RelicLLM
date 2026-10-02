@@ -16,10 +16,10 @@ import pytest
 import torch
 import torch.nn.functional as F
 
-from src.models.qwen4_exp.builder import build_heterogeneous
-from src.models.qwen4_exp.config import Qwen4ExpConfig
-from src.models.qwen4_exp.layers import inject_into_streams
-from src.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
+from relicllm.models.qwen4_exp.builder import build_heterogeneous
+from relicllm.models.qwen4_exp.config import Qwen4ExpConfig
+from relicllm.models.qwen4_exp.layers import inject_into_streams
+from relicllm.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
 
 MODEL_DIR = os.environ.get("QWEN4EXP_MODEL", "/mnt/data1/modelscope/Qwen/Qwen3.8-Flash-Next")
 

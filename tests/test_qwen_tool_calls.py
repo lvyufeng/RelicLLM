@@ -10,7 +10,7 @@ call rather than a half-read one.
 import json
 import re
 
-from src.encoding.qwen_tool_calls import parse
+from relicllm.encoding.qwen_tool_calls import parse
 
 WEATHER_TOOL = {
     "type": "function",

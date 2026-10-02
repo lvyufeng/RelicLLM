@@ -8,8 +8,8 @@ import torch
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.models.deepseek_v4 import runtime as tr
-from src.models.deepseek_v4.partition import (
+from relicllm.models.deepseek_v4 import runtime as tr
+from relicllm.models.deepseek_v4.partition import (
     POLICY_BASELINE_4GPU,
     POLICY_LEGACY,
     assert_baseline_compatible_env,
@@ -18,7 +18,7 @@ from src.models.deepseek_v4.partition import (
     shard_q8_0_blocks_for_rank,
     shard_tensor_for_rank,
 )
-from src.models.deepseek_v4.runtime import ColumnParallelLinear, ModelArgs, RowParallelLinear, Transformer
+from relicllm.models.deepseek_v4.runtime import ColumnParallelLinear, ModelArgs, RowParallelLinear, Transformer
 
 
 class _DummyExpertOwner:

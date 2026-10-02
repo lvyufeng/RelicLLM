@@ -16,7 +16,7 @@ sys.path.insert(0, "/mnt/data1/dsv4_inference")
 
 import torch
 
-from src.models.xing4_0.gguf_model import Xing4_0GGUFModel
+from relicllm.models.xing4_0.gguf_model import Xing4_0GGUFModel
 
 GGUF = "/mnt/data2/Xing4.0-29B-A4B-GGUF/xing4_0-29b-IQ4_NL.gguf"
 PROMPT = (
@@ -35,7 +35,7 @@ def build_model(device, block_count, use_kernel):
 
 
 def set_arm(model, on):
-    from src.models.xing4_0.hyper_connection import _load_hyper_connection_kernel
+    from relicllm.models.xing4_0.hyper_connection import _load_hyper_connection_kernel
 
     mod = _load_hyper_connection_kernel() if on else None
     n = 0

@@ -4,7 +4,7 @@ A 78-layer MoE text model with `glm-dsa` indexed attention and a dense prefix, s
 `UD-Q2_K_XL` GGUF bundle. PocketLLM runs text-in/text-out greedy generation on four cards, with the
 main residual stream and rank-local expert execution, including GLM's own chat framing.
 
-- **Backend**: the shared GGUF CLI (`src.cli.generate_gguf` / `src.cli.generate_glm`); no
+- **Backend**: the shared GGUF CLI (`relicllm.cli.generate_gguf` / `relicllm.cli.generate_glm`); no
   OpenAI-compatible adapter
 - **Parallelism**: TP4, expert parallelism for the routed experts
 - **Context**: the checkpoint advertises 1,048,576 tokens; full-context performance and memory are
@@ -35,7 +35,7 @@ disabled, because each one either regressed or was neutral in end-to-end measure
 
 ```bash
 PYTHONPATH=$PWD torchrun --standalone --nproc-per-node=4 \
-  -m src.cli.generate_glm \
+  -m relicllm.cli.generate_glm \
   --gguf-path /path/to/GLM-5.2-GGUF/UD-Q2_K_XL \
   --prompt "Please introduce yourself in one sentence." \
   --chat \
@@ -49,7 +49,7 @@ pulls the file through the page cache first, which matters on HDD/SMR-backed che
 Inspect the bundle without running it:
 
 ```bash
-PYTHONPATH=$PWD python -m src.cli.inspect_gguf \
+PYTHONPATH=$PWD python -m relicllm.cli.inspect_gguf \
   --gguf-path /path/to/GLM-5.2-GGUF/UD-Q2_K_XL \
   --architecture auto \
   --spec-summary --validate-spec \

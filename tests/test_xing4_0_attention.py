@@ -2,14 +2,14 @@
 
 The reference (`modeling_xing4_0.py`, read from the release) expands the
 compressed KV per head; the released GGUF is shaped for the absorbed form.  Both
-are implemented in `src/models/xing4_0/attention.py`, and this file is what makes
+are implemented in `relicllm/models/xing4_0/attention.py`, and this file is what makes
 "the same arithmetic" a measurement rather than a claim.
 
 The port below is the reference's own functions, written out here rather than
 imported, because the reference cannot be imported in this environment: it needs
 `transformers` 5.x (`from transformers import initialization as init`) and this
 environment has 4.57.1.  That is the same reason
-`src/models/deepseek_v4_1/attention.py` carries the reference's helpers, and the
+`relicllm/models/deepseek_v4_1/attention.py` carries the reference's helpers, and the
 port keeps the reference's line structure so a reader can diff the two:
 
 - `_ReferenceRMSNorm` is `Xing4_0RMSNorm.forward`
@@ -31,8 +31,8 @@ import pytest
 import torch
 import torch.nn.functional as F
 
-from src.models.xing4_0.attention import KVLatentCache, MLAAttention, MLAAttentionWeights
-from src.models.xing4_0.config import Xing4_0Params, yarn_get_mscale
+from relicllm.models.xing4_0.attention import KVLatentCache, MLAAttention, MLAAttentionWeights
+from relicllm.models.xing4_0.config import Xing4_0Params, yarn_get_mscale
 
 CONFIG = Path("/mnt/data2/Xing4.0-29B-A4B/config.json")
 

@@ -4,8 +4,8 @@ from typing import Mapping
 
 import pytest
 
-from src.encoding import gguf_tokenizer
-from src.encoding.gguf_tokenizer import _pre_tokenizer_for, build_gguf_bpe_tokenizer
+from relicllm.encoding import gguf_tokenizer
+from relicllm.encoding.gguf_tokenizer import _pre_tokenizer_for, build_gguf_bpe_tokenizer
 
 
 def _synthetic_bpe_metadata(pre: str | None) -> dict:
@@ -128,7 +128,7 @@ def test_qwen35_tokenizer_matches_the_reference() -> None:
     the same prompt by construction.
     """
 
-    from src.encoding.gguf_tokenizer import build_gguf_hf_tokenizer
+    from relicllm.encoding.gguf_tokenizer import build_gguf_hf_tokenizer
 
     tokenizer, metadata = build_gguf_hf_tokenizer(QWEN35_GGUF)
     assert tokenizer.eos_token_id == metadata["tokenizer.ggml.eos_token_id"] == 248046

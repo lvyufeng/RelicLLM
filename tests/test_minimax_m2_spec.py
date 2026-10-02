@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.models.minimax_m2.spec import MiniMaxM2Spec
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.models.minimax_m2.spec import MiniMaxM2Spec
 from tests.gguf_test_utils import GGML_F32, write_gguf, write_minimax_bundle
 
 

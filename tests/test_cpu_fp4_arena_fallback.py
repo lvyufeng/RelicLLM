@@ -13,7 +13,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 from relic_core.kernels.ops import Packed4BitWeightAlongK, _dequant_fp4_weight_torch
-from src.models.deepseek_v4.runtime import Expert, fp4_block_size
+from relicllm.models.deepseek_v4.runtime import Expert, fp4_block_size
 
 
 def _packed(raw: torch.Tensor) -> Packed4BitWeightAlongK:

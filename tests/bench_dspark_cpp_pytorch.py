@@ -21,13 +21,13 @@ sys.path.insert(0, str(REPO_ROOT))
 import torch
 import torch.distributed as dist
 
-from src.models.deepseek_v4.dspark_loop import (
+from relicllm.models.deepseek_v4.dspark_loop import (
     DSparkLoop,
     attach_dspark,
     dspark_state_dict_filter,
 )
-from src.models.deepseek_v4.loader import load_model
-from src.models.deepseek_v4.runtime import ModelArgs, Transformer
+from relicllm.models.deepseek_v4.loader import load_model
+from relicllm.models.deepseek_v4.runtime import ModelArgs, Transformer
 
 
 def read_fixtures(path: Path) -> list[tuple[str, list[int]]]:

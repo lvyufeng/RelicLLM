@@ -18,9 +18,9 @@ import os
 import pytest
 import torch
 
-from src.models.qwen4_exp.builder import build_heterogeneous
-from src.models.qwen4_exp.config import Qwen4ExpConfig
-from src.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
+from relicllm.models.qwen4_exp.builder import build_heterogeneous
+from relicllm.models.qwen4_exp.config import Qwen4ExpConfig
+from relicllm.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
 
 ROOT = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".scratch", "tp_tiny"
@@ -136,7 +136,7 @@ def _lockstep_forward(models, input_ids: torch.Tensor, world_size: int) -> torch
     """
     import torch.nn.functional as F
 
-    from src.models.qwen4_exp.layers import inject_into_streams
+    from relicllm.models.qwen4_exp.layers import inject_into_streams
 
     driver = models[0]
     config = driver.config
@@ -314,7 +314,7 @@ def test_resident_shard_matches_mmap_logits(checkpoint_dir, golden):
 
 def test_host_expert_moe_resident_matches_mmap(checkpoint_dir):
     """`HostExpertMoE` output must not depend on where the rows came from."""
-    from src.models.qwen4_exp.moe import HostExpertMoE
+    from relicllm.models.qwen4_exp.moe import HostExpertMoE
 
     config = Qwen4ExpConfig.from_pretrained(checkpoint_dir).text_config
     mapped = Qwen4ExpCheckpoint(checkpoint_dir, store=MmapSafetensors(checkpoint_dir))
@@ -340,7 +340,7 @@ def test_host_expert_moe_resident_matches_mmap(checkpoint_dir):
 
 def test_resident_shard_pin_fallback_is_uniform():
     """A mid-load pin failure must leave no pinned tensors behind."""
-    from src.models.qwen4_exp.weights import HostExpertShard
+    from relicllm.models.qwen4_exp.weights import HostExpertShard
 
     shard = HostExpertShard(num_layers=2, rank=0, world_size=1, pin_memory=True)
     gate_up_all = torch.randn(4, 6, 8)

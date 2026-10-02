@@ -36,8 +36,8 @@ from relicllm.backends.xing4_backend import (
     _Options,
     resolve_paths,
 )
-from src.models.xing4_0.generate import Generation, _drain, generate, sample_token
-from src.models.xing4_0.prefix_cache import LatentPrefixCache, restore, snapshot
+from relicllm.models.xing4_0.generate import Generation, _drain, generate, sample_token
+from relicllm.models.xing4_0.prefix_cache import LatentPrefixCache, restore, snapshot
 
 # ---------------------------------------------------------------------------- stand-ins
 

@@ -87,7 +87,7 @@ rm -f "$LOG" "$OUT"
 
 # `pocketllm serve` owns the rank fan-out now: the supervisor assigns the rendezvous
 # environment and runs each nonzero rank through the torch backend's worker loop.
-# This script used to start `torchrun --module src.server.openai`, a second front end
+# This script used to start `torchrun --module relicllm.server.openai`, a second front end
 # that has since been deleted (issue #447). `--master-port` went with torchrun, so the
 # port this script picks has to be exported for the supervisor to read it.
 export MASTER_PORT

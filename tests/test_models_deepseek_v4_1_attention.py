@@ -1,6 +1,6 @@
 """Does the CSA2 layer stack hold together as a stack, without a checkpoint to compare against?
 
-`src/models/deepseek_v4_1/attention.py` is the V4.1 attention half written out in pure PyTorch.
+`relicllm/models/deepseek_v4_1/attention.py` is the V4.1 attention half written out in pure PyTorch.
 There is no oracle for it on this host: the released runtime implements its ops in TileLang, which
 needs `torch>=2.10.0` (this environment is on 2.9.1), and the sm_75 cards here have no FP4 tensor
 core. So, as with `test_models_deepseek_v4_1_kernels.py`, nothing below claims to reproduce the
@@ -41,16 +41,16 @@ from __future__ import annotations
 import pytest
 import torch
 
-from src.models.deepseek_v4_1 import attention as attention_module
-from src.models.deepseek_v4_1.attention import (
+from relicllm.models.deepseek_v4_1 import attention as attention_module
+from relicllm.models.deepseek_v4_1.attention import (
     AttentionStack,
     Indexer,
     _TopKStream,
     get_window_topk_idxs,
     select_candidate_blocks,
 )
-from src.models.deepseek_v4_1.config import V41TextConfig
-from src.models.deepseek_v4_1.decode_pos import Pos
+from relicllm.models.deepseek_v4_1.config import V41TextConfig
+from relicllm.models.deepseek_v4_1.decode_pos import Pos
 
 CUDA = pytest.mark.skipif(not torch.cuda.is_available(), reason="a capture needs a card")
 

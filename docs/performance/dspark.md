@@ -258,7 +258,7 @@ which is why the hidden comparison is reported rather than asserted exact.
 
 ### Draft module (Stage B)
 
-Porting `src/models/deepseek_v4/dspark.py` into `cpp_engine/engine/dspark_engine.cpp`:
+Porting `relicllm/models/deepseek_v4/dspark.py` into `cpp_engine/engine/dspark_engine.cpp`:
 
 | Step | What | State |
 |---|---|---|

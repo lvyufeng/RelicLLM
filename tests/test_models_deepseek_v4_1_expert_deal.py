@@ -38,9 +38,9 @@ import random
 import pytest
 import torch
 
-from src.cli.generate_v41 import build_arg_parser
-from src.models.deepseek_v4_1 import device_experts as de
-from src.models.deepseek_v4_1.loader import load_backbone
+from relicllm.cli.generate_v41 import build_arg_parser
+from relicllm.models.deepseek_v4_1 import device_experts as de
+from relicllm.models.deepseek_v4_1.loader import load_backbone
 
 # The geometry every number in the module docstring's deal section and on the device-experts page was
 # taken at: six routed experts per row over four cards.

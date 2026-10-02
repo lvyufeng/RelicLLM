@@ -6,17 +6,21 @@ implementations, the serving adapters and the schedulers; the kernels come from
 
 ## What lives here
 
+One package, `relicllm/`. It is the serving shell and the model side together:
+
 | Path | What it is |
 |---|---|
-| `src/models/` | the model implementations (`deepseek_v4`, `deepseek_v4_1`, `glm_dsa`, `mimo_v2`, `minimax_m2`, `qwen4_exp`, `xing4_0`) |
-| `src/{loader,encoding,runtime,components,cli,server}/` | the loader, prefix/KV runtime, MoE components, CLI and server |
-| `relicllm/` | the serving package: CLI, HTTP server, supervisor, and the runtime adapters |
+| `relicllm/models/` | the model implementations (`deepseek_v4`, `deepseek_v4_1`, `glm_dsa`, `mimo_v2`, `minimax_m2`, `qwen4_exp`, `xing4_0`) |
+| `relicllm/{loader,encoding,runtime,components}/` | the weight loaders, the prompt encoders, the device plane and the MoE components |
+| `relicllm/{cli,server,api,backends,protocol}/` | the CLI, HTTP server, public API, runtime adapters and the request protocol |
+
+`src/` used to be a second top-level package holding the model side. It was merged in: the two called
+each other, and the name `src` in `site-packages` belonged to nobody.
 
 ## What does NOT live here
 
-- **No C++ engine.** The runtime is PyTorch; native compute arrives as ops from `relic-core`.
-  `relicllm.backends.cpp_backend` still exists only because the native engine has not been
-  unhooked yet — see the "unhook the native engine" work item.
+- **No C++ engine.** The runtime is PyTorch; the four backends (`v41`, `mimo`, `xing4`, `torch`) are
+  all Python. The retired `cpp_engine` and the `cpp` backend that fronted it are gone.
 - **No kernels.** `relic_core.kernels` is imported, not vendored. Build relic-core first:
 
   ```bash
@@ -34,4 +38,5 @@ implementations, the serving adapters and the schedulers; the kernels come from
 
 Extracted with `git-filter-repo` from the PocketLLM monorepo (`src/` minus `src/csrc` and
 `src/kernels`, plus `pocketllm/`), history preserved. The package was renamed `pocketllm` →
-`relicllm`, and `src.kernels` imports now resolve to `relic_core.kernels`.
+`relicllm`, and `src.kernels` imports now resolve to `relic_core.kernels`. The `src/` tree came across
+unchanged and was later merged into `relicllm/` with `git mv`, so history survives at the new paths.

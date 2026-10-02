@@ -1,6 +1,6 @@
 """Stage-1 CPU parity for the MiMo-V2 text decoder.
 
-Compares `src/models/mimo_v2/layers.py` against the golden fixture captured from
+Compares `relicllm/models/mimo_v2/layers.py` against the golden fixture captured from
 the checkpoint's own remote code (`/mnt/data1/mimo_v2_oracle/out/golden_tiny.pt`).
 The golden carries the fixture's parameters, so the reference implementation is
 not imported here at all: weights in, the reference's own intermediates out.
@@ -30,8 +30,8 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.mimo_v2.config import MimoV2TextConfig  # noqa: E402
-from src.models.mimo_v2.layers import (  # noqa: E402
+from relicllm.models.mimo_v2.config import MimoV2TextConfig  # noqa: E402
+from relicllm.models.mimo_v2.layers import (  # noqa: E402
     MimoV2HostModel,
     build_attention_masks,
     build_rope_inv_freq,
@@ -277,7 +277,7 @@ def test_rope_tables_match_the_reference_tables(golden, config):
     for idx, expected in sorted(golden["layer_rope"].items()):
         shape = config.attention(idx)
         inv_freq = build_rope_inv_freq(shape.rope_dim, shape.rope_theta)
-        from src.models.mimo_v2.layers import build_rope_cos_sin
+        from relicllm.models.mimo_v2.layers import build_rope_cos_sin
 
         cos, sin = build_rope_cos_sin(
             inv_freq, torch.arange(golden["config"]["seq"]).unsqueeze(0)
@@ -296,7 +296,7 @@ def test_the_two_families_use_different_tables(golden):
 
 def test_the_tail_past_rope_dim_does_not_rotate(config, golden):
     """Only the leading `rope_dim` of each head carries position; the rest is passed through."""
-    from src.models.mimo_v2.layers import apply_partial_rope
+    from relicllm.models.mimo_v2.layers import apply_partial_rope
 
     shape = config.attention(0)
     states = torch.randn(1, shape.num_q_heads, 10, shape.head_dim)
@@ -307,7 +307,7 @@ def test_the_tail_past_rope_dim_does_not_rotate(config, golden):
 
 def test_the_sink_is_a_softmax_column_not_an_additive_bias(model, golden):
     """Dropping the sink column changes the normalisation of every real entry."""
-    from src.models.mimo_v2.layers import attention as attention_fn
+    from relicllm.models.mimo_v2.layers import attention as attention_fn
 
     layer = model.layers[1]
     shape = layer.shape
@@ -334,7 +334,7 @@ def test_the_sink_is_a_softmax_column_not_an_additive_bias(model, golden):
     key = key.view(1, -1, shape.num_kv_heads, shape.head_dim).transpose(1, 2)
     value = value.view(1, -1, shape.num_kv_heads, shape.v_head_dim).transpose(1, 2)
 
-    from src.models.mimo_v2.layers import apply_partial_rope
+    from relicllm.models.mimo_v2.layers import apply_partial_rope
 
     cos, sin = golden["layer_rope"][1]
     query = apply_partial_rope(query, cos, sin, shape.rope_dim)
@@ -429,7 +429,7 @@ def test_each_plausible_wrong_reading_misses_the_golden(model, golden):
     """
     import torch.nn.functional as F
 
-    from src.models.mimo_v2.layers import (
+    from relicllm.models.mimo_v2.layers import (
         apply_partial_rope,
         attention as attention_fn,
         build_rope_cos_sin,
@@ -456,7 +456,7 @@ def test_each_plausible_wrong_reading_misses_the_golden(model, golden):
     scaled_v = value * shape.value_scale
 
     # (1) The sink as an additive logit bias rather than an extra softmax column.
-    from src.models.mimo_v2.layers import repeat_kv
+    from relicllm.models.mimo_v2.layers import repeat_kv
 
     k_rep = repeat_kv(rotated_k, shape.num_key_value_groups)
     v_rep = repeat_kv(scaled_v, shape.num_key_value_groups)

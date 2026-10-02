@@ -1,0 +1,1 @@
+"""Shared building blocks: quantized GGUF operators, MoE placement and backends."""

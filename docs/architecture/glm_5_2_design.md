@@ -80,7 +80,7 @@ The detailed decode profile found two hard floors on the measured system: active
 
 ```bash
 PYTHONPATH=$PWD torchrun --standalone --nproc-per-node=4 \
-  -m src.cli.generate_glm \
+  -m relicllm.cli.generate_glm \
   --gguf-path /path/to/GLM-5.2-GGUF/UD-Q2_K_XL \
   --prompt "请用一句话介绍你自己。" \
   --chat \
@@ -93,7 +93,7 @@ The command reads the real block count and runs the 78-layer main trunk. Set `GL
 Inspect the bundle:
 
 ```bash
-PYTHONPATH=$PWD python -m src.cli.inspect_gguf \
+PYTHONPATH=$PWD python -m relicllm.cli.inspect_gguf \
   --gguf-path /path/to/GLM-5.2-GGUF/UD-Q2_K_XL \
   --architecture auto \
   --spec-summary --validate-spec \
@@ -109,9 +109,9 @@ PYTHONPATH=$PWD python -m src.cli.inspect_gguf \
 
 ## Evidence and related notes
 
-- `src/models/glm_dsa/spec.py`
-- `src/models/glm_dsa/architecture.py`
-- `src/cli/generate_glm.py`
+- `relicllm/models/glm_dsa/spec.py`
+- `relicllm/models/glm_dsa/architecture.py`
+- `relicllm/cli/generate_glm.py`
 - `tests/test_glm_dsa_spec.py`
 - `tests/test_encoding_glm_dsa.py`
 - `tests/test_glm_dsa_iq2xs_iq3xxs_dp4a.py`

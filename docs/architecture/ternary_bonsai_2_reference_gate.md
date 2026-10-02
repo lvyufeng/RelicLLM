@@ -107,7 +107,7 @@ first reproduced and checked against the fork's own reference code rather than a
 ### 1. The `PTQ1_0` block: 128 weights in 28 bytes
 
 `QK_PTQ1_0 = 128`, and the block is `uint8_t qs[24]`, `uint8_t qh[2]`, `ggml_half d` — 1.75 bits per weight, one
-scale per 128 weights. `src/loader/gguf/ptq1_0.py` implements the decoder and `tests/test_ptq1_0_layout.py` pins it
+scale per 128 weights. `relicllm/loader/gguf/ptq1_0.py` implements the decoder and `tests/test_ptq1_0_layout.py` pins it
 against ten blocks read out of the released file at known rows and decoded by the fork's reference.
 
 The layout is upstream `TQ1_0`'s base-3 packing with the scale group halved from 256 to 128, and the packing has
@@ -238,7 +238,7 @@ Settled:
   vectors and the GDN permutation, so nothing has to be inferred from a model card;
 - the packing and the transform are pinned by executable tests rather than by prose;
 - the type ids are `143` (`PTQ1_0`) and `142` (`PQ2_0`), and both now decode their geometry in
-  `src/loader/gguf/reader.py` instead of reading as `unknown_` with a zero block size. Dispatch is still refused:
+  `relicllm/loader/gguf/reader.py` instead of reading as `unknown_` with a zero block size. Dispatch is still refused:
   knowing a block's size is not the same as being able to run it, and the loader must keep failing loudly until
   `#384` teaches it otherwise.
 

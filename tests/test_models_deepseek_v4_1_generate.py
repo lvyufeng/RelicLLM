@@ -23,10 +23,10 @@ from __future__ import annotations
 
 import torch
 
-from src.models.deepseek_v4_1 import generate as generate_module
-from src.models.deepseek_v4_1 import graphs as graphs_module
-from src.models.deepseek_v4_1 import prefix_cache as prefix_cache_module
-from src.models.deepseek_v4_1.generate import generate
+from relicllm.models.deepseek_v4_1 import generate as generate_module
+from relicllm.models.deepseek_v4_1 import graphs as graphs_module
+from relicllm.models.deepseek_v4_1 import prefix_cache as prefix_cache_module
+from relicllm.models.deepseek_v4_1.generate import generate
 
 DIM = 8
 PROMPT = [1, 2, 3]

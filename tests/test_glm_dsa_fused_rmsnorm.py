@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 import torch
 
-from src.models.glm_dsa.architecture import RMSNorm
+from relicllm.models.glm_dsa.architecture import RMSNorm
 
 
 def _cuda_rmsnorm_available() -> bool:

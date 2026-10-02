@@ -37,10 +37,10 @@ torch = pytest.importorskip("torch")
 
 from relicllm.api import EngineArgs, GenerationRequest, SamplingParams  # noqa: E402
 from relicllm.backends.mimo_backend import MimoBackend  # noqa: E402
-from src.models.mimo_v2.device_attention import MimoV2KVCache  # noqa: E402
-from src.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
-from src.models.mimo_v2.generate import generate  # noqa: E402
-from src.models.mimo_v2.prefix_cache import (  # noqa: E402
+from relicllm.models.mimo_v2.device_attention import MimoV2KVCache  # noqa: E402
+from relicllm.models.mimo_v2.device_model import MimoV2DeviceModel  # noqa: E402
+from relicllm.models.mimo_v2.generate import generate  # noqa: E402
+from relicllm.models.mimo_v2.prefix_cache import (  # noqa: E402
     WRITTEN,
     PrefixCache,
     geometry_tag,

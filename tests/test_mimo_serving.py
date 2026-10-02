@@ -44,7 +44,7 @@ from relicllm.backends.mimo_backend import (
     MimoBackend,
     _Options,
 )
-from src.models.mimo_v2.generate import Generation, generate, sample_token
+from relicllm.models.mimo_v2.generate import Generation, generate, sample_token
 
 
 # ---------------------------------------------------------------------------- stand-ins
@@ -627,7 +627,7 @@ def test_a_worker_runs_the_payload_rank_zero_sent_key_for_key(group, monkeypatch
         seen.update(kwargs)
         return Generation(tokens=[11], stopped="length")
 
-    monkeypatch.setattr("src.models.mimo_v2.generate.generate", spy)
+    monkeypatch.setattr("relicllm.models.mimo_v2.generate.generate", spy)
     worker = as_four_ranks(backend(), 3)
     worker._run_payload(payload)
 

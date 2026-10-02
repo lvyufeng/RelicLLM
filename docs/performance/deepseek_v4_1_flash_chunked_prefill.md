@@ -1690,7 +1690,7 @@ for c0 in range(0, total, chunk):
 `chunk` is `Backbone.forward`'s parameter and nothing else on the path changes: a caller that passes
 no chunk gets `total`, so the one-shot forward is the same code with a wider loop body rather than a
 second implementation. `generate(..., prefill_chunk=4096)`, which is
-`--prefill-chunk-tokens 4096` on `src/cli/generate_v41.py`, is the flag that reaches it; it defaults
+`--prefill-chunk-tokens 4096` on `relicllm/cli/generate_v41.py`, is the flag that reaches it; it defaults
 to off, and its help carries the floor — `index_topk * compress_ratio`, 1024 tokens — as a stated
 bound rather than a discovered one.
 

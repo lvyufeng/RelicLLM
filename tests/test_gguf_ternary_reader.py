@@ -24,17 +24,17 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.loader.gguf import pq2_0, ptq1_0
-from src.loader.gguf.quant_types import (
+from relicllm.loader.gguf import pq2_0, ptq1_0
+from relicllm.loader.gguf.quant_types import (
     GGUF_ADDRESSABLE_TYPE_NAMES,
     GGUF_DENSE_TYPE_IDS,
     GGUF_DENSE_TYPE_NAMES,
     GGUF_TERNARY_FILE_TYPE_IDS,
     GGUF_TERNARY_TYPE_NAMES,
 )
-from src.loader.gguf.quantized_loader import GGUFQuantizedTensorLoader
-from src.loader.gguf.reader import GGML_TYPES, GGUFReader, tensor_nbytes
-from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+from relicllm.loader.gguf.quantized_loader import GGUFQuantizedTensorLoader
+from relicllm.loader.gguf.reader import GGML_TYPES, GGUFReader, tensor_nbytes
+from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 from tests.gguf_test_utils import write_gguf
 
 GGML_F32 = 0
@@ -255,7 +255,7 @@ def test_the_loader_refuses_to_dequantize_a_ternary_tensor(tmp_path: Path, pack:
     assert "refuses rather than dequantizing to f16" in message
     # The decoder named is the pack's own: the two formats share nothing but the
     # group size, so pointing a reader at the other one is a real way to be wrong.
-    assert f"src/loader/gguf/{pack}.py" in message
+    assert f"relicllm/loader/gguf/{pack}.py" in message
     # And the refusal has to say which of the two packs it is talking about. One
     # has a GEMM that reads its blocks and one does not; a message that promises a
     # kernel the format lacks is worse than no message.

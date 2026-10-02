@@ -24,7 +24,7 @@ import pytest
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 from relic_core.kernels.cuda_loader import load_cuda_kernel  # noqa: E402
 from relic_core.kernels.ops import act_quant  # noqa: E402
-from src.models.deepseek_v4.runtime import apply_rotary_emb, precompute_freqs_cis, RMSNorm  # noqa: E402
+from relicllm.models.deepseek_v4.runtime import apply_rotary_emb, precompute_freqs_cis, RMSNorm  # noqa: E402
 
 
 @pytest.fixture(scope="module")

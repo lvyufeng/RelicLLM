@@ -134,7 +134,7 @@ at which a head forgets and 128 numbers control only the per-channel input to it
 
 ## 3. KDA against this repository's GDN
 
-`src/models/qwen4_exp/attention.py` implements Gated DeltaNet for Qwen3.8-27B. Its
+`relicllm/models/qwen4_exp/attention.py` implements Gated DeltaNet for Qwen3.8-27B. Its
 `recurrent_gated_delta_rule` and `chunk_gated_delta_rule` are **the same recurrence** as
 `recurrent_kimi_delta_attention` and `chunk_kimi_delta_attention`:
 
@@ -163,7 +163,7 @@ The `l2norm` itself is the one place the two agree more closely than expected: b
 `x / sqrt(sum(x²) + ε)` with ε *inside* the sum, not `max(‖x‖, ε)`. This repository's version is
 written `x * rsqrt(…)` rather than the reference's `x / sqrt(…)`, which differs only in rounding.
 
-**The verdict for task 2 is therefore "new wrapper, reused scan".** `src/models/qwen4_exp/` is the
+**The verdict for task 2 is therefore "new wrapper, reused scan".** `relicllm/models/qwen4_exp/` is the
 right place to read the recurrence from and the wrong place to call: the projections, the gates,
 the norm and the cache shape are all GLM-5.3's.
 
@@ -173,7 +173,7 @@ the norm and the cache shape are all GLM-5.3's.
 
 The DSA half is GLM-5.2's MLA — compressed KV in `kv_lora_rank 512`, `q_lora_rank 1536`, 64 heads,
 `qk_nope 256`, `v_head_dim 256`, `scaling = 256**-0.5` — with **no RoPE anywhere on the qk path**
-(§5), plus an indexer. GLM-5.2's loader contract in `src/models/glm_dsa/spec.py` names five indexer
+(§5), plus an indexer. GLM-5.2's loader contract in `relicllm/models/glm_dsa/spec.py` names five indexer
 tensors; GLM-5.3 has those five and two more:
 
 | tensor | 5.2 | 5.3 file shape | what it is |
@@ -276,7 +276,7 @@ part a fused `silu(gate) * up` loses: there is no clamp on the pre-activation at
 that has no clamp is right for the gate and wrong for `up`.
 
 **The indexer's `k_norm` is a LayerNorm, not an RMSNorm, and it has a bias.** This repository's DSA
-indexer — `src/models/deepseek_v4_1/attention.py:816`, the one a `glm_dsa` port would be modelled on
+indexer — `relicllm/models/deepseek_v4_1/attention.py:816`, the one a `glm_dsa` port would be modelled on
 — builds `RMSNorm(index_head_dim, norm_eps)`. The reference builds
 `nn.LayerNorm(head_dim, eps=1e-6)`: it subtracts the mean, it has a bias, and its epsilon is
 hardcoded rather than read from `config.rms_norm_eps`. The GGUF is the tell, and it is easy to read
@@ -456,10 +456,10 @@ here because it is the one place the two models' behaviour could diverge rather 
 | The indexer, pool compression, tail, `output_width` | same file, `Glm5NextTextIndexer` (739) and `Glm5NextTextAttention` (1067) |
 | The 1412-tensor inventory, the type histogram, `head_count_kv`, `kda.gate_lower_bound`, `ssm.conv_kernel`, `hyper_connection.*`, `nextn_predict_layers` | the four UD-Q2_K_XL shard headers, over HTTP range requests. The first shard's metadata sits in its opening ~9.4 MB and it carries no tensors at all; shards 2/3/4 carry all 1412 between them, each within its first 16 MB |
 | GLM-5.2's indexer geometry (`head_count 32`, `key_length 128`, `top_k 2048`, `rope.dimension_count 64`) | `unsloth/GLM-5.2-GGUF`'s `UD-Q2_K_XL-00001-of-00007` header |
-| GDN's decay, `l2norm` site and norm activation | `src/models/qwen4_exp/attention.py` |
-| DSV4.1's mHC, `hc_post`'s axis semantics and `norm_eps` source | `src/models/deepseek_v4_1/modules.py`, `src/models/deepseek_v4_1/config.py`, and a numeric check of `hc_post` against `einsum('ji,jd->id', comb, residual)` |
+| GDN's decay, `l2norm` site and norm activation | `relicllm/models/qwen4_exp/attention.py` |
+| DSV4.1's mHC, `hc_post`'s axis semantics and `norm_eps` source | `relicllm/models/deepseek_v4_1/modules.py`, `relicllm/models/deepseek_v4_1/config.py`, and a numeric check of `hc_post` against `einsum('ji,jd->id', comb, residual)` |
 | `hc_split_sinkhorn`'s arithmetic and the Triton path | `src/kernels/ops.py` (`hc_split_sinkhorn_torch`, `hc_split_sinkhorn`) |
-| GLM-5.2's indexer loader contract | `src/models/glm_dsa/spec.py` |
+| GLM-5.2's indexer loader contract | `relicllm/models/glm_dsa/spec.py` |
 
 **Environment.** This audit is a read, not a measurement, so it is host-independent — but the
 machine it was made on is the aarch64 Ascend 910B host, which has no CUDA toolchain. The

@@ -28,8 +28,8 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.loader.gguf.tensor_reader import (
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.loader.gguf.tensor_reader import (
     GGUFTensorDataReader,
     get_iq2xs_iq3xxs_signed_grid_tensor,
 )
@@ -48,7 +48,7 @@ def _cuda_gguf_ext_available() -> bool:
 
 
 def _type_id(tn: str) -> int:
-    from src.loader.gguf.quant_types import GGUF_DENSE_TYPE_IDS
+    from relicllm.loader.gguf.quant_types import GGUF_DENSE_TYPE_IDS
 
     return GGUF_DENSE_TYPE_IDS[tn]
 
@@ -181,7 +181,7 @@ def test_glm_tp_inter_slice_sum_matches_full() -> None:
 
 def test_glm_tp_inter_slice_alignment_guard() -> None:
     """A non-256-aligned inter slice must be rejected at MoE construction."""
-    from src.models.glm_dsa.architecture import GLMDSAArgs, GLMDSARawBlockMoE
+    from relicllm.models.glm_dsa.architecture import GLMDSAArgs, GLMDSARawBlockMoE
 
     # GLMDSAArgs is a frozen dataclass; build one with the fields the guard uses
     # (n_routed_experts, moe_inter_dim, dim, top_k, expert_weights_*) set and the

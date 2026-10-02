@@ -4,7 +4,7 @@ A 62-layer MoE text model with GQA and 256 routed experts, shipped as a `UD-IQ1_
 bundle. PocketLLM validates the bundle's schema, keeps each rank's routed-expert partition on device,
 and runs raw-block CUDA greedy generation at TP4.
 
-- **Backend**: the shared GGUF CLI (`src.cli.generate_gguf`); no OpenAI-compatible adapter
+- **Backend**: the shared GGUF CLI (`relicllm.cli.generate_gguf`); no OpenAI-compatible adapter
 - **Parallelism**: TP4 expert parallelism
 - **Context**: 196,608 tokens in the config — a full-length request does not fit the 4×22 GiB baseline
   with an FP16 KV cache
@@ -38,7 +38,7 @@ Two dispatches matter, because prefill and decode take different paths:
 
 ```bash
 PYTHONPATH=$PWD torchrun --standalone --nproc-per-node=4 \
-  -m src.cli.generate_gguf \
+  -m relicllm.cli.generate_gguf \
   --gguf-path /path/to/MiniMax-M2.7-GGUF/UD-IQ1_M \
   --seed-file /path/to/prompt_tokens.bin \
   --max-new-tokens 32 \
@@ -51,7 +51,7 @@ but the generation entrypoint takes prompt token IDs rather than a text prompt.
 Inspect and validate the bundle:
 
 ```bash
-PYTHONPATH=$PWD python -m src.cli.inspect_gguf \
+PYTHONPATH=$PWD python -m relicllm.cli.inspect_gguf \
   --gguf-path /path/to/MiniMax-M2.7-GGUF/UD-IQ1_M \
   --architecture auto \
   --spec-summary --validate-spec \

@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from src.models.minimax_m2 import architecture as minimax_arch
-from src.models.minimax_m2.architecture import MiniMaxMoE
+from relicllm.models.minimax_m2 import architecture as minimax_arch
+from relicllm.models.minimax_m2.architecture import MiniMaxMoE
 
 
 class _FakeLayer:

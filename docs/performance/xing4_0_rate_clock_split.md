@@ -126,7 +126,7 @@ the *rate* from that one, and not read the difference between 6.75 and 7.10 as a
 
 ## The fix, and its guard
 
-`src/models/xing4_0/generate.py` drains at the seam — one call, `_drain(model)`, immediately after the
+`relicllm/models/xing4_0/generate.py` drains at the seam — one call, `_drain(model)`, immediately after the
 prompt is forwarded and before either clock is read. It is a no-op on a host model, which is what keeps
 `tests/test_xing4_0_serving.py`'s scripted stand-ins working and what a CPU caller gets.
 
@@ -137,7 +137,7 @@ recorder, patches the stand-in model's `forward` to append to the same log, and 
 budget — the two prefill chunks, the drain, the two decode steps — and that the device it was told to
 wait for is the model's own. It fails, at index 2 of that list, on the code before this change.
 
-**The same seam is in `src/models/mimo_v2/generate.py`.** It has not been re-measured there, and its
+**The same seam is in `relicllm/models/mimo_v2/generate.py`.** It has not been re-measured there, and its
 published rates carry the same error. It is named in
 [the benchmarking guide](../guides/benchmarking.md#timing-convention) rather than fixed here, because
 correcting it means re-measuring that model's tables and this page is about this one.

@@ -38,12 +38,12 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from relic_core.kernels.cuda_loader import load_cuda_kernel  # noqa: E402
-from src.models.mimo_v2.device_attention import (  # noqa: E402
+from relicllm.models.mimo_v2.device_attention import (  # noqa: E402
     MimoV2DeviceAttention,
     MimoV2KVCache,
     single_pass_attention,
 )
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
 
 RELEASE = os.environ.get("POCKETLLM_MIMO_CHECKPOINT", "/mnt/data3/MiMo-V2.6-Flash-RL")
 HAS_RELEASE = os.path.isfile(os.path.join(RELEASE, "config.json"))

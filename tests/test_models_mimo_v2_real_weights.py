@@ -35,14 +35,14 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.mimo_v2.layers import (  # noqa: E402
+from relicllm.models.mimo_v2.layers import (  # noqa: E402
     build_attention_masks,
     gate_and_route,
     swiglu_mlp,
 )
-from src.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
-from src.models.mimo_v2.quant import dequant_mxfp4  # noqa: E402
-from src.models.mimo_v2.weights import (  # noqa: E402
+from relicllm.models.mimo_v2.loader import MimoV2Checkpoint  # noqa: E402
+from relicllm.models.mimo_v2.quant import dequant_mxfp4  # noqa: E402
+from relicllm.models.mimo_v2.weights import (  # noqa: E402
     MimoV2Mxfp4Experts,
     host_model_from_checkpoint,
     layer_weights_from_checkpoint,

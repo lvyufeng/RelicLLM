@@ -32,8 +32,8 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.mimo_v2.device_experts import MimoV2DeviceExperts  # noqa: E402
-from src.models.mimo_v2.ep import (  # noqa: E402
+from relicllm.models.mimo_v2.device_experts import MimoV2DeviceExperts  # noqa: E402
+from relicllm.models.mimo_v2.ep import (  # noqa: E402
     DEAL_ENV,
     EpGroup,
     deal_card,
@@ -319,7 +319,7 @@ def test_a_layer_sums_four_shares_into_the_answer_one_rank_gives():
     test. That is what the collective does on a fabric, and doing it in this process is what lets
     a single card check the deal's arithmetic without four of them.
     """
-    from src.models.mimo_v2.device_model import MimoV2DeviceModel
+    from relicllm.models.mimo_v2.device_model import MimoV2DeviceModel
 
     config = tiny_config(routed=(0, 1))
     assert config.ffn_kind(1) == "moe"
@@ -369,7 +369,7 @@ def test_the_join_writes_each_rank_down_its_own_columns(monkeypatch):
     """
     import torch.distributed as dist
 
-    from src.models.mimo_v2.ep import make_all_gather
+    from relicllm.models.mimo_v2.ep import make_all_gather
 
     world, rows, width = 4, 3, 2
 
@@ -389,7 +389,7 @@ def test_the_join_writes_each_rank_down_its_own_columns(monkeypatch):
 
 
 def test_a_single_rank_joins_nothing():
-    from src.models.mimo_v2.ep import make_all_gather
+    from relicllm.models.mimo_v2.ep import make_all_gather
 
     assert make_all_gather(1) is None
 

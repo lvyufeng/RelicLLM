@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-from src.models.deepseek_v4.dspark_gate import DSparkGate
+from relicllm.models.deepseek_v4.dspark_gate import DSparkGate
 
 DATA = Path(__file__).parent / "data" / "dspark_rounds_tp4.json"
 

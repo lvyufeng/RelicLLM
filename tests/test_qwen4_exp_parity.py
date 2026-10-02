@@ -15,8 +15,8 @@ import os
 import pytest
 import torch
 
-from src.models.qwen4_exp.builder import build_from_state_dict
-from src.models.qwen4_exp.config import Qwen4ExpTextConfig
+from relicllm.models.qwen4_exp.builder import build_from_state_dict
+from relicllm.models.qwen4_exp.config import Qwen4ExpTextConfig
 
 FIXTURE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),

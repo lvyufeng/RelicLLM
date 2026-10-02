@@ -1,4 +1,4 @@
-"""Semantic-contract tests for the ops `src/models/deepseek_v4_1/kernels.py` exposes.
+"""Semantic-contract tests for the ops `relicllm/models/deepseek_v4_1/kernels.py` exposes.
 
 These ops have no oracle on this host. The released V4.1 runtime implements them in TileLang, which
 is not installed and cannot be (it needs `torch>=2.10.0`; this environment is on 2.9.1), and the
@@ -32,8 +32,8 @@ import pytest
 import torch
 
 from relic_core.kernels import ops as shared_kernels
-from src.models.deepseek_v4_1 import kernels as v41_kernels
-from src.models.deepseek_v4_1.kernels import (
+from relicllm.models.deepseek_v4_1 import kernels as v41_kernels
+from relicllm.models.deepseek_v4_1.kernels import (
     _fp4_codes,
     _fp4_values,
     fp4_act_quant_e4m3,

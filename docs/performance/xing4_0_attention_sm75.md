@@ -1,7 +1,7 @@
 # Xing4.0-29B-A4B's MLA attention on sm_75
 
 What the attention costs on one RTX 2080 Ti, and what measuring it changed. The port it measures
-is `src/models/xing4_0/attention.py` — the staging form of [#391][issue], not a kernel.
+is `relicllm/models/xing4_0/attention.py` — the staging form of [#391][issue], not a kernel.
 
 | | |
 |---|---|

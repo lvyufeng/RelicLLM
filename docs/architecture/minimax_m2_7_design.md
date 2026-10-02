@@ -14,7 +14,7 @@ continuous measurement. Each row says which scope it was taken at.
 
 **Validated TP4 generation.** PocketLLM can load the real `UD-IQ1_M` sharded GGUF bundle, validate its model schema, keep each rank's routed-expert partition on device, and run raw-block CUDA greedy generation.
 
-The shared `src.cli.generate_gguf` entrypoint accepts token IDs. MiniMax tokenizer helpers are implemented and tested, but there is no dedicated OpenAI-compatible server adapter.
+The shared `relicllm.cli.generate_gguf` entrypoint accepts token IDs. MiniMax tokenizer helpers are implemented and tested, but there is no dedicated OpenAI-compatible server adapter.
 
 ## Model specification
 
@@ -71,7 +71,7 @@ Earlier MoE work moved 256-token prefill from 12.24 tok/s on the float path to a
 
 ```bash
 PYTHONPATH=$PWD torchrun --standalone --nproc-per-node=4 \
-  -m src.cli.generate_gguf \
+  -m relicllm.cli.generate_gguf \
   --gguf-path /path/to/MiniMax-M2.7-GGUF/UD-IQ1_M \
   --seed-file /path/to/prompt_tokens.bin \
   --max-new-tokens 32 \
@@ -81,7 +81,7 @@ PYTHONPATH=$PWD torchrun --standalone --nproc-per-node=4 \
 Inspect and validate the bundle:
 
 ```bash
-PYTHONPATH=$PWD python -m src.cli.inspect_gguf \
+PYTHONPATH=$PWD python -m relicllm.cli.inspect_gguf \
   --gguf-path /path/to/MiniMax-M2.7-GGUF/UD-IQ1_M \
   --architecture auto \
   --spec-summary --validate-spec \
@@ -106,8 +106,8 @@ The isolated benchmark is useful for kernel A/B work, but model-level TPS should
 ## Evidence and related notes
 
 - [MiniMax decode bottleneck analysis](../performance/minimax_decode_bottleneck_analysis.md)
-- `src/models/minimax_m2/spec.py`
-- `src/models/minimax_m2/architecture.py`
+- `relicllm/models/minimax_m2/spec.py`
+- `relicllm/models/minimax_m2/architecture.py`
 - `tests/test_minimax_m2_spec.py`
 - `tests/test_encoding_minimax_m2.py`
 - `tests/test_q4k_q5k_mma.py`

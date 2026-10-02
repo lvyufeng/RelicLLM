@@ -20,11 +20,11 @@ from __future__ import annotations
 
 import pytest
 
-from src.runtime import ops as ops_plane
+from relicllm.runtime import ops as ops_plane
 
 
 class _FakeProvider:
-    """A provider that answers for some of :data:`~src.runtime.ops.BINDINGS` and not the rest.
+    """A provider that answers for some of :data:`~relicllm.runtime.ops.BINDINGS` and not the rest.
 
     Deliberately partial. A provider is usually partial while it is being built, and the useful
     question about one is which parts it has, not whether it is finished.
@@ -76,7 +76,7 @@ def test_the_default_platform_is_the_one_this_host_has() -> None:
     That agreement is the point of the default: a launch picks a platform and the operator lookup
     finds the same one, rather than a run resolving to Ascend and then asking CUDA for its kernels.
     """
-    from src.runtime.device import probe_accelerator
+    from relicllm.runtime.device import probe_accelerator
 
     platform = probe_accelerator().platform
     assert ops_plane.load_ops() is ops_plane.load_ops(platform)

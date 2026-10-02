@@ -1,6 +1,6 @@
 """A decode position in the two forms the stack reads it in, and what a capture does to each.
 
-`src/models/xing4_0/decode_pos.py` carries one number in two spellings, and this file pins them
+`relicllm/models/xing4_0/decode_pos.py` carries one number in two spellings, and this file pins them
 against each other three ways: on the values (`row`, `span`, `advance`), on the refusals (a tensor
 with no host value, a device `Pos` without a width, a `span` on the device path), and **through a real
 CUDA capture** — which is the only test here that can distinguish a spelling that works from one that
@@ -21,9 +21,9 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.models.xing4_0.attention import KVLatentCache
-from src.models.xing4_0.config import Xing4_0Params
-from src.models.xing4_0.decode_pos import Pos, write_row
+from relicllm.models.xing4_0.attention import KVLatentCache
+from relicllm.models.xing4_0.config import Xing4_0Params
+from relicllm.models.xing4_0.decode_pos import Pos, write_row
 
 
 CONFIG = Path("/mnt/data2/Xing4.0-29B-A4B/config.json")

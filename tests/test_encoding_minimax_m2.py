@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.encoding.minimax_m2 import (
+from relicllm.encoding.minimax_m2 import (
     decode_minimax_m2_ids,
     encode_minimax_m2_prompt,
     minimax_m2_context_info,

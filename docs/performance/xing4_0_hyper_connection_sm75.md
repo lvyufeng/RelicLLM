@@ -13,7 +13,7 @@ reason is dispatch count rather than arithmetic.
 
 One call is `attn_hc` or `ffn_hc`; the trunk makes two per layer over 40 layers, so a per-token
 figure is **80 calls**. The extrapolations below are that multiplication, and the port is the eager
-one in `src/models/xing4_0/hyper_connection.py`.
+one in `relicllm/models/xing4_0/hyper_connection.py`.
 
 ## Bytes
 

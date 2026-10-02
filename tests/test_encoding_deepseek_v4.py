@@ -7,7 +7,7 @@ Run: PYTHONPATH=$PWD python tests/test_encoding_deepseek_v4.py
 import json
 import os
 
-from src.encoding.deepseek_v4 import encode_messages, parse_message_from_completion_text
+from relicllm.encoding.deepseek_v4 import encode_messages, parse_message_from_completion_text
 
 TESTS_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "encoding")
 

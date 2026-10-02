@@ -63,7 +63,7 @@ was recorded on.
 **The kernels' own tests are not here.** They belong with the kernels, which live in
 [relic-core](https://github.com/lvyufeng/relic-core) — its `tests/` carries the kernel-vs-reference
 checks and its own baseline. The two suites are disjoint by construction: a test lives here if it
-imports anything from `src` or `relicllm` beyond `relic_core.kernels.*`, and there if that is all it
+imports anything from `relicllm` beyond `relic_core.kernels.*`, and there if that is all it
 imports. A kernel test moved here would drag a model, a loader or a checkpoint into a repository
 that has none.
 

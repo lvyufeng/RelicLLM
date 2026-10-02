@@ -1,6 +1,6 @@
 """Test pre-draft margin gating for DSpark."""
 import torch
-from src.models.deepseek_v4.dspark_gate import DSparkGate
+from relicllm.models.deepseek_v4.dspark_gate import DSparkGate
 
 
 def test_margin_gate_skips_low_confidence():

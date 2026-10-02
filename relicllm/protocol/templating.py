@@ -1,7 +1,7 @@
 """Which chat template an architecture uses, and how its answer reads back.
 
 A checkpoint declares a ``model_type`` and that selects a templater.  DeepSeek-V4 has its own
-encoder in :mod:`src.encoding.deepseek_v4`, which renders DSML tool-call syntax and the reasoning
+encoder in :mod:`relicllm.encoding.deepseek_v4`, which renders DSML tool-call syntax and the reasoning
 controls; every other architecture goes through the checkpoint's own Hugging Face chat template,
 which is what lets a runtime serve a model this repository has no bespoke encoder for.
 
@@ -79,7 +79,7 @@ def _gguf_architecture(path: str) -> str:
     if not path:
         return ""
     try:
-        from src.encoding.gguf_tokenizer import read_gguf_metadata
+        from relicllm.encoding.gguf_tokenizer import read_gguf_metadata
 
         metadata = read_gguf_metadata(path)
     except Exception:
@@ -168,7 +168,7 @@ class DeepSeekV4Templater:
     """DSML chat template, thinking modes and tool-call parsing for DeepSeek-V4."""
 
     def __init__(self, tokenizer) -> None:
-        from src.encoding.deepseek_v4 import (
+        from relicllm.encoding.deepseek_v4 import (
             encode_messages,
             eos_token,
             parse_message_from_completion_text,
@@ -224,7 +224,7 @@ def _tool_call_parsers() -> dict[str, Any]:
     Imported here rather than at module scope so this module stays importable without the model
     encoders, the way the rest of :mod:`relicllm.protocol` does.
     """
-    from src.encoding import qwen_tool_calls
+    from relicllm.encoding import qwen_tool_calls
 
     return {
         # Qwen's own chat template, the one every Qwen3.5 checkpoint ships.

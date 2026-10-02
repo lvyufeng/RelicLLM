@@ -1,6 +1,6 @@
 """Parity between this repository's V4.1 backbone and the released `inference/model.py`.
 
-`src/models/deepseek_v4_1/` reimplements the released runtime rather than importing it, for the
+`relicllm/models/deepseek_v4_1/` reimplements the released runtime rather than importing it, for the
 reason `kernels.py` gives: the released `inference/kernel.py` needs TileLang and a tensor core this
 host does not have. A reimplementation is only worth anything if something holds it to the original,
 and prose cannot: the module tree has to reproduce the reference's *order of operations*, and the
@@ -22,7 +22,7 @@ What the stubs mean for the result:
   kernel would compare two op sets at once and report a difference in either as a difference here.
 * `vision` and `image_processor` are never reached: `vision_n_layers=0` and no `token_types`, and
   the engram hash is fed the reference's own output rather than a tokenizer's normalizer chain (see
-  `_load_reference`), so the compressed token map -- `src/encoding/engram.py`'s subject -- is the
+  `_load_reference`), so the compressed token map -- `relicllm/encoding/engram.py`'s subject -- is the
   one piece of the reference's front end this file does not run.
 
 The whole file skips when the released inference tree is not on this host, which is the same
@@ -42,8 +42,8 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.models.deepseek_v4_1.config import from_dict
-from src.models.deepseek_v4_1.modules import Backbone, ResidentEngramTable
+from relicllm.models.deepseek_v4_1.config import from_dict
+from relicllm.models.deepseek_v4_1.modules import Backbone, ResidentEngramTable
 
 REFERENCE = Path("/mnt/data3/DeepSeek-V4.1-Flash/inference")
 requires_reference = pytest.mark.skipif(
@@ -71,7 +71,7 @@ def _stub(name: str, **attributes) -> None:
 def _kernel_stub() -> dict:
     """The reference's six kernel entry points, bound to this repository's implementations."""
     from relic_core.kernels import ops
-    from src.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3
+    from relicllm.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3
 
     def fp4_act_quant(x, block_size=32, inplace=False, scale_dtype=torch.float8_e8m0fnu):
         # The reference's `fp4_quant_kernel` branches on the scale dtype and `src/kernels/ops.py`
@@ -102,7 +102,7 @@ def _load_reference():
         engram = importlib.import_module("engram")
         # `NgramHashState.__init__` runs a `tokenizers` normalizer chain over all 129280 released
         # tokens to build its compressed map, and asserts the result against the config. That map is
-        # what `src/encoding/engram.py` reimplements and `tests/test_encoding_engram.py` covers, so
+        # what `relicllm/encoding/engram.py` reimplements and `tests/test_encoding_engram.py` covers, so
         # here it is the identity: the reference's *hashing* -- the primes, the per-layer bucket
         # offsets, the rolling XOR -- still runs, over raw token ids rather than compressed ones,
         # and both models are handed its output.
@@ -267,7 +267,7 @@ def _pin_dense_dtype(dtype: torch.dtype) -> dict[str, torch.dtype]:
     `expected m1 and m2 to have the same dtype`, raised from a stock `nn.Linear` inside a module
     named nowhere in this file.
     """
-    from src.models.deepseek_v4_1 import attention, loader, modules
+    from relicllm.models.deepseek_v4_1 import attention, loader, modules
 
     previous = {"CACHE_DTYPE": attention.CACHE_DTYPE}
     for name, module in (("attention", attention), ("loader", loader), ("modules", modules)):
@@ -278,7 +278,7 @@ def _pin_dense_dtype(dtype: torch.dtype) -> dict[str, torch.dtype]:
 
 
 def _restore_dense_dtype(previous: dict[str, torch.dtype]) -> None:
-    from src.models.deepseek_v4_1 import attention, loader, modules
+    from relicllm.models.deepseek_v4_1 import attention, loader, modules
 
     attention.CACHE_DTYPE = previous["CACHE_DTYPE"]
     for name, module in (("attention", attention), ("loader", loader), ("modules", modules)):
@@ -336,7 +336,7 @@ def _build_pair(seed: int = 0, **overrides):
         torch.set_default_dtype(default_dtype)
     # The `reference_width` fixture owns the dense width, and this is the cheap check that it is
     # still in force: a call from outside a test would build a tree the copy below cannot fill.
-    from src.models.deepseek_v4_1 import attention, modules
+    from relicllm.models.deepseek_v4_1 import attention, modules
 
     if (modules.LINEAR_DTYPE, attention.CACHE_DTYPE) != (torch.bfloat16, torch.bfloat16):
         raise RuntimeError(

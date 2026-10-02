@@ -117,7 +117,7 @@ rm -f "$LOG" "$OUT"
 # `pocketllm serve` owns the rank fan-out now: the supervisor assigns the rendezvous
 # environment and runs each nonzero rank through the torch backend's worker loop, and
 # forwards termination to every rank, which is what the cleanup trap below relies on.
-# This script used to start `torchrun --module src.server.openai`, a second front end
+# This script used to start `torchrun --module relicllm.server.openai`, a second front end
 # that has since been deleted (issue #447).
 PYTHONPATH="$REPO_ROOT" "$PYTHON" -m pocketllm serve \
   --backend torch \

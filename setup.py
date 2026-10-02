@@ -1,17 +1,14 @@
 """Package relicllm.
 
 Pure Python: the native kernels moved to relic-core, so there is no ext_modules
-here. What remains is the runtime -- the model implementations, the serving
-adapters, and the `src` tree they import from.
+here. What remains is the runtime -- the serving adapters, the model
+implementations, the loaders, and the CLI they all sit behind.
 """
 
 from setuptools import find_namespace_packages, setup
 
 setup(
-    # RelicLLM's own package plus the shared `src` tree it carries. Resolved from
-    # the tree rather than hand-listed, so it cannot drift.
-    packages=find_namespace_packages(
-        include=["relicllm", "relicllm.*", "src", "src.*"],
-        exclude=["src.csrc", "src.csrc.*", "src.gguf", "src.moe"],
-    ),
+    # One package. Resolved from the tree rather than hand-listed, so the list
+    # cannot drift.
+    packages=find_namespace_packages(include=["relicllm", "relicllm.*"]),
 )

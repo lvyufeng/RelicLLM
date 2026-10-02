@@ -30,11 +30,11 @@ import numpy as np
 import pytest
 import torch
 
-from src.loader.gguf import iq4_nl
-from src.loader.gguf.bundle import read_gguf_bundle
-from src.loader.gguf.quant_types import IQ4_NL_RUNTIME_SPAN
-from src.loader.gguf.quantized_loader import GGUFQuantizedTensorLoader
-from src.loader.gguf.tensor_reader import GGUFTensorDataReader
+from relicllm.loader.gguf import iq4_nl
+from relicllm.loader.gguf.bundle import read_gguf_bundle
+from relicllm.loader.gguf.quant_types import IQ4_NL_RUNTIME_SPAN
+from relicllm.loader.gguf.quantized_loader import GGUFQuantizedTensorLoader
+from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 
 
 CHECKPOINT_DIR_ENV = "POCKETLLM_XING4_DIR"

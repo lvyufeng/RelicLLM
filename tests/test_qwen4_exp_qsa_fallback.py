@@ -6,8 +6,8 @@ import copy
 
 import torch
 
-from src.models.qwen4_exp.attention import QSAAttention
-from src.models.qwen4_exp.config import Qwen4ExpTextConfig
+from relicllm.models.qwen4_exp.attention import QSAAttention
+from relicllm.models.qwen4_exp.config import Qwen4ExpTextConfig
 
 
 def _weights(config: Qwen4ExpTextConfig) -> dict[str, torch.Tensor]:

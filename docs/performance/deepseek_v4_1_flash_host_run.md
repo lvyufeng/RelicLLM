@@ -1,6 +1,6 @@
 # DeepSeek-V4.1-Flash: what the released checkpoint costs to run on one host
 
-The released V4.1-Flash weights now load into `src/models/deepseek_v4_1` and decode correct text on
+The released V4.1-Flash weights now load into `relicllm/models/deepseek_v4_1` and decode correct text on
 this machine. This page is the measured cost of doing it, phase by phase, and the arithmetic that
 says which of those phases the four RTX 2080 Ti can and cannot move.
 
@@ -18,7 +18,7 @@ device path itself has its own page,
 | --- | --- |
 | Model | DeepSeek-V4.1-Flash, released checkpoint, fp8 dense + packed-fp4 experts |
 | Checkpoint | `/mnt/data3/DeepSeek-V4.1-Flash`, 48 shards, 475.24 GiB (SMR disk, `/dev/sda`) |
-| Runtime | PyTorch resident, `src/models/deepseek_v4_1`, no native engine, no CUDA tensors |
+| Runtime | PyTorch resident, `relicllm/models/deepseek_v4_1`, no native engine, no CUDA tensors |
 | Commit | `688d803` on `feature/v41-backbone-runtime` |
 | GPUs | 4 x RTX 2080 Ti, 22528 MiB each — **idle** for every host number below; EP world size 1 on the host path, one card timed for PCIe in the carrier table, and the device page's world 1 and 4 |
 | CPU / RAM | 2 x Xeon E5-2696 v4, 88 hardware threads, 1007 GiB RAM, 930 GiB available |
@@ -38,7 +38,7 @@ benchmarks; the numbers they produced are what this page records. The commit abo
 phase table, the byte census and the Engram numbers ran against; this page itself, the comment
 corrections it prompted, and the checked-in generation path land in later commits, and the two
 generated-token runs in the next section were made with
-`src/models/deepseek_v4_1/generate.py` on top of `c9694b3`. The per-step table under them and the
+`relicllm/models/deepseek_v4_1/generate.py` on top of `c9694b3`. The per-step table under them and the
 corrected carrier rows were measured after that, on the same branch.
 
 ## What is in the 475 GiB
@@ -145,7 +145,7 @@ saves about half of a step's expert expansions for 42 GiB of host RAM across the
 
 ### What a generated token costs, and of what
 
-`src/models/deepseek_v4_1/generate.py` against the complete checkpoint, greedy, from the 5-token
+`relicllm/models/deepseek_v4_1/generate.py` against the complete checkpoint, greedy, from the 5-token
 prompt, two runs in separate processes:
 
 | Run | New tokens | Wall | Per token | Text out |
@@ -334,7 +334,7 @@ touching PCIe at all.
 
 # a generated token, which is the number the expansion actually sets: ~60 s to load, then 15-42 s
 # per token
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -m src.models.deepseek_v4_1.generate \
+/home/lvyufeng/miniconda3/envs/deepseek/bin/python -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" --max-new-tokens 4
 
 # the correctness run: the profile forward, the prefill/stepwise comparison, and the greedy decode

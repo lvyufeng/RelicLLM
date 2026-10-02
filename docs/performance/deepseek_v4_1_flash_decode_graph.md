@@ -53,7 +53,7 @@ The step is **graph A → eager expert call → graph B**, per layer, forty time
 design choice. `routed.forward` cannot be captured because the host has to act in the middle of it:
 `_route_ids` does a pinned D2H plus a `torch.cuda.current_stream(...).synchronize()`, and
 `_resolve_row`'s `[int(e) for e in ids_row.tolist()]` is a host read per row
-(`src/models/deepseek_v4_1/device_experts.py:1794`, **2.9 ms a row**). That read is the point of a
+(`relicllm/models/deepseek_v4_1/device_experts.py:1794`, **2.9 ms a row**). That read is the point of a
 host-resident expert bank, so a graph over the whole step is not available at any price — and the
 half that is available is the half this page measures.
 
@@ -214,7 +214,7 @@ mask, the way the prefill branch already masks; `Indexer`'s `topk = min(index_to
 made `index_topk` on the device path, where unreachable slots are already `-1`; the compressor's emit
 and fill bodies selected as two captured variants; the per-device codebook caches, which are a fix
 worth having on their own; a `DecodeGraphs` owning the per-layer pairs and the shared pool, taking a
-**fresh pool handle on any rebuild**; and a flag on the existing `src/cli/generate_v41.py`, default
+**fresh pool handle on any rebuild**; and a flag on the existing `relicllm/cli/generate_v41.py`, default
 off, behind which 64 tokens of real greedy decode is compared against the eager path token by token.
 
 ## Reproducing
