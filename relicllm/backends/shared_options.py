@@ -60,7 +60,7 @@ PREFILL_CHUNK = BackendOption(
     "tokens one prefill forward takes",
     group=Group.PREFILL,
     minimum=1,
-    readers=("v41", "mimo", "xing4"),
+    readers=("v41", "mimo", "xing4", "qwen4_exp"),
 )
 
 #: Host memory a rank's prefix store may hold.
@@ -114,10 +114,26 @@ EXPERT_DEAL = BackendOption(
     readers=("v41", "mimo"),
 )
 
+#: How many staged experts a rank may keep cached on its card.
+#:
+#: The two runtimes answer this differently and that is the point of declaring it once: v41 leaves
+#: the number to its loader (``None`` means "the loader's own default"), while qwen4_exp's loader
+#: treats ``0`` as "restage every step" and so states that as its default. One flag, two answers.
+#: The name was ``expert_cache`` on both before the second reader arrived, so nothing was renamed.
+EXPERT_CACHE = BackendOption(
+    "expert_cache",
+    Kind.INTEGER,
+    None,
+    "experts the loader may keep cached a rank; the loader's own default when unset",
+    group=Group.EXPERT,
+    readers=("v41", "qwen4_exp"),
+)
+
 #: Every shared declaration, in the order a reader should meet them.
 SHARED: tuple[BackendOption, ...] = (
     PREFILL_CHUNK,
     PREFIX_CACHE_BYTES,
     PREFIX_CACHE_HEAD_TOKENS,
     EXPERT_DEAL,
+    EXPERT_CACHE,
 )

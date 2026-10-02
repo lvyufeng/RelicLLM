@@ -21,6 +21,7 @@ from relicllm.api import (
 from . import capabilities, cli_surface
 from .capabilities import runtime_capabilities
 from .mimo_backend import MimoBackend
+from .qwen4_exp_backend import Qwen4ExpBackend
 from .torch_backend import TorchBackend
 from .v41_backend import V41Backend
 from .worker import WORKERS, program
@@ -201,6 +202,30 @@ def create_backend(args: EngineArgs, **injected: Any):
             return _supervise_rank_zero(
                 args,
                 worker="v41",
+                build=build,
+                torch_rendezvous=True,
+            )
+        return construct(args)
+    if selected == "qwen4_exp":
+        def construct(resolved: EngineArgs) -> Qwen4ExpBackend:
+            return Qwen4ExpBackend(
+                resolved,
+                loader=injected.get("loader"),
+                tokenizer=injected.get("tokenizer"),
+            )
+
+        if _needs_supervision(args, injected):
+            def build(resolved: EngineArgs) -> Qwen4ExpBackend:
+                # Rank 0 loads inside the rendezvous window, for the reason the V4.1 and MiMo builds
+                # do: the group is read at load time and the environment that names it belongs to
+                # this process only while this call is on the stack.
+                backend = construct(resolved)
+                backend.prepare()
+                return backend
+
+            return _supervise_rank_zero(
+                args,
+                worker="qwen4_exp",
                 build=build,
                 torch_rendezvous=True,
             )

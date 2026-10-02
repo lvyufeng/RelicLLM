@@ -27,10 +27,11 @@ GLM-5.2, Qwen3.8-27B, DeepSeek-V4.1-Flash, MiMo-V2.6-Flash and Ternary-Bonsai-2-
 a single universal backend: each model has a runtime matched to its architecture and checkpoint
 format, and it does not trade away per-hardware kernel optimization for portability.
 
-Four of those models are served end to end over the OpenAI-compatible API:
+Five of those models are served end to end over the OpenAI-compatible API:
 **Qwen3.8-27B-FP8**, **Ternary-Bonsai-2-27B** on **one** card,
-**DeepSeek-V4.1-Flash** through `serve --backend v41`, and
-**MiMo-V2.6-Flash** through `serve --backend mimo`.
+**DeepSeek-V4.1-Flash** through `serve --backend v41`,
+**MiMo-V2.6-Flash** through `serve --backend mimo`, and
+**Qwen3.8-Flash-Next** through `serve --backend qwen4_exp`.
 
 !!! warning "Status"
 
@@ -41,6 +42,16 @@ Four of those models are served end to end over the OpenAI-compatible API:
 
 ## News
 
+- **[2026/10] Qwen3.8-Flash-Next is served end to end.** A 48-layer hybrid of **GatedDeltaNet**
+  linear-attention layers and a query-sparse full attention every fourth layer, over 512 routed
+  experts activated top-10 and a 95 GiB embedding table, now answers OpenAI chat and completions
+  through `serve --backend qwen4_exp` as four processes on four cards: each rank's disjoint share of
+  the experts is copied into host RAM at startup and only the draw is staged to the card. Prefill at
+  an 8,192-token chunk measures **786.27 tok/s**, and decode at the default `--expert-cache 0` is
+  **3.6 tok/s** — PCIe-bound on expert staging, with a sampled device utilization swinging between 7%
+  and 94% a step and a **28.6 tok/s** ceiling the same hardware reaches once the experts stop
+  crossing the bus. [Model page](models/qwen3.8-flash-next.md) ·
+  [Performance record](performance/qwen4_exp_performance.md)
 - **[2026/09] Xing4.0-29B-A4B is served end to end on one card.** A 29B mixture-of-experts model —
   MLA attention, 64 routed experts activated top-4 plus one shared, and **four residual streams per
   block** mixed by a matrix hyper-connection — released as an official `IQ4_NL` GGUF that fits a 22 GiB
@@ -180,6 +191,7 @@ the checkpoint fits on one**.
 | [Qwen3.8-27B-FP8](models/qwen3.8-27b-fp8.md) | Safetensors FP8 E4M3 | C++/CUDA TP4, GPU-resident FP8 | 864.54 tok/s prefill, 43.22 tok/s decode on a 512-token prompt |
 | [Ternary-Bonsai-2-27B](models/ternary-bonsai-2-27b.md) | GGUF `PTQ1_0` (GGML type 143), 1.75 bits a weight, 5.53 GiB | native C++/CUDA, **one card**, no flag needed | **636.0 tok/s prefill** at a 4,096-token prompt and 25.9 tok/s decode, against the same card's upstream reference of 642.5 and 30.7 |
 | [Xing4.0-29B-A4B](models/xing4.0-29b-a4b.md) | GGUF `IQ4_NL` (GGML type 20), 4.5 bits a weight, 17.94 GiB resident | `serve --backend xing4`, **one card**, all 64 experts of every layer resident | **75.22 tok/s prefill** at a 4,096-token prompt and 6.72 tok/s decode, 79.15 tok/s prefill at 512 tokens; decode is host-launch-bound, not bandwidth-bound |
+| [Qwen3.8-Flash-Next](models/qwen3.8-flash-next.md) | Safetensors BF16, GatedDeltaNet + QSA hybrid, 512-expert MoE | `serve --backend qwen4_exp`, host expert shard, TP4 | 786.27 tok/s prefill at an 8,192-token chunk, 3.6 tok/s decode at the default `--expert-cache 0`; decode is PCIe-bound, ceiling 28.6 tok/s |
 | [DeepSeek-V4-Flash](models/deepseek-v4.md) | Safetensors FP4/FP8; GGUF Q2/IQ2/IQ1 | PyTorch heterogeneous, C++/CUDA, GGUF TP4 | C++ FP4: ~401 tok/s prefill at 32K–64K; ~3.7 tok/s decode |
 | [MiniMax-M2.7](models/minimax-m2.7.md) | GGUF `UD-IQ1_M` | Raw-block CUDA, GGUF TP4 | 256-token prefill ~104.9–107 tok/s; 43-layer decode benchmark 10.32 tok/s |
 | [GLM-5.2](models/glm-5.2.md) | GGUF `UD-Q2_K_XL` | Raw-block CUDA, GGUF TP4 | ~0.79 tok/s prefill; ~0.66 tok/s decode |

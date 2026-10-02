@@ -18,7 +18,7 @@ from .errors import ConfigurationError
 from relicllm.runtime.device import PLATFORMS
 
 
-_BACKENDS = {"auto", "torch", "v41", "mimo", "xing4"}
+_BACKENDS = {"auto", "torch", "v41", "mimo", "xing4", "qwen4_exp"}
 _FORMATS = {"auto", "safetensors", "gguf"}
 #: The platforms ``--device`` accepts. Upstream's sets are wider -- vLLM has ``auto|cuda|cpu|tpu|
 #: xpu`` and SGLang ``cuda|xpu|hpu|npu|cpu|musa`` -- and narrower for us only in that we have no
