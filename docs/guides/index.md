@@ -9,6 +9,7 @@ conventions the rest of the documentation assumes.
 | --- | --- |
 | [Benchmarking and reporting rules](benchmarking.md) | The prefill/decode split, what every result record must contain, and the hardware and invocation details a comparable number needs. |
 | [Serving latency metrics (vLLM convention)](latency_metrics.md) | TTFT, TPOT, ITL and E2EL as vLLM defines them, the `pocket_*` series that back each one, and how they relate to the prefill/decode convention. |
+| [Hardware adaptation triage](hardware_triage.md) | The five outcomes a new checkpoint can earn (production, chat, demo, impossible, candidate), the four gates split by cost, the static fit calculation and its context/batch curve, why KV geometry is not layer count times head count, and the measured gaps the thresholds sit in. |
 | [PocketLLM API and backend guide](pocketllm_api.md) | The single user-facing API over the two execution planes (Torch and C++), backend selection, tensor parallelism, and the batch/scheduler surface. |
 | [PyPI release guide](https://github.com/lvyufeng/PocketLLM/blob/master/docs/guides/pypi_release.md) | The single source of truth for releasing `pocketllm` to PyPI, including the Test PyPI dry run. |
 | [Building and loading the CUDA extensions](https://github.com/lvyufeng/relic-core/blob/master/docs/guides/cuda_extension_builds.md) | Which `.so` the loader resolves and in what order, the two silent wrong-build failures and the three checks that separate them, and the sources in `src/csrc/` that `setup.py` does not compile. |
