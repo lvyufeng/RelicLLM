@@ -130,6 +130,7 @@ nav:
       - Native engine API: guides/pocketllm_api.md
   - Performance:
       - Overview: performance/index.md
+      - Roadmap for old hardware: performance/old_hardware_roadmap.md
       - DSpark speculative decoding: performance/dspark.md
       - MiniMax decode bottleneck: performance/minimax_decode_bottleneck_analysis.md
       - Qwen4-Exp expert placement: performance/qwen4_exp_performance.md
