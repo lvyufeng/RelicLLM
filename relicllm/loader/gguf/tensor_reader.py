@@ -155,6 +155,21 @@ def _quant_block_meta(type_name: str) -> tuple[int, int]:
         raise NotImplementedError(f"no block geometry for quant type {type_name}") from exc
 
 
+def decodable_type_names() -> frozenset[str]:
+    """Every GGUF type ``read_tensor`` will hand back, in any type spelling it accepts.
+
+    The set is derived from `read_tensor`'s own dispatch rather than restated, so the two cannot
+    drift: a format moves into this set exactly when a branch above starts handling it.
+
+    The distinction this answers is *reader* capability, which is not `GGUF_DENSE_TYPE_IDS`. That map
+    is the raw-block runtime's kernel dispatch table, and a type can be absent from it while being
+    perfectly decodable -- `q3_k`'s block geometry is in `_QUANT_BLOCK_META` and its decoder is a
+    branch below, and `q8_0` is handled by a reader of its own. Reading the kernel table as if it
+    were the reader's answers a question nobody asked and calls a working format unreachable.
+    """
+    return frozenset(_DENSE_DTYPES) | _QUANT_BLOCK_META.keys() | {"bf16", "q8_0"}
+
+
 def _product(values: Iterable[int]) -> int:
     total = 1
     for value in values:
