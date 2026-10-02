@@ -29,8 +29,14 @@ edge, that is a cycle forming — put the shared piece in `relicllm/protocol/` i
 namespace package carried alongside it. Both are listed in `setup.py`'s `find_namespace_packages`,
 and `src.csrc` / `src.gguf` / `src.moe` are excluded — there is no C++ tree here.
 
-`docs/` is the published site's source (`mkdocs.yml`), 66 pages indexed by `docs/README.md` — model
+`docs/` is the published site's source (`mkdocs.yml`), 68 pages indexed by `docs/README.md` — model
 guides, per-model design records, performance measurements, and migration notes.
+
+**Two things in that tree are build inputs, not pages:** the theme override
+(`docs/overrides/main.html`) and the hook (`docs/hooks/llms_txt_staleness.py`). `custom_dir` and
+`hooks:` name them, and `exclude_docs` in `mkdocs.yml` is what keeps them off the site. They live
+under `docs/` rather than at the repository root because that is the published site's tree and the
+only tree the `pages.yml` filter has to know about.
 
 **Those pages still say `PocketLLM`, `pocketllm_*` and `scripts/*.py`.** The rename to `relicllm`
 was applied to `CLAUDE.md`, the README and the package, not to the bodies of 347 lines across 52
@@ -94,8 +100,8 @@ documentation site, so the baseline check is a manual step.
 
 That workflow runs `mkdocs build --strict`, which is the repository's link checker — but only
 *within* `docs/`. It also fails when `docs/llms.txt` is stale with the nav, because
-`hooks/llms_txt_staleness.py` checks it on every build and `--strict` promotes the warning. So a nav
-edit and the regenerated `docs/llms.txt` (`python scripts/gen_llms_txt.py`) belong in the same
+`docs/hooks/llms_txt_staleness.py` checks it on every build and `--strict` promotes the warning. So
+a nav edit and the regenerated `docs/llms.txt` (`python scripts/gen_llms_txt.py`) belong in the same
 commit. Links leaving the repository are absolute URLs the build cannot see; `docs/README.md` says
 why they are written that way.
 

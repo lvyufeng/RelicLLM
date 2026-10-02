@@ -21,14 +21,30 @@ edit_uri: edit/master/docs/
 docs_dir: docs
 use_directory_urls: true
 
+# The documentation site's two non-page inputs live under `docs/`, which is what makes `docs/**`
+# cover them in CI -- but MkDocs copies every file it is not told to skip, so without this block the
+# published site would carry the hook's source, its bytecode, and a stray theme override.
+#
+# Named file by file rather than excluded as two directories. A directory pattern reads better and
+# is one line shorter, and it is wrong in a way nothing would catch: MkDocs logs a page dropped by
+# `exclude_docs` at INFO, and `--strict` promotes warnings only, so a `.md` that somebody later puts
+# in `docs/hooks/` would vanish from the site with a clean exit 0. Leaving the directory publishable
+# costs one caveat instead -- a second helper can be added under `docs/hooks/` without being
+# excluded, so add it here when there is one.
+exclude_docs: |
+  /hooks/llms_txt_staleness.py
+  /hooks/__pycache__/
+  /overrides/main.html
+
 theme:
   name: material
   language: en
   favicon: assets/favicon.svg
-  # Only overrides/main.html lives here, and it does nothing except fill
-  # `{% block announce %}`. Material's own main.html is four lines that just
-  # extend base.html, so overriding it drops no other block.
-  custom_dir: overrides
+  # Only main.html lives here, and it does nothing except fill `{% block announce %}`.
+  # Material's own main.html is four lines that just extend base.html, so overriding it
+  # drops no other block. The path is inside `docs_dir` because that is the documentation
+  # site's tree; `exclude_docs` above keeps it out of the published output.
+  custom_dir: docs/overrides
 
   palette:
     - media: "(prefers-color-scheme: light)"
@@ -169,8 +185,13 @@ nav:
 # when `docs/llms.txt` is out of date with the nav above, which `--strict` turns
 # into a failure. CI runs no pytest, so the docs build is the only check that
 # runs on a documentation change, and this is where that check has to live.
+#
+# It sits under `docs/`, so the `docs/**` filter in the pages workflow covers it without
+# naming it. (`scripts/gen_llms_txt.py`, which it imports, is the one build input outside that
+# tree, and that path is listed there by name.) `exclude_docs` above is what keeps the file
+# itself off the published site.
 hooks:
-  - hooks/llms_txt_staleness.py
+  - docs/hooks/llms_txt_staleness.py
 
 # The build is the link checker: `mkdocs build --strict` runs in CI and promotes
 # every warning below to a failure. Anything omitted from `nav` also fails, so no
