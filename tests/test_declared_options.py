@@ -19,7 +19,13 @@ import dataclasses
 import pytest
 
 from relicllm.api import ConfigurationError, EngineArgs
-from relicllm.backends import mimo_backend, shared_options, v41_backend, xing4_backend
+from relicllm.backends import (
+    mimo_backend,
+    qwen4_exp_backend,
+    shared_options,
+    v41_backend,
+    xing4_backend,
+)
 from relicllm.backends.options import BackendOption, Group, Kind, decode_options
 
 #: The three runtimes whose options are declared, with a checkpoint name each recognises.
@@ -27,6 +33,7 @@ DECLARED = {
     "v41": (v41_backend, "a-deepseek-v41-checkpoint"),
     "mimo": (mimo_backend, "a-mimo-v2-checkpoint"),
     "xing4": (xing4_backend, "a-xing4-checkpoint"),
+    "qwen4_exp": (qwen4_exp_backend, "a-qwen4-exp-checkpoint"),
 }
 
 

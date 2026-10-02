@@ -24,6 +24,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [MiMo-V2.6-Flash](https://lvyufeng.github.io/RelicLLM/models/mimo-v2.6-flash/)
 - [Ternary-Bonsai-2-27B](https://lvyufeng.github.io/RelicLLM/models/ternary-bonsai-2-27b/)
 - [Xing4.0-29B-A4B](https://lvyufeng.github.io/RelicLLM/models/xing4.0-29b-a4b/)
+- [Qwen3.8-Flash-Next](https://lvyufeng.github.io/RelicLLM/models/qwen3.8-flash-next/)
 
 ## Guides
 

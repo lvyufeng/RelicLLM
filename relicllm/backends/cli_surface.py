@@ -39,7 +39,7 @@ import argparse
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
-from . import mimo_backend, v41_backend, xing4_backend
+from . import mimo_backend, qwen4_exp_backend, v41_backend, xing4_backend
 from .options import BackendOption, Group, Kind
 
 #: The runtimes that declare options, in ``capabilities.AUTO_ORDER``. Not every runtime does: the
@@ -49,6 +49,7 @@ DECLARING: dict[str, Any] = {
     "v41": v41_backend,
     "mimo": mimo_backend,
     "xing4": xing4_backend,
+    "qwen4_exp": qwen4_exp_backend,
 }
 
 #: The namespace attribute every generated flag writes into, as ``{option name: value}``. One

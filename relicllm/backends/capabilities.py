@@ -47,6 +47,10 @@ _QWEN35_TYPES = {"qwen3_5", "qwen3_5_text"}
 _V41_TYPES = {"deepseek_v41", "deepseek_v41_text"}
 _MIMO_TYPES = {"mimo_v2", "mimo_v2_text"}
 _XING4_TYPES = {"xing4_0", "xing4_0_text"}
+#: Qwen3.8-Flash-Next. Unlike Qwen3.5's, this checkpoint nests its text stack under ``text_config``
+#: beside ``vision_config``, so both keys are its own name -- and the nested walk in
+#: :func:`_names_model` is what reaches the inner one.
+_QWEN4EXP_TYPES = {"qwen4_exp", "qwen4_exp_text"}
 
 
 def config_path_for(path: str, explicit: str | None = None) -> Path:
@@ -125,6 +129,18 @@ def is_xing4_config(config: Mapping[str, Any]) -> bool:
     same string.
     """
     return _names_model(config, _XING4_TYPES, "xing4")
+
+
+def is_qwen4_exp_config(config: Mapping[str, Any]) -> bool:
+    """Whether a config describes Qwen3.8-Flash-Next.
+
+    This release is a conditional-generation wrapper: the root says ``model_type=qwen4_exp`` and
+    ``architectures=["Qwen4ExpForConditionalGeneration"]`` beside a ``vision_config``, and the text
+    stack is nested under ``text_config`` with its own ``qwen4_exp_text``. The nested walk in
+    :func:`_names_model` is what reads through to it, which is why this is a one-line predicate
+    despite the two-level shape.
+    """
+    return _names_model(config, _QWEN4EXP_TYPES, "qwen4exp")
 
 
 def requested_gguf(args: EngineArgs) -> bool:
@@ -350,6 +366,31 @@ def _identify_xing4(args: EngineArgs) -> Identification:
     return refused(f"{_XING4_ONLY} (this one declares general.architecture={architecture!r})")
 
 
+_QWEN4EXP_ONLY = (
+    "backend='qwen4_exp' serves Qwen3.8-Flash-Next checkpoints only: a directory whose "
+    "config.json says model_type=qwen4_exp (or nests a text_config that does)"
+)
+
+
+def _identify_qwen4exp(args: EngineArgs) -> Identification:
+    """Whether this checkpoint is one ``qwen4_exp`` can serve, asked architecture first.
+
+    Safetensors-only, like the other specific runtimes here: this release ships shards, and the
+    ``torch`` runtime is the one that reads a GGUF. The two causes are told apart so a caller reads
+    the flag to change rather than the runtime to change -- the same split ``xing4``'s identify
+    makes for its own format rule.
+    """
+    gguf = _is_gguf_only(args, "qwen4_exp")
+    if gguf is not None:
+        return gguf
+    config = read_config(args.checkpoint_dir, args.config_path)
+    if config is None:
+        return UNKNOWN
+    if not is_qwen4_exp_config(config):
+        return refused(_QWEN4EXP_ONLY)
+    return READ
+
+
 def _identify_torch(_args: EngineArgs) -> Identification:
     """The generic runtime reads everything, so it is never refused and never preferred.
 
@@ -416,13 +457,34 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
         # No static prose, for the reason `mimo` has none.
         details={},
     ),
+    "qwen4_exp": RuntimeCapabilities(
+        name="qwen4_exp",
+        models=("qwen4_exp",),
+        model_formats=("safetensors",),
+        devices=("cuda",),
+        # One mutable KV cache serves one sequence, exactly as for the runtimes above, so a width
+        # above 1 is refused rather than accepted and ignored.
+        supports_batch=False,
+        supports_cancellation=True,
+        # The first of the specific runtimes with no prefix store: `models/qwen4_exp/runtime.py`
+        # forward-passes its whole prompt, and resuming it needs a store that module does not have.
+        # False here so a client reads "a repeated prefix is *not* resumed", which is the honest
+        # answer and not a silent default.
+        reads_prefix_cache=False,
+        identifies=_identify_qwen4exp,
+        # Static prose only; the adapter adds the run's own numbers.
+        details={
+            "execution": "relicllm/models/qwen4_exp PyTorch runtime, GatedDeltaNet + QSA",
+            "scheduler": "one mutable KV state, serialized at the backend boundary",
+        },
+    ),
 }
 
 
 #: The order ``auto`` asks them in: the architecture-specific readers before the generic runtime,
 #: which is the specificity of the reader. ``torch`` is last and identifies everything, so the
 #: loop's fallback and its last candidate are one answer.
-AUTO_ORDER: tuple[str, ...] = ("v41", "mimo", "xing4", "torch")
+AUTO_ORDER: tuple[str, ...] = ("v41", "mimo", "xing4", "qwen4_exp", "torch")
 
 
 def runtime_capabilities(name: str) -> RuntimeCapabilities:

@@ -64,6 +64,7 @@ from .base import RuntimeAdapter, settled_text
 from .capabilities import IGNORED_OPTIONS, declared_capabilities
 from .options import BackendOption, Group, Kind, decode_args
 from .shared_options import (
+    EXPERT_CACHE,
     EXPERT_DEAL,
     PREFILL_CHUNK,
     PREFIX_CACHE_BYTES,
@@ -138,13 +139,7 @@ OPTIONS: tuple[BackendOption, ...] = (
         group=Group.EXPERT,
         minimum=1,
     ),
-    BackendOption(
-        "expert_cache",
-        Kind.INTEGER,
-        None,
-        "experts the loader may keep cached a rank; the loader's own default when unset",
-        group=Group.EXPERT,
-    ),
+    EXPERT_CACHE,
     BackendOption(
         "expert_hot_rows",
         Kind.INTEGER,

@@ -274,6 +274,7 @@ def generate(
     chunk_size: int = 512,
     eos_token_ids: tuple[int, ...] = (),
     on_token=None,
+    on_step=None,
 ) -> tuple[list[int], dict[str, float]]:
     """Greedy decode with chunked prefill.
 
@@ -281,6 +282,19 @@ def generate(
     would need a 64K x 64K mask per layer, which does not fit.  The GatedDeltaNet
     and QSA caches carry state across chunks (validated by
     `test_chunked_prefill_matches_single_shot`).
+
+    `on_step` is asked before every decode step and stops the loop when it returns
+    true, the same contract `mimo_v2.generate` and `xing4_0.generate` take.  It runs
+    on *every* rank, not rank 0 alone: this loop is entered by all of them, so a rank
+    that stopped on its own would leave its peers inside the per-layer all-reduce
+    that nobody else enters.  The caller is the one that can make the predicate a
+    collective -- see `Qwen4ExpBackend._loop`, which broadcasts rank 0's decision --
+    and that is why it is a callback here rather than a local `self._is_cancelled`
+    read.  `stopped` in the returned stats names what ended the loop.
+
+    Timing is drained, not wall-clocked at the seam: both `torch.cuda.synchronize()`
+    calls are load-bearing (`docs/guides/benchmarking.md`), because a forward is
+    asynchronous and a host-clock seam reads two passes as one.
     """
     prompt_len = input_ids.shape[1]
     cache = model.make_cache(batch_size=input_ids.shape[0], max_seq_len=prompt_len + max_new_tokens + 1)
@@ -307,15 +321,23 @@ def generate(
 
     logits = gather_logits(logits[:, -1], ctx)
     produced: list[int] = []
+    stopped = "length"
     t1 = time.perf_counter()
+    t_first = None
     next_id = logits.argmax(-1, keepdim=True)
     with torch.inference_mode(), prof_scope("decode"):
         for _ in range(max_new_tokens):
+            if on_step is not None and on_step():
+                stopped = "cancel"
+                break
             token = int(next_id.item())
             produced.append(token)
+            if t_first is None:
+                t_first = time.perf_counter() - t1
             if on_token is not None and ctx.rank == 0:
                 on_token(token)
             if token in eos_token_ids:
+                stopped = "eos"
                 break
             step = model.forward(next_id.to(ctx.device), cache=cache, past_len=past)
             past += 1
@@ -329,6 +351,8 @@ def generate(
         "generated_tokens": float(len(produced)),
         "prefill_s": prefill_s,
         "decode_s": decode_s,
+        "ttft_s": prefill_s + (t_first if t_first is not None else 0.0),
+        "stopped": stopped,
         "prefill_tps": prompt_len / prefill_s if prefill_s > 0 else 0.0,
         "decode_tps": len(produced) / decode_s if decode_s > 0 else 0.0,
     }

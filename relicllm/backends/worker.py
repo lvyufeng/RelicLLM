@@ -82,6 +82,11 @@ WORKERS: dict[str, WorkerSpec] = {
             ("POCKETLLM_TOKENIZER_PATH", "tokenizer_path"),
         ),
     ),
+    "qwen4_exp": WorkerSpec(
+        entry_point="relicllm.backends.qwen4_exp_backend:Qwen4ExpBackend",
+        ready_at_construction=False,
+        path_fields=(("POCKETLLM_TOKENIZER_PATH", "tokenizer_path"),),
+    ),
 }
 
 #: The child's program. Constant: which runtime it is arrives in the environment, because that is
