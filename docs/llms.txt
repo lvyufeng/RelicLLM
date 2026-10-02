@@ -37,6 +37,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 ## Performance
 
 - [Overview](https://lvyufeng.github.io/RelicLLM/performance/)
+- [Roadmap for old hardware](https://lvyufeng.github.io/RelicLLM/performance/old_hardware_roadmap/)
 - [DSpark speculative decoding](https://lvyufeng.github.io/RelicLLM/performance/dspark/)
 - [MiniMax decode bottleneck](https://lvyufeng.github.io/RelicLLM/performance/minimax_decode_bottleneck_analysis/)
 - [Qwen4-Exp expert placement](https://lvyufeng.github.io/RelicLLM/performance/qwen4_exp_performance/)

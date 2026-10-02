@@ -8,6 +8,7 @@ different generation length — a `TG4` measurement says nothing about `TG512`.
 
 | Document | What it records |
 | --- | --- |
+| [Performance roadmap: becoming the best on old hardware](old_hardware_roadmap.md) | The plan rather than a run: the host-submission diagnosis, where each served model stands, and the four phases ordered by benefit ÷ cost — a trusted baseline first, serving coverage, then taking the host out of the decode loop. |
 | [DSpark speculative decoding with adaptive draft-length gating](dspark.md) | The DeepSeek-V4-Flash draft module, why the fixed accept threshold was falsified, and the online-calibrated gating that replaced it. |
 | [FlashMemory 1M context](https://github.com/lvyufeng/relic-engine/blob/master/docs/performance/flashmemory_1m_context.md) | The FlashMemory + KV_SWAP design for long-context memory reduction, and its current implementation status. *(Chinese)* |
 | [MiniMax-M2 decode bottleneck analysis](minimax_decode_bottleneck_analysis.md) | Per-phase profiling of MiniMax-M2 decode and prefill on TP4, and which phases the optimizations then targeted. |
