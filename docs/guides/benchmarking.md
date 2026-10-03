@@ -68,8 +68,10 @@ rates against each other and distorts a decode-versus-context trend most of all.
 
 So a timed path has to drain at the seam. `relicllm/models/xing4_0/generate.py`'s `_drain` is that, and
 what it removes is measured in
-[Xing4.0-29B-A4B: the prefill/decode seam](../performance/xing4_0_rate_clock_split.md). The same seam
-is in `relicllm/models/mimo_v2/generate.py`, where it has not been re-measured.
+[Xing4.0-29B-A4B: the prefill/decode seam](../performance/xing4_0_rate_clock_split.md). MiMo has the
+same drain at the same seam, added after that measurement: the **position** is pinned by
+`tests/test_mimo_serving.py`, but what it removes on MiMo is **not yet measured** — a decode rate read
+off that model before the fix is short by its last prefill chunk.
 
 This is one of two conventions in this repository. For client-observed serving
 numbers — TTFT, TPOT, ITL, E2EL, throughput and goodput, defined the way vLLM

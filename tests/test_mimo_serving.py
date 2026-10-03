@@ -25,6 +25,8 @@ tokenizer; the acceptance run for that is ``docs/models/mimo-v2.6-flash.md``.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import torch
 import pytest
 
@@ -44,7 +46,7 @@ from relicllm.backends.mimo_backend import (
     MimoBackend,
     _Options,
 )
-from relicllm.models.mimo_v2.generate import Generation, generate, sample_token
+from relicllm.models.mimo_v2.generate import Generation, _drain, generate, sample_token
 
 
 # ---------------------------------------------------------------------------- stand-ins
@@ -537,6 +539,61 @@ def test_generate_reports_what_the_loop_cost():
     assert generation.step_seconds == pytest.approx(
         generation.decode_seconds / max(1, len(generation.tokens) - 1)
     )
+
+
+def test_the_prompt_and_the_decode_are_split_by_a_device_drain(monkeypatch):
+    """The seam between the two clocks is a device fact, and it is exactly where it has to be.
+
+    `prefill_seconds` and `decode_seconds` are two host clocks around a boundary the device does not
+    have: a forward is asynchronous, so without a drain the last prefill chunk is still running when
+    the first clock is read and it lands inside the first `step` instead -- charging the prompt to the
+    decode loop, which is the rate bug this model shared with Xing4.0 before that seam was fixed
+    (`tests/test_xing4_0_serving.py`). So the drain's position is the whole of this test, and a fake
+    `torch.cuda.synchronize` is how it is observed on a machine with no card.
+
+    The model here forwards its whole prompt in one `prefill` (no prefix store), then the drain, then
+    the two steps a three-token budget takes. A version that drained at the end of the loop, or per
+    step, or not at all, produces a different log.
+    """
+    model = ScriptedModel(scripted=(11, 12, 13, 14))
+    model.device = torch.device("cuda:3")
+    events: list[str] = []
+
+    inner_prefill, inner_step = model.prefill, model.step
+
+    def recording_prefill(*args, **kwargs):
+        events.append("prefill")
+        return inner_prefill(*args, **kwargs)
+
+    def recording_step(*args, **kwargs):
+        events.append("step")
+        return inner_step(*args, **kwargs)
+
+    model.prefill = recording_prefill
+    model.step = recording_step
+    drained: list[object] = []
+
+    def fake_synchronize(device=None):
+        events.append("drain")
+        drained.append(device)
+
+    monkeypatch.setattr(torch.cuda, "synchronize", fake_synchronize)
+    result = generate(
+        model, [1, 2, 3, 4], max_new_tokens=3, eos_token_id=99, cache=FakeCache(64), chunk=2
+    )
+    assert events == ["prefill", "drain", "step", "step"]
+    # The device it was told to wait for is the model's own, and not one read off a default.
+    assert drained == [torch.device("cuda:3")]
+    # And the drain is charged to the prompt, which is what `ttft` has always meant.
+    assert result.prefill_seconds > 0 and result.ttft_seconds == result.prefill_seconds
+
+
+def test_the_drain_is_a_no_op_off_the_device():
+    """`generate` is driven by a host stand-in in this file, and may be driven by a CPU model."""
+    plain = ScriptedModel()
+    assert not hasattr(plain, "device")
+    _drain(plain)  # a model that names no device at all
+    _drain(SimpleNamespace(device="cpu"))  # a device, and not one there is anything to wait for
 
 
 def test_a_prompt_with_no_tokens_or_a_budget_of_none_is_refused():

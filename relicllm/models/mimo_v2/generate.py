@@ -153,6 +153,17 @@ def generate(
 
     started = time.perf_counter()
     cached_len, logits = _resume(model, cache, prefix_cache, ids, chunk)
+    # The prompt's work is asynchronous and this seam is a host clock, so without a drain the two
+    # fields below are not the two things they are named after: the last prefill chunk is still in
+    # flight when `prefill` is read, and it lands inside the *first* `step` instead -- so
+    # `prefill_seconds` under-reports by that chunk's device time and `decode_seconds` over-reports by
+    # exactly as much. Measured on Xing4.0, where this seam was fixed first: a 512-token prompt
+    # prefilled in one 512-wide chunk reported 3.2 s of decode over a loop whose own steps were 138 ms
+    # each and which therefore took 1.0 s, and the missing 2.1 s was that chunk. It is a rate bug and
+    # not a latency one -- a client waits for the same wall either way, and `ttft` below has always
+    # included the drain -- but every decode rate this repository publishes for this model is read
+    # off one side of it, so it has to be a device fact. See `_drain`.
+    _drain(model)
     prefill = time.perf_counter() - started
     first = time.perf_counter()
 
@@ -260,3 +271,18 @@ def _eos_set(eos_token_id: Sequence[int] | int) -> set[int]:
     if isinstance(eos_token_id, int):
         return {int(eos_token_id)}
     return {int(token) for token in eos_token_id}
+
+
+def _drain(model: Any) -> None:
+    """Wait for the device, when the model is on one, so that a host clock can be a device fact.
+
+    Guarded rather than assumed: `generate` is driven by a host fake in `tests/test_mimo_serving.py`
+    -- where a model that names no `device` must still run -- and a caller may hand it a CPU model. On
+    either of those this is correctly a no-op.
+    """
+    device = getattr(model, "device", None)
+    if device is None:
+        return
+    device = torch.device(device)
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
