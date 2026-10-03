@@ -395,6 +395,20 @@ def test_the_cli_switch_is_the_off_switch_and_a_zero_budget_is_how_it_is_spelled
     assert backend.capabilities.supports_prefix_caching is False
 
 
+def test_the_decode_graph_is_on_unless_the_launch_says_otherwise(tmp_path):
+    """2.49× the decode TPOT on the served number, so the default is the graphed path.
+
+    The library entry point keeps its own ``graphs=False``; this default is the backend's, and the
+    flag is the control column a benchmark or a bisect reaches for.
+    See `docs/performance/v41_decode_graph_default.md`.
+    """
+    backend, _ = _build(_checkpoint(tmp_path))
+    assert backend._options.decode_graphs is True
+
+    backend, _ = _build(_checkpoint(tmp_path), backend_options={"decode_graphs": False})
+    assert backend._options.decode_graphs is False
+
+
 @pytest.mark.parametrize(
     "overrides, message",
     [
@@ -599,8 +613,9 @@ def test_the_graphs_a_request_recorded_are_handed_back_when_it_ends(tmp_path, lo
 
 
 def test_an_eager_request_has_no_graphs_to_hand_back(tmp_path, loop):
+    """The control column: `decode_graphs=false` is what a benchmark or a bisect asks for."""
     stub = loop(tokens=[11, 12])
-    backend, _ = _build(_checkpoint(tmp_path), max_model_len=64)
+    backend, _ = _build(_checkpoint(tmp_path), max_model_len=64, backend_options={"decode_graphs": False})
 
     backend.generate([_request()])
 

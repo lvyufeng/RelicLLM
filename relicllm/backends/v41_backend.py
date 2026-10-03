@@ -196,7 +196,7 @@ OPTIONS: tuple[BackendOption, ...] = (
     BackendOption(
         "decode_graphs",
         Kind.FLAG,
-        False,
+        True,
         "capture the decode block into a CUDA graph",
         group=Group.DECODE,
     ),
@@ -329,7 +329,7 @@ class _Options:
     prefill_chunk: int | None = None
     prefix_cache_bytes: int = DEFAULT_PREFIX_CACHE_BYTES
     prefix_cache_head_tokens: int = DEFAULT_PREFIX_CACHE_HEAD_TOKENS
-    decode_graphs: bool = False
+    decode_graphs: bool = True
     cancel_collective: bool = True
     threads: int | None = None
     skip_special_tokens: bool = True

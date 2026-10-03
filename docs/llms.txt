@@ -50,6 +50,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [DeepSeek-V4.1-Flash remaining bottlenecks](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_remaining_bottlenecks/)
 - [DeepSeek-V4.1-Flash decode graph](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_decode_graph/)
 - [DeepSeek-V4.1-Flash graphed decode, live](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_decode_graph_live/)
+- [DeepSeek-V4.1-Flash decode graph becomes the default](https://lvyufeng.github.io/RelicLLM/performance/v41_decode_graph_default/)
 - [DeepSeek-V4.1-Flash chunked prefill](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_chunked_prefill/)
 - [DeepSeek-V4.1-Flash prefill stack](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_prefill_stack/)
 - [DeepSeek-V4.1-Flash single-request capability](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_single_request_capability/)

@@ -252,9 +252,11 @@ the reason the frozen-position page gives: a decode capture body is one token wi
   configuration from both that page's 722.0 ms and the frozen-position page's 833.6 ms.
 - **The ratio is 1.43–1.56×, not a point estimate.** The A-A control is 3.2% and the graphed column's
   own two sittings differ by 5.3%; a run with a wider prompt or a longer generation would narrow it.
-- **`--decode-graphs` is off by default** and this page is not, by itself, an argument to turn it on.
-  What it is: the gate is cleared — real positions, real greedy decode, 64 tokens token-aligned, the
-  node counts accounted for.
+- **`--decode-graphs` is on by default as of [the later measurement](v41_decode_graph_default.md)**,
+  which is the argument this page withheld: this page cleared the *gate* (real positions, real greedy
+  decode, 64 tokens token-aligned, the node counts accounted for), and that one took the served-level
+  number on the copy-removed config — 2.49× the decode TPOT and 3.3× the decode throughput. The step
+  figures above remain the ones to read for *mechanism*; the default is set from the served number.
 
 ## Reproducing
 
