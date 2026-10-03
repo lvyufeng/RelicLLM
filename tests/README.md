@@ -8,6 +8,13 @@
   scripts. pytest does not collect them, and each one prints the command that produced its numbers
   in its own docstring. `tests/fixtures/` and `tests/data/` are their inputs.
 
+  The vLLM-convention serving benchmark is no longer one of these: its implementation moved into the
+  package (`relicllm/bench/`) and is driven by **`relicllm bench serve`**, which launches a server,
+  measures it and writes a metadata envelope — see [serving latency
+  metrics](../docs/guides/latency_metrics.md#invocation). `tests/bench_serving.py` remains as a shim
+  that re-exports the client and forwards `main()`, so `python tests/bench_serving.py …` still runs;
+  new work should call `relicllm bench`.
+
 ```bash
 python -m pytest tests/ -q          # the whole suite
 python -m pytest tests/test_x.py -q # one module

@@ -28,23 +28,11 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
-
-@dataclass
-class HttpResult:
-    status: int
-    body: bytes
-    elapsed_seconds: float
-    first_event_seconds: float | None = None
-
-    @property
-    def text(self) -> str:
-        return self.body.decode("utf-8", errors="replace")
-
-    def json(self) -> dict[str, Any]:
-        value = json.loads(self.text)
-        if not isinstance(value, dict):
-            raise AssertionError(f"expected JSON object, got {type(value).__name__}")
-        return value
+# The three primitives every serving harness shares -- the HTTP call, its result type, and the prompt
+# generator -- live in the package now (`relicllm.bench.client`), so `relicllm bench` and
+# `bench_serving.py` use one implementation rather than two that have to agree. Re-exported here under
+# the names this module's importers already use.
+from relicllm.bench.client import HttpResult, http_request, prompt_text, require  # noqa: F401
 
 
 @dataclass
@@ -75,42 +63,10 @@ class ServerGroup:
         self.rendezvous.unlink(missing_ok=True)
 
 
-def require(condition: bool, message: str) -> None:
-    if not condition:
-        raise AssertionError(message)
-
-
 def parse_devices(value: str) -> list[str]:
     devices = [item.strip() for item in value.split(",") if item.strip()]
     require(devices, "--devices must contain at least one device")
     return devices
-
-
-def http_request(
-    base_url: str,
-    path: str,
-    payload: dict[str, Any] | None = None,
-    *,
-    timeout: float,
-) -> HttpResult:
-    data = None
-    headers: dict[str, str] = {}
-    if payload is not None:
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        headers["Content-Type"] = "application/json"
-    request = urllib.request.Request(
-        base_url.rstrip("/") + path,
-        data=data,
-        headers=headers,
-        method="POST" if payload is not None else "GET",
-    )
-    started = time.perf_counter()
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            body = response.read()
-            return HttpResult(response.status, body, time.perf_counter() - started)
-    except urllib.error.HTTPError as exc:
-        return HttpResult(exc.code, exc.read(), time.perf_counter() - started)
 
 
 def stream_request(
@@ -174,16 +130,6 @@ def read_logs(log_dir: pathlib.Path) -> str:
     for path in sorted(log_dir.glob("rank*.log")):
         chunks.append(f"--- {path.name}\n{path.read_text(encoding='utf-8', errors='replace')}")
     return "\n".join(chunks)
-
-
-def prompt_text(index: int, words: int) -> str:
-    sentence = (
-        "Explain the following benchmark request in one concise paragraph. "
-        "The quick brown fox jumps over the lazy dog while the deployment team "
-        "checks scheduler fairness, KV cache isolation, and tensor parallel safety. "
-    )
-    text = (f"Request {index}: " + sentence) * max(1, words // 35 + 1)
-    return text[: max(64, words * 5)]
 
 
 def payload(index: int, prompt_words: int, max_tokens: int, *, stream: bool = False) -> dict[str, Any]:

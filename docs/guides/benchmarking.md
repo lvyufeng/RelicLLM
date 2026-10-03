@@ -18,6 +18,33 @@ A benchmark result should record:
 - peak GPU memory per rank and host/pinned memory when it is material;
 - token parity, numerical error, or an explicit statement that no reference comparison was run.
 
+## The record `relicllm bench` writes
+
+Most of that list is supplied automatically by `relicllm bench serve`, which launches the server,
+measures it on [vLLM's terms](latency_metrics.md), and writes one JSON envelope per run:
+
+```bash
+relicllm bench serve --scenario decode --scenario prefill-8k \
+    --json-out /tmp/bench.json \
+    -- --model /path/to/checkpoint --backend auto --tensor-parallel-size 4
+```
+
+The envelope carries `schema`, `tool`, `git_commit`, `host` (hostname, platform, Python) and `cuda`
+(device names and count) around a `scenarios` map of the per-workload records. `launch` is the
+**literal argv** that started the server when the command launched one, and `null` when `--base-url`
+pointed at a server somebody else started — the two are different claims about a number, so the record
+keeps them apart rather than filling the gap with a guess.
+
+**Every metadata reader is best-effort and never invents a value.** A field that cannot be read — no
+`nvidia-smi`, no torch, no checkout — is **absent** from the record, not `0` and not `"unknown"`. That
+is the same rule a missing measurement follows everywhere else here, and it is what makes an absent
+`cuda` key mean "unknown host" rather than "no GPU".
+
+What the record does **not** carry is the switches that live in the environment. `POCKETLLM_*`
+(`POCKETLLM_XING4_DIR`, the bank names, the residency flags) change where experts live and therefore
+what the number means; a run whose result is to be quoted should name the ones it set alongside the
+record. The envelope's `env_snapshot` helper exists for a caller that wants them folded in.
+
 ## Timing convention
 
 PocketLLM's standard timed generation path measures the first model result as prefill and measures subsequent single-token forwards as decode:

@@ -41,6 +41,10 @@ dependencies = [
     # `pip install -e ../relic-core --no-build-isolation` before this package.
     "relic-core",
     "transformers>=4.40",
+    # `relicllm bench`'s statistics are numpy's, because the vLLM metrics it matches are numpy's
+    # (population std, linear-interpolated percentiles). Already a transitive dependency of
+    # transformers, but now imported directly, so it is named directly.
+    "numpy>=1.24",
     "safetensors>=0.4",
     "tqdm>=4.66",
     "setuptools>=68",

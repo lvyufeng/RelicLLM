@@ -9,6 +9,13 @@ import sys
 
 from relicllm.api import ConfigurationError, EngineArgs, UnsupportedFeatureError, device_hint
 from relicllm.backends.cli_surface import add_declared_options, resolved_options
+
+# The bench subcommand's parser and orchestrator. Module level rather than deferred, because
+# `build_parser()` registers the subcommand for every invocation -- a deferred import would not defer
+# anything. This does pull the measurement client (and numpy, for the statistics) into the CLI's import
+# graph, which `serve` alone would not need; that is the cost of the second subcommand, and it is paid
+# once at parse time, not per request.
+import relicllm.cli.bench as bench
 from relicllm.backends.factory import create_backend, select_backend
 from relicllm.server.openai import serve
 from relicllm.supervisor import TensorParallelSupervisor
@@ -151,6 +158,10 @@ def build_parser() -> argparse.ArgumentParser:
     # The runtimes' own levers, one flag each, read out of the declarations they carry. Added last
     # so the host's flags above keep their order in `--help` and the generated sections follow them.
     add_declared_options(serve_parser)
+    # `bench` is the second subcommand: measurement is a verb beside serving, the way `vllm bench
+    # serve` sits beside `vllm serve`. It carries no serve flags of its own -- the command that starts
+    # the server goes after `--` -- so registering it here does not touch the surface above.
+    bench.add_subparser(subparsers)
     return parser
 
 
@@ -239,7 +250,17 @@ def _supervised_command(original_argv: list[str]) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    # The `--` in a bench invocation separates bench's flags from the serve command to launch, and
+    # argparse has no way to keep that tail intact through `parse_args`. Split it here, before the
+    # parse, so the serve command reaches the launcher verbatim and never meets a parser that would
+    # reinterpret it.
+    raw = list(sys.argv[1:] if argv is None else argv)
+    if raw[:1] == ["bench"]:
+        head, tail = bench._split_serve_tail(raw[1:])
+        bench_args = bench.build_parser().parse_args(head)
+        return bench.run(bench_args, serve_argv=tail)
+
+    args = build_parser().parse_args(raw)
     if args.command != "serve":
         return 2
 

@@ -64,17 +64,21 @@ before it can tell whether it worked.
 Every optimization below needs an answer to "did that help", and today there is no reproducible way
 to ask. ~70 `bench_*` / `probe_*` / `profile_*` scripts each answer a different question.
 
-- **P0.1 `relicllm bench`.** One command, one JSON out, on vLLM's terms: TTFT / TPOT / ITL / E2EL /
-  goodput for a given (model, hardware, scenario). Reuse `tests/bench_serving.py` and the metric
-  definitions in [serving latency metrics](../guides/latency_metrics.md).
+- **P0.1 `relicllm bench` — landed.** One command, one JSON out, on vLLM's terms: TTFT / TPOT / ITL /
+  E2EL / goodput for a given (model, hardware, scenario). The client moved out of `tests/` into
+  `relicllm/bench/`, gained a launcher that starts `relicllm serve` and waits for `/ready`, and a
+  names-its-own-argv envelope; the metric definitions are unchanged from
+  [serving latency metrics](../guides/latency_metrics.md). **The mechanism landed; the numbers did
+  not.** No GPU run was spent this round, so there is no committed baseline yet — that is P0.2's
+  deliverable, not an omission here.
 - **P0.2 a performance regression gate.** `scripts/check_perf_baseline.py`, threshold-based against
   P0.1's JSON, `skip` rather than `fail` with no GPU — the same shape `scripts/check_test_baseline.py`
-  already uses.
+  already uses. Depends on a committed baseline from a P0.1 run.
 - **P0.3 fix MiMo's prefill/decode seam.** One line, and it makes an existing number trustworthy
   before anything is optimized against it ([benchmarking rules](../guides/benchmarking.md)).
 
 **Acceptance:** one command runs decode-only and 8k-prefill for every served runtime and writes a
-committed baseline.
+committed baseline. The command exists; the run that fills the baseline in is the next step.
 
 ### Phase 1 — serving coverage (landed: qwen4_exp)
 
