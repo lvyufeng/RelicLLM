@@ -43,7 +43,6 @@ DEEPSEEK_V41_RESIDENT_EXPERTS=1 python -m pocketllm serve \
   --port 8000 \
   --backend-option expert_pool_rows=148 \
   --backend-option prefill_chunk=4096 \
-  --backend-option decode_graphs=true \
   --backend-option threads=22
 ```
 
@@ -69,7 +68,7 @@ as `usage.prompt_tokens_details.cached_tokens`.
 | --- | ---: | --- |
 | `expert_pool_rows` | 288 | Expert rows a chunk's arena holds, per rank. An arena the pass re-draws; worth 8.44× on a 512-token prefill against its own off state, and 1.305× on a decode. **148 is not optional at 262144**, which is what the long-context numbers above are taken at; 0 is the control column, and it turns the batched prefill off with it. |
 | `prefill_chunk` | — | Tokens a prefill call takes at once. The width is the prefill knob, and 4096 is the width the long-context numbers need. |
-| `decode_graphs` | `false` | Capture a decode step as a CUDA graph. |
+| `decode_graphs` | `true` | Capture a decode step as a CUDA graph. On by default since [the default-graph measurement](../performance/v41_decode_graph_default.md): 2.49× the decode TPOT, 3.3× the decode throughput, and it removes the run-to-run jitter as well. `--backend-option decode_graphs=false` is the control column. |
 | `threads` | — | Host threads a rank's CPU work uses. 22 is one NUMA node on this box. |
 | `prefix_cache_bytes` | `4g` | Prefix-cache budget, a rank. `0` is what the CLI's `--enable-prefix-caching` off spells; a `k`/`m`/`g` suffix is accepted. |
 | `prefix_cache_head_tokens` | 1024 | The head anchor a snapshot is taken at. |

@@ -99,10 +99,16 @@ this repository's fastest models have been its least reachable.
 
 ### Phase 2 — take the host out of the loop (the largest single lever)
 
-- **P2.1 V4.1's decode graph, on by default.** The implementation exists
-  ([decode graph](deepseek_v4_1_flash_decode_graph.md)); the work is the graph's *split point*, which
-  is not a free choice — the host-resident expert bank forces the host to act mid-step, so the graph
-  has to be cut around it. Precedent says 4.3×.
+- **P2.1 V4.1's decode graph, on by default.** **Landed.** The implementation existed
+  ([decode graph](deepseek_v4_1_flash_decode_graph.md)) and the split point around the host-resident
+  expert call was already the design; what was missing was the served number on the copy-removed
+  config, which the roadmap's own rule (先搬，量完再说) required before the default moved. Measured at
+  [2.49× the decode TPOT and 3.3× the decode throughput](v41_decode_graph_default.md), against a
+  ~1.55 s a request capture that break-even clears inside three tokens — so the backend's
+  `decode_graphs` is now `true` and the flag is the control column. The larger win the number points
+  at is *not* taken here: capture is still per request because the recordings must be released before
+  the next prompt, and a persistent holder in the Xing4.0 shape is what would stop a load paying it
+  once a request.
 - **P2.2 de-synchronize sampling.** Replace the per-token host round trip with device-side sampling
   and a batched read-back. Applies to all four runtimes; independent of graphs.
 - **P2.3 carry graph capture to `mimo` and `qwen4_exp`.** Follows P2.1's split-point answer.
@@ -148,6 +154,15 @@ baseline P0.1 exists to produce is still **P0.2's** deliverable. The point of do
 one this page opened with — a phase does not start until the one before it can tell whether it
 worked, and until P0.2 can, the optimizations in Phase 2 would be landed against numbers that cannot
 show they helped.
+
+Then Phase 2's first item. **P2.1** turned V4.1's decode graph on, and it is the first change on this
+page argued from a number P0.1 produced rather than from a precedent: the graph's 1.43–1.56× had been
+taken with the expert `_stage` copy still in the step, so the served measurement was run again on the
+copy-removed config and the default was set from it — [2.49× the decode TPOT and 3.3× the decode
+throughput](v41_decode_graph_default.md), and the capture cost read off the first request's TTFT
+rather than assumed, which is what made break-even a fact (under three tokens) and the default
+defensible. The un-banked configuration is stated on the page, and the absolute ms are not comparable
+to the bank-attached figures — the delta is what the decision rests on.
 
 ## Where the detail is
 

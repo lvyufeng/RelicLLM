@@ -130,10 +130,13 @@ def generate(
     outright.
 
     `graphs` replays each block from a captured CUDA graph instead of running it, which is
-    `_decode_graphs` below and is off by default: the same tokens at the same positions either way,
-    and a pool of card memory on the other side of the choice. It needs a card -- the position
-    reaches the graphs as a tensor -- and a `max_new_tokens` of at least one, since the recording is
-    a decode step and there is nothing to record a decode step for otherwise.
+    `_decode_graphs` below: the same tokens at the same positions either way, and a pool of card
+    memory on the other side of the choice. It defaults to `False` **here** -- this is the library
+    entry point, and a direct caller that wants to compare against the eager loop asks for the loop --
+    while the v41 *backend* turns it on for serving, where the measurement is
+    `docs/performance/v41_decode_graph_default.md`. It needs a card -- the position reaches the graphs
+    as a tensor -- and a `max_new_tokens` of at least one, since the recording is a decode step and
+    there is nothing to record a decode step for otherwise.
 
     `prefix_cache` is a `prefix_cache.PrefixCache` the caller keeps across requests, or `None` for no
     reuse. With one, the prompt is looked up first: a stored prefix of it is restored instead of
