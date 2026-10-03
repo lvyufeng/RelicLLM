@@ -416,15 +416,14 @@ def test_argument_parsing_helpers():
         raise AssertionError("a goodput entry without ':' must be rejected")
 
 
-def test_the_server_is_somebody_elses_to_start():
-    """`--base-url` is the one required argument.
+def test_the_client_does_not_launch_a_server():
+    """The measurement client measures a URL; launching is a separate concern, in a separate module.
 
-    The harness launched the C++ binary itself once. That front end is gone, and
-    with it the launch: a server started by whoever is tuning it is the shape the
-    two `relicllm serve` benchmarks beside this one already use, and it is the
-    only shape that can say which scheduler the numbers belong to. The parser has
-    no `--ckpt`, `--binary` or `--devices` to fall back on, so a run that forgot
-    the URL fails at the required-argument check rather than at a launch.
+    This client launched the native binary itself once. That front end is gone, and the launch did not
+    come back *here*: `relicllm bench serve` owns it now (`relicllm/bench/launcher.py`), which is what
+    lets this module stay a client -- a base URL in, a record out. The parser has no `--ckpt`,
+    `--binary` or `--devices` to fall back on, so a run that names no server fails at the
+    required-argument check rather than at a launch it cannot perform.
     """
     parser = bench_serving.build_parser()
     for removed in ("--ckpt", "--binary", "--devices", "--sidecar", "--server-drain-seconds"):

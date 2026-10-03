@@ -3,3 +3,4 @@ relic-core
 transformers>=4.40
 safetensors>=0.4
 tqdm>=4.66
+numpy>=1.24

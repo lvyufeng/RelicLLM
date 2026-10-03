@@ -12,7 +12,8 @@ vLLM row can go in one table without an argument about what the words mean. The
 formulas below were read from the upstream source, not from documentation prose;
 the file and line each came from is in [Provenance](#provenance).
 
-Client: `tests/bench_serving.py`. Server: `pocketllm serve`, whose `/metrics` carries the counters.
+Client: `relicllm bench serve`, whose measurement half is `relicllm/bench/client.py`. Server:
+`relicllm serve`, whose `/metrics` carries the counters.
 
 ## The metrics
 
@@ -204,30 +205,48 @@ applies to any number that claims to be `prefill_tps` or `decode_tps`.
 
 ## Invocation
 
-The harness measures a server somebody else started, so the launch is a separate command — the
-two halves are separate on purpose, because only the command line that started the server knows
-which scheduler the numbers belong to:
+`relicllm bench serve` is the whole thing: it launches `relicllm serve`, waits for `/ready`, measures,
+writes the record, and tears the server down. The command line that starts the server goes **after
+`--`**, verbatim, so nothing about `serve` is re-declared here and a flag added to `serve` is
+measurable the day it lands:
 
 ```bash
-# 1. Start the server. On Ascend, leave paging off: the engine rejects a paged KV
-# cache on the batched decode path outright
-# (`cpp_engine/engine/qwen_engine.cpp:4501`), which is what --backend-option
-# kv_paged=false says. It is also the cpp backend's default.
-python -m pocketllm serve --model /path/to/checkpoint --backend cpp \
-    --tensor-parallel-size 4 --device-ids 0,1,2,3 --port 8000
+relicllm bench serve --scenario decode --scenario prefill-8k \
+    --json-out /tmp/bench.json \
+    -- --model /path/to/checkpoint --backend auto --tensor-parallel-size 4 --device-ids 0,1,2,3
+```
 
-# 2. Measure it.
-python tests/bench_serving.py --base-url http://127.0.0.1:8000 \
+`--scenario` names a workload from `relicllm/bench/scenarios.py`; the two the roadmap's baseline is
+made of are `decode` (128 in, 128 out — the per-token path) and `prefill-8k` (8192 in, 32 out — the
+long-context path). A scenario supplies the client fields it owns and the operator's own flags win
+over it, so `--num-prompts 100` with `--scenario decode` means a small run of the decode shape, not
+the scenario's default. Any client flag below is accepted; `relicllm bench serve --help` lists them.
+
+To measure a server **somebody else started**, point at it instead of naming a command — the two are
+mutually exclusive, and the record says which happened (`launch: null` versus the argv it ran):
+
+```bash
+python -m relicllm serve --model /path/to/checkpoint --backend auto \
+    --tensor-parallel-size 4 --device-ids 0,1,2,3 --port 8000
+relicllm bench serve --base-url http://127.0.0.1:8000 \
     --random-input-len 512 --random-output-len 128 \
     --num-prompts 32 --request-rate 4 --max-concurrency 8 \
     --goodput ttft:2000 tpot:60 --json-out /tmp/serve.json
 ```
 
-`--num-prompts 1000` and `--request-rate inf` are the defaults, matching vLLM:
-by default the harness saturates the server. `--dataset-name random` (the default)
-samples prompt lengths from `len × (1 ± --random-range-ratio)`; `--dataset-name
-custom` uses the same synthetic prompts as the concurrency harness, so a serving
-record and an acceptance record can share a workload.
+The record carries the envelope a number needs to be quoted — `git_commit`, host, and CUDA device
+names and count, each read best-effort and **left absent rather than guessed** when it cannot be
+read. That is what lets two records be compared without an argument about what machine ran them.
+
+!!! note "Why the launch is a subcommand and not a flag on the measurement"
+    Only the command line that started the server knows which scheduler the numbers belong to, so the
+    record stores it. `relicllm bench serve` launching the child is what puts that command in the
+    record; `--base-url` is the same measurement with that claim deliberately left out.
+
+`--num-prompts 1000` and `--request-rate inf` are the client defaults, matching vLLM: by default it
+saturates the server. `--dataset-name random` (the default) samples prompt lengths from
+`len × (1 ± --random-range-ratio)`; `--dataset-name custom` uses the same synthetic prompts as the
+concurrency harness, so a serving record and an acceptance record can share a workload.
 
 Two caveats on the random dataset, both recorded in the JSON output: without a
 tokenizer it reproduces vLLM's length *distribution* rather than its exact token
