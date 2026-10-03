@@ -74,8 +74,12 @@ to ask. ~70 `bench_*` / `probe_*` / `profile_*` scripts each answer a different 
 - **P0.2 a performance regression gate.** `scripts/check_perf_baseline.py`, threshold-based against
   P0.1's JSON, `skip` rather than `fail` with no GPU — the same shape `scripts/check_test_baseline.py`
   already uses. Depends on a committed baseline from a P0.1 run.
-- **P0.3 fix MiMo's prefill/decode seam.** One line, and it makes an existing number trustworthy
-  before anything is optimized against it ([benchmarking rules](../guides/benchmarking.md)).
+- **P0.3 fix MiMo's prefill/decode seam — landed.** The `_drain` Xing4.0 already had is now at MiMo's
+  seam too, so `prefill_seconds` and `decode_seconds` are a device fact on both. One line of behaviour
+  and the same one-line guard off the device; the position is pinned hermetically in
+  `tests/test_mimo_serving.py`. It makes an existing number trustworthy
+  ([benchmarking rules](../guides/benchmarking.md)); its own effect is **not yet re-measured**, which
+  belongs to a P0.1 run.
 
 **Acceptance:** one command runs decode-only and 8k-prefill for every served runtime and writes a
 committed baseline. The command exists; the run that fills the baseline in is the next step.
@@ -137,6 +141,13 @@ roadmap rather than only in the PR: a cold expert preload costs **3,446 s a rank
 default, and decode at the default `--expert-cache 0` is **PCIe-bound at 3.6 tok/s** with device
 utilization swinging between 7% and 94% a step — which is the Phase 2 diagnosis, in one more model,
 with a flag that moves it.
+
+Then Phase 0's mechanism: **P0.1** gave every number below a reproducible command and a record
+(`relicllm bench`), and **P0.3** closed MiMo's prefill/decode seam. Neither spent a GPU run, so the
+baseline P0.1 exists to produce is still **P0.2's** deliverable. The point of doing them first is the
+one this page opened with — a phase does not start until the one before it can tell whether it
+worked, and until P0.2 can, the optimizations in Phase 2 would be landed against numbers that cannot
+show they helped.
 
 ## Where the detail is
 
