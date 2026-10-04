@@ -8,7 +8,7 @@ A benchmark result should record:
 
 - model name and exact checkpoint/quantization variant;
 - PocketLLM commit or release;
-- runtime (`cpp_engine`, PyTorch resident, heterogeneous GGUF, etc.);
+- runtime (`torch`, `v41`, `mimo`, `xing4`, `qwen4_exp`; record the backend even under `auto`);
 - GPU model, per-card memory, GPU count, TP/EP world size, PCIe/NVLink topology;
 - CPU model, NUMA layout, system RAM, CUDA/driver/runtime versions when relevant;
 - prompt token count, generated token count, context length, and tokenizer source;

@@ -1,11 +1,19 @@
 # Ternary-Bonsai-2-27B
 
-A 27B hybrid-attention text model — 48 Gated DeltaNet layers and 16 full-attention layers over a
-**dense** 17,408-wide MLP — released as a GGUF whose weights are **1.75 bits each**. PocketLLM runs
-the whole checkpoint on **one** 2080 Ti, behind the same OpenAI-compatible server as its other
-models.
+!!! warning "No runtime in this repository serves this checkpoint"
+    The file declares `general.architecture=qwen35`, and the `cpp` adapter that was its default
+    backend has been retired: `--backend cpp` is no longer accepted, and no runtime here declares the
+    canonical `qwen3_5`, so `--backend auto` refuses the file by name. The engine lives in the
+    archived [relic-engine](https://github.com/lvyufeng/relic-engine); the commands below no longer
+    run from this repository, and the measurements are that engine's record.
 
-- **Backend**: `pocketllm serve`, `cpp` adapter (the default for this checkpoint — no flag needed)
+A 27B hybrid-attention text model — 48 Gated DeltaNet layers and 16 full-attention layers over a
+**dense** 17,408-wide MLP — released as a GGUF whose weights are **1.75 bits each**. The retired
+engine ran the whole checkpoint on **one** 2080 Ti, behind the same OpenAI-compatible server as its
+other models.
+
+- **Backend**: `cpp` adapter (the default for this checkpoint — no flag needed — retired from this
+  repository)
 - **Parallelism**: 1 GPU
 - **Context**: the checkpoint declares 262,144; **245,760 tokens** is what fits on a 22 GiB card at
   an FP16 KV cache, and the full 262,144 fits with `--kv-cache-dtype fp8`

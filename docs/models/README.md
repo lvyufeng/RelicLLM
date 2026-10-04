@@ -14,6 +14,7 @@ document it is under [performance](../performance/index.md).
 | **Text, CLI only** | Full-model text-in/text-out generation is covered through a CLI or benchmark entrypoint. There is no OpenAI adapter for it. |
 | **Experimental** | Functionality exists with an explicit caveat on performance, determinism or output parity. The caveat is the `## Known limitations` entry that carries it. |
 | **Inspect only** | Metadata and tensor validation exist without a complete generation runtime: the audit is the evidence, not generated text. |
+| **Not servable here** | The checkpoint's only backend was the native `cpp` engine, which has been retired from this repository. No runtime here declares the checkpoint's architecture, so `--backend auto` refuses it by name. The model page keeps the retired engine's record and says so at the top. |
 
 ## Support matrix
 
@@ -22,13 +23,13 @@ This table is the runtime status and nothing else, so a row stays scannable.
 
 | Model | Architecture | Format | Runtime | Status | Design |
 | --- | --- | --- | --- | --- | --- |
-| [DeepSeek-V4-Flash](deepseek-v4.md) | MLA + sparse attention + MoE | Safetensors FP4/FP8, GGUF Q2 | PyTorch and C++/CUDA, TP4 | Text + server | [Design](../architecture/deepseek_v4_design.md) |
+| [DeepSeek-V4-Flash](deepseek-v4.md) | MLA + sparse attention + MoE | Safetensors FP4/FP8, GGUF Q2 | PyTorch, `torch` backend, TP4 | Text + server | [Design](../architecture/deepseek_v4_design.md) |
 | [MiniMax-M2.7](minimax-m2.7.md) | GQA + 256-expert MoE | GGUF `UD-IQ1_M` | Raw-block CUDA, TP4 | Text, CLI only | [Design](../architecture/minimax_m2_7_design.md) |
 | [GLM-5.2](glm-5.2.md) | DSA/MLA-indexed + dense prefix + MoE | GGUF `UD-Q2_K_XL` | Raw-block CUDA, TP4 | Text, CLI only | [Design](../architecture/glm_5_2_design.md) |
-| [Qwen3.8-27B-FP8](qwen3.8-27b-fp8.md) | 48 Gated DeltaNet + 16 GQA | Safetensors FP8 E4M3 | C++/CUDA, TP4 | Text + server | [Design](../architecture/qwen3_8_27b_fp8_design.md) |
-| [Qwen3.8-27B-NVFP4](qwen3.8-27b-nvfp4.md) | Same text architecture | Safetensors NVFP4 + FP8 | C++/CUDA, TP2 | Text, CLI only | [Design](../architecture/qwen3_8_27b_nvfp4_design.md) |
-| [Qwen3.8-27B (official BF16)](qwen3.8-27b-bf16.md) | Same text architecture | Safetensors BF16, vision tower | C++/CUDA, **audit only**; C++/Ascend TP4 | Text + server on Ascend TP4 | [Design](../architecture/qwen3_8_27b_bf16_design.md) |
-| [Ternary-Bonsai-2-27B](ternary-bonsai-2-27b.md) | Same text architecture | GGUF `PTQ1_0`, 1.75 bits a weight | C++/CUDA, **one card**, no flag; C++/Ascend TP4 | Text + server | [Design](../architecture/bonsai_2_27b_design.md) |
+| [Qwen3.8-27B-FP8](qwen3.8-27b-fp8.md) | 48 Gated DeltaNet + 16 GQA | Safetensors FP8 E4M3 | **retired `cpp` engine, TP4** | Not servable here | [Design](../architecture/qwen3_8_27b_fp8_design.md) |
+| [Qwen3.8-27B-NVFP4](qwen3.8-27b-nvfp4.md) | Same text architecture | Safetensors NVFP4 + FP8 | **retired `cpp` engine, TP2** | Not servable here | [Design](../architecture/qwen3_8_27b_nvfp4_design.md) |
+| [Qwen3.8-27B (official BF16)](qwen3.8-27b-bf16.md) | Same text architecture | Safetensors BF16, vision tower | **retired `cpp` engine**; CUDA audit only, Ascend TP4 | Not servable here | [Design](../architecture/qwen3_8_27b_bf16_design.md) |
+| [Ternary-Bonsai-2-27B](ternary-bonsai-2-27b.md) | Same text architecture | GGUF `PTQ1_0`, 1.75 bits a weight | **retired `cpp` engine**, one card, no flag; CUDA/TP1, Ascend TP4 | Not servable here | [Design](../architecture/bonsai_2_27b_design.md) |
 | [DeepSeek-V4.1-Flash](deepseek-v4.1-flash.md) | Encoder-decoder, CSA2 shared-KV, MoE | Safetensors FP8 + FP4 | `--backend v41`, host PyTorch, TP4 | Text + server | [Design](../architecture/deepseek_v4_1_flash_design.md) |
 | [MiMo-V2.6-Flash](mimo-v2.6-flash.md) | 9 global + 39 sliding-window, MoE | Safetensors FP8 + MXFP4 | `--backend mimo`, host expert bank, TP4 | Text + server | [Design](../architecture/mimo_v2_6_flash_design.md) |
 | [Xing4.0-29B-A4B](xing4.0-29b-a4b.md) | MLA + matrix hyper-connection, 64-expert MoE | GGUF `IQ4_NL` | `--backend xing4`, **one card**, experts resident | Text + server | [Design](../architecture/xing4_0_29b_a4b_design.md) |

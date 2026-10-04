@@ -96,11 +96,11 @@ distinction is specific to `/v1/chat/completions`.
 ## Naming map: vLLM series → PocketLLM series
 
 The names stay `pocket_*` / `pocketllm_*`; only the definitions are aligned.
-There are no `vllm:` aliases. The native server prefixes with `pocket_` and the
-Python server with `pocketllm_`, and a series exists only where the table names
-one:
+There are no `vllm:` aliases. The native `cpp` server that used to publish the
+`pocket_*` column has been retired from this repository, so the only server here
+is the Python one; a series exists only where the table names one.
 
-| vLLM series | Native server (`cpp_engine`) | Python server (`pocketllm`) |
+| vLLM series | Native server (`cpp_engine`, retired) | Python server (`pocketllm`) |
 | --- | --- | --- |
 | `vllm:time_to_first_token_seconds` | `pocket_ttft_seconds` | `pocketllm_ttft_seconds` |
 | `vllm:e2e_request_latency_seconds` | `pocket_request_duration_seconds` | `pocketllm_request_duration_seconds` |
@@ -125,6 +125,11 @@ alignment topped out at 5 s for TTFT, which is below a single 6497-token prefill
 on the 2080 Ti baseline, so on that workload every real sample landed only in
 `+Inf` and the histogram could not be quantiled at all.
 
+!!! warning "The native `pocket_*` column is a record, not a live server"
+    The native `cpp` server that published the `pocket_*` names has been retired from this repository,
+    so nothing here emits them any more. The column is kept because it is what the alignment was done
+    against; read the Python column as the current series.
+
 !!! note "The `le` label is spelled differently by the two servers"
     The Python exporter writes ``le="1.0"`` and the native one writes
     ``le="1"``, because C++'s default float formatting drops the trailing
@@ -134,8 +139,8 @@ on the 2080 Ti baseline, so on that workload every real sample landed only in
 
 ### What each server observes, and what it does not
 
-**Native server.** All seven series. It owns the scheduler's clock, so it
-reports the three request phases directly and derives TTFT from the same
+**Native server (retired).** All seven series. It owned the scheduler's clock, so it
+reported the three request phases directly and derived TTFT from the same
 scheduler result. The phase columns have independent counts, unlike vLLM's,
 which observes all three for every finished request: a request cancelled before
 its first token has a real queue wait and no prefill interval, and it records

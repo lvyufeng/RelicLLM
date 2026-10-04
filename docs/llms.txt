@@ -32,7 +32,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [Benchmarking and reporting](https://lvyufeng.github.io/RelicLLM/guides/benchmarking/)
 - [Serving latency metrics](https://lvyufeng.github.io/RelicLLM/guides/latency_metrics/)
 - [Hardware adaptation triage](https://lvyufeng.github.io/RelicLLM/guides/hardware_triage/)
-- [Native engine API](https://lvyufeng.github.io/RelicLLM/guides/pocketllm_api/)
+- [API and backend guide](https://lvyufeng.github.io/RelicLLM/guides/pocketllm_api/)
 
 ## Performance
 

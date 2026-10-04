@@ -1,5 +1,13 @@
 # Qwen3.8-27B (official BF16)
 
+!!! warning "No runtime in this repository serves this checkpoint"
+    Its config is `model_type=qwen3_5`, and the shared native `cpp` text runtime that ran it — the
+    only backend the Ascend records below were taken on — has been retired: `--backend cpp` is no
+    longer accepted and no runtime here declares `qwen3_5`, so `--backend auto` refuses the
+    checkpoint by name. The engine lives in the archived
+    [relic-engine](https://github.com/lvyufeng/relic-engine); the commands below no longer run from
+    this repository, and the Ascend numbers are that engine's record.
+
 The official `Qwen/Qwen3.8-27B` release, with the checkpoint's multimodal root config and its bundled
 vision tower. PocketLLM maps all 866 text tensors, classifies the 333 vision tensors as deliberately
 ignored, and produces rank-local shard descriptors for any TP world size. On CUDA that is host-side
@@ -7,7 +15,8 @@ only — generation from this checkpoint has not been validated there. **On Asce
 the backend was brought up on:** every Ascend performance record in this repository measures this
 weight source.
 
-- **Backend**: `--backend cpp` (the shared text runtime); CUDA is not validated for this checkpoint
+- **Backend**: `cpp` (the shared text runtime, retired from this repository); CUDA is not
+  validated for this checkpoint
 - **Parallelism**: TP4 audited, and TP4 is how it runs on Ascend
 - **Context**: up to 262,144 positions (from the config; not measured on this checkpoint)
 - **Validated on**: 4 × Ascend 910B (first generation, `Short_SoC_version=Ascend910`), TP4, CANN 9.0.0,
