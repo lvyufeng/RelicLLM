@@ -57,18 +57,22 @@ def test_auto_selects_qwen4_exp_from_the_nested_text_config(tmp_path):
     assert factory.select_backend(EngineArgs(model=str(tmp_path), backend="auto")) == "qwen4_exp"
 
 
-def test_auto_keeps_torch_for_a_neighbouring_qwen(tmp_path):
+def test_auto_refuses_a_neighbouring_qwen(tmp_path):
     # Qwen3.5 is a different runtime's checkpoint and a generic Qwen is nobody's; neither may be
-    # captured by a predicate that only looked for the substring "qwen".
+    # captured by a predicate that only looked for the substring "qwen", and with `torch` narrowed
+    # to DeepSeek-V4 there is nothing left to catch them.
     for model_type in ("qwen3_5", "qwen2", "qwen3"):
         _write_config(tmp_path, {"model_type": model_type})
-        assert factory.select_backend(EngineArgs(model=str(tmp_path), backend="auto")) == "torch"
+        with pytest.raises(UnsupportedFeatureError, match="no backend serves"):
+            factory.select_backend(EngineArgs(model=str(tmp_path), backend="auto"))
 
 
-def test_auto_keeps_torch_for_a_gguf_qwen4_exp(tmp_path):
+def test_auto_refuses_a_gguf_qwen4_exp(tmp_path):
+    # qwen4_exp is safetensors-only, and the V4 runtime is not a home for a Qwen GGUF.
     _write_config(tmp_path, {"model_type": "qwen4_exp"})
     (tmp_path / "model.gguf").write_bytes(b"GGUF")
-    assert factory.select_backend(EngineArgs(model=str(tmp_path), backend="auto")) == "torch"
+    with pytest.raises(UnsupportedFeatureError, match="no backend serves"):
+        factory.select_backend(EngineArgs(model=str(tmp_path), backend="auto"))
 
 
 def test_explicit_qwen4_exp_refuses_a_foreign_checkpoint(tmp_path):

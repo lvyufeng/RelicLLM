@@ -90,46 +90,31 @@ def runtime_for_architecture(architecture: str, *, model_format: str) -> tuple[s
     """Which declared runtime reads this architecture, and on what grounds.
 
     The table is asked in its own order, so the answer cannot drift from what the dispatcher does.
-    ``models`` is the architecture's own name in each runtime's spelling; a runtime with an empty
-    ``models`` declares no particular architecture because it reads *every* one, which is what
-    ``torch`` does and is why it is the last candidate in :data:`~relicllm.backends.capabilities.AUTO_ORDER`.
+    ``models`` is the architecture's own name in each runtime's spelling; every runtime now names
+    the architecture it reads, so there is no catch-all left and an architecture no entry declares
+    is reported as unserved rather than attributed to one that reads everything.
 
     **Both spellings are tried**, because the table's ``models`` entries are not all canonical keys.
     Xing4 declares ``("xing4_0",)`` -- the checkpoint's own ``model_type`` -- while the canonical key
     for that string is ``xing4``; asking with the key alone misses it and silently downgrades a model
-    with a dedicated adapter to the generic fallback, which is a wrong answer about the most
-    actionable field this module reports.
+    with a dedicated adapter, which is a wrong answer about the most actionable field this module
+    reports.
     """
     key = architecture_key(architecture)
     candidates = {key, architecture.lower()}
-    fallback: str | None = None
     wrong_format: list[str] = []
     for name, runtime in RUNTIMES.items():
-        if not runtime.models:
-            if model_format in runtime.model_formats:
-                fallback = name
-            continue
         if not candidates & set(runtime.models):
             continue
         if model_format not in runtime.model_formats:
             # This runtime knows the architecture but not in this format, so it is not the answer --
             # but it is not a *refusal* either, and returning here would be a lie about the
             # dispatcher. `capabilities.route()` skips exactly this runtime and keeps going, and so
-            # must this: a DeepSeek-V4.1 GGUF has no `v41` adapter but the fallback is right there,
-            # and reporting `adapter: none` for it would contradict the probe the report prints.
+            # must this: a DeepSeek-V4.1 GGUF has no `v41` adapter and no other runtime declares it,
+            # so the report says so rather than naming a runtime that would misload it.
             wrong_format.append(f"{name} (only as {', '.join(runtime.model_formats)})")
             continue
         return name, f"{name} declares {sorted(candidates & set(runtime.models))[0]}"
-    if fallback is not None:
-        detail = (
-            f"; {', '.join(wrong_format)} declares {architecture} but not as {model_format}"
-            if wrong_format
-            else ""
-        )
-        return fallback, (
-            f"{fallback} declares no architecture and reads {model_format}, so it is the fallback "
-            f"rather than a per-architecture path{detail}"
-        )
     if wrong_format:
         return None, (
             f"{', '.join(wrong_format)} declares {architecture} but not as {model_format}, and no "

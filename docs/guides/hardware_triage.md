@@ -333,7 +333,7 @@ is the one row that is not a candidate, the card counts, the bank sizes, and the
 - **Xing4**'s only block format is `iq4_nl`, which has a kernel, and its adapter is declared — it
   needs nothing. Its `xing4` adapter is found because `RUNTIMES` declares the checkpoint's own
   `model_type` spelling, which is not the same string as the canonical architecture key; asking with
-  the key alone silently downgrades it to the generic fallback.
+  the key alone reports no adapter for it.
 - **Xing4 fits only because the bank exists.** With the 14.40 GiB expert bank offloaded it has
   4.32 GiB resident and reaches 334,988 tokens at batch 1, 32,768 at batch 8 — 46,080 B/token of KV
   is the whole model's, and the 40 trunk layers the GGUF ships (41 blocks, one of them a draft layer

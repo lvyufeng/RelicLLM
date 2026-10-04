@@ -153,12 +153,14 @@ def test_a_foreign_config_is_evidence_against_and_no_config_is_neither(tmp_path)
 
 
 def test_an_unreadable_checkpoint_reaches_the_adapter_instead_of_the_router(tmp_path) -> None:
-    """`UNKNOWN` is not `READ`: it must not be routed here by `auto`, and it must not be refused
-    for an explicit backend either."""
+    """`UNKNOWN` is not `READ`: no runtime is routed on it, and an explicit backend is not refused
+    on it either -- the adapter's own loader error names the file it could not read."""
     args = EngineArgs(model=str(tmp_path / "nothing"), backend="auto")
 
     assert identify("v41", args).verdict is Verdict.UNKNOWN
-    assert route(args) == "torch"
+    assert identify("torch", args).verdict is Verdict.UNKNOWN
+    with pytest.raises(UnsupportedFeatureError, match="no backend serves"):
+        route(args)
     assert select_backend(EngineArgs(model=str(tmp_path / "nothing"), backend="v41")) == "v41"
 
 
@@ -205,11 +207,27 @@ def test_a_header_that_was_read_and_disagrees_is_evidence_against(tmp_path) -> N
     assert identify("xing4", EngineArgs(model=str(unreadable), backend="xing4")).verdict is Verdict.UNKNOWN
 
 
-def test_the_generic_runtime_identifies_everything_and_is_asked_last() -> None:
-    """The loop has no separate fallback: `torch` is the last candidate and the answer to "nothing
-    else claimed it", so `route` cannot run off the end."""
-    assert identify("torch", EngineArgs(model="/nonexistent", backend="auto")).routes_here
-    assert declared.AUTO_ORDER.index("torch") == len(declared.AUTO_ORDER) - 1
+def test_no_runtime_identifies_everything_and_the_loop_refuses_when_none_does(tmp_path) -> None:
+    """There is no catch-all: every entry claims an architecture and refuses the others, so a
+    checkpoint nobody claims is refused by `route` rather than read by the last candidate."""
+    _write_config(tmp_path, {"model_type": "qwen2"})
+    args = EngineArgs(model=str(tmp_path), backend="auto")
+
+    assert identify("torch", args).verdict is Verdict.REFUSED
+    assert declared.AUTO_ORDER[-1] == "torch"  # widest last, but still not a fallback
+    with pytest.raises(UnsupportedFeatureError, match="no backend serves"):
+        route(args)
+
+
+def test_a_deepseek_v4_config_is_torchs_and_not_v41s(tmp_path) -> None:
+    """The two DeepSeek generations are separate architectures: V4 is `torch`'s, V4.1 is `v41`'s,
+    and neither predicate may capture the other."""
+    _write_config(tmp_path, {"model_type": "deepseek_v4", "architectures": ["DeepseekV4ForCausalLM"]})
+    args = EngineArgs(model=str(tmp_path), backend="auto")
+
+    assert identify("torch", args).verdict is Verdict.READ
+    assert identify("v41", args).verdict is Verdict.REFUSED
+    assert route(args) == "torch"
 
 
 def test_the_capability_refusal_does_not_shadow_the_checkpoint_refusal() -> None:

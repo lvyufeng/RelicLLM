@@ -151,16 +151,16 @@ def select_backend(args: EngineArgs, *, accelerator: Accelerator | None = None) 
         _refuse_options_the_runtime_does_not_read(args.backend, args)
         return args.backend
     # `auto` asks a different question than the explicit path does: not "is this provably not
-    # yours" but "does this checkpoint identify you", so a checkpoint presenting no evidence falls
-    # through to the generic runtime rather than being routed on the strength of a backend being
-    # importable.
+    # yours" but "does this checkpoint identify you". Every entry claims an architecture and refuses
+    # the rest, so a checkpoint nothing claims is refused here rather than routed into the last
+    # runtime on the list.
     for name in capabilities.AUTO_ORDER:
         if capabilities.identify(name, args).routes_here:
             _refuse_a_capability_the_runtime_lacks(name, args)
             _refuse_a_platform_the_runtime_lacks(name, args, accelerator=accelerator)
             _refuse_options_the_runtime_does_not_read(name, args)
             return name
-    raise AssertionError("capabilities.AUTO_ORDER has no fallback")
+    raise capabilities.no_runtime_serves(args)
 
 
 def create_backend(args: EngineArgs, **injected: Any):
