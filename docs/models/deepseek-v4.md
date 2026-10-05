@@ -2,11 +2,12 @@
 
 PocketLLM's most mature model family: a 43-layer MoE with MLA and sparse/indexed attention, 256 routed
 experts activated top-6 per token, shipped as Safetensors FP4 experts with FP8 dense tensors and also
-available in GGUF Q2/IQ2/IQ1 variants. It runs on both a PyTorch plane and a native C++/CUDA engine,
-with separate loading, kernel and placement policies per format.
+available in GGUF Q2/IQ2/IQ1 variants. It runs on a PyTorch plane — the `torch` backend — and used to
+run on a native C++/CUDA engine that has since been retired, with separate loading, kernel and
+placement policies per format.
 
-- **Backend**: `--backend cpp` (native C++/CUDA, OpenAI-compatible server); the PyTorch plane and the
-  GGUF path are separate entrypoints
+- **Backend**: `torch` (host PyTorch, OpenAI-compatible server); the GGUF path is a separate
+  entrypoint, and the retired native C++/CUDA engine is **not** available from this repository
 - **Parallelism**: TP4
 - **Context**: 65,536 tokens in the validated configuration
 - **Validated on**: 4×RTX 2080 Ti 22 GiB, PCIe Gen3, no NVLink
@@ -24,17 +25,21 @@ with separate loading, kernel and placement policies per format.
 | Attention | MLA with a sparse/indexed C4 indexer and compressor |
 | Original sequence length | 65,536 |
 
-Four execution paths exist, and which one you want depends on the format and the memory situation:
+Four execution paths existed, and which one you wanted depended on the format and the memory
+situation. Two of them were the C++ engine's and went with it; the two PyTorch ones are what this
+repository still has:
 
-- **C++ FP4 Safetensors** — the served path. The dense and attention work runs on the GPUs, the routed
-  experts may be resident or kept in host memory and staged as active quantized blocks. It includes
-  TP4 NCCL reductions, compressed/indexed attention, grouped prefill MoE, deterministic expert
+- **C++ FP4 Safetensors** — the retired engine's served path. The dense and attention work ran on the
+  GPUs, the routed experts were resident or kept in host memory and staged as active quantized blocks,
+  with TP4 NCCL reductions, compressed/indexed attention, grouped prefill MoE, deterministic expert
   reduction and the embedded OpenAI-compatible server.
-- **PyTorch FP4 Safetensors** — heterogeneous routed-expert serving and performance experiments.
-- **C++ GGUF Q2/IQ2/IQ1** — TP4 generation, grouped prefill and active-expert decode out of
-  low-bit raw-block kernels. Routed experts can stay host-resident and are copied through bounded
-  staging buffers; the runtime deliberately does not pin an entire file-backed GGUF mmap.
-- **DSpark** — an experimental speculative path. The current C++ sequential verify implementation is a
+- **PyTorch FP4 Safetensors** — heterogeneous routed-expert serving and performance experiments. This
+  is the `torch` backend, selected by `--backend auto` for a `model_type=deepseek_v4` checkpoint.
+- **C++ GGUF Q2/IQ2/IQ1** — the retired engine's low-bit path: TP4 generation, grouped prefill and
+  active-expert decode out of raw-block kernels. The `torch` backend reads a DeepSeek-V4 GGUF
+  (`general.architecture=deepseek4`, including the `deepseek4_mtp_support` variant), but this low-bit
+  C++ path is not part of it.
+- **DSpark** — an experimental speculative path. The C++ sequential verify implementation was a
   correctness path, not an end-to-end speedup claim.
 
 Decode is limited by PCIe expert staging rather than by Python overhead, which is why where the
@@ -43,7 +48,7 @@ experts live matters more here than which kernel runs.
 ## Run it
 
 ```bash
-# C++ Safetensors backend, TP4
+# C++ Safetensors backend, TP4 — historical: the `cpp` backend is retired and this no longer runs
 python -m pocketllm serve \
   --model /path/to/DeepSeek-V4-Flash \
   --backend cpp \
@@ -74,9 +79,9 @@ PYTHONPATH=$PWD python -m relicllm.cli.inspect_gguf \
 
 | Capability | State |
 | --- | --- |
-| C++ FP4 Safetensors generation and OpenAI-compatible serving | Supported |
-| PyTorch FP4 heterogeneous routed-expert serving | Supported |
-| C++ GGUF Q2/IQ2/IQ1 TP4 generation | Supported |
+| C++ FP4 Safetensors generation and OpenAI-compatible serving | Retired with the `cpp` backend |
+| PyTorch FP4 heterogeneous routed-expert serving | Supported, via the `torch` backend |
+| C++ GGUF Q2/IQ2/IQ1 TP4 generation | Retired with the `cpp` backend |
 | Grouped prefill MoE and deterministic expert reduction | Supported, on by default |
 | Host-resident routed experts with bounded staging | Supported |
 | 65,536-token context (batched attention) | Supported |
@@ -114,9 +119,12 @@ prompt and warm state are directly comparable.
   [the DSpark note](../performance/dspark.md) before making parity claims.
 - **FlashMemory's 1M context is a separate path** with its own enablement and validation constraints,
   not an extension of the validated 65,536-token configuration.
-- **The C++ front end is gone; this path is served by `pocketllm serve --backend cpp`.** The
-  `pocketllm_engine` binary still exists as a checkpoint-inspection and smoke tool, and it no longer
-  has a `--serve` mode of its own.
+- **The native C++/CUDA paths are retired from this repository.** They were served by
+  `pocketllm serve --backend cpp`, which is no longer accepted; the `pocketllm_engine` binary and the
+  code behind them belong to the archived
+  [relic-engine](https://github.com/lvyufeng/relic-engine). `--backend auto` now reaches this model
+  through the `torch` backend, which reads a `model_type=deepseek_v4` Safetensors directory or a
+  `deepseek4`-family GGUF.
 
 ## Where the detail is
 

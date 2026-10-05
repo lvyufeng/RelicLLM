@@ -127,7 +127,7 @@ nav:
       - Benchmarking and reporting: guides/benchmarking.md
       - Serving latency metrics: guides/latency_metrics.md
       - Hardware adaptation triage: guides/hardware_triage.md
-      - Native engine API: guides/pocketllm_api.md
+      - API and backend guide: guides/pocketllm_api.md
   - Performance:
       - Overview: performance/index.md
       - Roadmap for old hardware: performance/old_hardware_roadmap.md

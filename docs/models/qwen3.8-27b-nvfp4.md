@@ -1,12 +1,19 @@
 # Qwen3.8-27B-NVFP4
 
-The same 27B hybrid-attention text model as [Qwen3.8-27B-FP8](qwen3.8-27b-fp8.md), shipped with its
-dense MLPs in NVFP4. PocketLLM runs it on the native C++/CUDA engine at TP2, unpacking the 4-bit
-blocks in registers and consuming them with INT8 DP4A and WMMA kernels, and generates tokens that are
-bit-identical to the FP8 checkpoint's on the validated fixtures.
+!!! warning "No runtime in this repository serves this checkpoint"
+    Like [Qwen3.8-27B-FP8](qwen3.8-27b-fp8.md), its config is `model_type=qwen3_5` and the `cpp`
+    backend that served it has been retired: `--backend cpp` is no longer accepted and no runtime here
+    declares `qwen3_5`, so `--backend auto` refuses the checkpoint by name. The engine this page
+    documents lives in the archived [relic-engine](https://github.com/lvyufeng/relic-engine); its
+    commands no longer run from this repository, and the measurements below are that engine's record.
 
-- **Backend**: `--backend cpp` (native C++/CUDA; the shared text path serves it, but this checkpoint
-  has no separate serving benchmark)
+The same 27B hybrid-attention text model as [Qwen3.8-27B-FP8](qwen3.8-27b-fp8.md), shipped with its
+dense MLPs in NVFP4. The retired engine ran it at TP2, unpacking the 4-bit blocks in registers and
+consuming them with INT8 DP4A and WMMA kernels, and generated tokens that are bit-identical to the FP8
+checkpoint's on the validated fixtures.
+
+- **Backend**: `cpp` (native C++/CUDA, retired from this repository; the shared text path served it,
+  but this checkpoint has no separate serving benchmark)
 - **Parallelism**: TP2, on the NVLink-connected pair
 - **Context**: up to 262,144 positions (validated at 512 and 8,192)
 - **Validated on**: 2×RTX 2080 Ti 22 GiB, GPUs 2 and 3

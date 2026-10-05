@@ -136,56 +136,20 @@ prefix store is on by default.
 | `--backend-option prefix_cache_bytes=N` | 2 GiB | The store's host-side budget. |
 | `--backend-option tokenizer=DIR` | — | The tokenizer directory, same as `--tokenizer-path`. |
 | `--backend-option use_kernel=false` | `true` | Runs the hyper-connection in PyTorch instead of the fused kernel. **2.17× slower at decode**; it exists so the two can be compared. |
-| `--enable-batching` | off | Serves requests through the shared `BatchScheduler` instead of this adapter's own serialized session. See below. |
+| `--enable-batching` | off | Refused by name — no runtime here owns a batch path. See below. |
 | `--tensor-parallel-size` | 1 | Not implemented for this checkpoint; a value above 1 is refused rather than silently ignored. |
 
-### Through the shared scheduler
+### Batching
 
-`--enable-batching` routes requests through the same `BatchScheduler` the `cpp` backend drives. It is
-off by default, and the reason is a dependency rather than a doubt: the scheduler is the C++ library,
-so this route needs `pocketllm_cpp` built, and this runtime otherwise serves without it.
+`--enable-batching` and a `--max-batch-size` above 1 are both refused by name on this runtime: it
+declares `supports_batch=False`. The shared native `BatchScheduler` this section used to document —
+including the A-B-A-B single-card comparison and the `requests_running` gauge readings — went with the
+retired `cpp` backend, which is also where the scheduler library lived. No runtime here owns a batch
+path.
 
-It is not a claim of concurrency. The runtime declares `max_slots = 1` and
-`continuous_batching = False`, and the scheduler takes the smaller of the requested width and the
-declaration — so what joins the shared lifecycle is this runtime as it is, one request at a time,
-with admission, cancellation, per-request timings and the `/metrics` gauges coming from the one
-library instead of from a second implementation of them. The bridge's own account is in
-`pocketllm/backends/runtime_engine.py`; what it costs and what it buys is below.
-
-Measured on one RTX 2080 Ti, `cuda:0` through `tests/bench_runtime_scheduler_path.py`: the released
-`xing4_0-29b-IQ4_NL.gguf`, `--max-model-len 8192`, 32 greedy tokens, one warmup request and four
-measured ones per arm, **one arm per process** (a second engine in the same process runs about 10%
-slower than the first, which would be the order the arms were built in rather than the thing being
-compared). Two process pairs in each order, because a difference this size is exactly the size of a
-first-run artifact:
-
-| Arm | Process pair | Wall, median of 4 | Prefill | Decode |
-| --- | --- | ---: | ---: | ---: |
-| serialized session | A-B-A-B | 4.631 s | 0.247 s | 4.492 s |
-| `--enable-batching` | A-B-A-B | 4.383 s | 0.251 s | 4.231 s |
-| serialized session | B-A-B-A | 4.783 s | 0.251 s | 4.684 s |
-| `--enable-batching` | B-A-B-A | 4.460 s | 0.253 s | 4.432 s |
-
-**Every one of the four runs in both arms returned the same 32 token ids**, which is the claim that
-matters: a runtime that joins the scheduler and answers something else has been replaced, not routed.
-The scheduler path is at the faster end by about 5% in both orders, and this page does not claim it
-as a speedup — a host-bound decode loop at ~11,500 launches a step has a spread that size, and the
-mechanism for it has not been established.
-
-The first measurement of this pair — no warmup, one request an arm, the serial arm first — read the
-scheduler path as **27% faster** (4.94 s against 6.48 s), which it is not. The first request through
-a freshly loaded checkpoint pays the kernel-module load and the allocator growth, and it landed
-entirely on whichever arm ran first. That is why the table above has a warmup round, four measured
-runs and a spread instead of two numbers, and why the two arms are run in both orders.
-
-**The routed path is visible from outside the process.** `tests/bench_cpp_scheduler_metrics.py`
-serves this backend and samples `/metrics` while two clients are in flight. With `--enable-batching`
-the exposition carries `pocketllm_requests_running` and `pocketllm_requests_waiting` — the same
-`BatchScheduler::Stats` fields the `cpp` host publishes as `pocket_…`, at this runtime's declared
-width of one — and the peak over the group is **1 running and 1 waiting**: the scheduler is holding
-the second request rather than the second request never having arrived. Without the flag the series
-is **absent**, not zero, because there is no scheduler in that process to ask. A peak of zero would
-be the ambiguous reading; an absent series is not.
+The measurements in that record are the retired engine's, and this page no longer reproduces them; the
+one property it was making is still true of the serialized path, that a repeated prompt is answered by
+the serialized session and not by a second lifecycle.
 
 ### Without a server
 
@@ -216,8 +180,8 @@ python tests/bench_xing4_0_hyper_connection.py --device cuda:2 --steps 8
 | Cross-request prefix reuse | Supported, on by default |
 | Sampling (`temperature`, `top_k`, `top_p`) | Supported; greedy by default |
 | Memory-fitted context, up to the card's ceiling | Supported; measured at about 40,960 tokens |
-| Concurrent requests | **Not implemented** — requests serialize, one at a time, through the adapter's own session and through the shared scheduler alike |
-| The shared `BatchScheduler` (`--enable-batching`) | Supported at the width this runtime declares, which is 1. Same lifecycle and same gauges as the `cpp` backend, same answers as the serialized path |
+| Concurrent requests | **Not implemented** — requests serialize, one at a time through the adapter's own session |
+| The shared `BatchScheduler` (`--enable-batching`) | **Removed** — the flag is refused by name; the scheduler library went with the retired `cpp` backend |
 | Tensor parallelism | **Not implemented** — the checkpoint fits one card whole |
 | The NextN/MTP block (`blk.40`, 0.93 GiB) | **Not executed** — it is not loaded and there is no speculative path for it |
 | LoRA, adapters, logprobs, tool calling | **Not implemented** |
@@ -294,7 +258,8 @@ rows were re-measured alongside the corrected table and moved the way that corre
 
 This is the only checkpoint here that is smaller than the card it runs on, so the comparison is
 two-sided: what one card buys, and what this runtime gives up against the engines it shares a
-repository with.
+repository with. Those two engines have since been retired from this repository, so the comparison
+columns record a measurement rather than a route this checkout still offers.
 
 | | Xing4.0-29B-A4B, 1 card, IQ4_NL | Ternary-Bonsai-2-27B, 1 card, 1.75 bit | Qwen3.8-27B-FP8, 4 cards, TP4 |
 | --- | ---: | ---: | ---: |
@@ -302,13 +267,15 @@ repository with.
 | Prefill, 4,096 tokens | **75.2 tok/s** | 636.0 tok/s | 1,729 tok/s |
 | Decode, 4,096-token context | **6.72 tok/s** | 25.9 tok/s | 43.8 tok/s |
 | Architecture | MLA + 64-expert MoE, 4 streams | hybrid GQA, dense FFN | full GQA, dense FFN |
-| Runtime | PyTorch eager + raw-block kernels | C++ engine | C++ engine |
+| Runtime | PyTorch eager + raw-block kernels | C++ engine (retired) | C++ engine (retired) |
 
 **The gap is the runtime, not the checkpoint.** Bonsai runs a smaller model faster because its native
 C++ engine submits a step's work as a handful of launches where this one submits 11,536; the two
-checkpoints' byte counts per token differ by less than the two runtimes' launch counts do. Moving this
-path into the C++ engine is the obvious next step and it is not in this stage's scope — what the stage
-establishes is the checkpoint's shape, its parity, and its numbers in the runtime it has.
+checkpoints' byte counts per token differ by less than the two runtimes' launch counts do. That engine
+has since been retired from this repository along with the `cpp` backend that fronted it, so neither
+comparison column is a route this checkout can take; the columns are kept as the measurement they
+were. What the stage establishes is the checkpoint's shape, its parity, and its numbers in the
+runtime it has.
 
 ## Hardware and memory
 

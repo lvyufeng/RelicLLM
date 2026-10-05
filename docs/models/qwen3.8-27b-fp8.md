@@ -1,11 +1,20 @@
 # Qwen3.8-27B-FP8
 
-A 27B text model with a hybrid attention stack — 48 Gated DeltaNet (linear-attention) layers and 16
-full GQA layers — shipped as FP8 E4M3 Safetensors. PocketLLM runs it on the native C++/CUDA engine
-over four cards, with the weights sharded rank-locally and kept resident on each GPU, and serves it
-through the OpenAI-compatible API.
+!!! warning "No runtime in this repository serves this checkpoint"
+    Its root config is `model_type=qwen3_5`, and the `cpp` backend that served it has been retired:
+    `--backend cpp` is no longer accepted (`relicllm/api/types.py` does not list it in `_BACKENDS`)
+    and no runtime here declares `qwen3_5`, so `--backend auto` now refuses the checkpoint by name.
+    The engine this page documents — its kernels, its OpenAI-compatible server and the measurements
+    below — is the retired native C++/CUDA engine, which lives in the archived
+    [relic-engine](https://github.com/lvyufeng/relic-engine). The record is kept as that engine's run
+    history; the commands in it no longer run from this repository.
 
-- **Backend**: `--backend cpp` (native C++/CUDA, OpenAI-compatible server)
+A 27B text model with a hybrid attention stack — 48 Gated DeltaNet (linear-attention) layers and 16
+full GQA layers — shipped as FP8 E4M3 Safetensors. The retired engine ran it over four cards, with
+the weights sharded rank-locally and kept resident on each GPU, and served it through the
+OpenAI-compatible API.
+
+- **Backend**: `cpp` (native C++/CUDA, retired from this repository)
 - **Parallelism**: TP4, one process a card
 - **Context**: up to 262,144 positions
 - **Validated on**: 4×RTX 2080 Ti 22 GiB, PCIe Gen3, no NVLink

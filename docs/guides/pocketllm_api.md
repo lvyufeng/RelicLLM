@@ -1,11 +1,16 @@
 # PocketLLM API and Backend Guide
 
-PocketLLM presents one user-facing API over two independent execution planes:
+PocketLLM presents one user-facing API over its runtimes:
 
-- **Torch** uses the existing PyTorch/Triton runtimes under `src/`.
-- **C++** uses the native `cpp_engine` runtime and the selected CUDA or Ascend backend.
+- **`torch`** is the host-PyTorch runtime, selected by `auto` for a DeepSeek-V4 checkpoint.
+- **`v41`**, **`mimo`**, **`xing4`** and **`qwen4_exp`** are the per-architecture PyTorch runtimes.
 
-The common API does not imply shared kernels, KV-cache layouts, or schedulers. Those remain backend- and hardware-specific so that Turing CUDA and Ascend optimizations are not weakened by a lowest-common-denominator abstraction.
+There used to be a second execution plane, a native **C++** `cpp_engine` reached by `--backend cpp`.
+It has been retired: this repository builds no C/C++ extension, `cpp` is not an accepted
+`--backend`, and the engine lives in the archived
+[relic-engine](https://github.com/lvyufeng/relic-engine). Every runtime here is PyTorch.
+
+The common API does not imply shared kernels, KV-cache layouts, or schedulers. Those remain runtime- and hardware-specific so that Turing CUDA and Ascend optimizations are not weakened by a lowest-common-denominator abstraction.
 
 ## Offline API
 
@@ -14,7 +19,7 @@ from pocketllm import EngineArgs, LLM, SamplingParams
 
 llm = LLM(EngineArgs(
     model="/path/to/checkpoint",
-    backend="auto",  # or "torch" / "cpp"
+    backend="auto",  # or "torch" / "v41" / "mimo" / "xing4" / "qwen4_exp"
     tensor_parallel_size=4,
     max_model_len=65536,
 ))
@@ -56,11 +61,10 @@ HTTP endpoint; checkpoint-owned chat templates remain the authority for model-sp
 encoding. Caller-owned message and tool structures are not mutated.
 
 Use `generate_stream()` or `chat_stream()` for token events and `cancel(request_id)` to request
-cancellation at a safe generation boundary. The initial C++ compatibility adapter is serialized and
-exposes native greedy generation; unsupported sampling or request features report
-`UnsupportedFeatureError` rather than being silently ignored. Native streaming decodes the cumulative
-token sequence before emitting each delta, so BPE and UTF-8 token boundaries are handled by the
-tokenizer.
+cancellation at a safe generation boundary. Every runtime here is serialized — one request at a time
+— and unsupported sampling or request features report `UnsupportedFeatureError` rather than being
+silently ignored. Streaming decodes the cumulative token sequence before emitting each delta, so BPE
+and UTF-8 token boundaries are handled by the tokenizer.
 
 ## Async API
 
@@ -134,13 +138,13 @@ to tune lifecycle bounds; `--tensor-parallel-master-addr`, `--tensor-parallel-ma
 placement. A caller-provided rendezvous directory is treated as a parent for a fresh private run
 directory and is never removed by PocketLLM.
 
-The built-in supervisor works with every adapter that serves a checkpoint, and the native `cpp` one
-included: `CppBackend.run_worker` enters the engine's own worker loop, `warmup_tp` brings the NCCL
-communicator up inside construction, the NCCL-ID path arrives through the environment the supervisor
-publishes, and each rank's card is its own index — which works precisely because the supervisor hands
-every rank the same visible device list rather than narrowing it per rank. A V4.1 backend is the
-case that shaped the rest: rank 0 loads inside the rendezvous window, because a backend handed back
-unloaded would find the group gone.
+The built-in supervisor works with every adapter that serves a checkpoint: each enters its own
+worker loop through `RankedWorker`, `warmup_tp` brings the NCCL communicator up inside construction,
+the NCCL-ID path arrives through the environment the supervisor publishes, and each rank's card is
+its own index — which works precisely because the supervisor hands every rank the same visible
+device list rather than narrowing it per rank. A V4.1 backend is the case that shaped the rest:
+rank 0 loads inside the rendezvous window, because a backend handed back unloaded would find the
+group gone.
 A rank it starts runs **one program**, `pocketllm/backends/worker.py`, whichever runtime it is
 serving: what tells it which one is `POCKETLLM_WORKER_BACKEND`, set from the `WORKERS` registry, and
 the two things that still differ per runtime are the adapter to import and whether the checkpoint is
@@ -149,49 +153,32 @@ already loaded when the adapter is constructed. Adding a runtime therefore means
 `--no-tensor-parallel-supervisor` remains supported for `torchrun` and hand-written rank launchers,
 and is the opt-out for a rank layout this supervisor does not produce. A per-rank
 `CUDA_VISIBLE_DEVICES` is a layout it does produce — and is still honoured — but it is no longer the
-way to name cards: `--device-ids 2,3` names every rank's card once, and the offset the `cpp` adapter
-used to apply on top of a narrowed list is not applied on top of an explicit list. This process supervisor is not a scheduler: it starts ranks and reaps them, and
-what runs inside those ranks is the backend's own business. Whether a served backend batches is
-decided separately and per backend — see [Batching on the `cpp` backend](#batching-on-the-cpp-backend)
-— so `--tensor-parallel-size 4` says nothing about the width a request sees.
+way to name cards: `--device-ids 2,3` names every rank's card once. This process supervisor is not a
+scheduler: it starts ranks and reaps them, and what runs inside those ranks is the backend's own
+business. So `--tensor-parallel-size 4` says nothing about the width a request sees.
 
-### Batching on the `cpp` backend
+### Batching
 
-This backend owns a continuous-batching scheduler, and it is the default path. The two flags are the
-same decision seen twice, so the contradiction between them is refused rather than resolved:
+No runtime in this repository owns a batch path. `--max-batch-size` and `--enable-batching` are still
+accepted on the command line, but a launch that asks for a batch — a width above 1, or
+`--enable-batching` on — is refused by name through the factory's capability check rather than
+silently served at width 1. The native `BatchScheduler` went with the retired `cpp` backend and is
+not available here. `--enable-batching` defaults to unset, so leaving it alone is not a request for
+anything.
 
-| Command | Effect |
-| --- | --- |
-| `--backend cpp` | The batch scheduler, 8 slots. |
-| `--backend cpp --max-batch-size 4` | The batch scheduler, 4 slots. A width above 1 asks for the scheduler on its own. |
-| `--backend cpp --no-enable-batching` | The serialized session: one request at a time, no scheduler. |
-| `--backend cpp --no-enable-batching --max-batch-size 4` | `ConfigurationError`. A width is a request for a scheduler and the opt-out refuses it; picking one of the two here would leave the other flag accepted and ignored. |
-| `--backend-option enable_batching=false` | The serialized session. The backend option is the spelling the `scripts/` benchmarks use and it wins over the flag. |
+**A width is a request for a scheduler.** `--max-batch-size 4` asks for one on its own, and
+`--no-enable-batching` cannot be combined with it: the contradiction is a `ConfigurationError`
+raised at parse time, before the refusals above, rather than a silently-ignored flag.
 
-**The default width is 8, not 1.** A width of 1 is not a batch, so a default of 1 would make the
-default path serial — which is exactly what it used to be. The number is not cosmetic: the engine
-sizes its KV cache from it at construction, so a width that does not reach the engine is a width the
-server refuses at the first concurrent request. Which of the two paths the backend resolved, and at
-what width, is what `capabilities.details` reports through the Python API — `details["scheduler"]`
-and `details["max_batch_size"]` — and the scheduler's own view of it is
-[`engine_caps()`](#scheduler-backed-async-requests). Neither is on the HTTP surface today: `/health`
-reports the backend and its model, not its capabilities.
-
-**A width above 1 costs a lone request some latency.** The scheduler runs the width's rows whether or
-not that many requests are present, so a single request pays for the width it was given: with the
-prompt cache held fixed, ~17% more wall than the serialized session at width 2 and ~18% at width 8,
-of which about ten points is decode. More than that, the scheduler's prefill path does not consult
-the prefix cache, so a prompt the serialized session would have resumed for nothing is re-forwarded
-in full — which is the larger of the two costs for a client that repeats its prompt, and the reason
-`--max-batch-size 2` (or `--no-enable-batching`) is the setting for a deployment that serves one
-caller at a time. What the width buys is concurrency: on the real CLI, two concurrent requests
-reached 30.6 aggregate tok/s through the default path against 25.6 through the serialized one. Both
+**The width's cost was measured on the retired scheduler, and the record is kept as its.** That
+scheduler ran the width's rows whether or not that many requests were present, so a single request
+paid for the width it was given: with the prompt cache held fixed, ~17% more wall than the serialized
+session at width 2 and ~18% at width 8, of which about ten points was decode, and its prefill path
+did not consult the prefix cache. What the width bought was concurrency: two concurrent requests
+reached 30.6 aggregate tok/s through the default path against 25.6 through the serialized one. The
 figures and the method behind them are in
 [the concurrency acceptance page](https://github.com/lvyufeng/relic-engine/blob/master/docs/performance/cpp_openai_concurrency_validation.md#what-the-width-costs-a-lone-request).
-
-Once the batch path is selected, the sampling options the OpenAI surface accepts are honoured subject
-to the engine's own limits: see [Request fields](#request-fields) for which values the engine under
-this adapter can apply per request, and what happens to the ones it cannot.
+No runtime here can reproduce them, because none has a batch path to reproduce them on.
 
 ### Backend options
 
@@ -252,43 +239,31 @@ The unified server provides:
 
 `/ready` returns HTTP 503 while model loading is incomplete. `/metrics` uses dependency-free Prometheus text exposition and can later be wrapped by a richer exporter.
 
-### The scheduler gauges
+### Backend-owned series
 
-On the `cpp` backend with batching on, `/metrics` additionally carries the live `BatchScheduler`'s
-own admission state:
+The histograms above are request-scoped and reach `/metrics` through the HTTP layer. Numbers a
+runtime holds *between* requests travel the other channel: `BackendBase.metrics()` returns a flat
+`name -> value` mapping, and the server exports whatever it is handed.
+
+The series that exists today is the prefix store's, published with fixed names rather than per
+adapter, so a dashboard can compare two runtimes whose names were not typed twice:
 
 | Series | Meaning |
 | --- | --- |
-| `pocketllm_requests_running` | Requests the scheduler is currently holding a slot for. |
-| `pocketllm_requests_waiting` | Requests admitted but not yet running. |
-| `pocketllm_slots_free` | Slots the running set is not using. |
-| `pocketllm_kv_blocks{state=...}` | `total` / `free` / `reserved` / `cache_pinned`, on an engine that pages only. |
+| `relicllm_prefix_cache_hits_total` | Cumulative prefix resumes. |
+| `relicllm_prefix_cache_misses_total` | Cumulative prompts that found nothing to resume. |
+| `relicllm_prefix_cache_reused_tokens_total` | Tokens served from a resume rather than forwarded. |
+| `relicllm_prefix_cache_entries` | Live entries in the store. |
+| `relicllm_prefix_cache_bytes` | Bytes the store holds. |
+| `relicllm_prefix_cache_budget_bytes` | The byte budget it is allowed. |
 
-These are the same numbers, from the same `BatchScheduler::Stats`, that the native
-`pocketllm_engine` server publishes — its `pocket_requests_running` is this server's
-`pocketllm_requests_running`, with the same suffix and the same meaning, so the two hosts are
-compared by substituting the prefix rather than by a translation table.
+A runtime with no prefix store publishes nothing, which the server reads as "no backend-owned
+series" rather than as zero — an absent series cannot be mistaken for a measurement, where a zero
+would read as a store that is present and empty.
 
-A Python runtime driven by the same scheduler publishes the same series, which is the point of
-driving it from there: `xing4`, `v41` and `mimo` with `--enable-batching` report
-`pocketllm_requests_running` out of the one `BatchScheduler` library, under the same names, without a
-second implementation of it. What differs is the width the runtime declares — each declares one slot,
-so that gauge reads 1 rather than the running set a wide engine has, and `pocketllm_slots_free` is 0
-or 1. A runtime is charged for the width it declares, and a declaration of one is not a claim of
-concurrency.
-
-The gauges are published whether or not the model is loaded. They are the *scheduler's* numbers and
-not the model's, and a scrape during a long load is exactly when an operator wants to know whether
-the process has a scheduler in it at all — which is the question the series answers.
-
-`requests_running` is the one to watch. Two concurrent clients reaching a server that serializes
-them under a lock and two reaching a scheduler produce identical tokens and identical responses; the
-only place they differ is this gauge, which is why it is the reading the concurrency acceptance
-measurements take. `tests/bench_cpp_scheduler_metrics.py` samples it while a group of requests is
-in flight and reports the peak.
-
-On the serialized path there is no scheduler, so none of these series is exported — not as zero.
-An absent series cannot be mistaken for a measurement; a zero would read as "the scheduler is idle".
+The native `BatchScheduler` admission gauges (`requests_running`, `slots_free`, …) went with the
+retired `cpp` backend and the native scheduler library. No runtime here owns a batch path, so no
+runtime exports them.
 
 That list is the whole HTTP surface. **`/v1/embeddings` is deliberately unsupported** — PocketLLM
 serves the checkpoint's text-generation path, and nothing in either plane computes a pooled
@@ -305,13 +280,15 @@ than trusted.
 
 **Which runtime acts on what.** Whether a field's *value* has a shape this server can read is one
 policy for every runtime and is checked before dispatch. Whether a runtime's answer applies the field
-at all depends on the runtime, and each declares its own answer through `BackendBase.audit_request`
-(the `cpp` backend is the adapter that declares one today; a runtime that has declared nothing
-refuses nothing and is subject to the shape checks alone). `--backend cpp` serves `stop`, `n`,
-`logprobs`, `response_format`, `thinking_mode` and `add_generation_prompt`.
+at all depends on the runtime, and each declares its own answer through `BackendBase.audit_request`.
 
-Three of those are served by code that is not in any adapter, and saying so is the point of the
-division:
+No adapter declares one today: the method that carried the contract belonged to the retired `cpp`
+backend, so every runtime here returns `None` and the shape checks are the whole policy. A field that
+a runtime would not apply is therefore not refused by name on the paths below — it is accepted and,
+where the shape is unreadable, rejected host-side.
+
+The fields the retired engine served (`stop`, `n`, `logprobs`, `response_format`, `thinking_mode`,
+`add_generation_prompt`) split into two groups:
 
 - **`n` is the host's dispatch.** A request for `n` choices is `n` requests to the runtime, built by
   `pocketllm/choices.py` and run by whichever entry point received the request — the HTTP server or
@@ -319,17 +296,19 @@ division:
   `n` still refused is a stochastic request against an engine that samples at engine-wide values: the
   choices differ only in the seed they are handed, and that engine reads no seed it was given, so all
   `n` would be one text presented as independent samples.
-- **`logprobs` is the scheduler's.** The ranking comes off the scheduler's result, so a build whose
-  scheduler was not created (`batching=false` selects the serialized compatibility session) refuses
-  the field by name rather than answering with an empty array.
+- **`logprobs` is the runtime's declaration.** Requesting it where the runtime does not support
+  logprobs is refused by name. Only `torch` declares `supports_logprobs=True`; `capabilities.py`
+  declares it False for `v41`, `mimo`, `xing4` and `qwen4_exp`.
 - **`response_format` is the engine's sampler**, and it is the one field the host cannot even build
   the input for. A token constraint is a mask over the vocabulary *piece by piece*, and a piece is
   what the tokenizer emits rather than what the vocabulary file stores — a byte-level BPE vocabulary
   spells a space `Ġ`, so a mask assembled anywhere else would refuse every token that continues a
   word. The vocabulary therefore comes from the engine, the constraint is built over it, and the mask
   is applied by the per-row device sampler; an engine that samples at engine-wide values applies none,
-  which is why the capability is the engine's declaration rather than the adapter's and why
-  `batching=false` and tensor-parallel configurations refuse the field by name.
+  which is why the capability is the engine's declaration rather than the adapter's. On the retired
+  `cpp` engine a `batching=false` or tensor-parallel configuration was one that sampled at engine-wide
+  values and so refused the field by name; every runtime here declares `supports_logprobs=False`
+  except `torch`, so the field is refused on that capability rather than on a width.
 
 ### Implemented
 
@@ -467,11 +446,10 @@ Four things are worth knowing before relying on the field:
   one whose request asked for no ranking at all.
 - **The engine has to declare it, and the runtime has to be able to ask.** `logprobs` is refused
   when the capability is off, which is the case for speculative decoding (its verify step ranks no
-  tokens, so a row that emitted several has no ranking for the rest) and for the Ascend backend. On
-  `--backend cpp` the ranking comes off the batch scheduler, so a build running the serialized
-  compatibility session (`batching=false`) refuses the field by name rather than answering with an
-  empty array. The limit on alternatives is this server's — 20 per position, above OpenAI's
-  documented range — and a request past it is a 400 naming the ceiling.
+  tokens, so a row that emitted several has no ranking for the rest). Of the runtimes here only
+  `torch` declares `supports_logprobs`; `v41`, `mimo`, `xing4` and `qwen4_exp` refuse the field rather
+  than answering with an empty array. The limit on alternatives is this server's — 20 per position,
+  above OpenAI's documented range — and a request past it is a 400 naming the ceiling.
 
 #### Tool calls
 
@@ -507,10 +485,10 @@ Five things are worth knowing before relying on the field:
   DSML calls. Any other architecture keeps the older behaviour and leaves the call in `content`;
   inventing a parse for a syntax nobody has read would drop or corrupt calls silently. The
   selection is one implementation (`pocketllm/protocol/templating.py`), so the checkpoint's
-  architecture decides it the same way whichever backend served the request. That module was the C++
-  front end's sidecar once, and a `cpp` request through `pocketllm serve` used to answer with the
-  call as prose while the same checkpoint through the binary answered with `tool_calls`; both front
-  ends are now one, and there is one answer.
+  architecture decides it the same way whichever runtime served the request. That module was the
+  retired C++ front end's sidecar once, and the same checkpoint used to answer with the call as prose
+  through one front end and with `tool_calls` through the other; there is one front end now, and one
+  answer.
 - **Streaming is not supported.** A streamed response carries the call syntax as content, exactly as
   it did before, and reports the engine's own `finish_reason`. Ask for a non-streaming response when
   you want `tool_calls`. The *reasoning* split is a different matter and does happen on a stream: a
@@ -559,12 +537,11 @@ the prose:
 
 The check runs before dispatch, so a request this server will not serve is refused whole rather than
 streamed halfway and abandoned. Which fields are refused at which values is
-`pocketllm/protocol/contract.py`, and the adapter's own answer is
-`BackendBase.audit_request`: the *shape* of a field is the same on every runtime and is checked
-host-side, while whether a runtime's answer applies a field at all depends on the runtime and is
-declared by it. A runtime that has not declared anything refuses nothing, which is why the sections
-above describe the socket rather than a policy — the `cpp` backend is the adapter that declares one
-today.
+`pocketllm/protocol/contract.py`, and the runtime's own answer is `BackendBase.audit_request`: the
+*shape* of a field is the same on every runtime and is checked host-side, while whether a runtime's
+answer applies a field at all depends on the runtime and is declared by it. No adapter here declares
+one — that hook belonged to the retired `cpp` backend — so the sections above describe the socket
+rather than a per-runtime policy.
 
 ### Accepted and inert
 
@@ -581,158 +558,44 @@ refused with the rest of the table above.
 
 Prefer typed `EngineArgs` and explicit CLI options. `EngineArgs.from_env()` exists as a compatibility bridge for legacy deployments. Runtime tuning variables are named `POCKETLLM_*` (renamed from `DSV4_*`, a breaking change — see [the migration note](https://github.com/lvyufeng/relic-engine/blob/master/docs/migration/dsv4-to-pocket-rename.md)); `QWEN_*` and related names are unchanged. Backend-specific tuning belongs in `backend_options` and must not be assumed portable between CUDA and Ascend.
 
-## Native C++ Python module
+## Native C++ engine (retired) { #native-c-python-module }
 
-The native bridge is optional and does not affect CPU-only imports. You can build it as part of
-`pip install` (recommended) or manually via CMake.
+Earlier versions of this guide documented a native C/C++ bridge: a `pocketllm_cpp` pybind module
+built from `cpp_engine/`, a `QwenEngine` / `QwenBatchScheduler` Python surface, and an NCCL-gated
+build you opted into with `POCKETLLM_BUILD_CPP=1`. None of it is part of this repository any more.
+It was retired with the `cpp` backend: there is no `cpp_engine/` tree here, no `ext_modules` in
+`setup.py`, and `import pocketllm_cpp` resolves to nothing.
 
-### Via pip install
+The engine itself — the Python bindings, the batch scheduler and the scheduler-backed async request
+API that used to be documented here — lives in the archived
+[relic-engine](https://github.com/lvyufeng/relic-engine). Read its own documentation for that
+surface. Every runtime in *this* repository is pure PyTorch.
 
-```bash
-export NCCL_ROOT=/path/to/nccl          # see "NCCL is not optional for TP" below
-POCKETLLM_BUILD_CPP=1 pip install --no-build-isolation .
-```
-
-The `--no-build-isolation` flag ensures the active environment's Torch is the one that drives the
-Torch extension build. Without `POCKETLLM_BUILD_CPP=1`, the install skips the native module and
-produces only the Torch runtime.
-
-The native module installs top-level (`import pocketllm_cpp`), so no manual copy is needed. The
-install forwards `NCCL_ROOT`, `NCCL_INCLUDE_DIR` and `NCCL_LIBRARY` from the environment when they
-are set; it does not search for NCCL of its own.
-
-### Manual CMake build
-
-```bash
-export NCCL_ROOT=/path/to/nccl
-cmake -S cpp_engine -B cpp_engine/build-python \
-  -DPOCKET_BACKEND=cuda \
-  -DPOCKET_BUILD_PYTHON=ON \
-  -DPython3_ROOT_DIR="$(python -c 'import sys; print(sys.prefix)')" \
-  -DPython3_FIND_STRATEGY=LOCATION \
-  -DNCCL_ROOT="$NCCL_ROOT" \
-  -DPOCKET_REQUIRE_NCCL=ON \
-  -Dpybind11_DIR="$(python -c 'import pybind11; print(pybind11.get_cmake_dir())')"
-cmake --build cpp_engine/build-python --target pocketllm_cpp -j
-cp cpp_engine/build-python/python/pocketllm_cpp*.so "$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
-```
-
-`-DPython3_ROOT_DIR` is what makes CMake build against the interpreter that will import the module;
-without it a conda environment's Python is easy to lose to whichever one is first on the search path,
-and the mismatch shows up as a missing `Development.Module` at configure time.
-
-#### NCCL is not optional for TP
-
-NCCL is optional to the *build* and required by every `--tensor-parallel-size` above 1, and the
-first failure is late: the module imports, loads a checkpoint, and then `warmup_tp()` raises
-`Qwen TP requires an NCCL-enabled build`. NCCL from a conda `nvidia-nccl-cu12` wheel lives under
-`$CONDA_PREFIX/lib/python3.*/site-packages/nvidia/nccl`, which is not on CMake's search path, so a
-build that does not name it comes out TP-incapable with no warning at configure time.
-`-DPOCKET_REQUIRE_NCCL=ON` turns that into a configure failure; leave it off on a machine that will
-only ever run one card, which is a real configuration (the single-card GGUF paths have no
-collective at all).
-
-The pip path has no equivalent switch: it forwards `NCCL_ROOT` and leaves the decision to CMake's
-own discovery, so a `pip install` build has no configure-time guard at all. The check that catches
-it after the fact is `ldd` on the installed module — no `libnccl` line means no TP:
-
-```bash
-ldd "$(python -c 'import pocketllm_cpp; print(pocketllm_cpp.__file__)')" | grep nccl
-```
-
-Add `cpp_engine/build-python/python` to `PYTHONPATH` for a build-tree smoke test:
-
-```bash
-PYTHONPATH=cpp_engine/build-python/python python -c \
-  'import pocketllm_cpp; print(pocketllm_cpp.backend)'
-```
-
-The module exposes token-oriented `QwenEngine` and low-level `PersistentEngine` value types. Device-touching calls (prefill, decode, generate, verify, warmup, reset) release the Python GIL; cheap accessors and construction do not. It intentionally does not expose CUDA/ACL handles or Torch tensors.
-
-### Scheduler-backed async requests
-
-`QwenBatchScheduler` wraps an engine in the same continuous-batching scheduler the native
-OpenAI server uses, so Python can submit concurrent requests and stream tokens without going
-through HTTP.
-
-```python
-import threading
-import pocketllm_cpp
-
-engine = pocketllm_cpp.QwenEngine(checkpoint, pocketllm_cpp.QwenEngineOptions())
-scheduler = pocketllm_cpp.QwenBatchScheduler(engine, max_batch_size=4)
-
-sampling = pocketllm_cpp.QwenBatchSamplingParams()
-sampling.max_new_tokens = 64
-
-done = threading.Event()
-
-def on_token(request_id, token):
-    print(token, flush=True)
-
-def on_complete(result):
-    print(result.finish_reason)
-    done.set()
-
-request_id = scheduler.submit_request(
-    prompt_tokens, sampling, callback=on_complete, on_token=on_token)
-done.wait()
-scheduler.stop()
-```
-
-Omit both callbacks to poll instead; `poll_result` returns `None` on timeout:
-
-```python
-request_id = scheduler.submit_request(prompt_tokens, sampling)
-result = scheduler.poll_result(request_id, timeout_ms=30000)
-```
-
-Both callbacks run on the scheduler's background thread, so they **must not block** — time
-spent there delays every other running request. Push the token onto a queue and return. An
-exception raised inside a callback is reported on stderr and swallowed rather than being allowed
-to cross the thread boundary and terminate unrelated requests.
-
-`engine_caps()` reports what the engine actually supports, which is what a caller should branch on
-rather than assuming:
-
-```python
-caps = scheduler.engine_caps()
-caps.max_slots, caps.continuous_batching, caps.chunked_prefill, caps.paged_kv
-caps.per_request_sampling, caps.per_request_top_k
-```
-
-`max_batch_size()` returns the effective batch size, which may be lower than requested because it
-is clamped to `caps.max_slots`. `set_prefill_token_budget(tokens)` controls how much prefill runs
-per schedule iteration: smaller values let decode interleave sooner at some cost to prefill
-throughput, and `0` disables chunking so each prompt runs to completion in one call. It has no
-effect on engines that do not declare `chunked_prefill`.
-
-The engine must outlive the scheduler; the scheduler holds a non-owning pointer, matching the C++
-ownership model. Call `stop()` for a deterministic shutdown rather than relying on collection order.
 
 ## Backend selection
 
-`backend="auto"` picks the C++ adapter only when the native module is importable and the checkpoint
-is a Qwen3.5 safetensors model; anything else, including GGUF, stays on Torch. An explicit
-`backend="cpp"` for an unsupported checkpoint raises `UnsupportedFeatureError` before any CUDA
-initialization instead of failing deep inside the native loader.
+`backend="auto"` asks each runtime in `AUTO_ORDER` (`v41`, `mimo`, `xing4`, `qwen4_exp`, `torch`)
+whether it identifies the checkpoint, and takes the first that says yes. Every entry claims an
+architecture and refuses the others, so a checkpoint nothing claims is refused by name rather than
+routed into the last runtime — `UnsupportedFeatureError: no backend serves this checkpoint; auto
+tried v41, mimo, xing4, qwen4_exp, torch`. An explicit `--backend` for a checkpoint the named runtime
+does not serve raises the same error before anything loads.
 
-`backend="v41"` is the third adapter and the first thing `auto` tests for: a checkpoint whose config
+`backend="v41"` is the first thing `auto` tests for: a checkpoint whose config
 says `deepseek_v41` — at the root, or `deepseek_v41_text` under `text_config`, which is where the
-released V4.1 file keeps it — goes to it before the native adapter is even considered, because the
-native engine has no factory for that architecture. It runs the `relicllm/models/deepseek_v4_1` PyTorch
+released V4.1 file keeps it — goes to it. It runs the `relicllm/models/deepseek_v4_1` PyTorch
 runtime over the checkpoint's safetensors shards, one process a rank under `--tensor-parallel-size`,
 and it reports `supports_batch=False`: one mutable KV state, serialized at the backend boundary.
 `--backend v41` on a GGUF checkpoint, or on a config that is not V4.1, raises
 `UnsupportedFeatureError` before anything loads.
 
-Capabilities reported by the C++ adapter follow the linked device backend. An Ascend build advertises
-only the speculative methods it implements, since the external DSpark and DFlash2 drafters are
-CUDA-only. The V4.1 adapter advertises no logprobs — a request asking for them is refused rather than
-served without them — while prefix caching follows `prefix_cache_bytes`, which defaults to 4 GiB a
-rank and can be set to zero to turn the reuse off. Its `cancellation` detail names the mechanism
-rather than promising a latency: a cancellation is a per-step collective between the ranks and cannot
-interrupt a prompt's forward.
+Capabilities are declared per runtime in `relicllm/backends/capabilities.py` rather than reported by
+an adapter at run time, so there is one answer per runtime instead of one per code path. The V4.1
+adapter advertises no logprobs — a request asking for them is refused rather than served without them
+— while prefix caching follows `prefix_cache_bytes`, which defaults to 4 GiB a rank and can be set to
+zero to turn the reuse off. Its `cancellation` detail names the mechanism rather than promising a
+latency: a cancellation is a per-step collective between the ranks and cannot interrupt a prompt's
+forward.
 
 `backend="mimo"` is the adapter for MiMo-V2.6-Flash. `--backend mimo` names it, and `auto` reaches it
 too — the checkpoint's `model_type` is `mimo_v2`, which the factory recognizes the way it recognizes
@@ -797,32 +660,24 @@ does not simply omits them.
 
 ## Termination semantics
 
-The C++ adapter decides when generation stops. The first EOS token ends the request, is excluded from
-the returned token ids and text, and yields `finish_reason="stop"`. `finish_reason="length"` means the
-token budget ended first. Usage counts the EOS step the engine executed, so streaming and offline
-usage agree.
+The runtime decides when generation stops, and the answer is read off the model's own tokenizer. The
+first EOS token ends the request, is excluded from the returned token ids and text, and yields
+`finish_reason="stop"`. `finish_reason="length"` means the token budget ended first. Usage counts the
+step that produced the EOS, so streaming and offline usage agree.
 
-`QwenEngine.generate` takes no EOS argument and keeps mutating its session for the whole token budget,
-so when an EOS id is known both the offline and streamed paths drive `prefill`/`decode_step`
-themselves and stop at EOS. Running `generate()` and truncating afterwards would leave the recurrent
-state and prefix cache positioned past text the caller never saw, corrupting reuse for the next
-request. Native `generate()` is still used when no EOS id is available, where the token budget is the
-only stopping rule.
-
-EOS ids are resolved in order: `backend_options["eos_token_id"]`, the native engine's `eos_id`, the
-native config, the checkpoint's `generation_config.json`, the checkpoint's `config.json`, then the
-tokenizer. `generation_config.json` is preferred over the tokenizer because chat checkpoints commonly
-stop on a turn-end token that differs from the tokenizer's EOS. A non-integer override is rejected
-rather than guessed. When no EOS is available, `capabilities.details["eos_source"]` reports `none` and
-only the token budget can end generation. Streaming never issues another `decode_step` after EOS, and
-it never calls `reset()` per request, since `QwenEngine::reset()` would clear the prefix cache that
-`prefill()` relies on.
+EOS ids are resolved from the tokenizer the runtime loaded — a tuple on a checkpoint like MiMo-V2.6
+whose release ends a turn with either of two control tokens. The retired C++ adapter had a longer
+chain that also consulted `generation_config.json`, the native engine's own `eos_id` and an
+`eos_source` detail; none of that is part of this repository, and there is no `eos_source` field to
+read.
 
 ## Cancellation semantics
 
 `cancel(request_id)` returns `True` only for a request that is currently active, and cancellation is
 observed at safe boundaries between generation steps. It never interrupts a running device kernel and
-never rolls back a partially executed native step. `DELETE /v1/requests/<request_id>` returns HTTP 404
-for an unknown or already-finished request.
+never rolls back a partially executed step. `DELETE /v1/requests/<request_id>` returns HTTP 404 for an
+unknown or already-finished request.
 
-The existing `pocketllm_engine` executable and its CLI remain supported. The shared Python server is a migration path, not a replacement that invalidates existing production commands.
+Cancellation is a per-step collective on the tensor-parallel runtimes: a rank that decided to stop on
+its own would leave its peers inside a layer, so the flag is broadcast rather than acted on locally.
+See each model page for what that means for its own request lock.
