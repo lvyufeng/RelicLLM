@@ -436,20 +436,35 @@ def test_the_stream_sends_the_same_text_as_the_unstreamed_result():
 
 
 def test_a_stop_string_ends_the_answer_where_it_starts_and_is_never_sent():
-    """The marker is the client's, not the answer's: the text past it is not sent."""
+    """The marker is the client's, not the answer's: the text past it is not sent.
+
+    Both routes answer the same question. The streamed one holds the marker back as it settles --
+    a stream cannot take a character back -- and the unstreamed one used to report the whole answer
+    with the marker still inside it, so the same request cut the answer on one route and not on the
+    other. A caller that only reads ``text`` got the marker, and ``finish_reason`` said ``stop``
+    anyway.
+    """
     tokenizer = FakeTokenizer(pieces={11: "alpha", 12: "BETA", 13: "gamma"})
     adapter = backend(model=ScriptedModel(scripted=(11, 12, 13, 14)), tokenizer=tokenizer)
     events = list(adapter.stream(request(max_tokens=6, stop=("BETA",))))
     assert "".join(event.text for event in events) == "alpha"
     assert events[-1].finish_reason == "stop"
 
-    # The unstreamed call reports the whole answer, marker included: the marker is what a client
-    # asked to stop at, not a token the model did not produce, and a caller that only reads ``text``
-    # gets the same string it would have got from any other runtime.
     unstreamed = backend(
         model=ScriptedModel(scripted=(11, 12, 13, 14)), tokenizer=tokenizer
     ).generate([request(max_tokens=6, stop=("BETA",))])[0]
+    assert unstreamed.text == "alpha"
+    assert unstreamed.finish_reason == "stop"
+
+
+def test_an_unstreamed_answer_with_no_stop_string_keeps_the_whole_text():
+    """The truncation is the field's, not the serial path's: without a stop there is nothing to cut."""
+    tokenizer = FakeTokenizer(pieces={11: "alpha", 12: "BETA", 13: "gamma"})
+    unstreamed = backend(
+        model=ScriptedModel(scripted=(11, 12, 13, 14)), tokenizer=tokenizer
+    ).generate([request(max_tokens=6)])[0]
     assert unstreamed.text == "alphaBETAgamma"
+    assert unstreamed.finish_reason == "length"
 
 
 def test_a_tail_that_is_still_half_a_stop_string_is_held_back():

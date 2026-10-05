@@ -21,6 +21,7 @@ from relicllm.api import (
     Usage,
 )
 from relicllm.choices import CHOICE_MARK
+from relicllm.protocol.chat import apply_stop_to_text
 from relicllm.protocol.contract import CHAT, FieldRefusal, audit
 
 from .capabilities import served_fields
@@ -397,8 +398,22 @@ class RuntimeAdapter(RankedWorker, BackendBase):
         whose builder therefore takes the pieces rather than the object -- and it is a hook rather
         than an override of :meth:`_generate_one` because *reading the answer* is what differs there,
         while the bracket around it is not.
+
+        ``stop`` is applied here because the serial route had no other place to do it. The streamed
+        path matches client sequences in :class:`TokenStreamer`, on the text as it settles, and this
+        family's serial path handed the whole answer back with the marker still inside it -- so the
+        same request answered differently depending on ``stream``, and a caller that only read the
+        response ``text`` got the marker the other route had cut. ``v41`` never reaches this body
+        (it overrides this method and applies stops in its own step hook), and the DeepSeek-V4 side
+        truncates in its model module before the result is built; the shared helper is idempotent,
+        so re-running it over an already-cut answer finds no marker.
         """
-        return self._result(request, prompt_ids, generation, {"started": time.perf_counter()})
+        result = self._result(request, prompt_ids, generation, {"started": time.perf_counter()})
+        text, stopped = apply_stop_to_text(result.text, request.sampling_params.stop)
+        if stopped:
+            result.text = text
+            result.finish_reason = "stop"
+        return result
 
     def _prepare_serial(self, request: GenerationRequest, prompt_ids: Sequence[int]) -> Any:
         """What the loop is handed for a serial request, derived before the request lock is taken.
