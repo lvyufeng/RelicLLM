@@ -25,13 +25,14 @@ Two things are deliberately *not* here:
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from relicllm.api import BackendCapabilities, EngineArgs
+from relicllm.api import BackendCapabilities, EngineArgs, UnsupportedFeatureError
 
 
 # ---------------------------------------------------------------------------------------------
@@ -44,6 +45,14 @@ from relicllm.api import BackendCapabilities, EngineArgs
 # to remove.
 
 _QWEN35_TYPES = {"qwen3_5", "qwen3_5_text"}
+#: The original DeepSeek-V4. Deliberately *not* ``deepseek_v41``: the two are different
+#: architectures with different runtimes. The exact set keeps the ``model_type`` side apart, and the
+#: digit boundary in :func:`_names_model` is what keeps the ``architectures`` side from swallowing
+#: V4.1 -- which is what the `v41` runtime exists to serve.
+_DEEPSEEK_V4_TYPES = {"deepseek_v4", "deepseek_v4_text"}
+#: The GGUF ``general.architecture`` the DeepSeek-V4 export carries. It drops the underscore the
+#: config's ``model_type`` has, so it is its own constant rather than a reuse of the set above.
+_DEEPSEEK_V4_GGUF = "deepseek4"
 _V41_TYPES = {"deepseek_v41", "deepseek_v41_text"}
 _MIMO_TYPES = {"mimo_v2", "mimo_v2_text"}
 _XING4_TYPES = {"xing4_0", "xing4_0_text"}
@@ -83,13 +92,22 @@ def _names_model(config: Mapping[str, Any], types: set[str], architectures: str)
     The nesting walk is shared because the reason for it is: the released DeepSeek-V4.1 and
     Qwen3.5 checkpoints nest their text stack, so ``model_type`` is the architecture at the root
     and again inside ``text_config``. A wrapper config is still the architecture.
+
+    ``architectures`` is matched up to a digit boundary rather than anywhere in the string. The
+    architecture names are not decorated versions of one another, they are generations:
+    ``DeepseekV4ForCausalLM`` and ``DeepseekV41ForCausalLM`` differ by a *digit*, so a plain
+    substring test makes V4's ``deepseekv4`` a prefix of V4.1's value and one runtime's predicate
+    answers for the other's checkpoint. Stopping at the first digit is what keeps ``V4`` from
+    reading ``V41`` -- the config's own names put a letter, the end of the string, or a
+    capital boundary after the digit in every release here, so this is not a tuning knob.
     """
     value = str(config.get("model_type") or "").lower()
     if value in types:
         return True
     declared = config.get("architectures", ())
     if isinstance(declared, (list, tuple)):
-        if any(architectures in str(item).lower() for item in declared):
+        pattern = re.compile(re.escape(architectures) + r"(?!\d)")
+        if any(pattern.search(str(item).lower()) for item in declared):
             return True
     nested = config.get("text_config")
     return isinstance(nested, dict) and _names_model(nested, types, architectures)
@@ -141,6 +159,17 @@ def is_qwen4_exp_config(config: Mapping[str, Any]) -> bool:
     despite the two-level shape.
     """
     return _names_model(config, _QWEN4EXP_TYPES, "qwen4exp")
+
+
+def is_deepseek_v4_config(config: Mapping[str, Any]) -> bool:
+    """Whether a config describes the original DeepSeek-V4 (not V4.1).
+
+    ``deepseek_v4`` and ``deepseek_v41`` are two architectures. The ``model_type`` side is kept
+    apart by the exact set; the ``architectures`` side -- where the releases put
+    ``DeepseekV4ForCausalLM`` and ``DeepseekV41ForCausalLM`` -- is kept apart by the digit boundary
+    in :func:`_names_model`, since a plain substring test would read V4 inside V4.1.
+    """
+    return _names_model(config, _DEEPSEEK_V4_TYPES, "deepseekv4")
 
 
 def requested_gguf(args: EngineArgs) -> bool:
@@ -391,18 +420,64 @@ def _identify_qwen4exp(args: EngineArgs) -> Identification:
     return READ
 
 
-def _identify_torch(_args: EngineArgs) -> Identification:
-    """The generic runtime reads everything, so it is never refused and never preferred.
+_TORCH_ONLY = (
+    "backend='torch' serves DeepSeek-V4 checkpoints only: a directory whose config.json says "
+    "model_type=deepseek_v4, or a .gguf whose general.architecture is deepseek4 or a "
+    "'deepseek4_'-prefixed variant of it"
+)
 
-    It is last in :data:`AUTO_ORDER` and its verdict is :attr:`Verdict.READ`, which is the same
-    thing as saying the loop's fallback and its last candidate are the same answer.
+
+def _is_deepseek_v4_gguf(architecture: str | None) -> bool:
+    """Whether a GGUF ``general.architecture`` names the DeepSeek-V4 export family.
+
+    The base export carries ``deepseek4``; a variant suffixes it, and this host's MTP build says
+    ``deepseek4_mtp_support``. All of those are V4 checkpoints for the same reason the config's
+    ``model_type=deepseek_v4`` is, so the family is matched and not just the one spelling -- refusing
+    a V4 variant as "not V4" is the wrong answer in the direction that loses a servable model. The
+    separator is required so the prefix cannot reach into a differently-numbered neighbour, which is
+    the same generation-digit trap the config-side match stops at.
     """
-    return READ
+    if not architecture:
+        return False
+    return architecture == _DEEPSEEK_V4_GGUF or architecture.startswith(_DEEPSEEK_V4_GGUF + "_")
+
+
+def _identify_torch(args: EngineArgs) -> Identification:
+    """Whether this checkpoint is one the ``torch`` runtime can serve.
+
+    Despite its name and its historical casting as the generic fallback, this runtime is hard-wired
+    to DeepSeek-V4: it loads ``relicllm.models.deepseek_v4`` through the legacy serving engine, with
+    no architecture dispatch anywhere. So it identifies DeepSeek-V4 and refuses everything else --
+    the same evidence rule the other runtimes use. A checkpoint nothing claims no longer falls
+    through to here and gets read as V4; it is refused, and :func:`route` reports that no runtime
+    serves it.
+    """
+    config = read_config(args.model, args.config_path)
+    if config is not None and is_deepseek_v4_config(config):
+        return READ
+    architecture = gguf_architecture(args.model)
+    if _is_deepseek_v4_gguf(architecture):
+        return READ
+    if config is None and architecture is None:
+        # No evidence either way: not enough to route here, not enough to refuse.
+        return UNKNOWN
+    # Evidence against -- either a config that named a different architecture or a GGUF header that
+    # did, and each is worth saying so the caller reads what was read.
+    detail = (
+        f"this one declares model_type={config.get('model_type')!r}"
+        if config is not None
+        else f"this one declares general.architecture={architecture!r}"
+    )
+    return refused(f"{_TORCH_ONLY} ({detail})")
 
 
 RUNTIMES: dict[str, RuntimeCapabilities] = {
     "torch": RuntimeCapabilities(
         name="torch",
+        # Named after the framework it was once contrasted with the C++ engine on, but it is this
+        # one architecture's runtime -- so it declares that architecture, which is what makes it a
+        # candidate rather than a catch-all in `auto` and in triage.
+        models=("deepseek_v4",),
         model_formats=("safetensors", "gguf"),
         devices=("cuda", "cpu"),
         supports_batch=False,
@@ -481,9 +556,9 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
 }
 
 
-#: The order ``auto`` asks them in: the architecture-specific readers before the generic runtime,
-#: which is the specificity of the reader. ``torch`` is last and identifies everything, so the
-#: loop's fallback and its last candidate are one answer.
+#: The order ``auto`` asks them in: the architecture-specific readers before the widest one. Every
+#: entry now identifies a checkpoint *and refuses the others*, so the list is a set of claims rather
+#: than a fallback chain -- and a checkpoint no entry claims is refused, not read by the last one.
 AUTO_ORDER: tuple[str, ...] = ("v41", "mimo", "xing4", "qwen4_exp", "torch")
 
 
@@ -543,12 +618,26 @@ def identify(name: str, args: EngineArgs) -> Identification:
     return runtime_capabilities(name).identifies(args)
 
 
+def no_runtime_serves(args: EngineArgs) -> UnsupportedFeatureError:
+    """The refusal for a checkpoint no runtime identifies.
+
+    Every entry in :data:`AUTO_ORDER` claims an architecture and refuses the rest, so "nothing
+    matched" is now a real answer rather than an impossible branch. It is raised instead of routing
+    the checkpoint into the last runtime on the list, which is how an unclaimed checkpoint used to
+    be read as DeepSeek-V4.
+    """
+    return UnsupportedFeatureError(
+        "no backend serves this checkpoint; auto tried "
+        f"{', '.join(AUTO_ORDER)} -- pass --backend to name one"
+    )
+
+
 def route(args: EngineArgs) -> str:
-    """The runtime ``auto`` selects, or ``torch`` when nothing identifies the checkpoint."""
+    """The runtime ``auto`` selects, or raise when no entry claims the checkpoint."""
     for name in AUTO_ORDER:
         if runtime_capabilities(name).identifies(args).routes_here:
             return name
-    raise AssertionError("AUTO_ORDER has no fallback; torch identifies every checkpoint")
+    raise no_runtime_serves(args)
 
 
 def refusal(name: str, args: EngineArgs) -> str:
