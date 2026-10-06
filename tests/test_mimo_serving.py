@@ -709,3 +709,75 @@ def test_a_worker_runs_the_payload_rank_zero_sent_key_for_key(group, monkeypatch
     assert seen["top_k"] == payload["top_k"]
     assert seen["top_p"] == payload["top_p"]
     assert seen["seed"] == payload["seed"]
+
+
+# --------------------------------------------------------------------------------------------------
+# the four steps that moved to ShardedWorkerMixin, pinned
+# --------------------------------------------------------------------------------------------------
+#
+# These lived on the two adapters -- byte for byte on MiMo and Qwen4-Exp -- and none of them had a
+# test before the move. `_publish_ready`, `_worker_drained`, `_run_worker_request` and `close` now
+# have one definition between them, and the point of a shared definition is that the shared body is
+# the one that runs: these drive it, rather than asserting the copy that happened to be read.
+
+def test_a_ready_rank_barriers_before_it_announces(group, monkeypatch):
+    """The barrier is the whole of the method's reason: "ready" before the peers have loaded would
+    be a parent that thinks every rank is up, answering one that is still inside its load."""
+    adapter = as_four_ranks(backend(), 0)
+    order: list[str] = []
+
+    def _barrier(*a, **k):
+        order.append("barrier")
+        assert adapter._ready is False, "the rank announced before its peers' barrier"
+
+    monkeypatch.setattr("torch.distributed.barrier", _barrier)
+    adapter._publish_ready()
+    assert order == ["barrier"]
+    assert adapter._ready is True
+
+
+def test_a_drained_worker_barriers_before_the_group_goes(group, monkeypatch):
+    adapter = as_four_ranks(backend(), 1)
+    ran: list[int] = []
+    monkeypatch.setattr("torch.distributed.barrier", lambda *a, **k: ran.append(1))
+    adapter._worker_drained()
+    assert ran == [1]
+
+
+def test_a_worker_request_is_the_payload_runner(group):
+    """Serving one message takes the payload and nothing else: the worker's `_run_payload` is the
+    one the serial path reaches too, so a message that arrived here is executed by the same body."""
+    adapter = as_four_ranks(backend(), 3)
+    seen: dict = {}
+    adapter._run_payload = lambda payload: seen.update(payload)
+    adapter._run_worker_request({"op": "generate", "request_id": "r", "prompt_ids": [1, 2]})
+    assert seen == {"op": "generate", "request_id": "r", "prompt_ids": [1, 2]}
+
+
+def test_close_broadcasts_the_shutdown_then_reaps(group, monkeypatch):
+    """The order is the point: a broadcast after the group is reaped is a collective with no peer,
+    and a worker still parked on its message never learns to stop."""
+    adapter = as_four_ranks(backend(), 0)
+    order: list[str] = []
+
+    monkeypatch.setattr(
+        "torch.distributed.broadcast_object_list",
+        lambda payload, src=0: order.append(("broadcast", payload[0])),
+    )
+    monkeypatch.setattr(
+        "relicllm.backends.base.BackendBase.close",
+        lambda self: order.append(("super", None)),
+    )
+    adapter.close()
+    assert order == [("broadcast", {"op": "shutdown"}), ("super", None)]
+
+
+def test_a_worker_rank_sends_no_shutdown(group, monkeypatch):
+    """Only rank 0 broadcasts; a worker that reached the end of its loop is already out of the
+    message it was sent, and a second send would be a collective its peers are not in."""
+    adapter = as_four_ranks(backend(), 2)
+    sent: list = []
+    monkeypatch.setattr("torch.distributed.broadcast_object_list", lambda p, src=0: sent.append(p))
+    monkeypatch.setattr("relicllm.backends.base.BackendBase.close", lambda self: None)
+    adapter.close()
+    assert sent == []
