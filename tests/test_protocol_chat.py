@@ -48,6 +48,149 @@ def test_prepare_messages_rejects_unknown_named_tool():
         prepare_messages(body)
 
 
+# ----------------------------------------------------------------------------------- response format
+
+
+def test_a_response_format_rides_a_system_message_and_inserts_one_when_absent():
+    """The carrier is the encoder's, not the conversation's.
+
+    Both DeepSeek encoders render the schema block only under ``role == "system"``, so attaching the
+    field to the last instruction-bearing message -- which is the user turn in every conversation a
+    chat client sends -- meant the field never reached the prompt. See
+    ``docs/architecture/native_surface_decision.md``.
+    """
+    body = {
+        "messages": [{"role": "user", "content": "hi"}],
+        "response_format": {"type": "json_object"},
+    }
+
+    messages = prepare_messages(body)
+
+    assert [message["role"] for message in messages] == ["system", "user"]
+    assert messages[0]["response_format"] == {"type": "json_object"}
+    assert "response_format" not in messages[1]
+    # The inserted carrier is empty: the schema block is appended after the system content, and a
+    # placeholder sentence would be an instruction the caller never wrote.
+    assert messages[0]["content"] == ""
+
+
+def test_a_conversation_that_has_a_system_message_keeps_it_and_carries_both_fields():
+    tools = [{"type": "function", "function": {"name": "weather", "parameters": {}}}]
+    body = {
+        "messages": [
+            {"role": "system", "content": "Be terse."},
+            {"role": "user", "content": "hi"},
+        ],
+        "tools": tools,
+        "response_format": {"type": "json_object"},
+    }
+
+    messages = prepare_messages(body)
+
+    assert [message["role"] for message in messages] == ["system", "user"]
+    assert messages[0]["content"] == "Be terse."
+    assert messages[0]["tools"] == tools
+    assert messages[0]["response_format"] == {"type": "json_object"}
+
+
+def test_the_response_format_and_the_tool_list_share_one_inserted_carrier():
+    tools = [{"type": "function", "function": {"name": "weather", "parameters": {}}}]
+    body = {
+        "messages": [{"role": "user", "content": "hi"}],
+        "tools": tools,
+        "response_format": {"type": "json_schema", "json_schema": {"name": "W", "schema": {}}},
+    }
+
+    messages = prepare_messages(body)
+
+    assert [message["role"] for message in messages] == ["system", "user"]
+    assert messages[0]["tools"] == tools
+    assert messages[0]["response_format"]["type"] == "json_schema"
+
+
+def test_a_text_response_format_is_not_carried_at_all():
+    """``{"type": "text"}`` is the value an OpenAI client sends by default and asks for nothing.
+
+    Rendering it would put a schema block in the prompt whose schema is ``{"type": "text"}`` -- an
+    instruction the caller did not write -- and inserting a carrier for it would change the prompt
+    of a request that asked for no change.
+    """
+    body = {
+        "messages": [{"role": "user", "content": "hi"}],
+        "response_format": {"type": "text"},
+    }
+
+    messages = prepare_messages(body)
+
+    assert [message["role"] for message in messages] == ["user"]
+    assert "response_format" not in messages[0]
+
+
+def test_a_developer_message_does_not_carry_the_response_format():
+    """V4.1's checkpoint encoder raises on the role, so the field must not take it there either.
+
+    The role is accepted (V4's own encoder renders it) and the carrier is a system message: a
+    conversation whose last instruction-bearing turn is a developer one still gets an inserted
+    system message rather than a schema block the encoder would refuse.
+    """
+    body = {
+        "messages": [
+            {"role": "developer", "content": "Be terse."},
+            {"role": "user", "content": "hi"},
+        ],
+        "response_format": {"type": "json_object"},
+    }
+
+    messages = prepare_messages(body)
+
+    assert [message["role"] for message in messages] == ["system", "developer", "user"]
+    assert messages[0]["response_format"] == {"type": "json_object"}
+    assert "response_format" not in messages[1]
+
+
+def test_the_carrier_renders_the_schema_block_the_two_deepseek_encoders_read():
+    """The end the attachment exists for: the encoder sees the block.
+
+    Pinned against the encoder rather than against the message dict, because the defect this
+    replaced was precisely a carrier that looked right in the intermediate value and rendered
+    nothing.
+    """
+    from relicllm.encoding.deepseek_v4 import encode_messages
+
+    schema = {
+        "type": "object",
+        "properties": {"city": {"type": "string"}},
+        "required": ["city"],
+        "additionalProperties": False,
+    }
+    body = {
+        "messages": [{"role": "user", "content": "Capital of France?"}],
+        "response_format": {"type": "json_schema", "json_schema": {"name": "City", "schema": schema}},
+    }
+
+    rendered = encode_messages(prepare_messages(body), thinking_mode="chat")
+
+    assert "## Response Format:" in rendered
+    assert "You MUST strictly adhere to the following schema to reply:" in rendered
+    assert '"city"' in rendered
+    assert "Capital of France?" in rendered
+
+
+def test_a_malformed_response_format_is_left_for_the_audit_to_refuse():
+    """Normalization does not double as validation.
+
+    ``contract.structured_output_spec`` is what reads the value, and a value it cannot read is a
+    400 from the audit before dispatch -- so the normalization layer leaves the conversation alone
+    rather than attaching something no encoder should render.
+    """
+    body = {"messages": [{"role": "user", "content": "hi"}], "response_format": {"type": "bogus"}}
+
+    messages = prepare_messages(body)
+
+    assert [message["role"] for message in messages] == ["user"]
+    assert "response_format" not in messages[0]
+
+
 def test_prepare_messages_requires_a_non_empty_list():
     with pytest.raises(ValueError, match="non-empty list"):
         prepare_messages({"messages": []})

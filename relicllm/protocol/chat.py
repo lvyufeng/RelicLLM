@@ -18,6 +18,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from .contract import StructuredOutput, structured_output_spec
+
 _REASONING_EFFORTS = {None, "minimal", "low", "medium", "high", "max"}
 #: The two values ``thinking_mode`` takes. Named because the mode is a *choice* rather than an
 #: effort, so a value outside this set is a request error rather than something to map onto a
@@ -105,19 +107,40 @@ def prepare_messages(body: Mapping[str, Any]) -> list[dict[str, Any]]:
     if tools is not None and attach_tools and tool_attach_idx is None:
         messages.insert(0, {"role": "system", "content": ""})
         tool_attach_idx = 0
+    if tools is not None and attach_tools and tool_attach_idx is not None:
+        messages[tool_attach_idx]["tools"] = tools
+
+    # ``response_format`` is attached to a *system* message, and to a system message only. That is
+    # the one role both DeepSeek encoders render the schema block on -- they branch on
+    # ``role == "system"`` for it -- while the message this used to be attached to was the last
+    # instruction-bearing one, which is the user turn in every conversation a chat client sends. The
+    # field was accepted and silently dropped there, on every runtime.
+    #
+    # Its own carrier rather than the tool one: roles differ (``tools`` also accepts ``developer``,
+    # which V4.1's encoder raises on), so a body carrying both puts the schema on the system message
+    # the tools may have just inserted, and inserts a second empty one only when the conversation has
+    # a developer message but no system message. ``{"type": "text"}`` is not carried at all: it asks
+    # for nothing, and inserting a carrier for it would change this request's prompt.
+    spec = structured_output_spec(body.get("response_format"))
+    if isinstance(spec, StructuredOutput) and spec.constrains:
+        system_idx = None
+        for idx, msg in enumerate(messages):
+            if msg.get("role") == "system":
+                system_idx = idx
+                break
+        if system_idx is None:
+            messages.insert(0, {"role": "system", "content": ""})
+            system_idx = 0
+        messages[system_idx]["response_format"] = body["response_format"]
+
     last_user_idx = None
     for idx in range(len(messages) - 1, -1, -1):
         if messages[idx].get("role") in _INSTRUCTION_ROLES:
             last_user_idx = idx
             break
-    if tools is not None and attach_tools and tool_attach_idx is not None:
-        messages[tool_attach_idx]["tools"] = tools
-    if last_user_idx is not None:
-        if body.get("response_format") is not None:
-            messages[last_user_idx]["response_format"] = body["response_format"]
-        if instruction:
-            content = messages[last_user_idx].get("content") or ""
-            messages[last_user_idx]["content"] = f"{content}\n\n{instruction}" if content else instruction
+    if last_user_idx is not None and instruction:
+        content = messages[last_user_idx].get("content") or ""
+        messages[last_user_idx]["content"] = f"{content}\n\n{instruction}" if content else instruction
     return messages
 
 
