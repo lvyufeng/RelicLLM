@@ -89,36 +89,6 @@ class LLM:
         if refusal is not None:
             raise UnsupportedFeatureError(refusal.message)
 
-    def _sampling_body(self, params: SamplingParams, *, stream: bool) -> dict[str, Any]:
-        """The fields a ``SamplingParams`` asks for, in the body shape the audit reads.
-
-        Only the refusable ones, and only when they are not their default, so a request that asked
-        for nothing is not audited against fields the caller never named. This is the same pairing
-        :meth:`SamplingParams.from_openai` produces on the HTTP route -- a value under its OpenAI
-        key -- which is what lets one audit answer for both entry points. ``stream`` is set because
-        the audit reads it: a streamed chunk carries no ranking, so ``logprobs`` on this path is a
-        different question from the same field on the non-streaming one.
-        """
-        body: dict[str, Any] = {"stream": True} if stream else {}
-        if params.n != 1:
-            body["n"] = params.n
-        if params.stop:
-            body["stop"] = list(params.stop)
-        if params.logprobs:
-            body["logprobs"] = True
-            if params.top_logprobs:
-                body["top_logprobs"] = params.top_logprobs
-        if params.frequency_penalty:
-            body["frequency_penalty"] = params.frequency_penalty
-        if params.presence_penalty:
-            body["presence_penalty"] = params.presence_penalty
-        if params.repetition_penalty != 1.0:
-            body["repetition_penalty"] = params.repetition_penalty
-        if params.min_p:
-            body["min_p"] = params.min_p
-        body.update(params.extra)
-        return body
-
     @staticmethod
     def _dispatch(requests: Sequence[GenerationRequest]) -> list[GenerationRequest]:
         """Every runtime request a caller's request is made of.
@@ -146,7 +116,7 @@ class LLM:
         if isinstance(prompts, str):
             prompts = [prompts]
         params = sampling_params or SamplingParams()
-        self._audit(self._sampling_body(params, stream=False), endpoint=COMPLETIONS)
+        self._audit(params.sampling_body(stream=False), endpoint=COMPLETIONS)
         return self._backend.generate(self._dispatch(self._requests(prompts, params)))
 
     def generate_stream(
@@ -157,7 +127,7 @@ class LLM:
         if self._closed:
             raise RuntimeError("LLM is closed")
         params = sampling_params or SamplingParams()
-        self._audit(self._sampling_body(params, stream=True), endpoint=COMPLETIONS)
+        self._audit(params.sampling_body(stream=True), endpoint=COMPLETIONS)
         request = self._requests([prompt], params)[0]
         return streamed(self._backend, request)
 
@@ -209,7 +179,7 @@ class LLM:
             tool_choice=tool_choice,
             response_format=response_format,
         )
-        body.update(self._sampling_body(sampling_params or SamplingParams(), stream=stream))
+        body.update((sampling_params or SamplingParams()).sampling_body(stream=stream))
         self._audit(body, endpoint=CHAT)
         return build_chat_request(body, sampling_params, request_id=request_id)
 
