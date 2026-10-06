@@ -84,6 +84,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [Per-method duplication across the five adapters](https://lvyufeng.github.io/RelicLLM/architecture/per_method_duplication_2026_09/)
 - [The device plane](https://lvyufeng.github.io/RelicLLM/architecture/device_plane/)
 - [The native surface decision](https://lvyufeng.github.io/RelicLLM/architecture/native_surface_decision/)
+- [One scheduler, many models](https://lvyufeng.github.io/RelicLLM/architecture/one_scheduler_many_models/)
 
 ## Migration
 
