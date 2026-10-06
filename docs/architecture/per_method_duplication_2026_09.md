@@ -77,3 +77,59 @@ purpose**: folding a 15-line body into ~20 shared lines plus a hook is a wash in
 fact (which object carries the eos ids, which path resolves the tokenizer) behind a name instead of
 removing it. `close` (0.81) is a fourth: mimo's sends its workers a shutdown broadcast as its first
 act and xing4's drops a prefix cache as its last, and those are the two things the method is for.
+
+Two of those rows -- `_eos_tokens` and `_open_tokenizer` -- were later reopened on stronger evidence;
+the section at the end of this page records what the fold is and why the reasoning above did not
+survive re-measurement.
+
+## What changed for `_eos_tokens` and `_open_tokenizer`, 2026-10-06
+
+Two of those three rows were **reopened and folded** on 2026-10-06, and what changed is the
+*evidence* behind the recorded reason, not the measurement. The sentence above
+says the fold is "a wash in size" and that it "hides a fact behind a name". Both halves are now known
+false, and both were settled by the same thing this page is about: counting what the copies actually
+differ by.
+
+**The size claim was wrong, and re-measuring says by how much.** Counting statements the way this
+page's table did (docstrings stripped, `ast` over each body): the three `_eos_tokens` copies were 15
+statements each and the three `_open_tokenizer` copies 7 each -- **66 in total** -- and 13 of the 15
+were the same set-building loop with two `isinstance` branches and the refusal. The only statements
+that ever differed were the two-line read of the checkpoint's own config object
+(`self._checkpoint.layer`, `self._model.params`, `self._config.text_config`) and the one path
+expression. Folded, the same work is **30 statements**: one shared `_open_tokenizer` (7) and
+`_eos_tokens` (14) on `RuntimeAdapter`, the two one-expression defaults beside them, and four
+one-expression answers across the three adapters -- 23 shared, 7 local, against 66 all-local. The
+shared half is the half that carries the refusal and the union, so what each adapter still says is
+exactly the fact that was ever local to it.
+
+**The "hides a fact behind a name" claim is the one the two upstreams settle.** The fact in question
+is *where a runtime reads its EOS set and its tokenizer from*, and the two projects that serve these
+same checkpoint families answer it the other way:
+
+- **vLLM**: `BaseRenderer.get_eos_token_id` (`vllm/renderers/base.py`) is one definition on the base
+  class with **zero overrides** in the tree, reading only `self.tokenizer.eos_token_id` and never the
+  model config. Its tokenizer resolution is likewise one shared `get_tokenizer()`
+  (`vllm/tokenizers/registry.py`), with per-model differences as a small data registry rather than a
+  method a model type overrides.
+- **SGLang**: `ModelConfig._get_hf_eos_token_id() -> Optional[Set[int]]`
+  (`python/sglang/srt/configs/model_config.py`) is one shared method, and it is a *union* -- the HF
+  config's `eos_token_id` (scalar or list) unioned with the generation config's -- which is the shape
+  this fold settles on, exactly, one `isinstance(ids, int)` branch and all.
+
+Neither project hides "which config object" behind a name because neither has a per-model answer to
+hide: the union is the contract, the tokenizer is part of the checkpoint the config describes, and a
+runtime that read only one of the two would be the bug. The hook names the one line that genuinely
+varies; it does not hide it, because the line is what the hook *is*.
+
+What stayed put, and why: `capabilities` still has no shared body -- its difference is the *content*
+of an advertised table, not a computation, and each adapter's row is the declaration itself.
+`_eos_token_id` on `v41` is still its own method with its own name, because it is not this union: it
+reads one id off the tokenizer to hand the scheduler's `eos_token_id=` kwarg, with no config read and
+no refusal. And `v41` still opens its tokenizer inline, over a path its constructor already resolved,
+because its load needs the tokenizer *before* the model is built (for the hasher) -- a lifecycle
+position the base's `_ensure_loaded`-time hook does not have.
+
+The anti-drift test
+(`tests/test_backend_contract.py::test_the_tokenizer_and_eos_resolution_have_one_definition`) pins all
+four names to the files allowed to define them, and it treats `v41`'s `_eos_tokens` as the named
+exception rather than a silent gap.

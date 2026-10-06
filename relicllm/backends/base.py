@@ -318,8 +318,13 @@ class RuntimeAdapter(RankedWorker, BackendBase):
     left keeping is exactly that list, which is the point of the base -- the parts that are left are
     the parts that differ.
 
-    The only state read here is ``_tokenizer`` and ``_max_seq_len``, which every adapter in this
-    family has.
+    Opening the checkpoint's tokenizer and resolving its end-of-turn ids are the same shape and are
+    here too, because the one fact that genuinely varies between runtimes is answered by a
+    one-expression hook: :meth:`_tokenizer_directory` for the path and
+    :meth:`_checkpoint_eos_token_id` for the config object the release carries its eos ids on.
+
+    The only state read here is ``_tokenizer``, ``_max_seq_len``, ``_tokenizer_path`` and
+    ``_checkpoint_dir`` -- which every adapter in this family has by the time a request arrives.
     """
 
     #: How this adapter's own messages spell its runtime, as this family spells it in "the MiMo
@@ -450,6 +455,86 @@ class RuntimeAdapter(RankedWorker, BackendBase):
         for it.  Overridden by an adapter that lets a run configure it.
         """
         return True
+
+    def _open_tokenizer(self) -> Any:
+        """The checkpoint's own tokenizer, read from the directory this run resolves to.
+
+        Not a fallback and not a generic renderer: a checkpoint ships its chat markup as its own
+        template next to the weights, and a prompt rendered any other way is a prompt the model was
+        not trained on. ``trust_remote_code`` is on for the same reason -- the tokenizer is part of
+        the release, and a checkpoint that needs its own reader needs it here too.
+
+        Which directory is :meth:`_tokenizer_directory`'s answer, and the error names the runtime
+        through :attr:`_RUNTIME_LABEL` the way every message on this base does.
+        """
+        path = self._tokenizer_directory()
+        try:
+            from transformers import AutoTokenizer
+        except ImportError as exc:  # pragma: no cover - the repo's requirements carry it
+            raise ConfigurationError(
+                f"serving a {self._RUNTIME_LABEL} checkpoint needs `transformers` for its tokenizer"
+            ) from exc
+        try:
+            return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
+        except (OSError, ValueError) as exc:
+            raise ConfigurationError(
+                f"no tokenizer could be read from {path}: {exc}; pass --tokenizer-path"
+            ) from exc
+
+    def _tokenizer_directory(self) -> str:
+        """Where :meth:`_open_tokenizer` reads the tokenizer from.
+
+        The tokenizer flag when the launcher passed one, and this run's checkpoint directory
+        otherwise -- the same choice every adapter in this family made, spelled once. A runtime whose
+        checkpoint directory is decided late (``xing4`` resolves it from the GGUF) overrides this to
+        say so in one expression rather than restating the read below.
+        """
+        return self._tokenizer_path or self._checkpoint_dir
+
+    def _checkpoint_eos_token_id(self) -> Any:
+        """The end-of-turn id the checkpoint's own config names, or ``None`` if it names none.
+
+        The one thing that differed between the runtimes that share :meth:`_eos_tokens`: not the
+        union below, and not the refusal when the union is empty, but *which object carries the
+        config* -- a checkpoint's layer, a model's params, a language tower under a text config. A
+        subclass answers that in one expression here; the read that turns the answer into a set of
+        ids, and the answer's missing case, stay in one place below.
+        """
+        return None
+
+    def _eos_tokens(self) -> set[int]:
+        """The ids that end a turn, from the config and the tokenizer's own end-of-text.
+
+        Both sources are read because a run that stopped on one and not the other would run every
+        answer to its budget. The checkpoint's id may be a single int or a tuple -- a release can end
+        a turn with either of two control tokens -- and the tokenizer's own ``eos_token_id`` /
+        ``eos_token_ids`` (a duck-typed tokenizer carries the latter) are folded in the same way.
+        There is no default and no fallback: a checkpoint that names neither is one whose answers
+        cannot end, and a served request against it should say so rather than emit its whole budget.
+
+        Which config object the checkpoint's id is read from is :meth:`_checkpoint_eos_token_id`'s
+        one-line answer; everything after it is the same read on every runtime that shares this.
+        """
+        found: set[int] = set()
+        ids = self._checkpoint_eos_token_id()
+        if isinstance(ids, int):
+            found.add(int(ids))
+        elif ids:
+            found.update(int(token) for token in ids)
+        for candidate in (
+            getattr(self._tokenizer, "eos_token_id", None),
+            getattr(self._tokenizer, "eos_token_ids", None),
+        ):
+            if isinstance(candidate, int):
+                found.add(int(candidate))
+            elif candidate:
+                found.update(int(token) for token in candidate)
+        if not found:
+            raise ConfigurationError(
+                "this checkpoint names no end-of-turn token, so a request would run to its "
+                "budget; send a prompt_tokens request with an explicit max_tokens"
+            )
+        return found
 
     def _tokenize(self, request: GenerationRequest) -> list[int]:
         if request.prompt_tokens is not None:

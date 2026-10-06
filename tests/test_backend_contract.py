@@ -1233,3 +1233,99 @@ def test_the_sharded_worker_protocol_has_one_definition():
         "the sharded-worker protocol is written once in backends/sharded.py; these adapters carry "
         f"a second copy of it: {offenders}"
     )
+
+
+def test_the_tokenizer_and_eos_resolution_have_one_definition():
+    """The checkpoint's tokenizer read and its end-of-turn union live on the base, and nowhere else.
+
+    `_open_tokenizer` was written out three times -- the same `AutoTokenizer.from_pretrained(path,
+    trust_remote_code=True)`, the same two-name path, the same two refusals -- and `_eos_tokens` three
+    times, where the only difference in 23 lines was *which object carries the config's
+    `eos_token_id`* (MiMo's checkpoint layer, Xing4's model params, Qwen4-Exp's text config). Both are
+    `RuntimeAdapter`'s now, with that one fact as `_checkpoint_eos_token_id` and the one path fact as
+    `_tokenizer_directory` -- the two hooks the scan expects each adapter to answer.
+
+    The scan covers the shared read and the *hooks*. `_eos_tokens` on `v41` is the one exception,
+    listed as one: it is not the same method -- a single `tokenizer.eos_token_id` read feeding a
+    scheduler's `eos_token_id=` kwarg, with no config union and no refusal, so folding it into this
+    union would change what its loop stops on. `base.py` carries every name; a hook defined anywhere
+    the load does not reach is a copy nothing calls.
+    """
+    root = Path(__file__).resolve().parent.parent
+    backs = root / "relicllm" / "backends"
+    definitions = {
+        "_open_tokenizer": {"base.py"},
+        "_eos_tokens": {"base.py", "v41_backend.py"},
+        "_tokenizer_directory": {"base.py", "xing4_backend.py"},
+        "_checkpoint_eos_token_id": {"base.py", "mimo_backend.py", "xing4_backend.py", "qwen4_exp_backend.py"},
+    }
+
+    offenders: list[str] = []
+    for path in sorted(backs.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if node.name in definitions and path.name not in definitions[node.name]:
+                offenders.append(f"{path.relative_to(root)}:{node.lineno} {node.name}")
+
+    assert offenders == [], (
+        "the tokenizer read and the eos union are written once on `RuntimeAdapter`, over the two "
+        f"hooks each adapter answers; these carry a second copy: {offenders}"
+    )
+
+
+class _PathStub(RuntimeAdapter):
+    """A standalone adapter whose tokenizer path and directory are supplied, nothing else."""
+
+    _RUNTIME_LABEL = "Stub"
+
+    def __init__(self, path=None, directory=None) -> None:
+        self._tokenizer_path = path
+        self._checkpoint_dir = directory
+        self._tokenizer = None
+
+
+def test_the_tokenizer_directory_prefers_the_flag_and_falls_back_to_the_checkpoint():
+    """The one path decision every adapter made, and the base that answers it once."""
+    assert _PathStub(path="flag", directory="ckpt")._tokenizer_directory() == "flag"
+    assert _PathStub(path="", directory="ckpt")._tokenizer_directory() == "ckpt"
+    assert _PathStub(path=None, directory="ckpt")._tokenizer_directory() == "ckpt"
+
+
+def test_the_eos_union_takes_the_checkpoint_and_the_tokenizers_ids():
+    """The union, and the refusal when the checkpoint names nothing that can end an answer."""
+    tokenizer = SimpleNamespace(eos_token_id=2, eos_token_ids=None)
+    stub = _PathStub()
+    stub._tokenizer = tokenizer
+    stub._checkpoint_eos_token_id = lambda: (7, 8)
+
+    assert stub._eos_tokens() == {2, 7, 8}
+
+    # A single int on the checkpoint side is one id, not a tuple read as iterable ids.
+    stub._checkpoint_eos_token_id = lambda: 5
+    assert stub._eos_tokens() == {2, 5}
+
+    # A duck-typed tokenizer with only `eos_token_ids` still contributes.
+    stub._tokenizer = SimpleNamespace(eos_token_ids=[3, 4])
+    stub._checkpoint_eos_token_id = lambda: None
+    assert stub._eos_tokens() == {3, 4}
+
+    # No source at all is a refusal naming the outcome, not an empty set.
+    stub._tokenizer = SimpleNamespace()
+    with pytest.raises(ConfigurationError, match="names no end-of-turn token"):
+        stub._eos_tokens()
+
+
+def test_v41_keeps_its_own_eos_read_because_its_contract_is_different():
+    """`v41` reads one id off the tokenizer for its scheduler, and that is not this union.
+
+    Pinned so the shared `_eos_tokens` cannot be quietly widened to cover a method whose contract is
+    different: `v41` feeds a scheduler kwarg one id at a time, and a config union there would change
+    what its loop stops on rather than what is reported. It has no `_open_tokenizer` either -- its
+    load reads its tokenizer inline over a path the constructor resolved.
+    """
+    from relicllm.backends.v41_backend import V41Backend
+
+    assert V41Backend._eos_tokens is not RuntimeAdapter._eos_tokens
+    assert V41Backend._open_tokenizer is RuntimeAdapter._open_tokenizer

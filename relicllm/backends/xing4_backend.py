@@ -514,30 +514,20 @@ class Xing4Backend(RuntimeAdapter):
             for layer in (self._cache if isinstance(self._cache, list) else [self._cache])
         )
 
-    def _open_tokenizer(self) -> Any:
+    def _tokenizer_directory(self) -> str:
         """The released checkpoint's own tokenizer, which is not the GGUF's.
 
-        The GGUF carries the vocabulary, the special-token ids and the chat
-        template, but ``tokenizer.ggml.model`` is ``llama`` and there are no
-        merges in the header, so the reader that builds a BPE tokenizer from a GGUF
-        refuses it -- correctly, because what it would build is a different
-        tokenizer. The release ships ``tokenizer.model`` and a
-        ``tokenization_xing4_0.py``, and a prompt rendered any other way is a
-        prompt the model was not trained on.
+        The GGUF carries the vocabulary, the special-token ids and the chat template, but
+        ``tokenizer.ggml.model`` is ``llama`` and there are no merges in the header, so the reader
+        that builds a BPE tokenizer from a GGUF refuses it -- correctly, because what it would build
+        is a different tokenizer. The release ships ``tokenizer.model`` and a
+        ``tokenization_xing4_0.py``, and a prompt rendered any other way is a prompt the model was
+        not trained on.
+
+        The directory is resolved from the GGUF the load already found, which is why this is the one
+        adapter whose answer is not the base's two-name read.
         """
-        path = getattr(self, "_checkpoint_dir", None) or self._tokenizer_path or self._model_path
-        try:
-            from transformers import AutoTokenizer
-        except ImportError as exc:  # pragma: no cover - the repo's requirements carry it
-            raise ConfigurationError(
-                "serving a Xing4 checkpoint needs `transformers` for its tokenizer"
-            ) from exc
-        try:
-            return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
-        except (OSError, ValueError) as exc:
-            raise ConfigurationError(
-                f"no tokenizer could be read from {path}: {exc}; pass --tokenizer-path"
-            ) from exc
+        return getattr(self, "_checkpoint_dir", None) or self._tokenizer_path or self._model_path
 
     def _say(self, message: str) -> None:
         print(f"[xing4] {message}", flush=True)
@@ -582,35 +572,10 @@ class Xing4Backend(RuntimeAdapter):
 
     # -------------------------------------------------------------------- requests
 
-    def _eos_tokens(self) -> set[int]:
-        """The ids that end a turn, from the config and the tokenizer's own end-of-text.
-
-        Both sources are read because a run that stopped on one and not the other
-        would run every answer to its budget.  There is no default: a checkpoint
-        that names neither is one whose answers cannot end, and a served request
-        against it should say so rather than emit its whole budget.
-        """
-        found: set[int] = set()
+    def _checkpoint_eos_token_id(self) -> Any:
+        """Xing4's end-of-turn id lives on the model's params."""
         params = getattr(self._model, "params", None)
-        ids = getattr(params, "eos_token_id", None) if params is not None else None
-        if isinstance(ids, int):
-            found.add(int(ids))
-        elif ids:
-            found.update(int(token) for token in ids)
-        for candidate in (
-            getattr(self._tokenizer, "eos_token_id", None),
-            getattr(self._tokenizer, "eos_token_ids", None),
-        ):
-            if isinstance(candidate, int):
-                found.add(int(candidate))
-            elif candidate:
-                found.update(int(token) for token in candidate)
-        if not found:
-            raise ConfigurationError(
-                "this checkpoint names no end-of-turn token, so a request would run to its "
-                "budget; send a prompt_tokens request with an explicit max_tokens"
-            )
-        return found
+        return getattr(params, "eos_token_id", None) if params is not None else None
 
     def _loop(
         self,
