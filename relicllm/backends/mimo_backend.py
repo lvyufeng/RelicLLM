@@ -66,6 +66,7 @@ from relicllm.api import (
 from .base import RuntimeAdapter
 from .capabilities import IGNORED_OPTIONS, declared_capabilities
 from .options import BackendOption, Group, Kind, decode_args
+from .sharded import ShardedWorkerMixin
 from .shared_options import (
     EXPERT_DEAL,
     PREFILL_CHUNK,
@@ -73,7 +74,6 @@ from .shared_options import (
     PREFIX_CACHE_HEAD_TOKENS,
 )
 from .runtime_engine import (
-    RankedWorker,
     card_for_rank,
     device_index,
     visible_card_count,
@@ -261,7 +261,7 @@ class _Options:
         )
 
 
-class MimoBackend(RuntimeAdapter):
+class MimoBackend(ShardedWorkerMixin, RuntimeAdapter):
     """One MiMo-V2.6-Flash checkpoint, one process a rank, one request at a time."""
 
     #: Read by `RuntimeAdapter._tokenize`, which is the only place a runtime's name is needed.
@@ -460,13 +460,6 @@ class MimoBackend(RuntimeAdapter):
             "cancellation": "per-step broadcast; not inside the prompt's forward",
         }
 
-    def _publish_ready(self) -> None:
-        if self._world > 1:
-            import torch.distributed as dist
-
-            dist.barrier()
-        self._ready = True
-
     def _open_tokenizer(self) -> Any:
         """The checkpoint's own tokenizer, out of its ``tokenizer.json`` and chat template.
 
@@ -626,42 +619,6 @@ class MimoBackend(RuntimeAdapter):
             )
         return found
 
-    def _step_sync(
-        self, request_id: str, local: Callable[[], bool] | None = None
-    ) -> Callable[[], bool]:
-        """A per-step "should this loop stop", agreed on by every rank.
-
-        Rank 0 reads its own cancel flag and broadcasts it; every other rank reads what it was
-        sent. That message is what makes a client's disconnect reach a loop whose every other line
-        is deterministic and local -- and it is *this* collective rather than a local flag because
-        a rank that left on its own would leave three peers inside a layer's all-reduce.
-
-        `local` is a condition only rank 0 can evaluate -- the stream's stop-string check -- and it
-        is folded into the same flag for exactly that reason. A stop string is found on one rank
-        and nowhere else, so a rank 0 that unwound on its own to report it would leave the other
-        three in a layer; asking here instead makes the answer stop one step later, at a boundary
-        every rank arrives at together.
-        """
-        if self._world <= 1:
-            def alone() -> bool:
-                return self._is_cancelled(request_id) or (local is not None and local())
-
-            return alone
-
-        import torch
-        import torch.distributed as dist
-
-        flag = torch.zeros(1, dtype=torch.int32, device=self._device)
-
-        def agreed() -> bool:
-            if self._rank == 0:
-                stop = self._is_cancelled(request_id) or (local is not None and local())
-                flag.fill_(1 if stop else 0)
-            dist.broadcast(flag, src=0)
-            return bool(int(flag.item()))
-
-        return agreed
-
     # ------------------------------------------------------------------ the shared scheduler
 
     def _runtime_device(self) -> int:
@@ -723,35 +680,19 @@ class MimoBackend(RuntimeAdapter):
             self._publish_cache_metrics()
         return generation
 
-    def _dispatch(
+    def _worker_payload(
         self, request: GenerationRequest, prompt_ids: Sequence[int], budget: int
-    ) -> None:
-        """Hand every other rank the request, so that the work below is mirrored and not soloed.
+    ) -> dict[str, Any]:
+        """The prompt, the budget, and the sampler -- because MiMo's loop samples.
 
-        **The collective is what makes this mandatory rather than tidy.** Every routed layer closes
-        with an ``all_reduce``, so a rank that is not running the same request is not idle -- it is
-        at a *different* collective, and NCCL answers a mismatch by hanging both sides. Rank 0
-        therefore may not enter a generation the workers have not been told about, and the
-        broadcast below is the only thing that tells them: the worker loop blocks on this exact
-        call, one payload a request, and a request that never arrives is a rank 0 that deadlocks
-        on its own first expert layer rather than a rank 0 that quietly returns a wrong answer.
-
-        The payload is the whole request because the workers have to reproduce it exactly: the
-        same prompt ids, the same budget, the same sampler and the same seed. They are not given
-        the prompt *text* -- tokenization is rank 0's, and a rank that tokenized it itself would be
-        a second renderer that could disagree. Greedy is deterministic and the logits are the same
-        sum on every rank, so the tokens each rank draws are the same tokens; only rank 0's leave.
+        The base sends the prompt and the budget alone; this runtime's worker reproduces the run
+        exactly, so the sampler has to travel with it. A key renamed here and not in ``_run_payload``
+        is not a crash in the payload -- it is a worker that runs the loop with a different
+        temperature and draws a different token, or one that raises before its first ``all_reduce``
+        while rank 0 waits inside one.
         """
-        if self._world <= 1 or self._rank != 0:
-            return
-        import torch
-        import torch.distributed as dist
-
-        if not dist.is_initialized():
-            return
-
         params = request.sampling_params
-        payload = {
+        return {
             "op": "generate",
             "request_id": request.request_id,
             "prompt_ids": [int(token) for token in prompt_ids],
@@ -761,33 +702,6 @@ class MimoBackend(RuntimeAdapter):
             "top_p": params.top_p,
             "seed": params.seed,
         }
-        torch.distributed.broadcast_object_list([payload], src=0)
-
-    # -------------------------------------------------------------------- ranks
-
-    #: The worker loop is ``RankedWorker``'s. What is left is the two hooks it cannot work out
-    #: for itself: what serving one message takes, and what has to happen before the group goes.
-    def _run_worker_request(self, payload: Mapping[str, Any]) -> None:
-        """Serve one request, which here takes the payload and nothing else.
-
-        The base's body is ``v41``'s call shape -- ``_run_payload(payload, request, on_token)`` --
-        because that method's surface is the union of the serial path's and the worker loop's. This
-        runtime's runs a payload alone: nothing here has a per-request hook a worker rank could
-        pass, and the two arguments it does not take are not ones it should grow to ignore.
-        """
-        self._run_payload(payload)
-
-    def _worker_drained(self) -> None:
-        """Barrier before rank 0 tears the group down.
-
-        A worker that reaches the end of the loop is done serving, but its last request's
-        collectives may still be in flight on the device; the barrier is what makes "the loop has
-        ended" on a worker mean "rank 0 may now destroy the group" rather than a race the NCCL
-        teardown usually wins.
-        """
-        import torch.distributed as dist
-
-        dist.barrier()
 
     def _run_payload(self, payload: Mapping[str, Any]) -> None:
         """Run the same loop rank 0 is running, for the collective's sake and not for its answer.
@@ -820,18 +734,6 @@ class MimoBackend(RuntimeAdapter):
             )
         finally:
             self._publish_cache_metrics()
-
-    def close(self) -> None:
-        already_closed = self._closed
-        if not already_closed and self._world > 1 and self._rank == 0:
-            try:
-                import torch.distributed as dist
-
-                dist.broadcast_object_list([{"op": RankedWorker._WORKER_SHUTDOWN}], src=0)
-            except Exception:
-                # A peer that already left is not this rank's problem, and close() must not raise.
-                pass
-        super().close()
 
 
 __all__ = [

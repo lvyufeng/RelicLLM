@@ -1197,3 +1197,39 @@ def test_no_adapter_carries_a_second_door_into_the_scheduler():
         "the batch scheduler is not here yet (see #130) -- a per-adapter _start_runtime is an "
         f"entry point nothing calls: {offenders}"
     )
+
+
+def test_the_sharded_worker_protocol_has_one_definition():
+    """The rank-mirrored serving steps live in `sharded.py`, and nowhere else.
+
+    MiMo and Qwen4-Exp each wrote out the same six methods byte for byte -- announce after the
+    load's barrier, broadcast one payload a request, agree a stop flag per step, serve the payload
+    alone, barrier before teardown, broadcast the shutdown -- and a change to any invariant was a
+    change in two places that had to agree. `ShardedWorkerMixin` is the one place now.
+
+    The scan covers the four steps that are now unique to this protocol. `_worker_payload` is the
+    one hook the protocol leaves open -- `mimo` overrides it because its loop samples and
+    qwen4_exp's does not -- and `_run_worker_request`/`_worker_drained` also name `RankedWorker`'s
+    no-op defaults, which `runtime_engine.py` is allowed to keep. `close` is left out: every runtime
+    has one and they differ for reasons that are not this protocol (the base reaps, V4.1 also closes
+    a bell, Xing4 drops a store).
+    """
+    root = Path(__file__).resolve().parent.parent
+    backs = root / "relicllm" / "backends"
+    protocol = {"_publish_ready", "_step_sync", "_dispatch", "_run_worker_request", "_worker_drained"}
+    # `sharded.py` is the definition; `runtime_engine.py` has RankedWorker's no-op defaults.
+    allowed = {backs / "sharded.py", backs / "runtime_engine.py"}
+
+    offenders: list[str] = []
+    for path in sorted(backs.rglob("*.py")):
+        if path in allowed:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in protocol:
+                offenders.append(f"{path.relative_to(root)}:{node.lineno} {node.name}")
+
+    assert offenders == [], (
+        "the sharded-worker protocol is written once in backends/sharded.py; these adapters carry "
+        f"a second copy of it: {offenders}"
+    )

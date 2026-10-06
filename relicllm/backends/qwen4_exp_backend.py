@@ -29,7 +29,7 @@ makes a rank mandatory rather than optional. Every rank runs the same greedy loo
 returns the same sum everywhere, so the tokens agree without a message between them and only rank 0
 returns them. Cancellation is the one thing that cannot be local -- a rank that stopped on its own
 would leave its peers inside a layer -- so a cancel is a per-step ``broadcast`` of one int32 from
-rank 0, the same seam ``MimoBackend._step_sync`` takes.
+rank 0, the seam ``ShardedWorkerMixin._step_sync`` writes once for this runtime and MiMo.
 """
 
 from __future__ import annotations
@@ -51,7 +51,8 @@ from relicllm.api import (
 from .base import RuntimeAdapter
 from .capabilities import IGNORED_OPTIONS, declared_capabilities
 from .options import BackendOption, Group, Kind, decode_args
-from .runtime_engine import RankedWorker, card_for_rank, visible_card_count
+from .runtime_engine import card_for_rank, visible_card_count
+from .sharded import ShardedWorkerMixin
 from .shared_options import EXPERT_CACHE, PREFILL_CHUNK
 
 DEFAULT_MAX_SEQ_LEN = 32768
@@ -134,7 +135,7 @@ class _Options:
         )
 
 
-class Qwen4ExpBackend(RuntimeAdapter):
+class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
     """One Qwen3.8-Flash-Next checkpoint, one process a rank, one request at a time."""
 
     #: Read by `RuntimeAdapter._tokenize`, which is the only place a runtime's name is needed.
@@ -262,19 +263,6 @@ class Qwen4ExpBackend(RuntimeAdapter):
             self._tokenizer = self._open_tokenizer()
         self._publish_ready()
 
-    def _publish_ready(self) -> None:
-        """Announce this rank to its peers, then mark the engine ready.
-
-        The barrier first, as on MiMo: a rank that is ready before its peers have loaded would be
-        answered by a parent that thinks every rank is up, and the mismatch surfaces later inside a
-        collective rather than here where it can be explained.
-        """
-        if self._world > 1:
-            import torch.distributed as dist
-
-            dist.barrier()
-        self._ready = True
-
     def _build_details(self) -> None:
         text = getattr(self._config, "text_config", None)
         layers = getattr(text, "num_hidden_layers", None)
@@ -394,40 +382,6 @@ class Qwen4ExpBackend(RuntimeAdapter):
             )
         return found
 
-    def _step_sync(
-        self, request_id: str, local: Callable[[], bool] | None = None
-    ) -> Callable[[], bool]:
-        """A per-step "should this loop stop", agreed on by every rank.
-
-        Rank 0 reads its own cancel flag and broadcasts it; every other rank reads what it was sent.
-        That message is what makes a client's disconnect reach a loop whose every other line is
-        deterministic and local -- and it is *this* collective rather than a local flag because a rank
-        that left on its own would leave three peers inside a layer's all-reduce.
-
-        ``local`` is a condition only rank 0 can evaluate -- the stream's stop-string check -- and it
-        is folded into the same flag for exactly that reason. Identical to ``MimoBackend._step_sync``;
-        the two runtimes share the requirement, not the code.
-        """
-        if self._world <= 1:
-
-            def alone() -> bool:
-                return self._is_cancelled(request_id) or (local is not None and local())
-
-            return alone
-
-        import torch.distributed as dist
-
-        flag = torch.zeros(1, dtype=torch.int32, device=self._device)
-
-        def agreed() -> bool:
-            if self._rank == 0:
-                stop = self._is_cancelled(request_id) or (local is not None and local())
-                flag.fill_(1 if stop else 0)
-            dist.broadcast(flag, src=0)
-            return bool(int(flag.item()))
-
-        return agreed
-
     def _loop(
         self,
         prompt_ids: Sequence[int],
@@ -465,57 +419,6 @@ class Qwen4ExpBackend(RuntimeAdapter):
         )
         return _Generation.from_stats(tokens, stats)
 
-    def _dispatch(
-        self, request: GenerationRequest, prompt_ids: Sequence[int], budget: int
-    ) -> None:
-        """Hand every other rank the request, so that the work below is mirrored and not soloed.
-
-        **The collective is what makes this mandatory rather than tidy.** Every routed layer closes
-        with an ``all_reduce``, so a rank that is not running the same request is not idle -- it is at
-        a *different* collective, and NCCL answers a mismatch by hanging both sides. Rank 0 therefore
-        may not enter a generation the workers have not been told about, and the broadcast below is
-        the only thing that tells them: the worker loop blocks on this exact call, one payload a
-        request, and a request that never arrives is a rank 0 that deadlocks on its own first expert
-        layer rather than a rank 0 that quietly returns a wrong answer.
-
-        The payload is the whole request because the workers have to reproduce it exactly: the same
-        prompt ids and the same budget. They are not given the prompt *text* -- tokenization is rank
-        0's, and a rank that tokenized it itself would be a second renderer that could disagree.
-        Greedy is deterministic and the logits are the same sum on every rank, so the tokens each rank
-        draws are the same tokens; only rank 0's leave.
-        """
-        if self._world <= 1 or self._rank != 0:
-            return
-        import torch.distributed as dist
-
-        if not dist.is_initialized():
-            return
-        payload = {
-            "op": "generate",
-            "request_id": request.request_id,
-            "prompt_ids": [int(token) for token in prompt_ids],
-            "max_new_tokens": int(budget),
-        }
-        dist.broadcast_object_list([payload], src=0)
-
-    # -------------------------------------------------------------------- ranks
-
-    def _run_worker_request(self, payload: Mapping[str, Any]) -> None:
-        """Serve one request, which here takes the payload and nothing else, as on MiMo."""
-        self._run_payload(payload)
-
-    def _worker_drained(self) -> None:
-        """Barrier before rank 0 tears the group down.
-
-        A worker that reaches the end of the loop is done serving, but its last request's collectives
-        may still be in flight on the device; the barrier is what makes "the loop has ended" on a
-        worker mean "rank 0 may now destroy the group" rather than a race the NCCL teardown usually
-        wins.
-        """
-        import torch.distributed as dist
-
-        dist.barrier()
-
     def _run_payload(self, payload: Mapping[str, Any]) -> None:
         """Run the same loop rank 0 is running, for the collective's sake and not for its answer.
 
@@ -534,18 +437,6 @@ class Qwen4ExpBackend(RuntimeAdapter):
             eos_token_ids=tuple(sorted(self._eos_tokens())),
             on_step=self._step_sync(str(payload["request_id"])),
         )
-
-    def close(self) -> None:
-        already_closed = self._closed
-        if not already_closed and self._world > 1 and self._rank == 0:
-            try:
-                import torch.distributed as dist
-
-                dist.broadcast_object_list([{"op": RankedWorker._WORKER_SHUTDOWN}], src=0)
-            except Exception:
-                # A peer that already left is not this rank's problem, and close() must not raise.
-                pass
-        super().close()
 
 
 @dataclass(slots=True)
