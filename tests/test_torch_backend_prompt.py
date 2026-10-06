@@ -208,3 +208,109 @@ def test_a_budget_is_resolved_against_the_configured_context_first():
 
     assert [payload["max_tokens"] for payload in engine.payloads] == [1022, 9]
     backend.close()
+
+
+# ------------------------------------------------------------------- streaming stop, logprobs shape
+
+
+class WordStreamingEngine(RecordingServingEngine):
+    """A stream that hands out one word at a time, the way the real one hands out tokens."""
+
+    def __init__(self, words: list[str]) -> None:
+        super().__init__()
+        self.words = words
+
+    def submit_stream(self, payload: dict):
+        self.payloads.append(payload)
+        for word in self.words:
+            yield {"type": "token", "token_ids": [11], "text": word}
+        yield {"type": "done", "prompt_tokens": 2, "completion_tokens": [[11]], "finish_reason": "length"}
+
+
+def _word_backend(words: list[str]) -> TorchBackend:
+    return TorchBackend(
+        EngineArgs(model="model", backend="torch"),
+        runtime={"tokenizer": RecordingTokenizer(), "model_id": "fake-model"},
+        serving_engine=WordStreamingEngine(words),
+    )
+
+
+def test_a_streamed_stop_string_cuts_the_answer_and_nothing_past_it_goes_out():
+    """The mirror of the serial route, which cuts at the marker.
+
+    Without this the streamed answer ran past the marker: `mimo`, `xing4` and `qwen4_exp` matched
+    stops in `TokenStreamer`, `v41` in its step hook, and this adapter -- the DeepSeek-V4 runtime --
+    nowhere on the streamed path.
+    """
+    backend = _word_backend(["alpha", "BE", "TA", "gamma"])
+    request = GenerationRequest(
+        prompt="user: hi",
+        request_id="req-stop",
+        sampling_params=SamplingParams(stop=("BETA",)),
+    )
+
+    events = list(backend.stream(request))
+
+    text = "".join(event.text for event in events)
+    assert text == "alpha"
+    assert "BETA" not in text
+    assert events[-1].finish_reason == "stop"
+    backend.close()
+
+
+def test_a_streamed_answer_with_no_stop_string_keeps_its_own_finish_reason():
+    """The field was not asked for, so the loop's own reason is what comes back."""
+    backend = _word_backend(["alpha", "beta"])
+    request = GenerationRequest(prompt="user: hi", request_id="req-plain")
+
+    events = list(backend.stream(request))
+
+    assert "".join(event.text for event in events) == "alphabeta"
+    assert events[-1].finish_reason == "length"
+    backend.close()
+
+
+def test_a_partial_marker_at_the_end_is_text_the_model_wrote():
+    """A stop string that never completed is content, not a marker -- the same rule as the other route."""
+    backend = _word_backend(["alpha", "BE"])
+    request = GenerationRequest(
+        prompt="user: hi",
+        request_id="req-partial",
+        sampling_params=SamplingParams(stop=("BETA",)),
+    )
+
+    events = list(backend.stream(request))
+
+    assert "".join(event.text for event in events) == "alphaBE"
+    assert events[-1].finish_reason == "length"
+    backend.close()
+
+
+# ------------------------------------------------------------------------------ logprobs response
+
+
+def test_a_result_mapping_reports_the_ranking_in_the_openai_shape():
+    """The adapter's `logprobs` slot is the object a client reads, not the raw float list.
+
+    `_result_from_mapping` used to fall back to `token_logprobs` -- a bare list of floats -- which is
+    not the `{"content": [{"token", "logprob", "bytes", "top_logprobs"}]}` shape OpenAI defines. The
+    model-side builder now puts that object under `logprobs`, and the receiver's exclusion set keeps
+    the three ranking keys out of `metadata`.
+    """
+    request = GenerationRequest(prompt="user: hi", request_id="req-logprobs")
+    ranking = {
+        "content": [
+            {"token": "a", "logprob": -0.5, "bytes": [97], "top_logprobs": []},
+            {"token": "b", "logprob": -1.0, "bytes": [98], "top_logprobs": []},
+        ]
+    }
+
+    result = TorchBackend._result_from_mapping(
+        request,
+        {"text": "ab", "token_ids": [1, 2], "logprobs": ranking, "token_logprobs": [-0.5, -1.0]},
+    )
+
+    assert result.logprobs == ranking
+    assert "token_logprobs" not in result.metadata
+    assert "top_logprobs" not in result.metadata
+    assert "logprobs" not in result.metadata

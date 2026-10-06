@@ -13,6 +13,7 @@ from relicllm import (
     HealthStatus,
     LLM,
     SamplingParams,
+    UnsupportedFeatureError,
     TokenEvent,
     Usage,
 )
@@ -183,18 +184,28 @@ def test_the_library_surface_fans_out_choices_the_way_the_http_one_does():
     llm.close()
 
 
-def test_a_choice_count_past_the_ceiling_is_refused_where_the_contract_cannot_see_it():
-    """The library builds no body, so the field contract's ceiling never runs on this path.
+def test_a_choice_count_past_the_ceiling_is_refused_before_anything_is_queued():
+    """The library path now builds a body and audits it, so the ceiling is the same one here.
 
     One choice is one queued request, and the ceiling is what bounds how much of the queue a single
-    caller can occupy. Without this the HTTP endpoint would refuse `n: 129` and `LLM.chat` would
-    happily queue 129 requests.
+    caller can occupy. The refusal used to come from `expanded` at dispatch, as a
+    `ConfigurationError` about the number; the library entry points run the shape audit now, so the
+    same request is refused earlier and as a field error naming `n` -- the spelling the HTTP
+    endpoint was already answering with, which is the point of one contract behind both doors. What
+    is pinned either way: nothing reaches the backend.
     """
     llm = InjectedLLM()
-    with pytest.raises(ConfigurationError, match="128 or less"):
+    with pytest.raises(UnsupportedFeatureError, match="128 or less"):
         llm.chat([{"role": "user", "content": "hi"}], SamplingParams(n=129))
     assert llm.backend.seen == []
     llm.close()
+
+    # The ceiling is one number in two readers: the field contract above, and the fan-out itself,
+    # which is the half that never sees a body (a caller can build the requests itself).
+    from relicllm.choices import expanded
+    from relicllm import GenerationRequest
+    with pytest.raises(ConfigurationError, match="128 or less"):
+        expanded(GenerationRequest(prompt="hi", sampling_params=SamplingParams(n=129)))
 
 
 def test_chat_and_generate_preserve_sampling_fields():

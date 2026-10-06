@@ -16,10 +16,12 @@ from relicllm.api import (
     HealthStatus,
     SamplingParams,
     TokenEvent,
+    UnsupportedFeatureError,
 )
 from relicllm.backends.factory import create_backend
 from relicllm.choices import expanded, streamed
 from relicllm.protocol import build_chat_request
+from relicllm.protocol.contract import CHAT, COMPLETIONS, FieldRefusal, audit_shape
 
 
 _TOKEN_DONE = object()
@@ -66,6 +68,57 @@ class LLM:
                 requests.append(GenerationRequest(prompt_tokens=[int(token) for token in prompt], sampling_params=params))
         return requests
 
+    def _audit(self, body: Mapping[str, Any], *, endpoint: str) -> None:
+        """Refuse a body naming a field this backend will not apply, before anything runs.
+
+        The HTTP front end runs the same two audits (:mod:`relicllm.server.openai`); the library
+        entry points did not, so ``LLM.chat(..., response_format=...)`` on a runtime with no
+        structured path returned 200-style success with the field silently dropped -- the exact
+        failure the contract exists to prevent, on the other entry point. Shape first, then
+        capability against the backend's own declaration, and the refusal's ``message`` is raised
+        (a ``__``-free sentence with the field, what arrived and the remedy) rather than returned.
+
+        A backend with no declaration (``audit_request`` is the base's ``None``) is left alone:
+        test doubles and undeclared adapters keep accepting what they always did.
+        """
+        refusal: FieldRefusal | None = audit_shape(body, endpoint=endpoint)
+        if refusal is None:
+            audit_request = getattr(self._backend, "audit_request", None)
+            if callable(audit_request):
+                refusal = audit_request(body, endpoint=endpoint)
+        if refusal is not None:
+            raise UnsupportedFeatureError(refusal.message)
+
+    def _sampling_body(self, params: SamplingParams, *, stream: bool) -> dict[str, Any]:
+        """The fields a ``SamplingParams`` asks for, in the body shape the audit reads.
+
+        Only the refusable ones, and only when they are not their default, so a request that asked
+        for nothing is not audited against fields the caller never named. This is the same pairing
+        :meth:`SamplingParams.from_openai` produces on the HTTP route -- a value under its OpenAI
+        key -- which is what lets one audit answer for both entry points. ``stream`` is set because
+        the audit reads it: a streamed chunk carries no ranking, so ``logprobs`` on this path is a
+        different question from the same field on the non-streaming one.
+        """
+        body: dict[str, Any] = {"stream": True} if stream else {}
+        if params.n != 1:
+            body["n"] = params.n
+        if params.stop:
+            body["stop"] = list(params.stop)
+        if params.logprobs:
+            body["logprobs"] = True
+            if params.top_logprobs:
+                body["top_logprobs"] = params.top_logprobs
+        if params.frequency_penalty:
+            body["frequency_penalty"] = params.frequency_penalty
+        if params.presence_penalty:
+            body["presence_penalty"] = params.presence_penalty
+        if params.repetition_penalty != 1.0:
+            body["repetition_penalty"] = params.repetition_penalty
+        if params.min_p:
+            body["min_p"] = params.min_p
+        body.update(params.extra)
+        return body
+
     @staticmethod
     def _dispatch(requests: Sequence[GenerationRequest]) -> list[GenerationRequest]:
         """Every runtime request a caller's request is made of.
@@ -93,6 +146,7 @@ class LLM:
         if isinstance(prompts, str):
             prompts = [prompts]
         params = sampling_params or SamplingParams()
+        self._audit(self._sampling_body(params, stream=False), endpoint=COMPLETIONS)
         return self._backend.generate(self._dispatch(self._requests(prompts, params)))
 
     def generate_stream(
@@ -103,6 +157,7 @@ class LLM:
         if self._closed:
             raise RuntimeError("LLM is closed")
         params = sampling_params or SamplingParams()
+        self._audit(self._sampling_body(params, stream=True), endpoint=COMPLETIONS)
         request = self._requests([prompt], params)[0]
         return streamed(self._backend, request)
 
@@ -144,6 +199,7 @@ class LLM:
         tool_choice: Any = None,
         response_format: Any = None,
         request_id: str | None = None,
+        stream: bool = False,
     ) -> GenerationRequest:
         body = self._chat_body(
             messages,
@@ -153,6 +209,8 @@ class LLM:
             tool_choice=tool_choice,
             response_format=response_format,
         )
+        body.update(self._sampling_body(sampling_params or SamplingParams(), stream=stream))
+        self._audit(body, endpoint=CHAT)
         return build_chat_request(body, sampling_params, request_id=request_id)
 
     def chat(
@@ -206,6 +264,7 @@ class LLM:
             tool_choice=tool_choice,
             response_format=response_format,
             request_id=request_id,
+            stream=True,
         )
         return streamed(self._backend, request)
 

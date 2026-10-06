@@ -1,9 +1,9 @@
-"""Protocol implemented by Torch and native C++ execution adapters."""
+"""Protocol implemented by the PyTorch execution adapters."""
 
 from __future__ import annotations
 
 from contextlib import AbstractContextManager
-from typing import Callable, Iterator, Protocol, Sequence
+from typing import Any, Callable, Iterator, Mapping, Protocol, Sequence
 
 from .types import (
     BackendCapabilities,
@@ -22,6 +22,16 @@ class EngineBackend(Protocol):
         ...
 
     def health(self) -> HealthStatus:
+        ...
+
+    def audit_request(self, body: Mapping[str, Any], *, endpoint: str) -> Any:
+        """The first field in ``body`` this backend cannot serve, or ``None``.
+
+        ``Any`` on both ends rather than a ``FieldRefusal`` import: the refusal type lives in
+        ``relicllm.protocol.contract``, and this module is a leaf the protocol package must not be
+        pulled into. The value is a ``FieldRefusal`` -- the server reads ``.field`` and ``.message``
+        off it -- or ``None``. A backend with no declaration returns ``None``.
+        """
         ...
 
     def generate(self, requests: Sequence[GenerationRequest]) -> list[GenerationResult]:

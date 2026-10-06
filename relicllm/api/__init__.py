@@ -19,6 +19,7 @@ from .types import (
     TimingMetrics,
     TokenEvent,
     Usage,
+    backend_hint,
     device_hint,
 )
 
@@ -37,6 +38,7 @@ __all__ = [
     "TensorParallelSupervisorError",
     "TimingMetrics",
     "TokenEvent",
+    "backend_hint",
     "device_hint",
     "UnsupportedFeatureError",
     "Usage",

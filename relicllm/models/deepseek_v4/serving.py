@@ -281,7 +281,7 @@ def _format_logprobs(tokenizer, rows: list[dict] | None) -> tuple[list[str], lis
     return token_texts, token_logprobs, top_rows
 
 
-def _format_completion_result(tokenizer, thinking_mode: str, prompt_ids: list[int], completion_ids: list[int], prefill_time: float, decode_time: float, prefill_tokens: int, decode_tokens: int, stop: Any = None, max_tokens: int | None = None, logprobs: list[dict] | None = None) -> dict[str, Any]:
+def _format_completion_result(tokenizer, thinking_mode: str, prompt_ids: list[int], completion_ids: list[int], prefill_time: float, decode_time: float, prefill_tokens: int, decode_tokens: int, stop: Any = None, max_tokens: int | None = None, logprobs: list[dict] | None = None, top_logprobs: int | None = None) -> dict[str, Any]:
     completion_text = tokenizer.decode(completion_ids)
     try:
         assistant_msg = parse_message_from_completion_text(completion_text, thinking_mode)
@@ -312,6 +312,13 @@ def _format_completion_result(tokenizer, thinking_mode: str, prompt_ids: list[in
         result["token_texts"] = token_texts
         result["token_logprobs"] = token_logprobs
         result["top_logprobs"] = top_rows
+        # The OpenAI-shaped object, built here rather than at the HTTP edge: the torch adapter reads
+        # a result mapping, and its `logprobs` slot was falling back to a bare list of floats from
+        # `token_logprobs`. `_logprobs_payload` is the builder the response edge already used; the
+        # ranking it needs is the one just put on the result.
+        rendered = _logprobs_payload(result, top_logprobs)
+        if rendered is not None:
+            result["logprobs"] = rendered
     _apply_stop_to_result(result, stop)
     return result
 
@@ -363,6 +370,7 @@ def _run_payload(runtime: dict[str, Any], payload: dict[str, Any]) -> dict[str, 
                 stop=payload.get("stop"),
                 max_tokens=max_tokens,
                 logprobs=batch_logprobs[i] if batch_logprobs else None,
+                top_logprobs=payload.get("top_logprobs"),
             )
             for i in range(len(prompt_ids_list))
         ]
@@ -411,6 +419,7 @@ def _run_payload(runtime: dict[str, Any], payload: dict[str, Any]) -> dict[str, 
             stop=payload.get("stop"),
             max_tokens=max_tokens,
             logprobs=batch_logprobs[0] if batch_logprobs else None,
+            top_logprobs=payload.get("top_logprobs"),
         )
     return [
         _format_completion_result(
@@ -425,6 +434,7 @@ def _run_payload(runtime: dict[str, Any], payload: dict[str, Any]) -> dict[str, 
             stop=payload.get("stop"),
             max_tokens=max_tokens,
             logprobs=batch_logprobs[i] if batch_logprobs else None,
+            top_logprobs=payload.get("top_logprobs"),
         )
         for i in range(n)
     ]

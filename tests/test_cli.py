@@ -436,3 +436,43 @@ def test_backend_base_worker_hook_raises_typed_error() -> None:
     backend = BackendBase()
     with pytest.raises(Exception, match="worker entry point"):
         backend.run_worker()
+
+
+def test_the_retired_cpp_backend_is_refused_by_name_not_as_a_typo(capsys) -> None:
+    """`--backend cpp` is not a misspelling -- it is the value this flag took until the engine left.
+
+    `invalid choice: 'cpp'` would be true and useless, exactly as it was for `--device cuda:2`. The
+    refusal says what happened to the name, and the list of live runtimes is what an affected
+    launcher has to choose from.
+    """
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["serve", "--model", "checkpoint", "--backend", "cpp"])
+
+    message = capsys.readouterr().err
+    assert "not in this distribution" in message
+    assert "cpp_engine/" in message
+    for name in ("torch", "v41", "mimo", "xing4", "qwen4_exp"):
+        assert name in message
+
+
+def test_the_retired_cpp_backend_is_refused_when_engine_args_are_built_by_hand() -> None:
+    """The parser is one of two doors; a hand-built `EngineArgs` is the other and says the same.
+
+    A library caller never sees argparse, so the sentence has to live on the args object too -- which
+    is why both read it from `backend_hint` rather than each writing its own.
+    """
+    from relicllm.api.types import ConfigurationError, EngineArgs
+
+    with pytest.raises(ConfigurationError) as raised:
+        EngineArgs(model="checkpoint", backend="cpp")
+
+    message = str(raised.value)
+    assert "not in this distribution" in message
+    assert "cpp_engine/" in message
+    assert "torch" in message
+
+
+def test_a_live_backend_name_is_still_accepted() -> None:
+    """The refusal is one name wide: the mistake it catches must not catch the working spellings."""
+    for name in ("auto", "torch", "v41", "mimo", "xing4", "qwen4_exp"):
+        assert _parse("--backend", name).backend == name

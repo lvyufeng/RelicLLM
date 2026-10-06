@@ -7,7 +7,13 @@ import json
 import os
 import sys
 
-from relicllm.api import ConfigurationError, EngineArgs, UnsupportedFeatureError, device_hint
+from relicllm.api import (
+    ConfigurationError,
+    EngineArgs,
+    UnsupportedFeatureError,
+    backend_hint,
+    device_hint,
+)
 from relicllm.backends.cli_surface import add_declared_options, resolved_options
 
 # The bench subcommand's parser and orchestrator. Module level rather than deferred, because
@@ -26,6 +32,13 @@ from relicllm.supervisor import TensorParallelSupervisor
 # concept's owner, so the name comes from there.
 from relicllm.runtime.device import PLATFORMS as DEVICE_PLATFORMS
 
+#: The runtimes ``--backend`` accepts, in the order ``--help`` lists them. ``auto`` is the routing
+#: rule over the rest. Kept as a literal rather than read off ``capabilities.RUNTIMES`` so that the
+#: parser is self-contained and does not import the backend table just to print its choices -- and
+#: ``tests/test_runtime_capabilities.py`` pins the two to agree, which is what keeps this list from
+#: drifting from the declaration it names.
+_SERVED_BACKENDS: tuple[str, ...] = ("auto", "torch", "v41", "mimo", "xing4", "qwen4_exp")
+
 
 def _device_platform(value: str) -> str:
     """``--device``'s type: the platform, or a refusal naming the flag that answers a card.
@@ -41,6 +54,21 @@ def _device_platform(value: str) -> str:
     return value
 
 
+def _backend_name(value: str) -> str:
+    """``--backend``'s type: a live runtime, or a refusal that names the retired one.
+
+    The same shape as :func:`_device_platform`, and for the same reason: ``choices`` alone would
+    answer ``--backend cpp`` with ``invalid choice: 'cpp'``, when the value is a runtime this
+    distribution no longer ships and the caller needs to be told that rather than left to guess at
+    the spelling.
+    """
+    if value not in _SERVED_BACKENDS:
+        raise argparse.ArgumentTypeError(
+            f"must be one of {', '.join(_SERVED_BACKENDS)}, got {value!r}{backend_hint(value)}"
+        )
+    return value
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="relicllm", description="RelicLLM unified inference interface")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -48,8 +76,13 @@ def build_parser() -> argparse.ArgumentParser:
     serve_parser.add_argument("--model", required=True, help="checkpoint directory or model path")
     serve_parser.add_argument(
         "--backend",
-        choices=["auto", "torch", "v41", "mimo", "xing4", "qwen4_exp"],
+        type=_backend_name,
         default="auto",
+        metavar="NAME",
+        help=(
+            f"runtime to serve with: {', '.join(_SERVED_BACKENDS)} (default: auto, which routes by "
+            "the checkpoint's own declarations)"
+        ),
     )
     serve_parser.add_argument("--tokenizer-path")
     serve_parser.add_argument("--config-path")
@@ -126,9 +159,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     serve_parser.add_argument("--host", default="0.0.0.0")
     serve_parser.add_argument("--port", type=int, default=8000)
-    # "auto" asks the native model registry which engine the checkpoint wants.
-    # The explicit values stay for checkpoints that declare nothing, and for
-    # forcing one runtime onto a checkpoint to compare them.
+    # Kept for launches that still pass it, and accepted on every runtime; see
+    # `capabilities.IGNORED_OPTIONS`. It was the retired engine's choice of two
+    # execution programs, and no runtime here reads it.
     serve_parser.add_argument("--engine-kind", default="auto",
                               choices=["auto", "qwen", "persistent"])
     # Matches the legacy server default: routed experts live in host memory so

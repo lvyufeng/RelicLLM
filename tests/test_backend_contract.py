@@ -10,6 +10,7 @@ import pytest
 from relicllm.api import (
     BackendCapabilities,
     ConfigurationError,
+    EngineArgs,
     GenerationRequest,
     GenerationResult,
     SamplingParams,
@@ -23,6 +24,7 @@ from relicllm.backends.base import (
     RuntimeAdapter,
     settled_text,
 )
+from relicllm.engine import LLM
 from relicllm.server.metrics import HISTOGRAMS, Metrics
 from relicllm.server.openai import OpenAIHandler, RelicLLMHTTPServer
 
@@ -990,3 +992,120 @@ def test_a_word_that_is_not_a_stop_reports_the_safe_default():
     assert adapter._finish_reason("error") == "stop"
     assert adapter._finish_reason("") == "stop"
     assert adapter._finish_reason(None) == "stop"
+
+
+class _ServedStubAdapter(_StubRuntimeAdapter):
+    """The shared adapter with a real runtime's name, so it has a row in the field table.
+
+    `_StubRuntimeAdapter` has no `name` on purpose -- it is the shared body under test, not a
+    runtime -- so anything that reads the declaration needs a subclass that names one. The name is
+    the whole difference: `audit_request` is the family's and reads it. `mimo` is the narrow row:
+    it serves the fan-out and client stops and nothing else.
+    """
+
+    name = "mimo"
+
+    @property
+    def capabilities(self):
+        return BackendCapabilities(name=self.name, supports_streaming=True)
+
+    def generate(self, requests):
+        return []
+
+    def stream(self, request):
+        yield from ()
+
+
+class _TorchStubAdapter(_ServedStubAdapter):
+    name = "torch"
+
+
+def test_the_shared_adapter_audits_against_its_own_runtimes_row():
+    """The declaration is per runtime, and the adapter is the thing that knows which one it is.
+
+    Same base body, same request, two answers -- because the row differs. This is what makes the
+    audit a property of the runtime rather than of where the request entered, which is the whole
+    point of hanging it off `capabilities.served_fields` instead of off a per-adapter override.
+    """
+    mimo = _ServedStubAdapter()
+    torch = _TorchStubAdapter()
+
+    refused = mimo.audit_request({"logprobs": True})
+    assert refused is not None and refused.field == "logprobs"
+
+    assert mimo.audit_request({"response_format": {"type": "json_object"}}).field == "response_format"
+    assert torch.audit_request({"response_format": {"type": "json_object"}}) is None
+
+    # Both serve `choices` and `stop`, which is what every row has in common.
+    for adapter in (mimo, torch):
+        assert adapter.audit_request({"n": 2, "stop": ["x"]}) is None
+        assert adapter.audit_request({"logit_bias": {"5": 1.0}}).field == "logit_bias"
+
+    # A value that asks for nothing is served by everyone, which is the default an OpenAI client
+    # sends; refusing it would refuse the common request.
+    assert mimo.audit_request({"response_format": {"type": "text"}}) is None
+
+
+def test_a_server_over_a_runtime_adapter_refuses_an_undeclared_field_by_name():
+    """End to end, and the shape the acceptance criterion is written in: 400, `param` names it.
+
+    The refusal has to be the OpenAI error object rather than a bare string, because an OpenAI client
+    reads `param` to know which field to drop. The request never reaches `generate` -- the audit runs
+    before dispatch -- which is why a stub that generates nothing is enough to pin it.
+    """
+    server, base = _server(backend=_ServedStubAdapter())
+    try:
+        with pytest.raises(error.HTTPError) as raised:
+            _post(base, "/v1/chat/completions", {
+                "model": "m",
+                "messages": [{"role": "user", "content": "hi"}],
+                "logprobs": True,
+            })
+        assert raised.value.code == 400
+        body = json.loads(raised.value.read().decode())["error"]
+        assert body["param"] == "logprobs"
+        assert "logprobs" in body["message"]
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+class _DeclaredLLM(LLM):
+    """An `LLM` whose backend is one of the stubs above, so the library path can be driven.
+
+    The facade's constructor builds a real backend from a checkpoint; here the adapter is injected the
+    way `tests/test_public_api.py` injects its fake, which is what lets the audit be tested without a
+    model. Everything except the backend is the production path.
+    """
+
+    def __init__(self, backend) -> None:
+        self.args = EngineArgs(model="fake", backend="auto")
+        self._backend = backend
+        self._closed = False
+
+
+def test_the_library_path_audits_the_same_as_the_http_route():
+    """`LLM.chat(..., response_format=...)` on a runtime with no encoder for it used to succeed.
+
+    That silent success -- the field dropped, a plain completion returned -- is exactly what the
+    field contract exists to prevent, and the HTTP front end had been the only door with the audit.
+    The same call now raises, naming the field, on the narrow row and is served on the one that
+    declares it. The distinction from the base's `None`: a backend that never declared anything
+    still accepts, which `FakeBackend` covers in `tests/test_public_api.py`.
+    """
+    messages = [{"role": "user", "content": "hi"}]
+    schema = {"type": "json_object"}
+
+    with pytest.raises(UnsupportedFeatureError, match="response_format"):
+        _DeclaredLLM(_ServedStubAdapter()).chat(messages, response_format=schema)
+
+    # The runtime that declares it builds the request instead of raising; what the carrier renders
+    # onto is `protocol/chat.py`'s job and is pinned there.
+    assert _DeclaredLLM(_TorchStubAdapter()).chat(messages, response_format=schema) == []
+
+    # A sampling field the narrow row does not serve is refused the same way, off the params.
+    with pytest.raises(UnsupportedFeatureError, match="logprobs"):
+        _DeclaredLLM(_ServedStubAdapter()).generate(["hi"], SamplingParams(logprobs=True))
+
+    # And a field both serve is not refused.
+    assert _DeclaredLLM(_ServedStubAdapter()).generate(["hi"], SamplingParams(stop=["x"])) == []

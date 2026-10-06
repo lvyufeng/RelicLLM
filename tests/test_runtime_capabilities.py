@@ -244,3 +244,118 @@ def test_a_contradiction_in_the_arguments_is_still_a_configuration_error() -> No
     was, so the two are not reported as each other."""
     with pytest.raises(ConfigurationError, match="serialized session runs one request"):
         EngineArgs(model="m", backend="mimo", max_batch_size=2, enable_batching=False)
+
+
+# --------------------------------------------------------------------------------------------------
+# the served-field table
+# --------------------------------------------------------------------------------------------------
+
+
+def test_the_wire_booleans_are_read_off_the_served_field_table() -> None:
+    """`/v1/models` and the refusal both read the same row.
+
+    The failure this prevents is a runtime that advertises a capability and then refuses a request
+    naming it -- two answers to one question, which is exactly how the declaration drifted before.
+    """
+    for name in sorted(RUNTIMES):
+        declaration = declared_capabilities(name)
+        served = RUNTIMES[name].served_fields
+
+        assert declaration.supports_logprobs is served.logprobs
+        assert declaration.supports_structured_outputs is served.structured_outputs
+
+
+def test_every_runtime_serves_the_choices_fanout() -> None:
+    """`n` is the host's fan-out rather than anything a runtime does, so no row may refuse it."""
+    assert all(RUNTIMES[name].served_fields.choices for name in RUNTIMES)
+
+
+def test_only_the_two_prompt_instruction_runtimes_declare_structured_outputs() -> None:
+    """The measurement behind the column, as a test rather than a comment.
+
+    `torch` and `v41` declare it because both DeepSeek encoders render the checkpoint's own schema
+    instruction; the three others have no encoder that does and refuse `response_format` by name
+    instead of dropping it. `logprobs` is `torch` alone -- its loop builds a ranking and no other
+    runtime's does.
+    """
+    structured = {name for name in RUNTIMES if RUNTIMES[name].served_fields.structured_outputs}
+    logprobs = {name for name in RUNTIMES if RUNTIMES[name].served_fields.logprobs}
+
+    assert structured == {"torch", "v41"}
+    assert logprobs == {"torch"}
+    # Streaming is off everywhere: a chunk carries its token's text and no ranking.
+    assert not any(RUNTIMES[name].served_fields.streaming_logprobs for name in RUNTIMES)
+
+
+def test_no_module_outside_the_declaration_builds_a_served_field_table() -> None:
+    """A second `ServedFields(...)` is a second place a runtime answers for itself.
+
+    The declaration module is the one place; every reader goes through `served_fields(name)`, which
+    is what keeps a runtime's audit and its wire declaration from being written twice.
+    """
+    offenders = sorted(
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in REPO_ROOT.joinpath("relicllm").rglob("*.py")
+        if path.name != "capabilities.py" and "contract.py" not in path.parts
+        and re.search(r"\bServedFields\(", path.read_text())
+    )
+
+    assert not offenders, f"these build their own field table: {offenders}"
+
+
+def test_each_row_refuses_the_sampling_fields_it_does_not_serve() -> None:
+    """The table's other reader: what a request is refused on, per runtime.
+
+    The three specific runtimes sample greedily and apply no penalty term, so the whole sampler
+    block is refused by name rather than accepted and ignored -- and `logprobs` is refused everywhere
+    but `torch`. `torch` is the mirror: it takes the sampler block and the ranking, and refuses only
+    `logit_bias` and `parallel_tool_calls`, which no runtime here applies.
+    """
+    from relicllm.protocol.contract import CHAT, audit
+
+    refusing = {
+        "v41": ("logprobs", "frequency_penalty", "repetition_penalty", "min_p"),
+        "mimo": ("logprobs", "frequency_penalty", "presence_penalty", "min_p"),
+        "xing4": ("logprobs", "repetition_penalty", "min_p"),
+        "qwen4_exp": ("logprobs", "frequency_penalty", "min_p"),
+    }
+    bodies = {
+        "logprobs": {"logprobs": True},
+        "frequency_penalty": {"frequency_penalty": 0.5},
+        "presence_penalty": {"presence_penalty": 0.5},
+        "repetition_penalty": {"repetition_penalty": 1.2},
+        "min_p": {"min_p": 0.1},
+    }
+
+    for name, fields in refusing.items():
+        served = declared.served_fields(name)
+        for field in fields:
+            refusal = audit(bodies[field], endpoint=CHAT, serves=served)
+            assert refusal is not None and refusal.field == field, (name, field, refusal)
+        # The fields every row serves are not refused.
+        assert audit({"stop": ["x"]}, endpoint=CHAT, serves=served) is None
+
+    torch_row = declared.served_fields("torch")
+    assert audit({"logprobs": True}, endpoint=CHAT, serves=torch_row) is None
+    assert audit({"frequency_penalty": 0.5}, endpoint=CHAT, serves=torch_row) is None
+    assert audit({"logit_bias": {"5": 1.0}}, endpoint=CHAT, serves=torch_row).field == "logit_bias"
+
+
+def test_response_format_is_refused_by_name_on_the_runtimes_with_no_encoder_for_it() -> None:
+    """Same value, two answers, decided by the row rather than by where the request landed."""
+    from relicllm.protocol.contract import CHAT, audit
+
+    body = {"response_format": {"type": "json_object"}}
+
+    for name in ("mimo", "xing4", "qwen4_exp"):
+        refusal = audit(body, endpoint=CHAT, serves=declared.served_fields(name))
+        assert refusal is not None and refusal.field == "response_format", name
+
+    for name in ("torch", "v41"):
+        assert audit(body, endpoint=CHAT, serves=declared.served_fields(name)) is None, name
+
+    # A value that asks for nothing is accepted everywhere, which is what an OpenAI client's default
+    # `{"type": "text"}` is.
+    for name in sorted(RUNTIMES):
+        assert audit({"response_format": {"type": "text"}}, endpoint=CHAT,
+                     serves=declared.served_fields(name)) is None, name
