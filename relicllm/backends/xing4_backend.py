@@ -306,6 +306,7 @@ class Xing4Backend(RuntimeAdapter):
 
     #: Read by `RuntimeAdapter._tokenize`, which is the only place a runtime's name is needed.
     _RUNTIME_LABEL = "Xing4"
+    _PREPARE_PREFIX_CACHE = True
 
     name = "xing4"
 
@@ -378,16 +379,6 @@ class Xing4Backend(RuntimeAdapter):
         return device_index(device)
 
     # ------------------------------------------------------------------ lifecycle
-
-    def prepare(self) -> None:
-        self._ensure_open()
-        self._ensure_loaded()
-        # Three of the four adapters in this family have a prefix store and the fourth does not, so
-        # building one is not part of the base's `prepare`. It is here rather than inside `_load`
-        # for the reason the V4.1 adapter gives: every path that ends with a loaded model passes
-        # through `_ensure_loaded`, including the injected ones, and a store built in only one of
-        # them would be a switch that quietly does nothing on the others.
-        self._ensure_prefix_cache()
 
     def _ensure_loaded(self) -> None:
         if self._model is not None:

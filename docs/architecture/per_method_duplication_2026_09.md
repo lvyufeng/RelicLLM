@@ -133,3 +133,30 @@ The anti-drift test
 (`tests/test_backend_contract.py::test_the_tokenizer_and_eos_resolution_have_one_definition`) pins all
 four names to the files allowed to define them, and it treats `v41`'s `_eos_tokens` as the named
 exception rather than a silent gap.
+
+## Shared preparation, 2026-10-06
+
+On master `8038fb2`, MiMo and Xing4 still had identical three-statement `prepare` bodies:
+check that the adapter is open, load, then initialize the prefix store. Both now inherit
+`RuntimeAdapter.prepare`, selecting the last step with `_PREPARE_PREFIX_CACHE = True`.
+The default is `False`: V4.1 already builds its store under the load lock in `_ensure_loaded`,
+and Qwen4-Exp has no store. This is a startup-placement declaration, not a prefix-caching
+capability or the user's enable switch. Store builders, disabled-cache behavior, and lazy
+request/worker initialization remain unchanged. No new method hook or mixin is needed.
+
+The upstream check used pinned local snapshots from 2026-05-16, not today's upstream HEAD:
+
+- [vLLM `4db300e`: engine startup](https://github.com/vllm-project/vllm/blob/4db300e95fd29f5b1a4a7c34f4fbe91b7e9abb24/vllm/v1/engine/core.py#L117-L153)
+  constructs the model executor, initializes KV caches, then constructs the scheduler.
+  [Scheduler cache-manager initialization](https://github.com/vllm-project/vllm/blob/4db300e95fd29f5b1a4a7c34f4fbe91b7e9abb24/vllm/v1/core/sched/scheduler.py#L222-L237)
+  passes the prefix-caching configuration to the shared manager.
+- [SGLang `d1eb472`: scheduler startup](https://github.com/sgl-project/sglang/blob/d1eb472a7ab462057739b635404316bc1164a0f1/python/sglang/srt/managers/scheduler.py#L445-L459)
+  initializes the model worker before initializing its serving cache over the worker's memory pools.
+  [Cache selection](https://github.com/sgl-project/sglang/blob/d1eb472a7ab462057739b635404316bc1164a0f1/python/sglang/srt/managers/scheduler.py#L813-L971)
+  is driven by configuration and pool/model properties.
+
+Both put cache initialization in shared runtime startup rather than per-model preparation
+methods. Their cache algorithms differ; this evidence supports the lifecycle ownership, not
+RelicLLM's private flag or a change to its locking. `tests/test_runtime_preparation.py` pins
+shared-method ownership, call order, refusal before loading a closed adapter, load-failure
+short-circuiting, and V4.1's unchanged under-lock construction without a second outside-lock call.
