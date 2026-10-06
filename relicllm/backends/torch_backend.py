@@ -124,7 +124,22 @@ class TorchBackend(BackendBase):
                 # Default to W8A8 for int8 or when detection fails
                 default_config = repo_root / "configs" / "config_w8a8.json"
 
-            config_path = str(default_config) if default_config.is_file() else ""
+            config_path = str(default_config)
+            if not default_config.is_file():
+                # Refused here rather than handed on as the empty string, which is what this used
+                # to do: `open("")` raises `FileNotFoundError: [Errno 2] ... ''`, a message that
+                # names a directory that was never built rather than the profile that was never
+                # found. This runtime is expanded from a profile -- the hyperparameters and the
+                # quantisation, not the checkpoint's own config.json -- and no profile ships in
+                # this checkout, so the launch is unresolvable without one. Naming the artifact
+                # makes the fix a `--config-path` away instead of a traceback away.
+                raise ConfigurationError(
+                    f"backend='torch' expands a runtime profile and none was named: the default "
+                    f"{default_config} does not exist. Pass --config-path <profile.json> -- the "
+                    f"profile holds this runtime's hyperparameters and its quantisation selection "
+                    f"(expert_dtype={detected_dtype or 'unknown'} was detected in the checkpoint), "
+                    f"not the checkpoint's own config.json, which is --checkpoint-config-path"
+                )
         return argparse.Namespace(
             ckpt_format=self.args.model_format,
             partition_policy=str(self.args.backend_options.get("partition_policy", "legacy")),

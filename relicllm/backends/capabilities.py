@@ -354,7 +354,7 @@ def _identify_v41_or_mimo(
     gguf = _is_gguf_only(args, runtime)
     if gguf is not None:
         return gguf
-    config = read_config(args.checkpoint_dir, args.config_path)
+    config = read_config(args.checkpoint_dir, args.checkpoint_config_path)
     if config is None:
         return UNKNOWN
     if not predicate(config):
@@ -387,7 +387,7 @@ def _identify_xing4(args: EngineArgs) -> Identification:
     refused that pair; the explicit path used to let it through selection and fail at the loader
     with "no .gguf file at or under ...", which is the failure this moves earlier.
     """
-    config = read_config(args.checkpoint_dir, args.config_path)
+    config = read_config(args.checkpoint_dir, args.checkpoint_config_path)
     if config is not None and not is_xing4_config(config):
         return refused(_XING4_ONLY)
     if str(args.model_format).lower() == "safetensors":
@@ -421,7 +421,7 @@ def _identify_qwen4exp(args: EngineArgs) -> Identification:
     gguf = _is_gguf_only(args, "qwen4_exp")
     if gguf is not None:
         return gguf
-    config = read_config(args.checkpoint_dir, args.config_path)
+    config = read_config(args.checkpoint_dir, args.checkpoint_config_path)
     if config is None:
         return UNKNOWN
     if not is_qwen4_exp_config(config):
@@ -461,7 +461,7 @@ def _identify_torch(args: EngineArgs) -> Identification:
     nothing claims no longer falls through to here and gets read as V4; it is refused, and
     :func:`route` reports that no runtime serves it.
     """
-    config = read_config(args.model, args.config_path)
+    config = read_config(args.model, args.checkpoint_config_path)
     if config is not None and is_deepseek_v4_config(config):
         return READ
     architecture = gguf_architecture(args.model)

@@ -149,7 +149,19 @@ class EngineArgs:
     model: str = ""
     backend: str = "auto"
     tokenizer_path: str | None = None
+    #: A **runtime profile**: the JSON one runtime's own loader expands, holding that runtime's
+    #: hyperparameters and its quantisation selection. Unlike the config beside the weights it does
+    #: not describe the checkpoint in the export's spelling -- it speaks the runtime's -- and it is
+    #: not what identifies the checkpoint either. Two flags carried one name because both are "a
+    #: JSON", and the two roles disagree about what a file is: a profile names an architecture only
+    #: on the side, so passing one where a checkpoint config was meant used to build a model with
+    #: the wrong ``dtype`` and fail later at the weights, and a checkpoint config passed where a
+    #: profile was meant is not even the right key space. See :attr:`checkpoint_config_path`.
     config_path: str | None = None
+    #: A **checkpoint config**: the release's ``config.json``, or a GGUF, naming the architecture so
+    #: selection can decide whether this runtime serves the model at all. Read by identification and
+    #: by nothing else -- the profile above is what a loader expands.
+    checkpoint_config_path: str | None = None
     model_format: str = "auto"
     tensor_parallel_size: int = 1
     tensor_parallel_rank: int = 0
