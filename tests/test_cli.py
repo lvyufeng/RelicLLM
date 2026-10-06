@@ -39,6 +39,28 @@ def _parse(*extra: str):
     return build_parser().parse_args(["serve", "--model", "checkpoint", *extra])
 
 
+def test_the_two_config_flags_land_on_two_different_fields() -> None:
+    """A profile and a checkpoint config are two flags because they are two files.
+
+    ``--config-path`` is what a runtime's loader expands; ``--checkpoint-config-path`` is what
+    identification reads to decide whether this runtime serves the model at all. They shared one
+    name, so a launch that named the profile it needed also fed that file to identification -- which
+    read it as a checkpoint that declared no architecture and refused the runtime that had just been
+    correctly configured.
+    """
+    args = _args(_parse(
+        "--config-path", "/profiles/fp4.json",
+        "--checkpoint-config-path", "/ckpt/config.json",
+    ))
+
+    assert args.config_path == "/profiles/fp4.json"
+    assert args.checkpoint_config_path == "/ckpt/config.json"
+    # Unnamed, both are absent rather than defaulted to each other: identification falls back to
+    # <model>/config.json on its own, and a runtime with no profile uses its own default.
+    assert _args(_parse()).config_path is None
+    assert _args(_parse()).checkpoint_config_path is None
+
+
 def test_cli_maps_common_engine_fields() -> None:
     args = _args(_parse(
         "--backend", "torch",

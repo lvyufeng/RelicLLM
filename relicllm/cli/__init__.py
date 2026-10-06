@@ -85,7 +85,22 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     serve_parser.add_argument("--tokenizer-path")
-    serve_parser.add_argument("--config-path")
+    serve_parser.add_argument(
+        "--config-path",
+        help=(
+            "the runtime profile: a runtime's own hyperparameters and quantisation selection, "
+            "expanded by that runtime's loader. Not the checkpoint's config.json -- that one is "
+            "--checkpoint-config-path"
+        ),
+    )
+    serve_parser.add_argument(
+        "--checkpoint-config-path",
+        help=(
+            "the checkpoint's own config.json (or the config to read a GGUF's architecture from), "
+            "used to decide which runtime serves this model. Defaults to <model>/config.json. "
+            "Not a runtime profile -- that one is --config-path"
+        ),
+    )
     serve_parser.add_argument("--model-format", choices=["auto", "safetensors", "gguf"], default="auto")
     serve_parser.add_argument("--tensor-parallel-size", type=int, default=1)
     serve_parser.add_argument("--tensor-parallel-rank", type=int, default=0)
@@ -227,6 +242,7 @@ def _args(namespace: argparse.Namespace) -> EngineArgs:
         backend=namespace.backend,
         tokenizer_path=namespace.tokenizer_path,
         config_path=namespace.config_path,
+        checkpoint_config_path=namespace.checkpoint_config_path,
         model_format=namespace.model_format,
         tensor_parallel_size=namespace.tensor_parallel_size,
         tensor_parallel_rank=namespace.tensor_parallel_rank,

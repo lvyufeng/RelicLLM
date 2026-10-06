@@ -230,6 +230,31 @@ def test_a_deepseek_v4_config_is_torchs_and_not_v41s(tmp_path) -> None:
     assert route(args) == "torch"
 
 
+def test_a_runtime_profile_is_not_read_as_the_checkpoint_config(tmp_path) -> None:
+    """``--config-path`` is the runtime's *profile*, and identification does not read it.
+
+    The two were one flag, and the roles disagree about what a file says: a profile names the
+    runtime's hyperparameters and its quantisation, so its keys are ``dim``/``n_layers`` and it need
+    not mention an architecture at all. Read as the checkpoint's config it looked like a checkpoint
+    that declared ``model_type=None`` -- a *refusal* -- so naming the profile a launch needs also
+    switched off the identification that says the runtime serves this model. The architecture comes
+    from ``--checkpoint-config-path`` (default ``<model>/config.json``) and from nowhere else.
+    """
+    _write_config(tmp_path, {"model_type": "deepseek_v4"})
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"dim": 4096, "n_layers": 43, "expert_dtype": "fp4"}), encoding="utf-8")
+
+    profiled = EngineArgs(model=str(tmp_path), backend="torch", config_path=str(profile))
+    assert identify("torch", profiled).verdict is Verdict.READ
+
+    # The other direction reads the profile as the config and correctly refuses it: a profile is not
+    # evidence about the architecture, and a flag that points identification at one is a mistake.
+    misdirected = EngineArgs(
+        model=str(tmp_path), backend="torch", checkpoint_config_path=str(profile)
+    )
+    assert identify("torch", misdirected).verdict is Verdict.REFUSED
+
+
 def test_the_capability_refusal_does_not_shadow_the_checkpoint_refusal() -> None:
     """Two reasons to refuse, and the checkpoint's is the more specific one: it says which backend
     to use instead, and it fires first."""

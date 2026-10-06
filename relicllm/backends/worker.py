@@ -133,6 +133,13 @@ def _args_from_environment(name: str, spec: WorkerSpec) -> EngineArgs:
     paths = {
         name: os.environ.get(variable) or None for variable, name in spec.path_fields
     }
+    # The runtime profile rides in ``POCKETLLM_CONFIG_PATH`` for every runtime, like the two path
+    # fields above: it is set for every worker `factory` starts, so reading it is safe for a runtime
+    # that does not expand one. It is filled in here rather than through ``path_fields`` because that
+    # tuple is per-runtime, and a worker whose rank read no profile while rank 0 expanded one would
+    # build its layers against different hyperparameters -- a desynchronized collective, not a
+    # startup error. The profile is not the checkpoint config; see `EngineArgs.config_path`.
+    paths["config_path"] = os.environ.get("POCKETLLM_CONFIG_PATH") or None
     return EngineArgs(
         model=_required("POCKETLLM_CHECKPOINT"),
         backend=name,
