@@ -159,3 +159,83 @@ def test_add_generation_prompt_is_carried_only_when_a_request_overrides_it():
 
     completion = build_completion_request({"prompt": "raw"})
     assert "add_generation_prompt" not in completion.metadata
+
+
+def test_a_body_key_this_class_holds_no_field_for_becomes_an_extra_option():
+    """Only the runtime's own knobs, not the request itself.
+
+    ``from_openai`` is handed the whole client body, so "everything the class does not hold" was
+    every key the chat request carries too -- and those became generation options. The failure was
+    quiet: ``model``, ``messages``, the tool definitions and ``stream`` were merged into the options
+    mapping a runtime looks a sampling knob up in, next to the ones it knows. A name without an
+    OpenAI spelling still becomes an option, which is what this field is for.
+    """
+    params = SamplingParams.from_openai(
+        {
+            "model": "some-checkpoint",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": False,
+            "max_tokens": 8,
+            "tools": [{"type": "function", "function": {"name": "f"}}],
+            "tool_choice": "auto",
+            "user": "a-user-id",
+            "chat_template_kwargs": {"enable_answer_prefix": True},
+        }
+    )
+
+    assert params.extra == {"chat_template_kwargs": {"enable_answer_prefix": True}}
+    for correspondence in ("model", "messages", "stream", "user", "tool_choice"):
+        assert correspondence not in params.to_generation_options()
+
+
+def test_a_refusable_field_is_never_accepted_as_an_extra_option():
+    """Routing around the audit is not a use of ``extra``.
+
+    ``logit_bias`` is a field this backend cannot serve and ``audit`` is what reports it, so a name
+    in the refusal surface must not be classified as a runtime option: accepting it here would hand
+    the sampler a value the field contract had just declined to answer for. The refusal itself is
+    pinned where the audit lives; this pins that the door is not open from the other side.
+    """
+    body = {"logit_bias": {"1234": -100}, "best_of": 2, "echo": True}
+    params = SamplingParams.from_openai(body)
+
+    assert params.extra == {}
+    assert params.sampling_body() == {}
+
+
+def test_one_method_answers_what_a_body_would_say_for_both_entry_points():
+    """``sampling_body`` is the single bridge to ``audit``, so the two doors cannot disagree.
+
+    The library path used to spell this out in ``engine.py`` while the HTTP path spelled the same
+    fields out again in ``from_openai``. Two writers of one audit input is how a field becomes
+    refusable on one route and silent on the other; both call this now.
+    """
+    params = SamplingParams(
+        max_tokens=12,
+        n=2,
+        stop=("END",),
+        logprobs=True,
+        top_logprobs=3,
+        frequency_penalty=0.5,
+        response_format={"type": "json_object"},
+        extra={"chat_template_kwargs": {"x": 1}},
+    )
+    body = params.sampling_body(stream=True)
+
+    assert body == {
+        "stream": True,
+        "n": 2,
+        "stop": ["END"],
+        "logprobs": True,
+        "top_logprobs": 3,
+        "frequency_penalty": 0.5,
+        "response_format": {"type": "json_object"},
+        "chat_template_kwargs": {"x": 1},
+    }
+    # The defaults a caller never named are absent, so an audit of this request is not an audit of
+    # fields it did not use -- and never carries the budget, which no runtime refuses.
+    for unasked in ("temperature", "min_p", "presence_penalty", "repetition_penalty", "max_tokens"):
+        assert unasked not in body
+    # The only thing the stream keyword changes is the name the audit reads for it.
+    assert params.sampling_body() == {k: v for k, v in body.items() if k != "stream"}
+    assert SamplingParams().sampling_body() == {}

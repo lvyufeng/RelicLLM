@@ -341,6 +341,18 @@ class SamplingParams:
     logprobs: bool = False
     top_logprobs: int | None = None
     response_format: dict[str, Any] | None = None
+    #: Sampling names this class has no field for, keyed by their OpenAI spelling.
+    #:
+    #: They reach the model as generation options and nothing else: whatever a backend does with an
+    #: option it does not recognise is not a capability this declares, so a name here is not
+    #: reported on :class:`~relicllm.backends.capabilities.RuntimeCapabilities` and is not what a
+    #: client reads to find out what a runtime serves. A field that *is* declared -- ``logit_bias``,
+    #: ``best_of``, ``suffix``, ``echo``, ``parallel_tool_calls`` -- is refused by name when a
+    #: runtime does not apply it, and only reaches a backend through a client body, never here.
+    #:
+    #: What this is for is the runtime-specific knob a checkpoint documents and the OpenAI surface
+    #: has no name for, which is vLLM's ``chat_template_kwargs`` and SGLang's ``custom_params`` in
+    #: spirit: a name a particular checkpoint's generation path understands.
     extra: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -398,12 +410,6 @@ class SamplingParams:
         if cap is None:
             cap = body.get("max_tokens")
         max_tokens = None if cap is None else int(cap)
-        known = {
-            "max_tokens", "max_completion_tokens", "temperature", "top_p", "top_k",
-            "min_p", "seed", "repetition_penalty", "frequency_penalty",
-            "presence_penalty", "stop", "n", "logprobs", "top_logprobs",
-            "response_format",
-        }
         return cls(
             max_tokens=max_tokens,
             temperature=float(body.get("temperature", 0.0) or 0.0),
@@ -419,8 +425,90 @@ class SamplingParams:
             logprobs=bool(body.get("logprobs", False)),
             top_logprobs=None if body.get("top_logprobs") is None else int(body["top_logprobs"]),
             response_format=body.get("response_format"),
-            extra={str(k): v for k, v in body.items() if k not in known},
+            extra=SamplingParams.extra_from_body(body),
         )
+
+    #: The sampling names :meth:`from_openai` reads, under their OpenAI spelling.
+    #:
+    #: Every key here is a value the typed surface carries. ``temperature`` is in the set although
+    #: nothing refuses it -- the audit has no temperature block -- because the test is "does a field
+    #: of this class already hold it", and one of the two lists falling behind the class is a
+    #: request field that quietly becomes an ``extra`` entry.
+    _OPENAI_SAMPLING_FIELDS = frozenset({
+        "max_tokens", "max_completion_tokens", "temperature", "top_p", "top_k",
+        "min_p", "seed", "repetition_penalty", "frequency_penalty",
+        "presence_penalty", "stop", "n", "logprobs", "top_logprobs",
+        "response_format",
+    })
+
+    #: The request fields this class does not hold and that must never become generation options.
+    #:
+    #: ``from_openai`` is handed the whole client body, so without this the prompt, the messages, the
+    #: tool definitions and ``stream`` would each land in :attr:`extra` and be handed to the model as
+    #: a sampling option -- a name a runtime's option lookup does not know, next to the ones it does.
+    #: Refusing the refusal surface the same way is deliberate: ``logit_bias`` is a field this
+    #: backend cannot serve and the audit is what says so, so accepting it here as an option would
+    #: route around the very check that exists to report it.
+    #:
+    #: An unknown name is not in either set and still becomes an ``extra`` entry, which is the point
+    #: of the field -- see :attr:`extra`.
+    _CORRESPONDENCE_FIELDS = frozenset({
+        "model", "messages", "prompt", "stream", "stream_options", "tools",
+        "tool_choice", "parallel_tool_calls", "response_format", "logit_bias",
+        "best_of", "suffix", "echo", "user", "request_id", "reasoning",
+        "reasoning_effort",
+    })
+
+    @classmethod
+    def extra_from_body(cls, body: Mapping[str, Any]) -> dict[str, Any]:
+        """The body keys this class holds no field for, as :attr:`extra`.
+
+        Classification rather than a list of knobs: a name in :attr:`_OPENAI_SAMPLING_FIELDS` is
+        already a field and a name in :attr:`_CORRESPONDENCE_FIELDS` is the request itself, and what
+        is left is a runtime's own option, which belongs in :attr:`extra`.
+        """
+        return {
+            str(key): value
+            for key, value in body.items()
+            if key not in cls._OPENAI_SAMPLING_FIELDS and key not in cls._CORRESPONDENCE_FIELDS
+        }
+
+    def sampling_body(self, *, stream: bool = False) -> dict[str, Any]:
+        """This params object as the body-shaped mapping :func:`~relicllm.protocol.contract.audit` reads.
+
+        The one bridge between the typed surface and the audit, shared by both entry points, so a
+        field cannot be refusable on the HTTP route and silent in the library.
+
+        Only the refusable fields are emitted, and only when they are not their default, so a request
+        that asked for nothing is not audited against names the caller never used -- ``stop=()`` and
+        ``n=1`` are the values the audit accepts anyway. ``stream`` is set because the audit reads it:
+        a streamed chunk carries no ranking, so ``logprobs`` on a stream is a different question from
+        the same field on a non-streaming response.
+
+        ``extra`` is merged last and never audited: see :attr:`extra` for why a name without an OpenAI
+        spelling is not a capability this declares.
+        """
+        body: dict[str, Any] = {"stream": True} if stream else {}
+        if self.n != 1:
+            body["n"] = self.n
+        if self.stop:
+            body["stop"] = list(self.stop)
+        if self.logprobs:
+            body["logprobs"] = True
+            if self.top_logprobs:
+                body["top_logprobs"] = self.top_logprobs
+        if self.frequency_penalty:
+            body["frequency_penalty"] = self.frequency_penalty
+        if self.presence_penalty:
+            body["presence_penalty"] = self.presence_penalty
+        if self.repetition_penalty != 1.0:
+            body["repetition_penalty"] = self.repetition_penalty
+        if self.min_p:
+            body["min_p"] = self.min_p
+        if self.response_format is not None:
+            body["response_format"] = self.response_format
+        body.update(self.extra)
+        return body
 
     def to_generation_options(self) -> dict[str, Any]:
         """Return options understood by the current PyTorch generation path."""
