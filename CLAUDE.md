@@ -58,8 +58,8 @@ Provenance below), and mixing it into the relocation would bury which pages actu
   `relic_core.kernels.cuda_loader.load_cuda_kernel()` or `relic_core.kernels.ops`. If a change needs
   a kernel edit, it belongs in relic-core, and this repository gets the new binding.
 - **No C++ engine.** `cpp_engine/` was retired with the split, and the `cpp` backend that fronted it
-  was removed afterwards. The four remaining runtimes are pure PyTorch: `v41`, `mimo`, `xing4` and
-  `torch`.
+  was removed afterwards. The five remaining runtimes are pure PyTorch: `v41`, `mimo`, `xing4`,
+  `torch` and `qwen4_exp`.
 - **The kernel test suite.** `tests/` here is the model-runtime half; relic-core carries its own.
   The partition is mechanical: a test lives here if it imports anything from `relicllm` beyond
   `relic_core.kernels.*`.

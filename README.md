@@ -19,8 +19,9 @@ each other, and the name `src` in `site-packages` belonged to nobody.
 
 ## What does NOT live here
 
-- **No C++ engine.** The runtime is PyTorch; the four backends (`v41`, `mimo`, `xing4`, `torch`) are
-  all Python. The retired `cpp_engine` and the `cpp` backend that fronted it are gone.
+- **No C++ engine.** The runtime is PyTorch; the five runtimes (`v41`, `mimo`, `xing4`, `torch`,
+  `qwen4_exp`) are all Python. The retired `cpp_engine` and the `cpp` backend that fronted it are
+  gone.
 - **No kernels.** `relic_core.kernels` is imported, not vendored. Build relic-core first:
 
   ```bash
