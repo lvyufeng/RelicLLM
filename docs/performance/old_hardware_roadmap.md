@@ -71,9 +71,18 @@ to ask. ~70 `bench_*` / `probe_*` / `profile_*` scripts each answer a different 
   [serving latency metrics](../guides/latency_metrics.md). **The mechanism landed; the numbers did
   not.** No GPU run was spent this round, so there is no committed baseline yet — that is P0.2's
   deliverable, not an omission here.
-- **P0.2 a performance regression gate.** `scripts/check_perf_baseline.py`, threshold-based against
-  P0.1's JSON, `skip` rather than `fail` with no GPU — the same shape `scripts/check_test_baseline.py`
-  already uses. Depends on a committed baseline from a P0.1 run.
+- **P0.2 a performance regression gate — landed.** `scripts/check_perf_baseline.py`, threshold-based
+  against P0.1's JSON, `skip` rather than `fail` for a runtime the baseline does not cover — the same
+  shape `scripts/check_test_baseline.py` already uses. The unit is a `runtime/scenario/metric` key and
+  the comparison is a ratio against a threshold (15% to start, argued from the spread of the two v41
+  records in `tests/fixtures/perf/`), because a metric is a number and every good number moves a
+  little every run. Both directions are reported: a metric is a regression only if it moved the way
+  *that* metric does not want, so a larger `output_throughput` is not one and a larger `e2el` is.
+  `--observed` is repeatable, which the baseline needs because a run has one runtime in it.
+  `tests/fixtures/perf/baseline.json` is the committed baseline, and its `runs` block records the
+  **launch shape** each runtime's numbers were measured at — this set does not share one width
+  (`xing4` serves a single card a process at a time; the rest run TP4 here), and `tpot.median` is one
+  key at either width, so a value without its width is not a measurement of anything.
 - **P0.3 fix MiMo's prefill/decode seam — landed.** The `_drain` Xing4.0 already had is now at MiMo's
   seam too, so `prefill_seconds` and `decode_seconds` are a device fact on both. One line of behaviour
   and the same one-line guard off the device; the position is pinned hermetically in
@@ -82,7 +91,14 @@ to ask. ~70 `bench_*` / `probe_*` / `profile_*` scripts each answer a different 
   belongs to a P0.1 run.
 
 **Acceptance:** one command runs decode-only and 8k-prefill for every served runtime and writes a
-committed baseline. The command exists; the run that fills the baseline in is the next step.
+committed baseline. **Met for four of the five runtimes** — `tests/fixtures/perf/baseline.json`
+holds `v41`, `mimo`, `xing4` and `torch` over both scenarios, measured on the 2080 Ti box in one
+serial run and regenerable with `scripts/check_perf_baseline.py --update`. `qwen4_exp` is a named
+skip: its checkpoint (Qwen3.8-Flash-Next) is not on this host, which the gate reports as a runtime it
+has no comparison for rather than a pass. Two launch facts the numbers are only valid under:
+`torch` was given `--config-path /mnt/data1/dsv4_inference/configs/config_fp4_active.json` (no profile
+ships in this checkout — see `--config-path` below), and `xing4` ran at `--tensor-parallel-size 1`,
+which is its width and not a choice.
 
 ### Phase 1 — serving coverage (landed: qwen4_exp)
 
