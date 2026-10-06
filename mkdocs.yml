@@ -175,6 +175,7 @@ nav:
       - Per-method duplication across the five adapters: architecture/per_method_duplication_2026_09.md
       - The device plane: architecture/device_plane.md
       - The native surface decision: architecture/native_surface_decision.md
+      - One scheduler, many models: architecture/one_scheduler_many_models.md
   - Migration:
       - Overview: migration/index.md
       - A max_tokens the context cannot hold is refused: migration/overlong-max-tokens-is-refused.md
