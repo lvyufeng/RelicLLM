@@ -468,6 +468,37 @@ def test_a_stream_cuts_at_a_stop_string_and_holds_back_a_partial_one() -> None:
     assert events[-1].finish_reason == "stop"
 
 
+def test_an_unstreamed_call_is_cut_at_the_marker_too() -> None:
+    """A stop string is the field's answer, not the stream's.
+
+    The serial path used to hand the whole text back with the marker inside it -- the same request
+    answered differently depending on ``stream`` -- and ``finish_reason`` reported ``stop`` for a
+    ``text`` that still had the marker in it. Both routes now name the same answer, which is what
+    lets a runtime declare ``stop`` at all.
+    """
+    tokenizer = FakeTokenizer()
+    tokenizer.encoding["<|user|>hi<|assistant|>"] = [5]
+    tokenizer.pieces[11], tokenizer.pieces[12] = "hello, BE", "TA more"
+    adapter = backend(model=ScriptedModel(scripted=(11, 12, 13, 14)), tokenizer=tokenizer)
+
+    result = adapter.generate([request(request_id="t", stop=["BETA"])])[0]
+
+    assert result.text == "hello, "
+    assert result.finish_reason == "stop"
+
+
+def test_an_unstreamed_call_without_a_stop_string_keeps_the_whole_text() -> None:
+    """The cut is the field's, not the serial route's: nothing is truncated unprompted."""
+    tokenizer = FakeTokenizer()
+    tokenizer.encoding["<|user|>hi<|assistant|>"] = [5]
+    adapter = backend(model=ScriptedModel(scripted=(11, 12, 13, 14)), tokenizer=tokenizer)
+
+    result = adapter.generate([request(request_id="t")])[0]
+
+    assert result.text == "abcd"
+    assert result.finish_reason == "length"
+
+
 def test_a_stop_string_ends_the_run_and_not_only_the_sending() -> None:
     """The marker stops the *loop*, which for a while it did not.
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import threading
+from types import SimpleNamespace
 from urllib import error, request
 
 import pytest
@@ -947,6 +948,58 @@ def test_the_shared_default_is_to_skip_special_tokens():
     assert adapter._skip_special_tokens() is True
     adapter._decode([7])
     assert tokenizer.calls == [((7,), True)]
+
+
+def test_a_serial_result_without_a_stop_string_keeps_the_whole_answer():
+    """The cut is the field's, not the serial route's: a request that asked for no stop gets none.
+
+    The streamed path matches stops in ``TokenStreamer`` and the serial path had nowhere to match
+    them, so the same request answered differently depending on ``stream``: the unstreamed ``text``
+    carried a marker that the streamed one had cut. This is the half that says the new cut is the
+    field's doing -- without a stop string the answer arrives whole, with its own finish reason.
+    """
+    adapter = _StubRuntimeAdapter()
+    adapter._tokenizer = _RecordingTokenizer()
+    generation = SimpleNamespace(
+        tokens=[1, 2, 3], stopped="length", prefill_seconds=0.0,
+        decode_seconds=0.0, ttft_seconds=0.0, step_seconds=0.0, cached_tokens=0,
+    )
+
+    result = adapter._serial_result(
+        GenerationRequest(prompt_tokens=[9], request_id="r1"), [9], generation
+    )
+    # The recording tokenizer spells ids as themselves, space separated via "|".
+    assert result.text == "1|2|3"
+    assert result.finish_reason == "length"
+
+
+class _StopTokenizer:
+    """Ids to fixed text, so a stop string has something to be found in."""
+
+    def decode(self, ids, skip_special_tokens=True):
+        return "".join({1: "alpha", 2: "BETA", 3: "gamma"}.get(int(t), "") for t in ids)
+
+
+def test_a_serial_stop_string_that_really_matches_truncates_and_stops():
+    """The other half of the shared builder: the answer is the text before the marker.
+
+    The marker is the client's, not the answer's -- the same reading ``TokenStreamer`` applies on
+    the streamed route -- so both routes now name the same ``text`` and the same ``finish_reason``.
+    """
+    adapter = _StubRuntimeAdapter()
+    adapter._tokenizer = _StopTokenizer()
+    generation = SimpleNamespace(
+        tokens=[1, 2, 3], stopped="length", prefill_seconds=0.0,
+        decode_seconds=0.0, ttft_seconds=0.0, step_seconds=0.0, cached_tokens=0,
+    )
+    request = GenerationRequest(
+        prompt_tokens=[9], request_id="r1", sampling_params=SamplingParams(stop=["BETA"])
+    )
+
+    result = adapter._serial_result(request, [9], generation)
+
+    assert result.text == "alpha"
+    assert result.finish_reason == "stop"
 
 
 def test_every_stop_word_this_tree_emits_maps_to_the_same_finish_reason():
