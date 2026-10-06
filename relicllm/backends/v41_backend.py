@@ -72,7 +72,6 @@ from .shared_options import (
 )
 from .runtime_engine import (
     RankedWorker,
-    cancel_key,
     card_for_rank,
     device_index,
     visible_card_count,
@@ -759,60 +758,6 @@ class V41Backend(RuntimeAdapter):
         """
         token = self._eos_token_id()
         return set() if token is None else {int(token)}
-
-    def _start_runtime(
-        self,
-        *,
-        request_id: int,
-        prompt_ids: Sequence[int],
-        sampling: Any,
-        context: Any,
-        on_token: Callable[[int], None],
-        on_step: Callable[[], bool],
-    ) -> None:
-        """One generation, driven a step at a time by the scheduler.
-
-        Almost the call `_generate_one` makes, and deliberately so. `_run` still broadcasts the
-        payload to this rank's peers -- a rank 0 that entered a generation the workers were not told
-        about would not be idle, it would be at a different collective -- `_step_hook` is still the
-        per-token hook, `_run_payload` is still what drives the model, and the payload is the serial
-        path's own builder. The bridge is additive: no model code is involved.
-
-        Two things differ, and both are the scheduler's doing rather than the checkpoint's.
-
-        The payload is built from `context` rather than from a `GenerationRequest` the caller
-        supplied, because there is no caller here -- the scheduler is one. `context` *is* the
-        request this row was submitted for, so the two routes render the same prompt, the same
-        sampler and the same thinking mode by construction rather than by agreement.
-
-        And the step boundary is the scheduler's: `on_step` is where the run parks until the next
-        token is asked for, called at the end of the per-token hook -- the last point before the
-        loop takes another forward. Either cancellation unwinds there, the scheduler retiring the
-        row and a client that disconnected under `backend.cancel` alike, which is the same seam the
-        streaming path already uses.
-        """
-        self._ensure_loaded()
-        # The serial path's own payload builder, so the two routes cannot disagree about what they
-        # sent: the budget, the sampler, the seed and the thinking mode all come from the request
-        # this row was submitted for rather than from a second derivation of them.
-        payload = self._payload(context, prompt_ids)
-
-        # The client's own id for this request, which is what `backend.cancel` is called with. The
-        # scheduler's row id is not something a client ever sees, so keying the check on it would
-        # mean a disconnect was never noticed.
-        cancelled_at = cancel_key(context, request_id)
-
-        def emit(token: int, _logits: Any) -> None:
-            on_token(int(token))
-            # The step boundary is the scheduler's: this is where the run parks until the next
-            # token is asked for, and where either cancellation unwinds.
-            if on_step() or self._is_cancelled(cancelled_at):
-                raise _AbortGeneration("cancel")
-
-        # `request=None`: the per-step hook reads stop *strings* off it, and this route applies
-        # none. The engine's own stop check is token-level.
-        with self._request_lock:
-            self._run(payload, None, on_token=emit)
 
     def _encode_chat(
         self, tokenizer: Any, messages: Any, metadata: Mapping[str, Any]

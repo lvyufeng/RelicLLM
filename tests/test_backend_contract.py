@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import ast
 import json
 import re
 import threading
+from pathlib import Path
 from types import SimpleNamespace
 from urllib import error, request
 
@@ -1162,3 +1164,36 @@ def test_the_library_path_audits_the_same_as_the_http_route():
 
     # And a field both serve is not refused.
     assert _DeclaredLLM(_ServedStubAdapter()).generate(["hi"], SamplingParams(stop=["x"])) == []
+
+
+def test_no_adapter_carries_a_second_door_into_the_scheduler():
+    """The scheduler route belongs to #130's scheduler, and there is none for it to be called by.
+
+    `_start_runtime` had a definition on `v41`, `mimo` and `xing4` and a caller nowhere: not in the
+    package, not in `tests/`. It exists to serve a row the batch scheduler admitted, and the only
+    scheduler in this tree is inside `models/deepseek_v4/` -- it reaches no adapter. A method with
+    no caller is the alternative entry point the request lifecycle is supposed to have exactly one
+    of, so it was removed; this keeps a fourth one from being written before the scheduler that
+    would call it exists.
+
+    The scan parses every module under either package rather than checking a list of files, because
+    the last adapter to be added is the one a hand-kept list would miss. It looks for a definition
+    and not for the name: `xing4_backend.py`'s `_loop` docstring says which method it was and why it
+    went, and prose about a removal is not the removal coming back.
+    """
+    root = Path(__file__).resolve().parent.parent
+    offenders: list[str] = []
+    for package in ("relicllm", "tests", "scripts"):
+        for path in sorted((root / package).rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            if any(
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name == "_start_runtime"
+                for node in ast.walk(tree)
+            ):
+                offenders.append(str(path.relative_to(root)))
+
+    assert offenders == [], (
+        "the batch scheduler is not here yet (see #130) -- a per-adapter _start_runtime is an "
+        f"entry point nothing calls: {offenders}"
+    )
