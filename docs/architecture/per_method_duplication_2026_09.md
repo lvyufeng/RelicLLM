@@ -4,17 +4,22 @@ This is the measurement #442's acceptance rests on, kept because the issue's own
 estimates and the slices that followed kept needing the same question answered again: **which
 same-named methods across `pocketllm/backends/*.py` are still the same body?**
 
-The method is `scripts/method_duplication.py`: `ast` per
+The method was `scripts/method_duplication.py`: `ast` per
 method, docstrings stripped, comment-only lines dropped, then `difflib.SequenceMatcher` over the
-stripped statement lists for every pair of same-named methods in the six modules. What it reports is
+stripped statement lists for every pair of same-named methods in the six modules. What it reported is
 the **best** pair per name, the line count of each side, and how many definitions the name has. A
 high ratio between one pair out of five says those two agree, not that the family does.
 
-Run it from the repository root:
+**The script is gone.** It was written against the pre-merge tree — `pocketllm/backends/`, with
+`cpp_backend` among the six modules — and by the time it would have been re-run those paths no
+longer existed, so it raised `FileNotFoundError` rather than reporting anything. It was deleted
+rather than repaired: the table below is the measurement, and the fold it drove (#442) is finished,
+so a re-run would answer a question nothing is waiting on. Re-deriving it is a small script
+(`ast` + `difflib`) against whatever the adapters are at the time, and a fresh port would report the
+current tree rather than this one.
 
-```bash
-python scripts/method_duplication.py
-```
+The table below is a snapshot of master `c896925`, on the tree as it was then. The module names in
+the `pair` column are the pre-merge ones.
 
 ## Where this stood at the end of #442's slices 1–6 (master `c896925`)
 
