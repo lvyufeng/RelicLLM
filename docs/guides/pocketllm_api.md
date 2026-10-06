@@ -280,15 +280,20 @@ than trusted.
 
 **Which runtime acts on what.** Whether a field's *value* has a shape this server can read is one
 policy for every runtime and is checked before dispatch. Whether a runtime's answer applies the field
-at all depends on the runtime, and each declares its own answer through `BackendBase.audit_request`.
+at all depends on the runtime, and is declared per runtime through `BackendBase.audit_request`, one
+entry per field, from the runtime table (`relicllm/backends/capabilities.py`) that `/v1/models`
+already publishes.
 
-No adapter declares one today: the method that carried the contract belonged to the retired `cpp`
-backend, so every runtime here returns `None` and the shape checks are the whole policy. A field that
-a runtime would not apply is therefore not refused by name on the paths below — it is accepted and,
-where the shape is unreadable, rejected host-side.
+Every runtime declares one: the declaration is a `ServedFields` on the runtime's own row, read by
+`capabilities.declared_capabilities` for what `/v1/models` publishes and by the adapter's
+`audit_request` for what a request is refused on, so the two cannot disagree. A backend that declares
+nothing at all still returns `None`, which is what keeps a test double accepted rather than refused
+wholesale. Which entry is which runtime's is
+[the native surface decision](../architecture/native_surface_decision.md).
 
 The fields the retired engine served (`stop`, `n`, `logprobs`, `response_format`, `thinking_mode`,
-`add_generation_prompt`) split into two groups:
+`add_generation_prompt`) each ended up somewhere different, and the three worth singling out are the
+ones where "accepted" and "applied" are different words:
 
 - **`n` is the host's dispatch.** A request for `n` choices is `n` requests to the runtime, built by
   `pocketllm/choices.py` and run by whichever entry point received the request — the HTTP server or
@@ -297,18 +302,15 @@ The fields the retired engine served (`stop`, `n`, `logprobs`, `response_format`
   choices differ only in the seed they are handed, and that engine reads no seed it was given, so all
   `n` would be one text presented as independent samples.
 - **`logprobs` is the runtime's declaration.** Requesting it where the runtime does not support
-  logprobs is refused by name. Only `torch` declares `supports_logprobs=True`; `capabilities.py`
-  declares it False for `v41`, `mimo`, `xing4` and `qwen4_exp`.
-- **`response_format` is the engine's sampler**, and it is the one field the host cannot even build
-  the input for. A token constraint is a mask over the vocabulary *piece by piece*, and a piece is
-  what the tokenizer emits rather than what the vocabulary file stores — a byte-level BPE vocabulary
-  spells a space `Ġ`, so a mask assembled anywhere else would refuse every token that continues a
-  word. The vocabulary therefore comes from the engine, the constraint is built over it, and the mask
-  is applied by the per-row device sampler; an engine that samples at engine-wide values applies none,
-  which is why the capability is the engine's declaration rather than the adapter's. On the retired
-  `cpp` engine a `batching=false` or tensor-parallel configuration was one that sampled at engine-wide
-  values and so refused the field by name; every runtime here declares `supports_logprobs=False`
-  except `torch`, so the field is refused on that capability rather than on a width.
+  logprobs is refused by name. `capabilities.py` declares it served by `torch` alone; `v41`, `mimo`,
+  `xing4` and `qwen4_exp` refuse the field rather than answering with an empty array. See
+  [Log probabilities](#log-probabilities).
+- **`response_format` is the prompt's, not the sampler's.** The native path held the answer to the
+  schema: a token constraint masked the engine's own vocabulary immediately before the per-row
+  draw. No runtime here has that seam — sampling is a host-side function over a full logits tensor —
+  so token-level constrained decoding went with the engine, and what survives is the checkpoint's
+  own instruction (`encoding/deepseek_v4.py::response_format_template`), which the two DeepSeek
+  encoders render. See [Structured outputs](#structured-outputs).
 
 ### Implemented
 
@@ -320,7 +322,7 @@ The fields the retired engine served (`stop`, `n`, `logprobs`, `response_format`
 | `temperature`, `top_p`, `top_k`, `seed` | both | Applied when the engine declares per-request sampling and top-k; otherwise a value that differs from the engine's effective one is a 400 from the sampling check rather than a silent substitution. |
 | `stream` | both | Selects SSE deltas terminated by `[DONE]`. |
 | `n` | both | The number of choices. Served by running the request `n` times, so the response holds one entry per choice with `index` running 0..n-1; see [Choices](#choices). |
-| `response_format` | chat | Applied when the engine declares structured outputs; `text`, `json_object` and `json_schema` are supported there, and the request is refused when it is not. |
+| `response_format` | chat | `text`, `json_object` and `json_schema` reach the model as an instruction rendered into the prompt by the two DeepSeek encoders; a runtime whose encoder never renders it has no path for the field at all. See [Structured outputs](#structured-outputs). |
 | `tools` | chat | Tool definitions reach the chat template, and a call the model writes back is reported in the assistant message's `tool_calls` rather than left in the text; see [Tool calls](#tool-calls). |
 | `tool_choice` | chat | `"none"` drops the definitions, `"required"` and a named function become an instruction in the prompt; see [Tool calls](#tool-calls). |
 | `stop` | both | Matched against the decoded text as it is produced, so the completion ends at the first occurrence of any sequence and the sequence itself is not part of the answer. The field is a string or a list of strings; a value of another shape is a 400. |
@@ -362,9 +364,9 @@ Three details are worth knowing before relying on the field:
 
 `n` is the number of completions one request asks for, and the server serves it by running the
 request `n` times: each choice is its own runtime request, with its own seed derived from the
-request's `seed` and — when `response_format` asks for one — its own grammar. The response carries
-one entry per choice with `index` running 0..`n`-1. `usage` is counted the way OpenAI counts it:
-`prompt_tokens` once for the request, `completion_tokens` the sum over the choices.
+request's `seed`. The response carries one entry per choice with `index` running 0..`n`-1. `usage`
+is counted the way OpenAI counts it: `prompt_tokens` once for the request, `completion_tokens` the
+sum over the choices.
 
 On a streamed response the choices arrive **one after another**, not interleaved, and each chunk
 names the choice it belongs to in `index`. Interleaving would need the runtime to be driving several
@@ -444,12 +446,47 @@ Four things are worth knowing before relying on the field:
 - **Streaming is not supported**, because a chunk carries the text of its token with no ranking
   beside it. `{"stream":true,"logprobs":...}` is a 400 rather than a stream that looks the same as
   one whose request asked for no ranking at all.
-- **The engine has to declare it, and the runtime has to be able to ask.** `logprobs` is refused
-  when the capability is off, which is the case for speculative decoding (its verify step ranks no
-  tokens, so a row that emitted several has no ranking for the rest). Of the runtimes here only
-  `torch` declares `supports_logprobs`; `v41`, `mimo`, `xing4` and `qwen4_exp` refuse the field rather
-  than answering with an empty array. The limit on alternatives is this server's — 20 per position,
-  above OpenAI's documented range — and a request past it is a 400 naming the ceiling.
+- **The runtime has to rank it, and the declaration is per runtime.** `logprobs` is refused by name
+  where the runtime cannot rank a position — for `v41`, `mimo`, `xing4` and `qwen4_exp` it is a 400
+  naming the field rather than a 200 carrying an empty array. Of the runtimes here only `torch` serves
+  it. The limit on alternatives is this server's — 20 per position, above OpenAI's documented range —
+  and a request past it is a 400 naming the ceiling.
+
+#### Structured outputs
+
+`response_format` is the field that asks for a machine-readable answer, and what it buys here is an
+*instruction*: the checkpoint's own encoder renders the schema into the prompt as the line
+`"## Response Format:"` followed by `"You MUST strictly adhere to the following schema to reply:"`
+and the schema itself. The model is told the shape; nothing forces it, and the answer can still be
+malformed JSON. A caller that needs a guarantee rather than a strong hint should validate what comes
+back.
+
+Three things follow from where the rendering lives:
+
+- **`{"type": "text"}`** asks for nothing and is the shape an OpenAI client sends by default. It is
+  accepted everywhere and renders nothing.
+- **`{"type": "json_object"}` and `{"type": "json_schema"}`** render the schema block. The field is
+  meaningful on the runtimes whose encoder has that block — `torch` (DeepSeek-V4) and `v41`
+  (DeepSeek-V4.1) — and refused by name on the others.
+- **The rendering needs a conversation, so this is a chat field.** A `/v1/completions` request
+  carries a raw prompt with no message list, and there is nothing for the encoder to attach the
+  schema to; a completion naming `response_format` is accepted and not rendered. Refusing it there
+  instead would need a capability the row does not carry: the two runtimes that declare
+  `structured_outputs` serve the field on chat and do not render it on completions, so `torch` writes
+  JSON on `/v1/chat/completions` and returns unconstrained text when the same `response_format` is
+  sent to `/v1/completions`.
+
+The retired native path implemented this differently — a token mask over the engine's own
+vocabulary, applied at the sampler, which *did* hold the model to the schema. That is recorded, with
+its evidence, in [The native surface decision](../architecture/native_surface_decision.md). Two
+limits on the instruction path are worth knowing:
+
+- **The schema is rendered, not parsed.** This server reads the three shapes of `response_format`
+  and hands the rest through; a well-formed but impossible schema is rendered as written and
+  ignored by the model rather than refused.
+- **The answer is not checked against the schema.** Nothing here parses the completion and
+  re-asks on a violation, so `finish_reason: "stop"` says the model stopped, not that the JSON is
+  valid.
 
 #### Tool calls
 
@@ -539,9 +576,11 @@ The check runs before dispatch, so a request this server will not serve is refus
 streamed halfway and abandoned. Which fields are refused at which values is
 `pocketllm/protocol/contract.py`, and the runtime's own answer is `BackendBase.audit_request`: the
 *shape* of a field is the same on every runtime and is checked host-side, while whether a runtime's
-answer applies a field at all depends on the runtime and is declared by it. No adapter here declares
-one — that hook belonged to the retired `cpp` backend — so the sections above describe the socket
-rather than a per-runtime policy.
+answer applies a field at all depends on the runtime and is declared per runtime — from the same
+table `/v1/models` publishes, so the two cannot disagree about what this runtime serves. The entries
+above that are the runtime's rather than the socket's are `logprobs` (`torch` alone ranks a position)
+and `response_format` (`torch` and `v41` render it into the prompt); see
+[Log probabilities](#log-probabilities) and [Structured outputs](#structured-outputs).
 
 ### Accepted and inert
 
@@ -571,6 +610,12 @@ API that used to be documented here — lives in the archived
 [relic-engine](https://github.com/lvyufeng/relic-engine). Read its own documentation for that
 surface. Every runtime in *this* repository is pure PyTorch.
 
+Two APIs existed only on the native side, and what happened to each is a decision rather than a
+side effect of the deletion: the engine's tokenizer was **not** moved, and token-level constrained
+decoding was **dropped** while the checkpoint's own prompt instruction for `response_format` was
+kept. [The native surface decision](../architecture/native_surface_decision.md) holds the evidence,
+the measured defect that the prompt-layer path itself had, and what its fix changes.
+
 
 ## Backend selection
 
@@ -590,12 +635,12 @@ and it reports `supports_batch=False`: one mutable KV state, serialized at the b
 `UnsupportedFeatureError` before anything loads.
 
 Capabilities are declared per runtime in `relicllm/backends/capabilities.py` rather than reported by
-an adapter at run time, so there is one answer per runtime instead of one per code path. The V4.1
-adapter advertises no logprobs — a request asking for them is refused rather than served without them
-— while prefix caching follows `prefix_cache_bytes`, which defaults to 4 GiB a rank and can be set to
-zero to turn the reuse off. Its `cancellation` detail names the mechanism rather than promising a
-latency: a cancellation is a per-step collective between the ranks and cannot interrupt a prompt's
-forward.
+an adapter at run time, so there is one answer per runtime instead of one per code path — the same
+declaration a request is refused on by name and `/v1/models` publishes. The V4.1 adapter ranks no
+logprobs — a request asking for them is refused rather than served without them — while prefix
+caching follows `prefix_cache_bytes`, which defaults to 4 GiB a rank and can be set to zero to turn
+the reuse off. Its `cancellation` detail names the mechanism rather than promising a latency: a
+cancellation is a per-step collective between the ranks and cannot interrupt a prompt's forward.
 
 `backend="mimo"` is the adapter for MiMo-V2.6-Flash. `--backend mimo` names it, and `auto` reaches it
 too — the checkpoint's `model_type` is `mimo_v2`, which the factory recognizes the way it recognizes
