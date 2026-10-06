@@ -678,42 +678,6 @@ class MimoBackend(RuntimeAdapter):
         card = self._card()
         return card if card is not None else -1
 
-    def _start_runtime(
-        self,
-        *,
-        request_id: int,
-        prompt_ids: Sequence[int],
-        sampling: Any,
-        context: Any,
-        on_token: Callable[[int], None],
-        on_step: Callable[[], bool],
-    ) -> None:
-        """One generation, driven a step at a time by the scheduler.
-
-        This is `_loop` with two of its arguments supplied differently, and it is `_loop` on purpose
-        rather than a second call to `generate`: every routed layer closes with an `all_reduce`, so
-        a rank 0 that ran a request the workers were not told about would not be idle, it would be
-        at a different collective. Going through the same method is what keeps the payload, the
-        broadcast and the per-step agreement in one place instead of two that agree by inspection.
-
-        The budget is the scheduler's, which derived it from this request with the same rule the
-        serial path uses. Everything else -- the sampler, the seed, the prompt -- is read off
-        `context`, which *is* the request this row was submitted for, so the two routes render the
-        same thing by construction.
-
-        And the step boundary is the scheduler's. `_step_sync` is what tells rank 0's park to the
-        other ranks, so they take that step together or none of them does, and a client that
-        disconnected -- which arrives on the HTTP thread under the request's own id, not the
-        scheduler's -- reaches the loop at the same seam.
-        """
-        self._loop(
-            list(prompt_ids),
-            int(sampling.max_new_tokens),
-            context,
-            on_token=on_token,
-            stop=on_step,
-        )
-
     def _loop(
         self,
         prompt_ids: Sequence[int],

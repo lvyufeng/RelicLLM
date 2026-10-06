@@ -54,7 +54,6 @@ from .capabilities import IGNORED_OPTIONS, declared_capabilities
 from .options import BackendOption, Group, Kind, decode_args
 from .shared_options import PREFILL_CHUNK, PREFIX_CACHE_BYTES
 from .runtime_engine import (
-    cancel_key,
     card_for_rank,
     device_index,
     visible_card_count,
@@ -378,57 +377,6 @@ class Xing4Backend(RuntimeAdapter):
         # every shape a device arrives in, and this is one of them.
         return device_index(device)
 
-    def _start_runtime(
-        self,
-        *,
-        request_id: int,
-        prompt_ids: Sequence[int],
-        sampling: Any,
-        context: Any,
-        on_token: Callable[[int], None],
-        on_step: Callable[[], bool],
-    ) -> None:
-        """One generation, driven a step at a time by the scheduler.
-
-        The sampling parameters come from the scheduler's request rather than from a
-        `GenerationRequest`, so this is the point where the two vocabularies meet, and three things
-        follow from it rather than from this adapter: the budget is the scheduler's
-        ``max_new_tokens``, the ``ignore_eos`` the scheduler resolved is what empties the eos set --
-        nowhere else in this adapter reaches that flag -- and the step boundary is the scheduler's
-        ``on_step``. A client that disconnects calls `backend.cancel()`, and the request has to stop
-        at the same seam whether the cancel came from there or from the scheduler retiring the
-        request, so the two are asked together.
-        """
-        from relicllm.models.xing4_0.generate import generate
-
-        self._ensure_loaded()
-        self._ensure_prefix_cache()
-        eos = () if bool(sampling.ignore_eos) else self._eos_tokens()
-        try:
-            generate(
-                self._model,
-                list(prompt_ids),
-                max_new_tokens=int(sampling.max_new_tokens),
-                temperature=float(sampling.temperature),
-                top_k=int(sampling.top_k) or None,
-                top_p=float(sampling.top_p) or None,
-                seed=int(sampling.seed),
-                eos_token_id=eos,
-                chunk=self._options.prefill_chunk,
-                cache=self._cache,
-                prefix_cache=self._prefix_cache,
-                on_token=lambda token, _logits: on_token(token),
-                # Two cancellations meet at the same seam: the runtime's own, which is called with
-                # the id the client's request carries, and the scheduler's, which arrives as
-                # `on_step` returning true. The budget and the eos set are the scheduler's own --
-                # `sampling` is what it derived for this row, and `ignore_eos` reaches this route
-                # and nowhere else in the adapter -- which is why this is a second `generate` call
-                # rather than a call into `_loop`.
-                on_step=lambda: self._is_cancelled(cancel_key(context, request_id)) or on_step(),
-            )
-        finally:
-            self._publish_cache_metrics()
-
     # ------------------------------------------------------------------ lifecycle
 
     def prepare(self) -> None:
@@ -688,11 +636,13 @@ class Xing4Backend(RuntimeAdapter):
         reported them as tokens the model had produced for the caller. `MimoBackend._loop` has taken
         this predicate since its stream was written.
 
-        The scheduler's own step boundary is not a third reason and never was. A row the scheduler
-        admitted is served through :meth:`_start_runtime`, which builds its predicate around
-        ``generate`` itself; a serial request is served from here and passes its cancel as ``stop``,
-        correctly, because the two routes never overlap. An ``on_step`` parameter that every caller
-        left as ``None`` was a parameter with no caller, so it is gone.
+        There is no third reason and never was. This runtime's scheduler route was a second
+        `generate` call in the shape of :meth:`_start_runtime`, and it had no caller -- the scheduler
+        it was written for is still inside `deepseek_v4` and reaches no adapter -- so it was removed
+        rather than left as a method nothing calls. A serial request is served from here and passes
+        its cancel as ``stop``, correctly, because the two routes would never have overlapped anyway.
+        An ``on_step`` parameter that every caller left as ``None`` was a parameter with no caller,
+        so it went with it.
         """
         from relicllm.models.xing4_0.generate import generate
 
