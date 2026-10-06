@@ -460,27 +460,6 @@ class MimoBackend(ShardedWorkerMixin, RuntimeAdapter):
             "cancellation": "per-step broadcast; not inside the prompt's forward",
         }
 
-    def _open_tokenizer(self) -> Any:
-        """The checkpoint's own tokenizer, out of its ``tokenizer.json`` and chat template.
-
-        Not a fallback and not a generic renderer: MiMo's chat markup is its own (``<|im_start|>``,
-        ``<|im_end|>``), it ships the template as ``chat_template.jinja`` next to the weights, and a
-        prompt rendered any other way is a prompt the model was not trained on.
-        """
-        path = self._tokenizer_path or self._checkpoint_dir
-        try:
-            from transformers import AutoTokenizer
-        except ImportError as exc:  # pragma: no cover - the repo's requirements carry it
-            raise ConfigurationError(
-                "serving a MiMo checkpoint needs `transformers` for its tokenizer"
-            ) from exc
-        try:
-            return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
-        except (OSError, ValueError) as exc:
-            raise ConfigurationError(
-                f"no tokenizer could be read from {path}: {exc}; pass --tokenizer-path"
-            ) from exc
-
     def _say(self, message: str) -> None:
         if self._world <= 1 or self._rank == 0:
             print(f"[mimo] {message}", flush=True)
@@ -588,36 +567,10 @@ class MimoBackend(ShardedWorkerMixin, RuntimeAdapter):
 
     # -------------------------------------------------------------------- requests
 
-    def _eos_tokens(self) -> set[int]:
-        """The ids that end a turn, from the config and the tokenizer's own end-of-text.
-
-        The config's ``eos_token_id`` is a tuple on this checkpoint because the release ends a
-        turn with either of two control tokens, and the tokenizer's ``eos_token_id`` is the same
-        id again; both are read because a run that stopped on one of them and not the other would
-        run every answer to its budget. There is no default and no fallback: a checkpoint that
-        names neither is one whose answers cannot end.
-        """
-        found: set[int] = set()
+    def _checkpoint_eos_token_id(self) -> Any:
+        """MiMo's end-of-turn id lives on the checkpoint's layer."""
         layer = getattr(self._checkpoint, "layer", None)
-        ids = getattr(layer, "eos_token_id", None) if layer is not None else None
-        if isinstance(ids, int):
-            found.add(int(ids))
-        elif ids:
-            found.update(int(token) for token in ids)
-        for candidate in (
-            getattr(self._tokenizer, "eos_token_id", None),
-            getattr(self._tokenizer, "eos_token_ids", None),
-        ):
-            if isinstance(candidate, int):
-                found.add(int(candidate))
-            elif candidate:
-                found.update(int(token) for token in candidate)
-        if not found:
-            raise ConfigurationError(
-                "this checkpoint names no end-of-turn token, so a request would run to its "
-                "budget; send a prompt_tokens request with an explicit max_tokens"
-            )
-        return found
+        return getattr(layer, "eos_token_id", None) if layer is not None else None
 
     # ------------------------------------------------------------------ the shared scheduler
 
