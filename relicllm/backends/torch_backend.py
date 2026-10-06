@@ -26,9 +26,11 @@ from relicllm.api import (
     UnsupportedFeatureError,
 )
 from relicllm.protocol import encode_chat_prompt, render_fallback_prompt
+from relicllm.protocol.contract import CHAT, FieldRefusal, audit
 
 from .base import BackendBase
-from .capabilities import declared_capabilities
+from .capabilities import declared_capabilities, served_fields
+from .stop import StopFilter
 
 
 #: What the legacy runtime generates when a request carries no budget of its own
@@ -297,7 +299,8 @@ class TorchBackend(BackendBase):
             logprobs=result.get("logprobs") or result.get("token_logprobs"),
             metadata={key: value for key, value in result.items() if key not in {
                 "token_ids", "completion_ids", "text", "content", "finish_reason",
-                "prompt_tokens", "completion_tokens", "timings", "logprobs", "token_logprobs",
+                "prompt_tokens", "completion_tokens", "timings",
+                "logprobs", "token_logprobs", "top_logprobs",
             }},
         )
 
@@ -312,6 +315,15 @@ class TorchBackend(BackendBase):
     def metrics(self) -> dict[str, float]:
         """The runtime's own gauges, or nothing when it publishes none."""
         return {}
+
+    def audit_request(self, body: Mapping[str, Any], *, endpoint: str = CHAT) -> FieldRefusal | None:
+        """The audit against this runtime's declaration, which is not the family's.
+
+        This adapter extends :class:`BackendBase` rather than :class:`RuntimeAdapter`, so it does not
+        inherit the family's override and has to state the same read itself: the table row for
+        ``torch``, which is the one row with ``logprobs`` and ``structured_outputs`` set.
+        """
+        return audit(body, endpoint=endpoint, serves=served_fields(self.name))
 
     def generate(self, requests: Sequence[GenerationRequest]) -> list[GenerationResult]:
         self._ensure_loaded()
@@ -364,6 +376,11 @@ class TorchBackend(BackendBase):
                     if self._serving_engine is None:
                         raise RuntimeError("Torch serving engine is unavailable")
                     events = self._serving_engine.submit_stream(self._payload(request, stream=True))
+                # The client's stop sequences, matched here because this is where the text is: the
+                # events below carry a step's new tokens, and the text a client sees is the run of
+                # those deltas. Without this the streamed answer ran past the marker that the serial
+                # one cuts at.
+                stop = StopFilter(request.sampling_params.stop)
                 for event in events:
                     self._check_cancelled(request.request_id)
                     if isinstance(event, TokenEvent):
@@ -378,17 +395,34 @@ class TorchBackend(BackendBase):
                         tokenizer = self._tokenizer()
                         if tokenizer is not None:
                             text = str(tokenizer.decode(token_ids))
+                    if kind == "done":
+                        text = stop.tail()
+                    else:
+                        text = stop.feed(text)
                     usage = None
                     if event.get("prompt_tokens") is not None:
                         completion = event.get("completion_tokens") or token_ids
                         if completion and isinstance(completion[0], list):
                             completion = completion[0]
                         usage = Usage(int(event.get("prompt_tokens", 0)), len(completion))
+                    finish_reason = event.get("finish_reason") if kind == "done" else None
+                    if stop.hit and finish_reason is not None:
+                        # The loop's own reason is "length" or "stop" and it does not know a client
+                        # marker ended the answer; the marker is what it was, the same way the serial
+                        # route reports it.
+                        finish_reason = "stop"
+                    if kind != "done" and not text:
+                        # Nothing to send: the delta was held back whole (it may still complete a
+                        # marker), or it arrived after one was matched. An empty content delta is a
+                        # chunk the client has to read and cannot use. The event that *matched* is
+                        # not this one -- there `feed` returned the text before the marker, which is
+                        # non-empty unless the marker started the very first delta.
+                        continue
                     yield TokenEvent(
                         request_id=request.request_id,
                         token_id=token_ids[-1] if token_ids else None,
                         text=text,
-                        finish_reason=event.get("finish_reason") if kind == "done" else None,
+                        finish_reason=finish_reason,
                         usage=usage,
                         metadata={"type": kind} if kind else {},
                     )

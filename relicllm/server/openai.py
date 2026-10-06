@@ -2,7 +2,7 @@
 
 The protocol layer accepts any ``EngineBackend``.  Model loading remains the
 responsibility of the chosen adapter, so this module can be tested with a fake
-backend and can serve Torch or native C++ without duplicating JSON handling.
+backend and can serve any runtime without duplicating JSON handling.
 """
 
 from __future__ import annotations
@@ -322,9 +322,10 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             # Two audits, and the split is deliberate. Shape is the host's: `"n": 2.5` is not a
             # number of choices on any runtime, and the check is the same cheap JSON inspection
             # wherever the request lands. Capability is the backend's, because whether the answer
-            # applies a field depends on the runtime and, for the C++ one, on the engine under it.
-            # Both run before dispatch, so a request this server will not serve is refused with a
-            # 400 naming the field rather than streamed halfway and then abandoned.
+            # applies a field depends on which runtime it is; the adapter reads its row in
+            # `relicllm/backends/capabilities.py`. Both run before dispatch, so a request this
+            # server will not serve is refused with a 400 naming the field rather than streamed
+            # halfway and then abandoned.
             refusal = audit_shape(body, endpoint=endpoint)
             if refusal is None:
                 refusal = server.backend.audit_request(body, endpoint=endpoint)

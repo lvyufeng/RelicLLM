@@ -21,8 +21,9 @@ from relicllm.api import (
     Usage,
 )
 from relicllm.choices import CHOICE_MARK
-from relicllm.protocol.contract import CHAT, FieldRefusal
+from relicllm.protocol.contract import CHAT, FieldRefusal, audit
 
+from .capabilities import served_fields
 from .runtime_engine import RankedWorker, cancel_key
 
 
@@ -73,8 +74,8 @@ def settled_text(decoded: str) -> str:
 class BackendBase:
     """Small common implementation for lifecycle and cancellation bookkeeping.
 
-    The lock is intentionally at the backend boundary.  Current native engines
-    own one mutable KV-cache transaction, so concurrent calls must serialize
+    The lock is intentionally at the backend boundary.  Every runtime here owns
+    one mutable KV-cache transaction, so concurrent calls must serialize
     until a request-aware cache scheduler is implemented.
     """
 
@@ -168,11 +169,11 @@ class BackendBase:
         because a ``stop`` of ``5`` is wrong on every runtime; what is left here is the question
         only the backend can answer.
 
-        ``None`` by default, and deliberately: a runtime that has not stated which fields it applies
-        has no claim to hold a request to, and refusing every field in the table for every adapter
-        that has not been audited would replace a silent ignore with a blanket refusal. The C++
-        adapter is the one that declares -- it is the runtime whose own front end is being retired,
-        so its contract is the one being carried over.
+        ``None`` by default, and that default is load-bearing rather than a placeholder: a runtime
+        that has not stated which fields it applies has no claim to hold a request to, and refusing
+        every field in the table would replace a silent ignore with a blanket refusal. Test doubles
+        and adapters outside the runtime family extend this class precisely to stay undeclared --
+        "no declaration" has to stay distinguishable from "declares nothing served".
         """
         return None
 
@@ -278,8 +279,8 @@ class BackendBase:
 
         The Python-runtime family does not take this body: :class:`RuntimeAdapter` inherits
         :class:`~relicllm.backends.runtime_engine.RankedWorker`'s loop, which is the same program
-        written once for all of them. This is what a backend outside that family falls back to --
-        ``cpp`` was the last one -- and a backend that has no worker entry has to say so rather
+        written once for all of them. This is what a backend outside that family falls back to, and no
+        backend is outside it today -- so a backend that has no worker entry has to say so rather
         than return.
         """
         raise TensorParallelSupervisorError(
@@ -324,6 +325,18 @@ class RuntimeAdapter(RankedWorker, BackendBase):
     #: tokenizer is not loaded".  Read by :meth:`_tokenize` alone: nothing else here needs to know
     #: which runtime it is.
     _RUNTIME_LABEL = ""
+
+    def audit_request(self, body: Mapping[str, Any], *, endpoint: str = CHAT) -> FieldRefusal | None:
+        """The base class's audit, against this runtime's own declaration.
+
+        The declaration is ``capabilities.served_fields(self.name)`` -- the same read
+        :func:`~relicllm.backends.capabilities.declared_capabilities` makes for what ``/v1/models``
+        publishes -- so the field a runtime advertises and the field a request is refused on are one
+        value in one place. Every adapter in this family is a live runtime with a row in that table;
+        the adapters that are not (test doubles, and anything outside this family) inherit
+        :class:`BackendBase` and keep its ``None``.
+        """
+        return audit(body, endpoint=endpoint, serves=served_fields(self.name))
 
     def prepare(self) -> None:
         """Open and load, which is every path that has to have happened before a request.

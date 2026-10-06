@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 from relicllm.api import BackendCapabilities, EngineArgs, UnsupportedFeatureError
+from relicllm.protocol.contract import ServedFields
 
 
 # ---------------------------------------------------------------------------------------------
@@ -199,7 +200,7 @@ def gguf_architecture(path: str) -> str | None:
     separates "a Xing4 export" from "a file ending in .gguf". The two failures are kept apart --
     ``None`` is *no evidence* (not a GGUF, more than one of them, a header that will not parse) and
     an empty string is impossible, so a caller can refuse on a header it read rather than on one it
-    could not. Where it is ``None`` the caller falls through to the adapter, and the native reader
+    could not. Where it is ``None`` the caller falls through to the adapter, whose GGUF reader
     reports the precise error when it is the one that ends up with the file.
     """
     try:
@@ -301,8 +302,16 @@ class RuntimeCapabilities:
     supports_batch: bool = False
     supports_streaming: bool = True
     supports_cancellation: bool = False
-    supports_logprobs: bool = False
-    supports_structured_outputs: bool = False
+    #: Which request fields this runtime's answer actually applies, audited by
+    #: :func:`relicllm.protocol.contract.audit` against every body the runtime is asked to serve.
+    #:
+    #: It is one table for two questions that used to have two answers: the wire declaration
+    #: (:func:`declared_capabilities` reads its ``logprobs`` and ``structured_outputs`` from here)
+    #: and the refusal a request gets when it names a field the runtime will not apply. A runtime
+    #: that declares a field and does not apply it is the failure this field exists to make
+    #: impossible, which is why it is a ``ServedFields`` -- the very object :func:`audit` refuses
+    #: from -- rather than a handful of booleans this module would then have to keep in step.
+    served_fields: ServedFields = ServedFields()
     supports_speculative_decoding: tuple[str, ...] = ()
     #: Whether this runtime has a prefix-resumption path *at all*. Whether it is open in a given
     #: configuration is the instance's answer, not this one's -- see
@@ -445,12 +454,12 @@ def _is_deepseek_v4_gguf(architecture: str | None) -> bool:
 def _identify_torch(args: EngineArgs) -> Identification:
     """Whether this checkpoint is one the ``torch`` runtime can serve.
 
-    Despite its name and its historical casting as the generic fallback, this runtime is hard-wired
-    to DeepSeek-V4: it loads ``relicllm.models.deepseek_v4`` through the legacy serving engine, with
-    no architecture dispatch anywhere. So it identifies DeepSeek-V4 and refuses everything else --
-    the same evidence rule the other runtimes use. A checkpoint nothing claims no longer falls
-    through to here and gets read as V4; it is refused, and :func:`route` reports that no runtime
-    serves it.
+    The name says which framework it is built on and nothing about scope: this runtime is
+    hard-wired to DeepSeek-V4 -- it loads ``relicllm.models.deepseek_v4`` through the legacy
+    serving engine, with no architecture dispatch anywhere. So it identifies DeepSeek-V4 and
+    refuses everything else, which is the same evidence rule the other runtimes use. A checkpoint
+    nothing claims no longer falls through to here and gets read as V4; it is refused, and
+    :func:`route` reports that no runtime serves it.
     """
     config = read_config(args.model, args.config_path)
     if config is not None and is_deepseek_v4_config(config):
@@ -474,15 +483,34 @@ def _identify_torch(args: EngineArgs) -> Identification:
 RUNTIMES: dict[str, RuntimeCapabilities] = {
     "torch": RuntimeCapabilities(
         name="torch",
-        # Named after the framework it was once contrasted with the C++ engine on, but it is this
-        # one architecture's runtime -- so it declares that architecture, which is what makes it a
-        # candidate rather than a catch-all in `auto` and in triage.
+        # Named for the framework it is built on, and it declares the one architecture it serves --
+        # which is what makes it a candidate rather than a catch-all in `auto` and in triage.
         models=("deepseek_v4",),
         model_formats=("safetensors", "gguf"),
         devices=("cuda", "cpu"),
         supports_batch=False,
         supports_cancellation=True,
-        supports_logprobs=True,
+        # The filling of the table that can be read off this file. `choices` is the host's fan-out
+        # (`relicllm/choices.py::expanded`) rather than anything a runtime does, so every entry
+        # takes it. `logit_bias` and `parallel_tool_calls` are applied nowhere here. Streaming
+        # logprobs are off everywhere: a streamed chunk carries its token's text and no ranking,
+        # and the DeepSeek-V4 payload builder raises rather than pretending otherwise.
+        #
+        # `structured_outputs` is the one this runtime answers differently from the rest, and what
+        # it means is stated on the field: the checkpoint's own instruction template
+        # (`relicllm/encoding/deepseek_v4.py::response_format_template`) reaches the prompt through
+        # `protocol/chat.py::prepare_messages`. There is no logit mask behind it -- the runtime has
+        # no per-token sampler to hang one on -- and it is declared because the prompt instruction
+        # is what the field buys here.
+        served_fields=ServedFields(
+            choices=True,
+            stop=True,
+            logprobs=True,
+            penalties=True,
+            repetition_penalty=True,
+            min_p=True,
+            structured_outputs=True,
+        ),
         reads_prefix_cache=True,
         identifies=_identify_torch,
         details={
@@ -497,6 +525,12 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
         model_formats=("safetensors",),
         devices=("cpu", "cuda"),
         supports_cancellation=True,
+        # `structured_outputs` for the same reason `torch` declares it, and a different encoder:
+        # this checkpoint ships its own (`<checkpoint>/encoding/encoding.py`) and renders the
+        # schema block under `role == "system"`, which is where
+        # `protocol/chat.py::prepare_messages` now attaches the field. `logprobs` is False here
+        # where it is True on `torch`: this runtime's loop does not produce a ranking.
+        served_fields=ServedFields(choices=True, stop=True, structured_outputs=True),
         reads_prefix_cache=True,
         identifies=lambda args: _identify_v41_or_mimo(
             args, "v41", is_v41_config, "DeepSeek-V4.1-Flash"
@@ -513,6 +547,11 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
         model_formats=("safetensors",),
         devices=("cuda",),
         supports_cancellation=True,
+        # `stop` is served on both routes: the streamed one through `TokenStreamer`, and the serial
+        # one through `RuntimeAdapter._serial_result`. `response_format` is refused rather than
+        # dropped -- this encoder renders no schema block, so accepting the field would be the
+        # silent ignore the contract exists to prevent.
+        served_fields=ServedFields(choices=True, stop=True),
         reads_prefix_cache=True,
         identifies=lambda args: _identify_v41_or_mimo(
             args, "mimo", is_mimo_config, "MiMo-V2.6-Flash"
@@ -527,6 +566,8 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
         model_formats=("gguf",),
         devices=("cuda",),
         supports_cancellation=True,
+        # The same two fields `mimo` serves, for the same two reasons.
+        served_fields=ServedFields(choices=True, stop=True),
         reads_prefix_cache=True,
         identifies=_identify_xing4,
         # No static prose, for the reason `mimo` has none.
@@ -541,6 +582,10 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
         # above 1 is refused rather than accepted and ignored.
         supports_batch=False,
         supports_cancellation=True,
+        # The same two fields as the other two specific runtimes. This one samples greedily with
+        # `argmax`, so half the sampling table has nothing to apply to -- which is the reason the
+        # field is refused rather than accepted and ignored.
+        served_fields=ServedFields(choices=True, stop=True),
         # The first of the specific runtimes with no prefix store: `models/qwen4_exp/runtime.py`
         # forward-passes its whole prompt, and resuming it needs a store that module does not have.
         # False here so a client reads "a repeated prefix is *not* resumed", which is the honest
@@ -569,6 +614,16 @@ def runtime_capabilities(name: str) -> RuntimeCapabilities:
         raise KeyError(
             f"no capability declaration for backend {name!r}; declared: {sorted(RUNTIMES)}"
         ) from exc
+
+
+def served_fields(name: str) -> ServedFields:
+    """Which request fields the runtime ``name`` applies, as a declaration.
+
+    The same read :func:`declared_capabilities` makes for the wire booleans and the adapters make
+    for their audit, so a runtime's answer to "does the answer apply this field" is one value in
+    one place.
+    """
+    return runtime_capabilities(name).served_fields
 
 
 def declared_capabilities(
@@ -605,8 +660,12 @@ def declared_capabilities(
         supports_streaming=declaration.supports_streaming,
         supports_cancellation=declaration.supports_cancellation,
         supports_embeddings=False,
-        supports_logprobs=declaration.supports_logprobs,
-        supports_structured_outputs=declaration.supports_structured_outputs,
+        # Derived from the served-field table rather than declared a second time. A runtime that
+        # told `/v1/models` it ranks log probabilities and then refused `logprobs` would be
+        # answering two questions about one capability with two values; this is the read that
+        # makes them the same value.
+        supports_logprobs=declaration.served_fields.logprobs,
+        supports_structured_outputs=declaration.served_fields.structured_outputs,
         supports_prefix_caching=declaration.reads_prefix_cache and reads_prefix_cache,
         supports_speculative_decoding=declaration.supports_speculative_decoding,
         details={**declaration.details, **(details or {})},

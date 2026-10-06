@@ -1,4 +1,4 @@
-"""RelicLLM: one user-facing API over independent Torch and C++ backends."""
+"""RelicLLM: one user-facing API over the independent PyTorch runtimes."""
 
 __version__ = "0.1.0.dev0"
 

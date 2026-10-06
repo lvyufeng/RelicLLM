@@ -81,6 +81,24 @@ def device_hint(value: Any) -> str:
     return f"; {value!r} names a card, which is `--device-ids {card}`"
 
 
+def backend_hint(value: Any) -> str:
+    """The sentence a refusal of ``cpp`` ends with, or the empty string.
+
+    ``cpp`` is not a runtime here any more: the native engine was deleted with the ``cpp_engine/``
+    tree (see ``docs/architecture/native_surface_decision.md``), so ``--backend cpp`` selects
+    nothing. ``choices`` alone would print ``invalid choice: 'cpp'``, which is true and reads as a
+    typo -- while the caller's actual mistake is that they are on a distribution where the name
+    describes something that was removed. One function because two places refuse the value -- the
+    parser and :meth:`EngineArgs.__post_init__` -- and only the value differs between them.
+    """
+    if str(value).strip().lower() != "cpp":
+        return ""
+    return (
+        "; `cpp` is not in this distribution: the native engine was removed with the `cpp_engine/` "
+        f"tree. The runtimes are {', '.join(sorted(_BACKENDS - {'auto'}))}"
+    )
+
+
 def _coerce_device_ids(value: Any) -> tuple[int, ...]:
     """``--device-ids`` as a tuple of card indices, from a list, a tuple or ``"2,3"``.
 
@@ -182,7 +200,10 @@ class EngineArgs:
         self.model_format = str(self.model_format).lower()
         self.kv_cache_dtype = str(self.kv_cache_dtype).lower()
         if self.backend not in _BACKENDS:
-            raise ConfigurationError(f"backend must be one of {sorted(_BACKENDS)}, got {self.backend!r}")
+            raise ConfigurationError(
+                f"backend must be one of {sorted(_BACKENDS)}, got {self.backend!r}"
+                f"{backend_hint(self.backend)}"
+            )
         if self.model_format not in _FORMATS:
             raise ConfigurationError(
                 f"model_format must be one of {sorted(_FORMATS)}, got {self.model_format!r}"
