@@ -2,9 +2,14 @@
 """Record a served-path golden fixture for one entry point.
 
 Run this once per entry point, when the entry point's answer is believed correct. It runs the entry
-point for real, records the command line, the environment and the answer, and writes
-`tests/fixtures/golden/<entry>.json`. `tests/test_served_path_golden.py` then re-runs the same thing
-on every suite run, and skips when the checkpoint is not on the machine reading it.
+point for real, records the command line, the environment, the card it ran on and the answer, and
+writes `tests/fixtures/golden/<entry>.json`. `tests/test_served_path_golden.py` then re-runs the same
+thing on every suite run, and skips when the checkpoint is not on the machine reading it.
+
+The card is read from the recording host and recorded as free text -- the one field here that
+answers "which silicon was this", which `commit` and `taken_at` cannot. It is recorded and never
+read: nothing compares it and no skip consults it, so a fixture with no card (every one recorded
+before this field existed) is a gap in provenance and not a host that cannot run.
 
 Recording is a deliberate act rather than a side effect: a fixture is only worth having if a human
 looked at the answer and agreed it was right, because re-recording is how a real regression gets
@@ -121,6 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         requires=requires,
         commit=_current_commit(),
         taken_at=datetime.date.today().isoformat(),
+        card=golden.captured_card(),
         notes=args.notes,
     )
 
