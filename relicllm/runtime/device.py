@@ -1,10 +1,19 @@
 """Which accelerator this process runs on, and the names torch and the collectives use for it.
 
-RelicLLM targets two hardware families that share no runtime: NVIDIA's Turing cards (``sm_75``) and
-Ascend's 910 series. Nothing above this module should have to know which one it is on, and until now
-nothing did -- because every route was CUDA, spelled ``torch.cuda`` at three hundred and thirty call
-sites. This module is the one place that answers the question, so that those three hundred and thirty
-are decisions made *here* rather than assumptions made *there*.
+RelicLLM targets two hardware families that share no runtime: NVIDIA's CUDA cards and Ascend's 910
+series. Nothing above this module should have to know which one it is on, and until now nothing did
+-- because every route was CUDA, spelled ``torch.cuda`` at three hundred and thirty call sites. This
+module is the one place that answers the question, so that those three hundred and thirty are
+decisions made *here* rather than assumptions made *there*.
+
+The two halves of that question are answered separately, because they are separately true. *Which
+platform* is :func:`probe_accelerator`: ``cuda``, ``ascend`` or ``cpu``. *Which card, within CUDA* is
+:func:`probe_card_capability`, and it is a second question because the NVIDIA side is no longer one
+card: the tree was written for Turing (``sm_75``, RTX 2080 Ti) and now also ships on Ada (``sm_89``,
+RTX 4090), which carry different tensor-core instructions and which ``relic-core`` already branches
+between. A module that answered only the first would leave every caller to re-derive the second from
+``torch.cuda`` at its own call site -- which is the shape of the problem this module exists to end,
+met again one level down.
 
 Three things are deliberately pure, and each is pure for a reason a test can use:
 
@@ -159,6 +168,124 @@ def probe_accelerator(
     if npu:
         return Accelerator("ascend", _DEVICE_TYPE["ascend"], _COLLECTIVE["ascend"])
     return Accelerator("cpu", _DEVICE_TYPE["cpu"], _COLLECTIVE["cpu"])
+
+
+#: The three-digit compute capability the kernel libraries use, ``major * 100 + minor * 10``, so
+#: that ``sm_75`` is ``750`` and ``sm_89`` is ``890``. Spelled here rather than left implicit
+#: because ``relic-core``'s headers compare against exactly this (``GGML_CUDA_CC_TURING`` is
+#: ``750``), and a second arithmetic convention for the same two cards is a footgun.
+def _compute_capability(major: int, minor: int) -> int:
+    return major * 100 + minor * 10
+
+
+@dataclass(frozen=True, slots=True)
+class CardCapability:
+    """What the CUDA card under this process is, in the terms a kernel choice is made in.
+
+    This exists because :class:`Accelerator` answers *which platform* and nothing answered *which
+    card*, and the two NVIDIA families this tree runs on do not merely differ in speed. Turing
+    (``sm_75``, the RTX 2080 Ti) has no FP8 tensor core and reaches half-precision matrix multiply
+    through a sequence of ``m16n8k8`` instructions; Ada (``sm_89``, the RTX 4090) has an FP8 tensor
+    core and does it in one ``m16n8k16``. ``relic-core`` already branches on the difference --
+    ``ops.py``'s ``_auto_impl`` sends an FP8 op down a Triton path above ``major`` 8 and a Torch
+    path below it -- so a caller that needs to know which side of that fork it is on has had no way
+    to ask. This is the way.
+
+    **A card this module has never heard of is not a refusal.** :func:`probe_card_capability`
+    reports whatever torch reports; ``known`` is only "this is one of the cards the tree was
+    validated on", and an unknown card keeps its real numbers so a caller can still decide. The
+    *default* value is where the caution lives: :data:`UNKNOWN_CAPABILITY` is Turing, the oldest
+    thing the tree supports, so a caller handed no card at all takes the branch that assumes
+    nothing the newer card has -- which is the safe direction for a capability gate to fail in.
+    """
+
+    #: Whether this is one of the cards the tree was validated against, not whether it is usable.
+    known: bool
+    major: int
+    minor: int
+    #: What the driver calls the card, for a log line and for a golden fixture's record. Empty when
+    #: nothing was read; never load-bearing.
+    name: str = ""
+
+    @property
+    def cc(self) -> int:
+        """The three-digit capability: ``750`` for ``sm_75``, ``890`` for ``sm_89``."""
+        return _compute_capability(self.major, self.minor)
+
+    @property
+    def supports_fp8_tensor_core(self) -> bool:
+        """Whether an FP8 matmul is a tensor-core op here.
+
+        ``major >= 8``: Ampere and up have one, Turing does not. This is deliberately the *same
+        predicate* ``relic-core``'s ``ops.py`` uses to choose between its Triton and Torch FP8
+        paths, so the answer here and the path taken there cannot disagree.
+        """
+        return self.major >= 8
+
+    @property
+    def supports_fp4_tensor_core(self) -> bool:
+        """Whether a 4-bit matmul is a tensor-core op here: Blackwell (``sm_10x``) and no earlier.
+
+        Neither card this repository ships for has one. It is here because "4-bit" is a name a
+        model file can carry regardless of the card, and a caller that assumed FP8's answer also
+        covered FP4 would be wrong on the 4090.
+        """
+        return self.major >= 10
+
+
+#: The cards the tree has been validated on, by compute capability. Membership sets ``known``; it
+#: decides nothing else, and a card absent from this map is still probed and still reports its real
+#: numbers.
+KNOWN_CAPABILITIES: dict[int, str] = {750: "Turing / RTX 2080 Ti", 890: "Ada / RTX 4090"}
+
+#: What a caller with no card gets. Turing is the floor of everything the tree supports, so a
+#: capability gate reading this takes the conservative branch -- no FP8, no FP4 -- rather than
+#: assuming whatever the newer card added.
+UNKNOWN_CAPABILITY = CardCapability(known=False, major=7, minor=5, name="")
+
+
+def probe_card_capability(
+    *,
+    index: int = 0,
+    capability: tuple[int, int] | None = None,
+    name: str | None = None,
+) -> CardCapability:
+    """The card at ``index``, or :data:`UNKNOWN_CAPABILITY` when there is none to read.
+
+    Both halves of the answer may be supplied instead of probed, which is the convention every
+    other probe here follows and the reason this is testable off the card:
+
+    - ``capability=(8, 9)`` is what the RTX 4090 host answers, and handing it in makes the Ada
+      branch reachable from the 2080 Ti box that has no Ada device -- the same trick
+      :func:`probe_accelerator` uses to make the Ascend arm reachable on a CUDA host.
+    - ``capability`` given as ``None`` means "ask torch", not "no card". A host that genuinely has
+      no CUDA device answers through the probe failing, which returns the unknown value rather
+      than raising: a question with no card to answer it is not an error, it is the host half of
+      the same choice :func:`accelerator_device` makes with ``None``.
+
+    The name is read from torch only when the capability was; a caller who supplied the numbers
+    gets its own label or none, because cobbling a name from ``torch.cuda`` while the caller is
+    describing a card that may not be on this host would report a *different* card's name.
+    """
+    if capability is None:
+        try:
+            import torch
+        except ImportError:  # pragma: no cover - see _cuda_available
+            return UNKNOWN_CAPABILITY
+        if not torch.cuda.is_available():  # pragma: no cover - the sm_75/ascend hosts answer here
+            return UNKNOWN_CAPABILITY
+        major, minor = torch.cuda.get_device_capability(index)
+        card_name = torch.cuda.get_device_name(index)
+    else:
+        major, minor = capability
+        card_name = name or ""
+    known_name = KNOWN_CAPABILITIES.get(_compute_capability(int(major), int(minor)))
+    return CardCapability(
+        known=known_name is not None,
+        major=int(major),
+        minor=int(minor),
+        name=known_name or card_name,
+    )
 
 
 def _checked(platform: str) -> str:
@@ -458,8 +585,11 @@ def device_count(*, platform: str | None = None) -> int:
 
 __all__ = [
     "ACCELERATORS",
+    "KNOWN_CAPABILITIES",
     "PLATFORMS",
+    "UNKNOWN_CAPABILITY",
     "Accelerator",
+    "CardCapability",
     "DeviceError",
     "accelerator_device",
     "bind_device",
@@ -467,6 +597,7 @@ __all__ = [
     "device_count",
     "device_type_registered",
     "probe_accelerator",
+    "probe_card_capability",
     "process_group_backend",
     "require_device",
     "resolve_platform",
