@@ -37,7 +37,6 @@ Stage 5 of [#388](https://github.com/lvyufeng/PocketLLM/issues/388).
 from __future__ import annotations
 
 import os
-import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -357,7 +356,6 @@ class Xing4Backend(RuntimeAdapter):
                 ),
             )
         self._heads = 0
-        self._request_lock = threading.RLock()
         self._details: dict[str, Any] = {}
 
     def _runtime_device(self) -> int:

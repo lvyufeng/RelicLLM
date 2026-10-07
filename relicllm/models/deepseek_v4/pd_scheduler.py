@@ -1,12 +1,30 @@
-"""Logical PD-separation scheduler for the standalone TP=4 inference runtime."""
+"""DeepSeek-V4's PD-mode phase policy and the execution facade that carries it.
+
+This is the V4 half of what used to be one file. The *queue* left for
+:mod:`relicllm.scheduler` -- it was a scheduler with no callers and is now a scheduler with five, the
+model-agnostic one. What stays here is what is V4's alone: the phase policy that pins CPU sets, OMP
+thread counts, NUMA nodes and the INT8 attention variant *by phase* for the host-resident-expert PD
+run, and the facade that hands the model its chunked-prefill size and phase hook.
+
+Why the split falls here, and not at "generic vs specific":
+
+* The queue is not V4's. Four other runtimes reach the engine one request at a time and had nothing;
+  the scheduler gives them the one queue too.
+* The phase policy *is* V4's. ``apply_phase_resources`` reads ``DEEPSEEK_PD_*`` and pins the process
+  to cores -- machinery for a run that puts experts on the host, which no other runtime in this tree
+  does. Lifting it into the shared scheduler would have made the shared scheduler a V4 module in
+  disguise, which is the failure the lift existed to avoid.
+
+``relicllm/scheduler/core.py`` reads none of the ``DEEPSEEK_PD_*`` names;
+``tests/test_scheduler_core.py`` scans the shared package to keep it that way.
+"""
 
 from __future__ import annotations
 
-import collections
 import os
 import signal
-from dataclasses import dataclass, field
-from typing import Any, Callable, Deque, Iterator, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Iterator, List, Optional
 
 
 _ATTN_INT8_SUFFIXES = (
@@ -20,37 +38,39 @@ _ATTN_INT8_SUFFIXES = (
 
 _VALID_PHASES = ("prefill", "decode")
 
-@dataclass
-class Request:
-    request_id: int
-    prompt_tokens: List[int]
-    max_new_tokens: int
-    phase: str = "prefill"
-    kv_owned: bool = False
-    next_prefill_offset: int = 0
-    metadata: dict = field(default_factory=dict)
-
 
 @dataclass
 class PDExecutionConfig:
-    scheduler: Optional["PDScheduler"] = None
+    """The phase policy and chunk size a PD run executes with.
+
+    ``phase_policy`` is the V4 resource pinning above, or ``None`` when the run has not asked for it
+    (every run that has not set a ``DEEPSEEK_PD_*`` variable). ``prefill_chunk_tokens`` is the
+    chunked-prefill size, forwarded to the generation call under that name.
+    """
+
+    phase_policy: Optional["PDPhasePolicy"] = None
     prefill_chunk_tokens: int = 0
-    decode_first: bool = True
 
     @property
     def phase_callback(self) -> Optional[Callable[[str], None]]:
-        if self.scheduler is None or not self.scheduler.has_phase_overrides():
+        if self.phase_policy is None or not self.phase_policy.has_phase_overrides():
             return None
-        return self.scheduler.apply_phase_resources
+        return self.phase_policy.apply_phase_resources
 
     @classmethod
-    def from_env(cls, scheduler: Optional["PDScheduler"] = None) -> "PDExecutionConfig":
+    def from_env(cls, phase_policy: Optional["PDPhasePolicy"] = None) -> "PDExecutionConfig":
         prefill_chunk_tokens = int(os.getenv("DEEPSEEK_SERVING_PREFILL_CHUNK_TOKENS", "0") or "0")
-        decode_first = os.getenv("DEEPSEEK_SERVING_DECODE_FIRST", "1").lower() not in {"0", "false", "no"}
-        return cls(scheduler=scheduler, prefill_chunk_tokens=prefill_chunk_tokens, decode_first=decode_first)
+        return cls(phase_policy=phase_policy, prefill_chunk_tokens=prefill_chunk_tokens)
 
 
 class PDExecutionFacade:
+    """Runs a model's generation with the PD run's chunk size and phase hook attached.
+
+    A thin adapter over one of the model's two generation entry points (serial or streamed): it is
+    the single place the ``prefill_chunk_tokens`` keyword and the phase callback are added, so the
+    two call paths cannot drift in which they pass.
+    """
+
     def __init__(self, generate_fn: Callable, generate_stream_fn: Callable, config: PDExecutionConfig) -> None:
         self._generate_fn = generate_fn
         self._generate_stream_fn = generate_stream_fn
@@ -61,9 +81,9 @@ class PDExecutionFacade:
         cls,
         generate_fn: Callable,
         generate_stream_fn: Callable,
-        scheduler: Optional["PDScheduler"] = None,
+        phase_policy: Optional["PDPhasePolicy"] = None,
     ) -> "PDExecutionFacade":
-        return cls(generate_fn, generate_stream_fn, PDExecutionConfig.from_env(scheduler))
+        return cls(generate_fn, generate_stream_fn, PDExecutionConfig.from_env(phase_policy))
 
     def run(
         self,
@@ -74,7 +94,7 @@ class PDExecutionFacade:
         temperature: float,
         **generate_kwargs,
     ):
-        return self._call_generate_with_kwargs(
+        return self._call_with_kwargs(
             self._generate_fn,
             model,
             prompt_tokens,
@@ -93,7 +113,7 @@ class PDExecutionFacade:
         temperature: float,
         **generate_kwargs,
     ) -> Iterator[dict[str, Any]]:
-        yield from self._call_generate_with_kwargs(
+        yield from self._call_with_kwargs(
             self._generate_stream_fn,
             model,
             prompt_tokens,
@@ -103,26 +123,7 @@ class PDExecutionFacade:
             generate_kwargs,
         )
 
-    def _call_generate(
-        self,
-        generate_fn: Callable,
-        model: Any,
-        prompt_tokens: List[List[int]],
-        max_new_tokens: int,
-        eos_id: int,
-        temperature: float,
-    ):
-        return self._call_generate_with_kwargs(
-            generate_fn,
-            model,
-            prompt_tokens,
-            max_new_tokens,
-            eos_id,
-            temperature,
-            {},
-        )
-
-    def _call_generate_with_kwargs(
+    def _call_with_kwargs(
         self,
         generate_fn: Callable,
         model: Any,
@@ -140,11 +141,19 @@ class PDExecutionFacade:
         return generate_fn(model, prompt_tokens, max_new_tokens, eos_id, temperature, **kwargs)
 
 
-class PDScheduler:
+class PDPhasePolicy:
+    """V4's per-phase resource policy, read from ``DEEPSEEK_PD_*``.
+
+    Not a scheduler: it holds no queue and admits nothing. The one scheduler is
+    :class:`relicllm.scheduler.Scheduler`; the model's generation loop calls
+    :meth:`apply_phase_resources` when the phase changes (through the facade's ``phase_callback``),
+    and this decides what a phase change does to the host -- the INT8 attention variant in the
+    environment, the server's run/pause, the CPU set, the OMP thread count and the NUMA node. All of
+    it is off unless a ``DEEPSEEK_PD_*`` variable is set, which is why a run without any behaves
+    exactly as one that never had this class.
+    """
+
     def __init__(self) -> None:
-        self.decode_queue: Deque[Request] = collections.deque()
-        self.prefill_queue: Deque[Request] = collections.deque()
-        self._next_request_id: int = 0
         self._current_phase: Optional[str] = None
         self._current_runtime_threads: Optional[int] = None
         self._pause_server_during_prefill = os.getenv("DEEPSEEK_PD_PAUSE_SERVER_DURING_PREFILL", "0").lower() in {"1", "true", "yes"}
@@ -155,47 +164,6 @@ class PDScheduler:
         except ValueError:
             self._server_pid = None
         self._server_paused: Optional[bool] = None
-
-    def submit(self, prompt_tokens: List[int], max_new_tokens: int) -> Request:
-        request = Request(
-            request_id=self._next_request_id,
-            prompt_tokens=list(prompt_tokens),
-            max_new_tokens=int(max_new_tokens),
-            phase="prefill",
-        )
-        self._next_request_id += 1
-        self.prefill_queue.append(request)
-        return request
-
-    def has_work(self) -> bool:
-        return bool(self.decode_queue) or bool(self.prefill_queue)
-
-    def next_step(self) -> Optional[Tuple[Request, str]]:
-        if self.decode_queue:
-            return self.decode_queue[0], "decode"
-        if self.prefill_queue:
-            return self.prefill_queue[0], "prefill"
-        return None
-
-    def mark_prefill_done(self, request: Request) -> None:
-        try:
-            self.prefill_queue.remove(request)
-        except ValueError:
-            pass
-        request.phase = "decode"
-        request.kv_owned = True
-        self.decode_queue.append(request)
-
-    def mark_request_done(self, request: Request) -> None:
-        try:
-            self.decode_queue.remove(request)
-        except ValueError:
-            pass
-        try:
-            self.prefill_queue.remove(request)
-        except ValueError:
-            pass
-        request.kv_owned = False
 
     def has_phase_overrides(self) -> bool:
         return (
@@ -309,17 +277,17 @@ def run_single_request(
     max_new_tokens: int,
     eos_id: int,
     temperature: float,
-    scheduler: Optional[PDScheduler] = None,
+    phase_policy: Optional[PDPhasePolicy] = None,
     **generate_kwargs,
 ):
     prefill_chunk_tokens = int(generate_kwargs.pop("prefill_chunk_tokens", 0) or 0)
     facade = PDExecutionFacade(
         generate_fn,
         lambda *args, **kwargs: iter(()),
-        PDExecutionConfig(scheduler=scheduler or PDScheduler(), prefill_chunk_tokens=prefill_chunk_tokens),
+        PDExecutionConfig(phase_policy=phase_policy or PDPhasePolicy(), prefill_chunk_tokens=prefill_chunk_tokens),
     )
     if generate_kwargs:
-        return facade._call_generate_with_kwargs(
+        return facade._call_with_kwargs(
             generate_fn,
             model,
             prompt_tokens,
@@ -338,17 +306,17 @@ def run_single_stream_request(
     max_new_tokens: int,
     eos_id: int,
     temperature: float,
-    scheduler: Optional[PDScheduler] = None,
+    phase_policy: Optional[PDPhasePolicy] = None,
     **generate_kwargs,
 ):
     prefill_chunk_tokens = int(generate_kwargs.pop("prefill_chunk_tokens", 0) or 0)
     facade = PDExecutionFacade(
         lambda *args, **kwargs: None,
         generate_stream_fn,
-        PDExecutionConfig(scheduler=scheduler or PDScheduler(), prefill_chunk_tokens=prefill_chunk_tokens),
+        PDExecutionConfig(phase_policy=phase_policy or PDPhasePolicy(), prefill_chunk_tokens=prefill_chunk_tokens),
     )
     if generate_kwargs:
-        yield from facade._call_generate_with_kwargs(
+        yield from facade._call_with_kwargs(
             generate_stream_fn,
             model,
             prompt_tokens,

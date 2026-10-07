@@ -78,7 +78,7 @@ from relicllm.models.deepseek_v4.generation import (
 )
 from relicllm.models.deepseek_v4.runtime import ModelArgs, Transformer
 from relicllm.runtime.device import bind_device, probe_accelerator, torch_device_type
-from relicllm.models.deepseek_v4.pd_scheduler import PDExecutionFacade, PDScheduler
+from relicllm.models.deepseek_v4.pd_scheduler import PDExecutionFacade, PDPhasePolicy
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 from relicllm import protocol  # noqa: E402
@@ -196,12 +196,12 @@ def _init_runtime(args):
     torch.set_default_device(accelerator.torch_device_type)
 
     control_group = dist.new_group(backend="gloo", timeout=timedelta(days=7)) if world_size > 1 else None
-    scheduler = PDScheduler() if args.pd_mode == "scheduler" else None
-    executor = PDExecutionFacade.from_env(generate, generate_stream, scheduler)
+    phase_policy = PDPhasePolicy() if args.pd_mode == "scheduler" else None
+    executor = PDExecutionFacade.from_env(generate, generate_stream, phase_policy)
     return {
         "model": model,
         "tokenizer": tokenizer,
-        "scheduler": scheduler,
+        "phase_policy": phase_policy,
         "executor": executor,
         "model_id": args.model,
         "rank": rank,

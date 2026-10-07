@@ -1129,13 +1129,13 @@ def main(
     torch.set_default_device(accelerator.torch_device_type)
     print("I'm DeepSeek 👋")
 
-    pd_scheduler_obj = None
+    phase_policy = None
     if pd_mode == "scheduler":
-        from relicllm.models.deepseek_v4.pd_scheduler import PDScheduler
-        pd_scheduler_obj = PDScheduler()
+        from relicllm.models.deepseek_v4.pd_scheduler import PDPhasePolicy
+        phase_policy = PDPhasePolicy()
 
     def _run_generate(prompt_token_lists):
-        if pd_scheduler_obj is None:
+        if phase_policy is None:
             return generate(model, prompt_token_lists, max_new_tokens, tokenizer.eos_token_id, temperature, prefill_chunk_tokens=pd_prefill_chunk_tokens)
         from relicllm.models.deepseek_v4.pd_scheduler import run_single_request
         return run_single_request(
@@ -1146,7 +1146,7 @@ def main(
             tokenizer.eos_token_id,
             temperature,
             prefill_chunk_tokens=pd_prefill_chunk_tokens,
-            scheduler=pd_scheduler_obj,
+            phase_policy=phase_policy,
         )
 
     if interactive:

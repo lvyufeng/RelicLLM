@@ -48,9 +48,11 @@ COMPONENTS_MOE_FORBIDDEN_MODEL_MODULES = (
 #: The package stack, lowest layer first. A module may import anything in its own layer or below;
 #: an import of a strictly higher layer is the shape this test exists to catch. The stack is written
 #: the way the runtime is built — each layer may only name the ones under it — so the number is a
-#: contract, not a preference. `docs/architecture/package_layers.md` is the page behind it.
+#: contract, not a preference. `docs/architecture/package_layers.md` is the page behind it. `run`
+#: and `scheduler` share the bottom layer: both are model- and format-agnostic, and the scheduler is
+#: the plane every runtime reaches the engine through rather than a leaf a model names.
 LAYERS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("device", ("runtime",)),
+    ("device", ("runtime", "scheduler")),
     ("primitives", ("loader", "encoding")),
     ("protocol", ("api", "protocol")),
     ("support", ("components",)),

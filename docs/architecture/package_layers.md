@@ -15,7 +15,7 @@ Lowest first. Each layer may name the ones under it and no others.
 
 | Layer | Packages | What it is |
 |---|---|---|
-| **device** | `runtime/` (`device.py`, `ops.py`) | the accelerator plane and the kernel bindings. Names no vendor, no model, no container format |
+| **device** | `runtime/` (`device.py`, `ops.py`), `scheduler/` | the accelerator plane, the kernel bindings, and the one request queue. Names no vendor, no model, no container format |
 | **primitives** | `loader/`, `encoding/` | reading checkpoints, and the tokenizer front ends. Container formats live here |
 | **protocol** | `api/`, `protocol/` | the request/response contract, the sampling vocabulary, prompt rendering |
 | **support** | `components/` | shared building blocks: GGUF quantized ops, MoE placement and backends, the spec registry |
@@ -32,10 +32,12 @@ name any of them.
 The two boundaries worth defending are the ones the table above puts a gap in.
 
 **device below everything.** `runtime/device.py` answers "which accelerator is this process on" and
-`runtime/ops.py` resolves a kernel binding. Nothing above them names a vendor, and they name nothing
-above themselves — measured, both had zero outbound cross-package edges before this work and still
-do. The Ascend port ([the device plane](device_plane.md)) depends on exactly that: a second
-hardware family changes these two files and nothing else.
+`runtime/ops.py` resolves a kernel binding. `scheduler/` is the third module of the plane: the one
+request queue every runtime reaches the engine through ([one scheduler, lifted](scheduler_2026_10.md)),
+model-agnostic by the same rule. Nothing above them names a vendor, and they name nothing above
+themselves — measured, `runtime/{device,ops}.py` had zero outbound cross-package edges before this
+work and still do. The Ascend port ([the device plane](device_plane.md)) depends on exactly that: a
+second hardware family changes these files and nothing else.
 
 **models above support, below adapters.** A model directory may use the shared building blocks
 (`components/`) and the loader; it may not name a backend, a server, or the CLI. And nothing below

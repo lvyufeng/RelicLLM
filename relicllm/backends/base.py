@@ -23,6 +23,7 @@ from relicllm.api import (
 from relicllm.choices import CHOICE_MARK
 from relicllm.protocol.chat import apply_stop_to_text
 from relicllm.protocol.contract import CHAT, FieldRefusal, audit
+from relicllm.scheduler import Scheduler
 
 from .capabilities import served_fields
 from .runtime_engine import RankedWorker, cancel_key
@@ -75,15 +76,22 @@ def settled_text(decoded: str) -> str:
 class BackendBase:
     """Small common implementation for lifecycle and cancellation bookkeeping.
 
-    The lock is intentionally at the backend boundary.  Every runtime here owns
-    one mutable KV-cache transaction, so concurrent calls must serialize
-    until a request-aware cache scheduler is implemented.
+    The engine is held by one request at a time. Every runtime here owns one mutable KV-cache
+    transaction, so concurrent calls serialize -- and the thing they serialize on is
+    :class:`~relicllm.scheduler.Scheduler`, not a mutex. The difference is that a waiting request is
+    visible in the scheduler's queue (its id, its prompt, its phase counters) where it was previously
+    a thread parked on a lock; the serialization itself is the same one request at a time. See
+    ``docs/architecture/one_scheduler_many_models.md``.
     """
 
     def __init__(self) -> None:
         self._closed = False
         self._ready = False
         self._state_lock = threading.RLock()
+        #: The one engine slot, shared by this backend's serial and streamed paths. A subclass may
+        #: replace it with a scheduler built over a gate it injects (the server does, to bound the
+        #: wait); the default is an unbounded one.
+        self._scheduler = Scheduler()
         self._cancelled: set[str] = set()
         self._active_requests: set[str] = set()
         #: What :meth:`_publish_cache_metrics` last read, in the exporter's spelling, and what
@@ -414,7 +422,8 @@ class RuntimeAdapter(RankedWorker, BackendBase):
             prompt_ids = self._tokenize(request)
             prepared = self._prepare_serial(request, prompt_ids)
             self._check_cancelled(request.request_id)
-            with self._request_lock:
+            scheduled = self._scheduler.submit(prompt_ids, self._budget(prompt_ids, request))
+            with self._scheduler.acquire(scheduled):
                 self._check_cancelled(request.request_id)
                 generation = self._run_serial(prepared, request)
             return self._serial_result(request, prompt_ids, generation)
@@ -694,7 +703,8 @@ class RuntimeAdapter(RankedWorker, BackendBase):
             events=events,
             decode=self._decode,
         )
-        with self._request_lock:
+        scheduled = self._scheduler.submit(prompt_ids, budget)
+        with self._scheduler.acquire(scheduled):
             marks = {"started": time.perf_counter()}
             generation = self._run_loop(prompt_ids, budget, request, streamer)
         if generation.stopped == "cancel" and not streamer.hit:

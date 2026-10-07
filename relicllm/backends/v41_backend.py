@@ -410,7 +410,6 @@ class V41Backend(RuntimeAdapter):
         self._loader = loader
         self._tokenizer = tokenizer
         self._load_lock = threading.RLock()
-        self._request_lock = threading.RLock()
         self._expert_device: str | None = None
         self._details: dict[str, Any] = {}
         self._bell: Bell | None = None
@@ -895,6 +894,9 @@ class V41Backend(RuntimeAdapter):
             prompt_ids = self._tokenize(request)
             payload = self._payload(request, prompt_ids)
             self._check_cancelled(request.request_id)
+            # Enter the scheduler here, on the HTTP thread, so the wait for the engine is visible as
+            # a queued request; the slot itself is taken on the generation thread below.
+            scheduled = self._scheduler.submit(prompt_ids, self._budget(prompt_ids, request))
 
             events: queue.Queue = queue.Queue(maxsize=_STREAM_QUEUE_DEPTH)
             outcome: list[Any] = []
@@ -916,8 +918,11 @@ class V41Backend(RuntimeAdapter):
 
                     if torch.cuda.is_available():
                         torch.cuda.set_device(self._local_rank)
-                    with self._request_lock:
+                    self._scheduler.acquire(scheduled)
+                    try:
                         outcome.append(self._run(payload, request, on_token=on_token))
+                    finally:
+                        self._scheduler.mark_request_done(scheduled)
                 except BaseException as exc:  # reported on the HTTP thread, not swallowed
                     outcome.append(exc)
                 finally:
