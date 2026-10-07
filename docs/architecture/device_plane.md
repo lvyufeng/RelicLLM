@@ -91,7 +91,7 @@ child process:
 
 | Entry point | What it decides |
 |---|---|
-| `relicllm/runtime/generation.py::setup_dist` | the GGUF raw-block runtime's device and collective |
+| `relicllm/components/gguf/generation.py::setup_dist` | the GGUF raw-block runtime's device and collective |
 | `relicllm/cli/generate_v41.py::setup_distributed` | the same, for the V4.1 launcher |
 | `relicllm/models/mimo_v2/ep.py::EpGroup.from_env` | the MiMo expert-parallel group |
 | `relicllm/models/qwen4_exp/runtime.py::init_distributed` | the Qwen4-Exp TP context |

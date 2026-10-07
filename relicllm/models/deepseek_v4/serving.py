@@ -78,7 +78,7 @@ from relicllm.models.deepseek_v4.generation import (
 )
 from relicllm.models.deepseek_v4.runtime import ModelArgs, Transformer
 from relicllm.runtime.device import bind_device, probe_accelerator, torch_device_type
-from relicllm.runtime.pd_scheduler import PDExecutionFacade, PDScheduler
+from relicllm.models.deepseek_v4.pd_scheduler import PDExecutionFacade, PDScheduler
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 from relicllm import protocol  # noqa: E402

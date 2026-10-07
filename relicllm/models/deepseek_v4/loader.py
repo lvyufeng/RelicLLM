@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import torch
 
-from relicllm.loader.mappings.deepseek_v4 import validate_ds4_tensor_mappings
+from relicllm.models.deepseek_v4.mappings import validate_ds4_tensor_mappings
 from relicllm.loader.gguf.reader import GGUFReader
 from relicllm.loader.gguf.tensor_reader import GGUFTensorDataReader
 from relic_core.kernels.ops import soft_fp8_blockfp8_weight_dequant

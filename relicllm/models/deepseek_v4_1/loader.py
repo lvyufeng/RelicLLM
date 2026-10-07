@@ -69,7 +69,7 @@ from typing import Callable, Iterable, Iterator, Sequence
 
 import torch
 
-from relicllm.encoding.engram import EngramLayout, NgramHasher, build_compressed_token_map
+from relicllm.models.deepseek_v4_1.engram import EngramLayout, NgramHasher, build_compressed_token_map
 from relicllm.loader.safetensors import SAFETENSORS_DTYPES, MmapSafetensors
 from relicllm.models.deepseek_v4_1.attention import LINEAR_DTYPE
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
@@ -580,7 +580,7 @@ class CheckpointEngramTable(EngramTable):
 class EngramHashIds:
     """`NgramHasher`'s row ids as the `[b, s, n_engram_layers, n_hash_cols]` tensor the tree reads.
 
-    `relicllm/encoding/engram.py` is stdlib-only on purpose -- it answers a question about a config and a
+    `relicllm/models/deepseek_v4_1/engram.py` is stdlib-only on purpose -- it answers a question about a config and a
     tokenizer and has no reason to need a tensor library -- and `NgramHasher.hash_ids` returns
     `[position][layer][column]` nested lists, which is the shape that is readable and testable there.
     `Backbone.forward` wants the tensor, so this is the bridge, and it is a second *formulation* of

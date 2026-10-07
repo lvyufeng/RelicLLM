@@ -20,7 +20,7 @@ import argparse
 import torch
 
 from relicllm.encoding.glm_dsa import decode_glm_dsa_ids, encode_glm_dsa_prompt, glm_dsa_context_info
-from relicllm.runtime.generation import run_gguf_generation
+from relicllm.components.gguf.generation import run_gguf_generation
 
 
 def build_arg_parser() -> argparse.ArgumentParser:

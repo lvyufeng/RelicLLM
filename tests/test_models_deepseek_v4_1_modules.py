@@ -26,7 +26,7 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from relicllm.encoding.engram import EngramLayout
+from relicllm.models.deepseek_v4_1.engram import EngramLayout
 from relicllm.models.deepseek_v4_1 import modules as modules_module
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.decode_pos import Pos

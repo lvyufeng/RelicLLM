@@ -439,13 +439,13 @@ def test_synchronize_is_a_no_op_on_a_host_platform() -> None:
 
 
 def test_setup_dist_names_what_it_needs_when_the_host_has_neither_accelerator(monkeypatch) -> None:
-    """`relicllm/runtime/generation.py`'s entry point, on a host with no card of either kind.
+    """`relicllm/components/gguf/generation.py`'s entry point, on a host with no card of either kind.
 
     The sentence was `"GGUF raw-block runtime requires CUDA"`, which named one vendor for a runtime
     that is about to be able to run on another. What it needs is an accelerator; whose is the device
     plane's question.
     """
-    from relicllm.runtime import generation
+    from relicllm.components.gguf import generation
 
     monkeypatch.delenv("WORLD_SIZE", raising=False)
     monkeypatch.setattr(generation, "probe_accelerator", lambda: _accelerator("cpu"))
@@ -465,7 +465,7 @@ def test_setup_dist_returns_a_device_of_the_platforms_type(monkeypatch) -> None:
     is the one that moves a process between cards and can tell a bind from a no-op.
     """
     torch = _torch()
-    from relicllm.runtime import generation
+    from relicllm.components.gguf import generation
 
     for name in ("WORLD_SIZE", "RANK", "LOCAL_RANK"):
         monkeypatch.delenv(name, raising=False)

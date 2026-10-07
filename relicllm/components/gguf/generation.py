@@ -6,6 +6,10 @@ modeling imports. Per-architecture assembly is reached polymorphically through
 ``relicllm.components.moe.registry.detect_spec``), so the greedy decode / seed-file
 driver below works for any registered raw-block CUDA architecture.
 
+It sits under ``relicllm/components/gguf/`` rather than the device plane because it
+is GGUF-shaped: the container format is the branch point, and the one format-neutral
+piece it needs (``relicllm.runtime.device``) is the layer below it.
+
 DeepSeek-V4's full text-generation orchestration (tokenizer, sampling,
 interactive, PD scheduler) still lives in ``relicllm.models.deepseek_v4.generation``;
 this driver is the shared GGUF raw-block token-id smoke/perf entrypoint.

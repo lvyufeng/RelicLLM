@@ -22,7 +22,7 @@ What the stubs mean for the result:
   kernel would compare two op sets at once and report a difference in either as a difference here.
 * `vision` and `image_processor` are never reached: `vision_n_layers=0` and no `token_types`, and
   the engram hash is fed the reference's own output rather than a tokenizer's normalizer chain (see
-  `_load_reference`), so the compressed token map -- `relicllm/encoding/engram.py`'s subject -- is the
+  `_load_reference`), so the compressed token map -- `relicllm/models/deepseek_v4_1/engram.py`'s subject -- is the
   one piece of the reference's front end this file does not run.
 
 The whole file skips when the released inference tree is not on this host, which is the same
@@ -102,7 +102,7 @@ def _load_reference():
         engram = importlib.import_module("engram")
         # `NgramHashState.__init__` runs a `tokenizers` normalizer chain over all 129280 released
         # tokens to build its compressed map, and asserts the result against the config. That map is
-        # what `relicllm/encoding/engram.py` reimplements and `tests/test_encoding_engram.py` covers, so
+        # what `relicllm/models/deepseek_v4_1/engram.py` reimplements and `tests/test_encoding_engram.py` covers, so
         # here it is the identity: the reference's *hashing* -- the primes, the per-layer bucket
         # offsets, the rolling XOR -- still runs, over raw token ids rather than compressed ones,
         # and both models are handed its output.

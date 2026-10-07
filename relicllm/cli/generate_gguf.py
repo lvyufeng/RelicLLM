@@ -12,7 +12,7 @@ import argparse
 
 import torch
 
-from relicllm.runtime.generation import parse_tokens_csv, read_seed_tokens, run_gguf_generation
+from relicllm.components.gguf.generation import parse_tokens_csv, read_seed_tokens, run_gguf_generation
 
 
 def build_arg_parser() -> argparse.ArgumentParser:

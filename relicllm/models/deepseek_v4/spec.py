@@ -76,7 +76,7 @@ class DeepSeekV4Spec:
         return "other"
 
     def build_tensor_mappings(self, bundle: GGUFBundle) -> list[TensorMapping]:
-        from relicllm.loader.mappings.deepseek_v4 import build_ds4_tensor_mappings
+        from relicllm.models.deepseek_v4.mappings import build_ds4_tensor_mappings
 
         mappings = []
         for item in build_ds4_tensor_mappings(bundle):

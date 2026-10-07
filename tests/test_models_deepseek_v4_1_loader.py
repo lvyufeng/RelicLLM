@@ -18,7 +18,7 @@ to real properties of the release:
 * the vision tower, the aligner, the image tokens and the DSpark draft layers are wanted by nothing
   the text backbone builds, and the report counts them rather than passing over them in silence.
 
-`EngramHashIds` needs none of that. It is a second *formulation* of `relicllm/encoding/engram.NgramHasher`
+`EngramHashIds` needs none of that. It is a second *formulation* of `relicllm.models.deepseek_v4_1.engram.NgramHasher`
 -- which is stdlib-only, and therefore a real oracle -- and the tests below hold the two to the same
 ids on a token stream split across a prefill and a decode. That comparison is the reason the tensor
 version is allowed to exist, and the split is the case a cache exists for: a port that re-reads the
@@ -34,7 +34,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from relicllm.encoding.engram import EngramLayout, NgramHasher
+from relicllm.models.deepseek_v4_1.engram import EngramLayout, NgramHasher
 from relicllm.loader.safetensors import MmapSafetensors
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.kernels import _fp4_values

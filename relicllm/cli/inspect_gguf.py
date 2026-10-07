@@ -6,7 +6,7 @@ import os
 from collections import Counter, defaultdict
 
 from relicllm.loader.gguf.bundle import GGUFBundle, read_gguf_bundle
-from relicllm.loader.mappings.deepseek_v4 import validate_ds4_tensor_mappings
+from relicllm.models.deepseek_v4.mappings import validate_ds4_tensor_mappings
 from relicllm.loader.gguf.prism_hadamard import HadamardSpec, HadamardSpecError, has_hadamard_block, parse_hadamard_spec
 from relicllm.loader.gguf.reader import GGUFArraySummary
 from relicllm.components.moe.registry import detect_spec, known_architectures
