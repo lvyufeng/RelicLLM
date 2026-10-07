@@ -199,10 +199,11 @@ permission it will grant.
 This is the one place where an existing shape does not generalise, and it is worth stating plainly
 because a wrong abstraction here reads as correct.
 
-The tree is acquiring a card descriptor — `CardCapability`, with `major`/`minor`, a `cc` of
-`major*100 + minor*10`, and predicates `supports_fp8_tensor_core = major >= 8` and
-`supports_fp4_tensor_core = major >= 10`. (As of this writing it is proposed, not merged: it lives on
-a branch and is the subject of its own pull request. Read it as a design, not as a shipped fact.)
+The tree has a card descriptor — `CardCapability` in `relicllm/runtime/device.py`, with
+`major`/`minor`, a `cc` of `major*100 + minor*10`, and predicates `supports_fp8_tensor_core = major >= 8`
+and `supports_fp4_tensor_core = major >= 10`. It answers *which card* where the plane answers *which
+platform*, and it is the abstraction this section is about: it is NVIDIA-shaped, and this is where that
+matters.
 
 "Is compute capability general?" — **the question is, the encoding is not.** "Compute capability", the
 `major.minor` convention and `major*100 + minor*10` are NVIDIA's. An Ascend 910A has no `major`; an
