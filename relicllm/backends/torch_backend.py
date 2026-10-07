@@ -66,8 +66,11 @@ class TorchBackend(BackendBase):
         self._runtime: Mapping[str, Any] | None = runtime
         self._serving_engine = serving_engine
         self._runtime_loader = runtime_loader
-        self._request_lock = threading.RLock()
         self._model_id = args.model.rsplit("/", 1)[-1] or "pytorch"
+        #: This adapter's load lock. `BackendBase` no longer supplies one, because every adapter's
+        #: one was ``_request_lock`` and the engine slot is now the scheduler's; the load lock is a
+        #: different thing and stays. The serving engine is built lazily under it.
+        self._load_lock = threading.RLock()
         if runtime is not None or serving_engine is not None:
             self._ready = True
 
@@ -187,7 +190,7 @@ class TorchBackend(BackendBase):
     def _ensure_loaded(self) -> None:
         self._ensure_open()
         if not self._ready:
-            with self._request_lock:
+            with self._load_lock:
                 if not self._ready:
                     self._load()
 
@@ -360,14 +363,16 @@ class TorchBackend(BackendBase):
             self._begin_request(request.request_id)
             try:
                 self._check_cancelled(request.request_id)
-                with self._request_lock:
+                payload = self._payload(request, stream=False)
+                scheduled = self._scheduler.submit(payload["_prompt_ids"], payload["max_tokens"])
+                with self._scheduler.acquire(scheduled):
                     self._check_cancelled(request.request_id)
                     if self._runtime and callable(self._runtime.get("backend_generate")):
                         raw = self._generate_injected(request)
                     else:
                         if self._serving_engine is None:
                             raise RuntimeError("Torch serving engine is unavailable")
-                        raw = self._serving_engine.submit(self._payload(request, stream=False))
+                        raw = self._serving_engine.submit(payload)
                 self._check_cancelled(request.request_id)
                 if isinstance(raw, list):
                     if not raw:
@@ -392,17 +397,21 @@ class TorchBackend(BackendBase):
         self._begin_request(request.request_id)
         self._check_cancelled(request.request_id)
         try:
-            with self._request_lock:
+            payload = self._payload(request, stream=True)
+            scheduled = self._scheduler.submit(payload["_prompt_ids"], payload["max_tokens"])
+            with self._scheduler.acquire(scheduled):
                 if self._runtime and callable(self._runtime.get("backend_stream")):
                     events = self._stream_injected(request)
                 else:
                     if self._serving_engine is None:
                         raise RuntimeError("Torch serving engine is unavailable")
-                    events = self._serving_engine.submit_stream(self._payload(request, stream=True))
+                    events = self._serving_engine.submit_stream(payload)
                 # The client's stop sequences, matched here because this is where the text is: the
                 # events below carry a step's new tokens, and the text a client sees is the run of
                 # those deltas. Without this the streamed answer ran past the marker that the serial
-                # one cuts at.
+                # one cuts at. The slot is held across this loop, then, exactly as the lock it
+                # replaces was -- a streamed request owns the engine from its first token to its
+                # last, and a token is yielded as it arrives rather than buffered behind the slot.
                 stop = StopFilter(request.sampling_params.stop)
                 for event in events:
                     self._check_cancelled(request.request_id)

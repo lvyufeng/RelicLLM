@@ -35,7 +35,6 @@ rank 0, the seam ``ShardedWorkerMixin._step_sync`` writes once for this runtime 
 from __future__ import annotations
 
 import os
-import threading
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any
@@ -170,7 +169,6 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         self._device: Any = None
         self._world = 1
         self._rank = 0
-        self._request_lock = threading.RLock()
         self._distributed = False
         self._details: dict[str, Any] = {}
 
