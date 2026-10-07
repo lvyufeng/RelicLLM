@@ -266,6 +266,7 @@ class MimoBackend(ShardedWorkerMixin, RuntimeAdapter):
 
     #: Read by `RuntimeAdapter._tokenize`, which is the only place a runtime's name is needed.
     _RUNTIME_LABEL = "MiMo"
+    _PREPARE_PREFIX_CACHE = True
 
     name = "mimo"
 
@@ -306,16 +307,6 @@ class MimoBackend(ShardedWorkerMixin, RuntimeAdapter):
         self._details: dict[str, Any] = {}
 
     # ------------------------------------------------------------------ lifecycle
-
-    def prepare(self) -> None:
-        self._ensure_open()
-        self._ensure_loaded()
-        # Three of the four adapters in this family have a prefix store and the fourth does not, so
-        # building one is not part of the base's `prepare`. It is here rather than inside `_load`
-        # for the reason the V4.1 adapter gives: every path that ends with a loaded model passes
-        # through `_ensure_loaded`, including the injected ones, and a store built in only one of
-        # them would be a switch that quietly does nothing on the others.
-        self._ensure_prefix_cache()
 
     def _init_distributed(self) -> None:
         """Join the group the launcher set, if there is one.

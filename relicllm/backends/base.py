@@ -332,6 +332,10 @@ class RuntimeAdapter(RankedWorker, BackendBase):
     #: which runtime it is.
     _RUNTIME_LABEL = ""
 
+    #: MiMo and Xing4 build their prefix stores after loading. V4.1 builds under its load lock,
+    #: and Qwen4-Exp has no store, so neither adds a post-load step here.
+    _PREPARE_PREFIX_CACHE = False
+
     def audit_request(self, body: Mapping[str, Any], *, endpoint: str = CHAT) -> FieldRefusal | None:
         """The base class's audit, against this runtime's own declaration.
 
@@ -345,16 +349,18 @@ class RuntimeAdapter(RankedWorker, BackendBase):
         return audit(body, endpoint=endpoint, serves=served_fields(self.name))
 
     def prepare(self) -> None:
-        """Open and load, which is every path that has to have happened before a request.
+        """Open, load, and prepare any store this runtime builds after loading.
 
-        Deliberately *not* here: building a prefix store.  Three of the adapters have one and they
-        do not agree on where it belongs -- ``v41`` builds it inside ``_ensure_loaded``, under the
-        load lock, so that the injected loader paths reach it too; ``mimo`` and ``xing4`` build it
-        from this method.  That is a decision about the store, not about preparing, so each adapter
-        that has one says so itself.
+        MiMo and Xing4 opt into the last step through :attr:`_PREPARE_PREFIX_CACHE`; each keeps its
+        own store builder and its lazy request-path calls. V4.1 already builds its store inside
+        ``_ensure_loaded``, under the load lock, and must not build it again outside that lock.
+        Qwen4-Exp has no prefix store. The declaration selects the startup step, not whether this
+        run's prefix caching is enabled -- the builder still reads that switch itself.
         """
         self._ensure_open()
         self._ensure_loaded()
+        if self._PREPARE_PREFIX_CACHE:
+            self._ensure_prefix_cache()
 
     def generate(self, requests: Sequence[GenerationRequest]) -> list[GenerationResult]:
         """Answer every request, one at a time.
