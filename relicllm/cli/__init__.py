@@ -15,6 +15,7 @@ from relicllm.api import (
     device_hint,
 )
 from relicllm.backends.cli_surface import add_declared_options, resolved_options
+from relicllm.runtime.kv_spec import VALID_KV_CACHE_DTYPES
 
 # The bench subcommand's parser and orchestrator. Module level rather than deferred, because
 # `build_parser()` registers the subcommand for every invocation -- a deferred import would not defer
@@ -149,7 +150,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     serve_parser.add_argument("--max-model-len", type=int)
     serve_parser.add_argument("--dtype")
-    serve_parser.add_argument("--kv-cache-dtype", default="auto")
+    serve_parser.add_argument(
+        "--kv-cache-dtype",
+        default="auto",
+        help=(
+            "storage dtype for the attention caches: one of "
+            f"{', '.join(VALID_KV_CACHE_DTYPES)}. 'auto' keeps each "
+            "runtime's own bf16 cache and is the only value any runtime supports today; the others "
+            "are declared so a runtime that can quantize a cache accepts them by name, and are "
+            "refused by name where it cannot"
+        ),
+    )
     serve_parser.add_argument("--prefill-chunk-tokens", type=int, default=0)
     serve_parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=True)
     serve_parser.add_argument(

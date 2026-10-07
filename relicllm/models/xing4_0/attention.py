@@ -52,6 +52,7 @@ product, does not.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import torch
@@ -60,6 +61,7 @@ import torch.nn.functional as F
 from relicllm.models.xing4_0.config import Xing4_0Params
 from relicllm.models.xing4_0.decode_pos import Pos, write_row
 from relicllm.models.xing4_0.rope import cos_sin, inv_freq, rotate_interleaved
+from relicllm.runtime.kv_spec import KVCacheSpec
 
 __all__ = ["MLAAttention", "MLAAttentionWeights", "KVLatentCache"]
 
@@ -190,6 +192,21 @@ def _rms_norm(x: torch.Tensor, weight: torch.Tensor, eps: float) -> torch.Tensor
     return (x * weight.float()).to(dtype)
 
 
+def _as_specs(source: "KVCacheSpec | Sequence[KVCacheSpec]") -> tuple[KVCacheSpec, ...]:
+    """A declaration from either a single spec or a sequence of them; empty for anything else.
+
+    The empty tuple is the signal that the caller passed a ``Xing4_0Params`` -- the spelling that
+    predates the declaration -- so the width can be read from it below. It is kept rather than removed
+    because several callers (a kernel bench, a decode-position test) hold a params object and no
+    config to declare from.
+    """
+    if isinstance(source, KVCacheSpec):
+        return (source,)
+    if isinstance(source, (list, tuple)) and source and isinstance(source[0], KVCacheSpec):
+        return tuple(source)
+    return ()
+
+
 class KVLatentCache:
     """The absorbed cache: one 512-wide latent and its 64-wide rope key per token.
 
@@ -197,11 +214,31 @@ class KVLatentCache:
     value is `latent @ v_b` and is only ever needed after the attention weights.
     """
 
-    def __init__(self, batch: int, capacity: int, params: Xing4_0Params, *, device="cpu", dtype=torch.float32):
-        self.params = params
+    def __init__(
+        self,
+        batch: int,
+        capacity: int,
+        source: Xing4_0Params | tuple[KVCacheSpec, ...],
+        *,
+        device="cpu",
+        dtype=torch.float32,
+    ):
+        # `source` is the model's own declaration of this cache (`models/xing4_0/kv_spec.py`) when
+        # the caller has one, and the params object otherwise. The width comes from whichever it was:
+        # the declaration is the authority, and `params` is the spelling that predates it, still
+        # accepted so a caller holding only a params object -- a kernel bench, a decode-position
+        # test -- keeps working.
+        specs = _as_specs(source)
+        if specs:
+            self.spec = specs[0]
+            self.params = None
+            self.width = int(self.spec.head_dim)
+        else:
+            self.spec = None
+            self.params = source
+            self.width = int(source.kv_lora_rank) + int(source.qk_rope_head_dim)
         self.batch = int(batch)
         self.capacity = int(capacity)
-        self.width = int(params.kv_lora_rank) + int(params.qk_rope_head_dim)
         self.latent = torch.zeros((self.batch, self.capacity, self.width), device=device, dtype=dtype)
         self.length = 0
 

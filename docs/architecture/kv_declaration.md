@@ -150,12 +150,33 @@ host can read `page_size_bytes` and `layer_ids` without importing a model, and t
 chunked-prefill restore being one implementation rather than four.
 
 **Does not.** This is the declaration, not the consumer — no paged allocation and no block table
-land here. It is also not a new allocator: `MimoV2KVCache`, `KVLatentCache` and `Qwen4ExpCache` carry
+land here. It is also not a new allocator: `MimoV2KVCache` and `KVLatentCache` carry
 `append`/`view`/`reset` semantics the runtimes depend on, so the declaration is passed *into* those
-constructors, which stop deriving shapes themselves. vLLM and SGLang each re-allocate from their spec
-with a generic kernel-side writer; this tree has no such writer, and inventing one is a separate
-piece of work. Making the caches independent `nn.Module` tensors — rather than buffers that share the
-model's tree — is likewise out of scope here.
+constructors, which stop deriving their KV dimensions themselves. vLLM and SGLang each re-allocate
+from their spec with a generic kernel-side writer; this tree has no such writer, and inventing one is
+a separate piece of work. Making the caches independent `nn.Module` tensors — rather than buffers that
+share the model's tree — is likewise out of scope here.
+
+**Two runtimes still derive their own shapes**, each deferred for a concrete reason rather than left
+undone:
+
+- **V4** (`models/deepseek_v4/runtime.py`) keeps a *single* `Attention.kv_cache` sized
+  `window_size + max_seq_len // compress_ratio` — the sliding window and the compressed latent
+  concatenated into one buffer — and its `Compressor` scales its state by an overlap factor (`coff`)
+  the publisher does not carry. So its buffers cannot be read back from the current declaration
+  without widening `AttentionSpec` to describe an *allocated, non-per-token* shape; that is a
+  publisher/taxonomy change, not plumbing. (V4.1, the sibling architecture, *is* wired — see below.)
+- **qwen4_exp's `GatedDeltaNetCache`** shards its head counts per tensor-parallel rank before sizing
+  its two state tensors, while `StateSpec` states the unsharded geometry. Wiring it means giving a
+  state spec a rank's share the way `AttentionSpec` already does, which is a change to the taxonomy
+  rather than to one constructor.
+
+**V4.1 is wired end to end.** Its four KV-shaped buffers — `window_kv_cache` (every layer),
+`compress_kv_cache` and the compressor's `kv_state`/`score_state` (the source layers), and the
+indexer's `k_cache` (the layers that `own_k`) — are sized from the declaration rather than from
+`_compress_ratio_at`/`window_size`/`head_dim`, so the two cannot drift;
+`tests/test_kv_spec_deepseek_allocation.py` holds both the shapes and the line, by forcing a
+declaration that disagrees with the config and asserting the buffer follows the declaration.
 
 ## Not decided here
 
