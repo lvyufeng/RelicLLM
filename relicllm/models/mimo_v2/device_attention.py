@@ -43,6 +43,7 @@ from relicllm.models.mimo_v2.layers import (
     split_fused_qkv,
 )
 from relicllm.models.mimo_v2.quant import QKV_SHARDS
+from relicllm.runtime.kv_spec import KVCacheSpec
 from relicllm.runtime.ops import load_ops
 
 __all__ = [
@@ -638,6 +639,43 @@ def attention(
     )
 
 
+def _spec_by_layer(config: MimoV2TextConfig) -> dict[int, "KVCacheSpec"]:
+    """The declaration's spec for each layer, keyed by layer id.
+
+    The declaration groups layers that share a geometry, so this is the inverse: one entry a layer,
+    which is how the cache allocates. Built once per cache, not once per layer, because a publisher
+    call resolves the whole pattern.
+    """
+    from relicllm.models.mimo_v2.kv_spec import kv_spec
+
+    by_layer: dict[int, KVCacheSpec] = {}
+    for spec in kv_spec(config):
+        for layer in spec.layer_ids:
+            by_layer[int(layer)] = spec
+    return by_layer
+
+
+def _declared_shape(
+    shape: MimoV2AttentionShape, spec: "KVCacheSpec | None"
+) -> MimoV2AttentionShape:
+    """`shape` with its KV dimensions taken from the declaration, or unchanged when it declares none.
+
+    Only the four numbers a *cache* is built from are replaced -- key/value head counts and widths,
+    and the window a sliding-window layer's ring is capped at. The query head count, rope width and
+    sink stay the config's, because the attention reads them and they are not a cache's shape.
+    """
+    if spec is None:
+        return shape
+    window = getattr(spec, "sliding_window", None)
+    return replace(
+        shape,
+        num_kv_heads=int(spec.num_kv_heads),
+        head_dim=int(spec.head_dim),
+        v_head_dim=int(spec.v_head_dim if spec.v_head_dim is not None else spec.head_dim),
+        sliding_window=int(window) if window else shape.sliding_window,
+    )
+
+
 class MimoV2KVCache:
     """Key and value states for a stack of layers, one buffer a layer.
 
@@ -679,13 +717,20 @@ class MimoV2KVCache:
         if not self.layers:
             raise ValueError("a cache with no layers holds nothing")
 
+        # The four numbers a cache is sized from -- key/value head counts and widths, and the window
+        # -- come from this checkpoint's declaration (`models/mimo_v2/kv_spec.py`), not from a second
+        # reading of the config here. `config.attention(layer)` still supplies the fields the
+        # attention itself needs (query heads, rope width, sink), which are not a cache's business.
+        declared = _spec_by_layer(config)
+
         self._shapes: dict[int, MimoV2AttentionShape] = {}
         self._slots: dict[int, int] = {}
         self._key: dict[int, torch.Tensor] = {}
         self._value: dict[int, torch.Tensor] = {}
         self._written: dict[int, int] = {}
         for layer in self.layers:
-            shape = shard_shape(config.attention(layer), self.shard, self.shards)
+            shape = _declared_shape(config.attention(layer), declared.get(layer))
+            shape = shard_shape(shape, self.shard, self.shards)
             slots = self.capacity if shape.sliding_window is None else min(
                 int(shape.sliding_window), self.capacity
             )

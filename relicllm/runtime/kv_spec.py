@@ -167,14 +167,15 @@ def spec_config(config: Any) -> SpecConfig:
 #: bf16 in every runtime today, and the rest are the quantized storages a declaration could name.
 #: The set is stated here -- beside the dtype table that knows their widths -- rather than in the
 #: argument parser, so a host flag, a runtime's declaration and the byte arithmetic cannot disagree
-#: about what a value means. Matches vLLM's ``get_kv_quant_mode`` spellings.
+#: about what a value means. Matches vLLM's ``get_kv_quant_mode`` spellings, minus the *packed* ones
+#: (``nvfp4``): the byte table below is bytes per scalar, and a storage that puts two values in a byte
+#: has no single scalar width to name -- it belongs with the paged allocator that lays it out.
 VALID_KV_CACHE_DTYPES: tuple[str, ...] = (
     "auto",
     "fp8",
     "fp8_e4m3",
     "fp8_e5m2",
     "int8",
-    "nvfp4",
 )
 
 

@@ -59,6 +59,7 @@ from relicllm.api import (
     Usage,
 )
 
+from ..runtime.kv_spec import VALID_KV_CACHE_DTYPES
 from ..work_bell import Bell, BellRinger, WorkerBell, bell_path
 from .base import RuntimeAdapter, settled_text
 from .capabilities import IGNORED_OPTIONS, declared_capabilities
@@ -447,9 +448,18 @@ class V41Backend(RuntimeAdapter):
                 "max_batch_size must be 1"
             )
         kv_cache_dtype = str(getattr(args, "kv_cache_dtype", "auto") or "auto").lower()
-        if kv_cache_dtype != "auto":
+        if kv_cache_dtype not in VALID_KV_CACHE_DTYPES:
             raise UnsupportedFeatureError(
-                "the V4.1 runtime keeps bf16 attention caches; "
+                f"kv_cache_dtype={kv_cache_dtype!r} is not a KV cache dtype; "
+                f"expected one of {', '.join(VALID_KV_CACHE_DTYPES)}"
+            )
+        if kv_cache_dtype != "auto":
+            # The declaration states bf16 for every V4.1 cache (`models/deepseek_v4_1/kv_spec.py`),
+            # so a value other than `auto` asks for a storage none of these caches is declared in.
+            # A quantized cache needs a writer that re-quantizes it, which this runtime has not got --
+            # refusing by name is the difference between "unsupported" and "silently widened".
+            raise UnsupportedFeatureError(
+                "the V4.1 runtime keeps a bf16 attention cache and has no quantized writer; "
                 f"kv_cache_dtype={kv_cache_dtype!r} is not supported"
             )
 

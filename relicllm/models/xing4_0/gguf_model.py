@@ -323,10 +323,17 @@ class Xing4_0GGUFModel:
         return self.lm_head(collapsed).reshape(-1, self.lm_head.out_dim).float()
 
     def make_cache(self, capacity: int, *, batch: int = 1):
-        from relicllm.models.xing4_0.attention import KVLatentCache
+        """One cache a layer, each sized from this checkpoint's declaration.
 
+        The declaration (`models/xing4_0/kv_spec.py`) is what states the latent width now, so the
+        cache stops deriving it and a host allocator reads the same number the cache was built from.
+        """
+        from relicllm.models.xing4_0.attention import KVLatentCache
+        from relicllm.models.xing4_0.kv_spec import kv_spec
+
+        specs = kv_spec(self.params)
         return [
-            KVLatentCache(batch, capacity, self.params, device=self.device, dtype=self.dtype)
+            KVLatentCache(batch, capacity, specs, device=self.device, dtype=self.dtype)
             for _ in self.blocks
         ]
 

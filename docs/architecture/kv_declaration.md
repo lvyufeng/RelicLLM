@@ -150,12 +150,25 @@ host can read `page_size_bytes` and `layer_ids` without importing a model, and t
 chunked-prefill restore being one implementation rather than four.
 
 **Does not.** This is the declaration, not the consumer — no paged allocation and no block table
-land here. It is also not a new allocator: `MimoV2KVCache`, `KVLatentCache` and `Qwen4ExpCache` carry
+land here. It is also not a new allocator: `MimoV2KVCache` and `KVLatentCache` carry
 `append`/`view`/`reset` semantics the runtimes depend on, so the declaration is passed *into* those
-constructors, which stop deriving shapes themselves. vLLM and SGLang each re-allocate from their spec
-with a generic kernel-side writer; this tree has no such writer, and inventing one is a separate
-piece of work. Making the caches independent `nn.Module` tensors — rather than buffers that share the
-model's tree — is likewise out of scope here.
+constructors, which stop deriving their KV dimensions themselves. vLLM and SGLang each re-allocate
+from their spec with a generic kernel-side writer; this tree has no such writer, and inventing one is
+a separate piece of work. Making the caches independent `nn.Module` tensors — rather than buffers that
+share the model's tree — is likewise out of scope here.
+
+**Three runtimes still derive their own shapes**, and each is deferred for a concrete reason rather
+than left undone:
+
+- **V4.1 and V4** register their KV buffers as `nn.Module` buffers *inside* `Attention`, `Indexer` and
+  `Compressor`, so reading the declaration needs the spec threaded `Backbone → Block → Attention` —
+  three constructors in one file per runtime, and V4's live in a single 4,700-line `runtime.py`. Only
+  the plumbing is outstanding: the declaration already reproduces V4.1's geometry exactly, and the
+  window ring #146 added names every layer one of these buffers is allocated on.
+- **qwen4_exp's `GatedDeltaNetCache`** shards its head counts per tensor-parallel rank before sizing
+  its two state tensors, while `StateSpec` states the unsharded geometry. Wiring it means giving a
+  state spec a rank's share the way `AttentionSpec` already does, which is a change to the taxonomy
+  rather than to one constructor.
 
 ## Not decided here
 
