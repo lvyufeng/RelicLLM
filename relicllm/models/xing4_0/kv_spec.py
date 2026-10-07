@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from relicllm.runtime.kv_spec import KVCacheSpec, MLASpec
+from relicllm.runtime.kv_spec import KVCacheSpec, MLASpec, spec_config
 
 #: The widths the checkpoint states, with the released card's values as the fallback the config class
 #: itself uses (`xing4_0/config.py:82`). Spelled here rather than read from the dataclass so this
@@ -27,6 +27,7 @@ _DEFAULT_QK_ROPE_HEAD_DIM = 64
 
 def kv_spec(config: Mapping[str, Any]) -> tuple[KVCacheSpec, ...]:
     """One :class:`MLASpec` for every layer of this checkpoint."""
+    config = spec_config(config)
     kv_lora = int(config.get("kv_lora_rank") or _DEFAULT_KV_LORA_RANK)
     rope = int(
         config.get("qk_rope_head_dim")

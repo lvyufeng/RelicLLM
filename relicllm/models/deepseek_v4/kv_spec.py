@@ -24,6 +24,7 @@ from relicllm.runtime.kv_spec import (
     KVCacheSpec,
     MLASpec,
     SlidingWindowSpec,
+    spec_config,
 )
 
 _DEFAULT_HEAD_DIM = 512
@@ -57,6 +58,7 @@ def _group(ratios: list[int]) -> dict[int, list[int]]:
 
 def kv_spec(config: Mapping[str, Any]) -> tuple[KVCacheSpec, ...]:
     """A spec per compress ratio, plus the indexer cache on the layers that own one."""
+    config = spec_config(config)
     ratios = _ratios(config)
     if not ratios:
         return ()

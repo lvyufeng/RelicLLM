@@ -23,6 +23,7 @@ from relicllm.runtime.kv_spec import (
     FullAttentionSpec,
     KVCacheSpec,
     StateSpec,
+    spec_config,
 )
 
 _LINEAR_TYPE = "linear_attention"
@@ -44,6 +45,7 @@ def _layer_types(config: Mapping[str, Any], layers: int) -> list[str]:
 
 def kv_spec(config: Mapping[str, Any]) -> tuple[KVCacheSpec, ...]:
     """The linear state, the QSA key/value pair, and the indexer key -- each naming its layers."""
+    config = spec_config(config)
     layers = int(config.get("num_hidden_layers") or len(config.get("layer_types") or ()))
     types = _layer_types(config, layers)
     linear = tuple(index for index, name in enumerate(types) if name == _LINEAR_TYPE)

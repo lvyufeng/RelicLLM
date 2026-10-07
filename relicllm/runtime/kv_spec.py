@@ -47,9 +47,10 @@ class that reported only one of them would be read wrong by one of the two calle
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # torch is imported lazily: this module is on the `--help` and triage paths
     import torch
@@ -62,9 +63,119 @@ __all__ = [
     "MLASpec",
     "SlidingWindowSpec",
     "StateSpec",
+    "SpecConfig",
+    "VALID_KV_CACHE_DTYPES",
     "dtype_size",
     "to_torch_dtype",
 ]
+
+#: Per-architecture aliases: the key a publisher reads -> the attribute the runtime's own config
+#: class spells it with. A publisher reads one spelling; the aliases are how the same declaration is
+#: fed from a checkpoint's `config.json`, from a runtime dataclass, and from a triage test payload
+#: without any of the three having to know the others' names. Flat rather than per-architecture
+#: because these are genuine synonyms for the same quantity -- `num_hidden_layers` and `n_layers` are
+#: one number -- and the table is deliberately small: a name that is *not* a synonym (MiMo's per-family
+#: `swa_*` widths, which no single key can carry) is not aliased and is resolved by the caller.
+_CONFIG_ALIASES: dict[str, tuple[str, ...]] = {
+    "num_hidden_layers": ("num_hidden_layers", "n_layers", "num_layers"),
+    "head_dim": ("head_dim", "attention.key_length"),
+    "num_key_value_heads": ("num_key_value_heads", "attention.head_count_kv"),
+    "kv_source_layer_ids": ("kv_source_layer_ids", "kv_source_layers"),
+    "qk_rope_head_dim": ("qk_rope_head_dim", "rope.dimension_count"),
+}
+
+
+class SpecConfig(Mapping[str, Any]):
+    """A view of one architecture's config that answers the names a publisher reads.
+
+    A publisher such as ``models/deepseek_v4_1/kv_spec.py`` reads ``config["num_hidden_layers"]``;
+    that runtime's own config class spells the same field ``n_layers``, and its ``compress_ratios``
+    comes back as a tuple of ints rather than a list. Rather than teach every publisher every
+    spelling -- or, worse, have each runtime feed the publisher a hand-built dict that can silently
+    drift from its own config -- the publisher reads a mapping and the adapter bridges the two.
+
+    A mapping rather than an attribute wrapper because the publishers also read *optional* keys
+    (``config.get("layer_types")``); ``__getitem__`` raises and ``__iter__``/``__len__`` describe the
+    canonical keys, so the view is a real ``Mapping`` and nothing else has to change.
+    """
+
+    __slots__ = ("_source", "_items")
+
+    def __init__(self, source: Any) -> None:
+        if isinstance(source, Mapping):
+            self._source: Any = None
+            self._items: Mapping[str, Any] = source
+        else:
+            self._source = source
+            self._items = getattr(source, "__dict__", {})
+
+    def _lookup(self, key: str) -> Any:
+        for name in _CONFIG_ALIASES.get(key, (key,)):
+            if self._source is not None and hasattr(self._source, name):
+                return getattr(self._source, name)
+            if name in self._items:
+                return self._items[name]
+        raise KeyError(key)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._lookup(key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        try:
+            return self._lookup(key)
+        except KeyError:
+            return default
+
+    def __iter__(self) -> Iterator[str]:
+        present = set(self._items)
+        if self._source is not None:
+            present |= set(self._source.__dict__)
+        for key, names in _CONFIG_ALIASES.items():
+            if any(name in present for name in names):
+                yield key
+        for key in present:
+            if key not in _CONFIG_ALIASES:
+                yield key
+
+    def __len__(self) -> int:
+        return sum(1 for _ in self)
+
+    @property
+    def source(self) -> Any:
+        """The object this view wraps -- a live config, or the mapping itself.
+
+        A publisher for an architecture whose widths are **per family** (MiMo resolves a global and a
+        sliding-window key/value width, and each has its own head counts) cannot build an exact
+        declaration from flat keys alone: the live config's own resolution -- ``attention(layer)`` --
+        is the authority, and this is how a publisher reaches it. A fixture payload or a
+        ``config.json`` body is a mapping, has no such accessor, and the publisher falls back to the
+        raw keys, which is exactly the path triage already exercised.
+        """
+        return self._items if self._source is None else self._source
+
+
+def spec_config(config: Any) -> SpecConfig:
+    """The view a publisher reads, from a config mapping, a dataclass instance, or another view.
+
+    A plain mapping keeps its own keys intact -- including a GGUF's namespaced ones, which a publisher
+    simply does not read -- because :meth:`SpecConfig.__getitem__` falls back to the underlying
+    mapping after the alias table misses.
+    """
+    return config if isinstance(config, SpecConfig) else SpecConfig(config)
+
+#: What ``--kv-cache-dtype`` may be asked for. ``auto`` is the runtime's own cache dtype, which is
+#: bf16 in every runtime today, and the rest are the quantized storages a declaration could name.
+#: The set is stated here -- beside the dtype table that knows their widths -- rather than in the
+#: argument parser, so a host flag, a runtime's declaration and the byte arithmetic cannot disagree
+#: about what a value means. Matches vLLM's ``get_kv_quant_mode`` spellings.
+VALID_KV_CACHE_DTYPES: tuple[str, ...] = (
+    "auto",
+    "fp8",
+    "fp8_e4m3",
+    "fp8_e5m2",
+    "int8",
+    "nvfp4",
+)
 
 
 class KVKind(StrEnum):

@@ -1,12 +1,20 @@
-"""DeepSeek-V4.1-Flash's KV declaration: only a few layers own a growing buffer.
+"""DeepSeek-V4.1-Flash's KV declaration: only a few layers own a *growing* buffer.
 
 The same compressor shape as V4 and the sharpest case in the roster, because a ratio list read alone
 gets it backwards. V4.1 has ``compress_ratios`` like V4, but a non-zero ratio here means the layer
-*reads* a compressed cache rather than writing one: of 40 layers, 36 are consumer-only sliding
-windows and just four -- the ``kv_source_layer_ids`` -- own a growing buffer. Costing every non-zero
-ratio as a growing layer counts 38 where there are 4.
+*reads* a compressed cache rather than writing one: of 40 layers, just four -- the
+``kv_source_layer_ids`` -- own a growing buffer, and costing every non-zero ratio as a growing layer
+counts 38 where there are 4.
 
-The indexer is guarded the same way and for the same reason: its ``k_cache`` is registered inside
+**Every** layer registers a ``window_kv_cache`` (``attention.py:1341``, unconditional), yet the window
+spec below names only the 36 *non-owning* layers. That is a deliberate gap, not an oversight: naming
+all forty would put the four source layers in two cache classes at once, and `KvGeometry.layers` sums
+per-class counts back to the trunk depth, so a layer counted twice reads as a 44-layer model. The
+allocated ring on those four layers is therefore unstated here; stating it needs the declaration to
+express "each layer in exactly one class by default, plus this layer also in that one", which is a
+triage-side change rather than a publisher-side one.
+
+The indexer is guarded and follows the same list: its ``k_cache`` is registered inside
 ``if self.owns_k`` (``attention.py:809``), and ``owns_k`` is membership of the source list, so only
 the four source layers hold one.
 
@@ -23,6 +31,7 @@ from relicllm.runtime.kv_spec import (
     KVCacheSpec,
     MLASpec,
     SlidingWindowSpec,
+    spec_config,
 )
 
 _DEFAULT_HEAD_DIM = 512
@@ -53,6 +62,7 @@ def _owning_layers(config: Mapping[str, Any], ratios: list[int]) -> list[int]:
 
 def kv_spec(config: Mapping[str, Any]) -> tuple[KVCacheSpec, ...]:
     """A compressed spec per ratio among the source layers, plus their indexer key cache."""
+    config = spec_config(config)
     ratios = _ratios(config)
     if not ratios:
         return ()
@@ -91,6 +101,11 @@ def kv_spec(config: Mapping[str, Any]) -> tuple[KVCacheSpec, ...]:
                 )
             )
 
+    # Every layer registers a `window_kv_cache` (`attention.py:1341`), source or not. Declaring it on
+    # only the *non-owning* layers keeps this cache class disjoint from the compressed one, which is
+    # what `KvGeometry.layers` assumes when it sums per-class counts back to the trunk depth. The
+    # owning layers' rings are therefore not named here; see the module docstring for why that is a
+    # known, deliberate gap rather than an oversight.
     consuming = tuple(layer for layer in range(len(ratios)) if layer not in owning)
     if consuming:
         specs.append(

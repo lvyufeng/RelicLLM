@@ -21,6 +21,7 @@ from relicllm.runtime.kv_spec import (
     FullAttentionSpec,
     KVCacheSpec,
     SlidingWindowSpec,
+    spec_config,
 )
 
 _DEFAULT_SLIDING_WINDOW = 128
@@ -31,6 +32,9 @@ _WINDOW_TYPES = ("sliding_attention", "sliding_window")
 
 def _pattern(config: Mapping[str, Any], layers: int) -> list[bool]:
     """Which layers are sliding-window, one bool a layer, resolved the way ``config.py:342`` does."""
+    resolved = getattr(config.source, "resolved_hybrid_layer_pattern", None)
+    if resolved:
+        return [bool(flag) for flag in resolved]
     types = config.get("layer_types")
     if types:
         return [str(name) in _WINDOW_TYPES for name in types]
@@ -41,45 +45,48 @@ def _pattern(config: Mapping[str, Any], layers: int) -> list[bool]:
 
 
 def kv_spec(config: Mapping[str, Any]) -> tuple[KVCacheSpec, ...]:
-    """A global spec and a sliding-window spec, each naming the layers that share it."""
+    """A global spec and a sliding-window spec, each naming the layers that share it.
+
+    The two families have their own head counts and widths on this checkpoint, and both are resolved
+    rather than stated: a live ``MimoV2TextConfig`` answers ``attention(layer)`` for the layer
+    itself, which is the only place the per-family fallback (an unstated ``swa_head_dim`` follows the
+    *global* head dim, not the other way round) is applied. When that accessor is not available -- a
+    triage fixture payload or a ``config.json`` body -- the flat keys are read, which is the path the
+    fixture exercises.
+    """
+    config = spec_config(config)
     layers = int(config.get("num_hidden_layers") or len(config.get("hybrid_layer_pattern") or ()))
-    kv_heads = int(
-        config.get("num_key_value_heads") or config.get("attention.head_count_kv") or 0
-    )
-    key_dim = int(config.get("head_dim") or config.get("attention.key_length") or 0)
-    value_dim = int(config.get("v_head_dim") or config.get("attention.value_length") or key_dim)
-    window = int(
-        config.get("sliding_window")
-        or config.get("sliding_window_size")
-        or _DEFAULT_SLIDING_WINDOW
-    )
+    resolve = getattr(config.source, "attention", None)
+    live = resolve if callable(resolve) else None
 
     pattern = _pattern(config, layers)
-    windowed = tuple(index for index, is_swa in enumerate(pattern) if is_swa)
-    global_layers = tuple(index for index, is_swa in enumerate(pattern) if not is_swa)
-
+    window = int(
+        config.get("sliding_window") or config.get("sliding_window_size") or _DEFAULT_SLIDING_WINDOW
+    )
     specs: list[KVCacheSpec] = []
-    if global_layers:
-        specs.append(
-            FullAttentionSpec(
-                name="key",
-                layer_ids=global_layers,
-                dtype="bfloat16",
-                num_kv_heads=kv_heads,
-                head_dim=key_dim,
-                v_head_dim=value_dim,
-            )
+    for is_swa in (False, True):
+        members = tuple(index for index, flag in enumerate(pattern) if flag is is_swa)
+        if not members:
+            continue
+        # A live config answers per layer, which is where an unstated `swa_head_dim` resolves against
+        # the *global* head dim; a mapping states one pair of widths for both families.
+        shape = live(members[0]) if live is not None else None
+        kv_heads = int(shape.num_kv_heads) if shape else int(config.get("num_key_value_heads") or 0)
+        key_dim = int(shape.head_dim) if shape else int(config.get("head_dim") or 0)
+        value_dim = (
+            int(shape.v_head_dim) if shape else int(config.get("v_head_dim") or key_dim)
         )
-    if windowed:
+        cls = SlidingWindowSpec if is_swa else FullAttentionSpec
+        window_kwargs = {"sliding_window": window} if is_swa else {}
         specs.append(
-            SlidingWindowSpec(
+            cls(
                 name="key",
-                layer_ids=windowed,
+                layer_ids=members,
                 dtype="bfloat16",
                 num_kv_heads=kv_heads,
                 head_dim=key_dim,
                 v_head_dim=value_dim,
-                sliding_window=window,
+                **window_kwargs,
             )
         )
     return tuple(specs)
