@@ -174,6 +174,7 @@ nav:
       - The command-line surface against vLLM and SGLang: architecture/cli_surface_design_2026_09.md
       - Per-method duplication across the five adapters: architecture/per_method_duplication_2026_09.md
       - The device plane: architecture/device_plane.md
+      - Joining a machine, and joining a family: architecture/joining_a_machine_or_a_family.md
       - The package layers: architecture/package_layers.md
       - The native surface decision: architecture/native_surface_decision.md
       - One scheduler, many models: architecture/one_scheduler_many_models.md
