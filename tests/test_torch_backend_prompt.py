@@ -176,7 +176,7 @@ def test_a_request_without_a_budget_names_the_runtime_default():
     """The legacy runtime's own 512 is written out rather than left off the payload.
 
     The serving queue's admission check counts that same field against its token budget
-    (``relicllm/server/engine.py``), so an absent one would be read there as zero and the request
+    (``relicllm/backends/serving_engine.py``), so an absent one would be read there as zero and the request
     would be admitted on a promise the runtime does not keep.
     """
     tokenizer = RecordingTokenizer()

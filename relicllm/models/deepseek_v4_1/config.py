@@ -22,7 +22,7 @@ implementation in this repository would use -- so the aliasing is paid once here
 rather than at every call site.
 
 Two things are deliberately *not* done here. The Engram row-count derivation
-lives in `relicllm/encoding/engram.py`, which owns the primes and the hash, and is
+lives in `relicllm/models/deepseek_v4_1/engram.py`, which owns the primes and the hash, and is
 cross-checked against this schema by the tests rather than called from it. And
 the tensor inventory is not this module's business: `scripts/audit_dsv41_headers.py`
 maps names to tensors, and it reads its config through `from_dict` so that it no
@@ -656,7 +656,7 @@ class V41Config:
         return out
 
     def engram_block(self) -> dict[str, Any]:
-        """The Engram fields under the names `relicllm/encoding/engram.py` reads.
+        """The Engram fields under the names `relicllm/models/deepseek_v4_1/engram.py` reads.
 
         The flat file already uses these names, so this is the identity there and
         the aliasing everywhere else. Kept explicit rather than making the Engram

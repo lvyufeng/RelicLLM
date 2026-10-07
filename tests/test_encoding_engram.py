@@ -1,4 +1,4 @@
-"""Tests for `relicllm/encoding/engram.py`.
+"""Tests for `relicllm/models/deepseek_v4_1/engram.py`.
 
 The Engram hash tables are 189.13 GiB of FP8 whose rows are named by ids computed
 from the tokenizer, so the only thing that can be checked without the checkpoint
@@ -33,7 +33,7 @@ from typing import Sequence
 
 import pytest
 
-from relicllm.encoding.engram import (
+from relicllm.models.deepseek_v4_1.engram import (
     EngramLayout,
     NgramHasher,
     build_compressed_token_map,

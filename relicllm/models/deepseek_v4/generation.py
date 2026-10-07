@@ -12,7 +12,7 @@ import torch.distributed as dist
 from transformers import AutoTokenizer
 from relicllm.components.moe.shared_weights import SharedCPUMoEWeightArena
 from relicllm.runtime.device import bind_device, probe_accelerator
-from relicllm.runtime.prefix_snapshot import PrefixSnapshotCache
+from relicllm.models.deepseek_v4.prefix_snapshot import PrefixSnapshotCache
 from relicllm.models.deepseek_v4.runtime import (
     Transformer,
     ModelArgs,
@@ -1131,13 +1131,13 @@ def main(
 
     pd_scheduler_obj = None
     if pd_mode == "scheduler":
-        from relicllm.runtime.pd_scheduler import PDScheduler
+        from relicllm.models.deepseek_v4.pd_scheduler import PDScheduler
         pd_scheduler_obj = PDScheduler()
 
     def _run_generate(prompt_token_lists):
         if pd_scheduler_obj is None:
             return generate(model, prompt_token_lists, max_new_tokens, tokenizer.eos_token_id, temperature, prefill_chunk_tokens=pd_prefill_chunk_tokens)
-        from relicllm.runtime.pd_scheduler import run_single_request
+        from relicllm.models.deepseek_v4.pd_scheduler import run_single_request
         return run_single_request(
             generate,
             model,

@@ -21,10 +21,10 @@ from relicllm.components.moe.spec import (
     metadata_int,
 )
 from relicllm.loader.gguf.bundle import GGUFBundle
-from relicllm.loader.mappings.glm_dsa import build_tensor_mappings, classify_tensor_name
+from relicllm.models.glm_dsa.mappings import build_tensor_mappings, classify_tensor_name
 
 if TYPE_CHECKING:
-    from relicllm.runtime.generation import GGUFTokenRuntime
+    from relicllm.components.gguf.generation import GGUFTokenRuntime
 
 
 class GLMDSASpec:
@@ -270,7 +270,7 @@ class GLMDSASpec:
         ``leading_dense_layers`` so the generic generation CLI runs only the dense
         prefix unless more layers are explicitly requested.
         """
-        from relicllm.runtime.generation import GGUFTokenRuntime
+        from relicllm.components.gguf.generation import GGUFTokenRuntime
         from relicllm.models.glm_dsa.gguf_model import load_glm_dsa_gguf_model
 
         _ = gpu_memory_gib

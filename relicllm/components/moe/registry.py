@@ -57,13 +57,11 @@ def detect_spec(bundle: GGUFBundle, override: str = "auto") -> MoEModelSpec:
 # Reading a checkpoint is *format* knowledge, not architecture knowledge, so it cannot live on a
 # spec: `detect_spec` needs the bundle before it knows which spec to ask, and a second format would
 # have to hand every spec a second reading path. It lives here instead, because this module is the
-# one thing above `relicllm.loader` that the generation driver is allowed to import --
-# `relicllm/runtime/generation.py` must stay both model- and format-agnostic, which is what
-# `tests/test_package_boundaries.py::test_runtime_stays_model_and_checkpoint_format_agnostic`
-# asserts.
+# one thing in `relicllm.components` that the generation driver reaches through --
+# `relicllm/components/gguf/generation.py` names no model, and this registry is how it gets from a
+# `general.architecture` string to a spec without importing one.
 #
-# The effect is that `relicllm/runtime/` names no container format at all. Adding one is a branch here,
-# and the generation loop below it does not change.
+# Adding a container format is a branch here, and the generation loop below it does not change.
 
 
 def load_bundle(path: str | Path) -> GGUFBundle:

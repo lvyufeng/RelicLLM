@@ -781,7 +781,7 @@ class Backbone(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
         """input_ids: [b, s]. Returns (output_ids, logits, main_hidden).
 
-        `hash_ids` is [b, s, n_engram_layers, n_hash_cols], the row ids `relicllm.encoding.engram` hands
+        `hash_ids` is [b, s, n_engram_layers, n_hash_cols], the row ids `relicllm.models.deepseek_v4_1.engram` hands
         out. It is required exactly when the model has Engram layers, checked here rather than
         raised from inside the loop: a missing table would otherwise first show up as an attribute
         error 40 layers in, after minutes of expert staging.

@@ -66,7 +66,7 @@ def test_loader_canonical_namespace_imports() -> None:
     gguf_reader = importlib.import_module("relicllm.loader.gguf.reader")
     gguf_bundle = importlib.import_module("relicllm.loader.gguf.bundle")
     tensor_reader = importlib.import_module("relicllm.loader.gguf.tensor_reader")
-    deepseek_mapping = importlib.import_module("relicllm.loader.mappings.deepseek_v4")
+    deepseek_mapping = importlib.import_module("relicllm.models.deepseek_v4.mappings")
     safetensors_loader = importlib.import_module("relicllm.loader.safetensors")
 
     assert hasattr(gguf_reader, "GGUFReader")

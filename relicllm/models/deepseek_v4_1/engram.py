@@ -451,7 +451,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     import sys
 
     parser = argparse.ArgumentParser(
-        prog="python -m relicllm.encoding.engram",
+        prog="python -m relicllm.models.deepseek_v4_1.engram",
         description="Verify the Engram hash layout a DeepSeek-V4.1 config implies.",
     )
     parser.add_argument(

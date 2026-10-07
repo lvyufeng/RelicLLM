@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from relicllm.loader.gguf.bundle import GGUFBundle
 from relicllm.components.moe.capability import capability_status_for_role
 from relicllm.components.moe.placement import HardwareProfile, heterogeneous_expert_decision, lowbit_device_resident_decision
-from relicllm.loader.mappings.minimax_m2 import GLOBAL_TENSORS, LAYER_TENSORS, build_tensor_mappings, classify_tensor_name
+from relicllm.models.minimax_m2.mappings import GLOBAL_TENSORS, LAYER_TENSORS, build_tensor_mappings, classify_tensor_name
 from relicllm.components.moe.spec import (
     CapabilityItem,
     CapabilityReport,
@@ -24,7 +24,7 @@ from relicllm.components.moe.spec import (
 if TYPE_CHECKING:
     import torch
 
-    from relicllm.runtime.generation import GGUFTokenRuntime
+    from relicllm.components.gguf.generation import GGUFTokenRuntime
 
 
 class MiniMaxM2Spec:
@@ -213,7 +213,7 @@ class MiniMaxM2Spec:
         """
         import time
 
-        from relicllm.runtime.generation import GGUFTokenRuntime
+        from relicllm.components.gguf.generation import GGUFTokenRuntime
         from relicllm.models.minimax_m2.gguf_model import load_minimax_m2_gguf_model
         from relicllm.models.minimax_m2.moe_planning import (
             build_minimax_m2_tp_routed_resident_plan,

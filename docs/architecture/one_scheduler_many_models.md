@@ -120,7 +120,7 @@ The first row is done, and it is the same pattern. `components/moe/registry.py` 
 shape, in a repository that also contains the anti-pattern.
 
 The decisive local fact is the third row. There **is** a scheduler in this tree:
-`relicllm/runtime/pd_scheduler.py`. It is imported by exactly two modules, and both are inside one
+`relicllm/models/deepseek_v4/pd_scheduler.py`. It is imported by exactly two modules, and both are inside one
 model:
 
 ```

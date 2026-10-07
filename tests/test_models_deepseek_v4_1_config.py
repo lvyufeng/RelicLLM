@@ -491,12 +491,12 @@ def test_the_released_values_are_what_they_were_measured_to_be():
 def test_the_engram_derivation_reads_the_nested_config():
     """The consumer that was broken before the schema existed.
 
-    `relicllm/encoding/engram.py` needs the six engram keys and the pad id under the
+    `relicllm/models/deepseek_v4_1/engram.py` needs the six engram keys and the pad id under the
     flat names. It reads them through `engram_block`, and the block has to be the
     same object whichever file it came from -- that is the whole point, since the
     row counts are 189 GiB of table.
     """
-    from relicllm.encoding.engram import EngramLayout
+    from relicllm.models.deepseek_v4_1.engram import EngramLayout
 
     nested = load_config(str(HF_CONFIG)).engram_block()
     flat = load_config(str(FLAT_CONFIG)).engram_block()

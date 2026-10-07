@@ -170,7 +170,7 @@ class TorchBackend(BackendBase):
             return
         runtime = self._load_runtime()
         if self._serving_engine is None:
-            from relicllm.server.engine import DeepSeekServingEngine
+            from relicllm.backends.serving_engine import DeepSeekServingEngine
             from relicllm.models.deepseek_v4.serving import _broadcast_payload, _run_payload, _run_payload_stream
 
             self._serving_engine = DeepSeekServingEngine(

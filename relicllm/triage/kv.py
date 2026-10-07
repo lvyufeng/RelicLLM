@@ -745,8 +745,8 @@ def _build_minimax(config: Mapping[str, Any], *, layers: int, head_dim: int) -> 
     size would give — and the model page agrees with the code, saying a full-length request does not
     fit the 4x22 GiB baseline.
 
-    The cache is sized per request, from ``prompt + max_new_tokens`` (``runtime/generation.py:93``),
-    not from a context field.
+    The cache is sized per request, from ``prompt + max_new_tokens``
+    (``components/gguf/generation.py:97``), not from a context field.
     """
     kv_heads = _int(config, "n_kv_heads", "num_key_value_heads", "attention.head_count_kv", default=8) or 8
     head_dim = _int(config, "head_dim", "attention.key_length", default=head_dim) or head_dim
