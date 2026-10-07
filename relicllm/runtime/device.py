@@ -184,12 +184,19 @@ class CardCapability:
 
     This exists because :class:`Accelerator` answers *which platform* and nothing answered *which
     card*, and the two NVIDIA families this tree runs on do not merely differ in speed. Turing
-    (``sm_75``, the RTX 2080 Ti) has no FP8 tensor core and reaches half-precision matrix multiply
-    through a sequence of ``m16n8k8`` instructions; Ada (``sm_89``, the RTX 4090) has an FP8 tensor
-    core and does it in one ``m16n8k16``. ``relic-core`` already branches on the difference --
-    ``ops.py``'s ``_auto_impl`` sends an FP8 op down a Triton path above ``major`` 8 and a Torch
-    path below it -- so a caller that needs to know which side of that fork it is on has had no way
-    to ask. This is the way.
+    (``sm_75``, the RTX 2080 Ti) reaches an 8-bit matrix multiply through a sequence of ``m16n8k8``
+    instructions; Ada (``sm_89``, the RTX 4090) does it in one ``m16n8k16``. ``relic-core`` already
+    branches on the difference -- ``ops.py``'s ``_auto_impl`` sends an FP8 op down a Triton path at
+    or above ``major`` 8 and a Torch path below it -- so a caller that needs to know which side of
+    that fork it is on has had no way to ask. This is the way.
+
+    Two edges worth knowing before a caller relies on the predicates. **The cut is relic-core's, not
+    a hardware fact**: ``major >= 8`` is the line that repository forks on, and it is the whole of
+    what the predicates claim. **And the reading is what the torch build supports, not what is
+    plugged in**: :func:`probe_card_capability` asks ``torch.cuda.get_device_capability``, which
+    reports the capability the torch binary was compiled for, so a build without ``sm_89`` device
+    code answers ``(7, 5)`` on the very 4090 this descriptor exists to name. The descriptor reports
+    what it read; it does not check that the card and the build agree.
 
     **A card this module has never heard of is not a refusal.** :func:`probe_card_capability`
     reports whatever torch reports; ``known`` is only "this is one of the cards the tree was
@@ -203,8 +210,10 @@ class CardCapability:
     known: bool
     major: int
     minor: int
-    #: What the driver calls the card, for a log line and for a golden fixture's record. Empty when
-    #: nothing was read; never load-bearing.
+    #: What the driver calls the card, for a log line and for a golden fixture's record. Never
+    #: load-bearing. It holds the recognised name when the capability is one of the known two, the
+    #: driver's string when the probe read an unrecognised card, and empty when the caller supplied
+    #: the capability itself and no name.
     name: str = ""
 
     @property
@@ -214,21 +223,26 @@ class CardCapability:
 
     @property
     def supports_fp8_tensor_core(self) -> bool:
-        """Whether an FP8 matmul is a tensor-core op here.
+        """Whether ``relic-core`` would send an FP8 matmul down its Triton path for this card.
 
-        ``major >= 8``: Ampere and up have one, Turing does not. This is deliberately the *same
-        predicate* ``relic-core``'s ``ops.py`` uses to choose between its Triton and Torch FP8
-        paths, so the answer here and the path taken there cannot disagree.
+        ``major >= 8`` is the cut ``relic-core``'s ``ops.py`` uses to choose between its Triton and
+        Torch FP8 paths. It is the whole of what this property claims: it mirrors *that fork*, not a
+        hardware feature table. ``relic-core`` also gates the Triton arm on ``_USE_TRITON`` (false
+        when the triton import fails) and asks the same capability question only when
+        ``torch.cuda.is_available()``, neither of which is represented here -- so at ``major >= 8``
+        with triton unimportable, this reads True while that fork takes the Torch path.
         """
         return self.major >= 8
 
     @property
     def supports_fp4_tensor_core(self) -> bool:
-        """Whether a 4-bit matmul is a tensor-core op here: Blackwell (``sm_10x``) and no earlier.
+        """Whether a 4-bit matmul is a tensor-core op here: Blackwell (``sm_10x``) and later.
 
         Neither card this repository ships for has one. It is here because "4-bit" is a name a
         model file can carry regardless of the card, and a caller that assumed FP8's answer also
-        covered FP4 would be wrong on the 4090.
+        covered FP4 would be wrong on the 4090. Same caveat as
+        :attr:`supports_fp8_tensor_core`: the cut mirrors the fork above, and Blackwell's own
+        sub-version has no full-rate 4-bit path.
         """
         return self.major >= 10
 

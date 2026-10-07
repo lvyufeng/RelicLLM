@@ -113,21 +113,33 @@ def test_the_card_probe_takes_its_answers_rather_than_finding_them() -> None:
     assert turing.known and ada.known, "both cards are ones the tree ships on"
 
 
-def test_the_two_cards_this_tree_ships_on_differ_in_the_way_relic_core_branches_on() -> None:
-    """The property that makes this type worth having, stated as an assertion.
+def test_the_two_cards_this_tree_ships_on_differ_at_the_cut_relic_core_forks_at() -> None:
+    """The two cards sit on opposite sides of `major >= 8`.
 
-    `relic-core`'s `ops.py` sends FP8 down a Triton path when `major >= 8` and a Torch path below.
-    If this predicate ever stopped matching that one, the card descriptor and the kernel choice
-    would disagree -- which is the class of bug the descriptor exists to make impossible.
+    This pins the boundary and the direction -- sm_75 below it, sm_89 at or above it -- which is the
+    fork `relic-core`'s `ops.py` makes. It does **not** prove the two agree: `relic-core` is another
+    repository, nothing here imports it, and an edit to either side's cut still passes. The
+    agreement is a convention this test documents and the property docstring states, not a fact it
+    can hold across a repository boundary.
+
+    A boundary mutation is what this catches: `>=` to `>` on either predicate moves a card across
+    the line and one of these assertions fails.
     """
     turing = plane.probe_card_capability(capability=(7, 5))
     ada = plane.probe_card_capability(capability=(8, 9))
 
-    assert not turing.supports_fp8_tensor_core, "sm_75 has no FP8 tensor core"
-    assert ada.supports_fp8_tensor_core, "sm_89 does"
+    assert not turing.supports_fp8_tensor_core, "sm_75 is below the FP8 cut"
+    assert ada.supports_fp8_tensor_core, "sm_89 is at or above it"
     assert not turing.supports_fp4_tensor_core and not ada.supports_fp4_tensor_core, (
         "neither card has an FP4 tensor core; that is Blackwell and up"
     )
+
+    # The two cuts are pinned at their own boundary, not just at these two cards: `>=` to `>` on
+    # either predicate moves these four cases and fails the assertion beside it.
+    assert plane.probe_card_capability(capability=(8, 0)).supports_fp8_tensor_core
+    assert not plane.probe_card_capability(capability=(7, 9)).supports_fp8_tensor_core
+    assert plane.probe_card_capability(capability=(10, 0)).supports_fp4_tensor_core
+    assert not plane.probe_card_capability(capability=(9, 9)).supports_fp4_tensor_core
 
 
 def test_an_unreadable_card_is_the_turing_floor_and_not_a_failure() -> None:
@@ -139,14 +151,20 @@ def test_an_unreadable_card_is_the_turing_floor_and_not_a_failure() -> None:
     """
     unknown = plane.UNKNOWN_CAPABILITY
 
-    assert unknown == plane.probe_card_capability(
-        capability=(unknown.major, unknown.minor)
-    ) or not unknown.known
     assert not unknown.known
     assert (unknown.major, unknown.minor) == (7, 5)
     assert unknown.cc == 750
     assert not unknown.supports_fp8_tensor_core
     assert not unknown.supports_fp4_tensor_core
+
+    # The floor is Turing -- but it is not the same value as a *probed* Turing card, and the
+    # difference is the point: this one is not `known`, because nothing was read. Asserting the two
+    # are equal would be a tautology (`unknown.known` is already false) and would hide the case a
+    # caller has to get right: no card read at all, versus a Turing card read.
+    probed_turing = plane.probe_card_capability(capability=(7, 5))
+    assert probed_turing.known, "a probed sm_75 is a card the tree was validated on"
+    assert not unknown.known, "the floor was never validated -- nothing was read"
+    assert (probed_turing.major, probed_turing.minor) == (unknown.major, unknown.minor)
 
 
 def test_a_card_the_tree_has_never_seen_keeps_its_real_numbers() -> None:
