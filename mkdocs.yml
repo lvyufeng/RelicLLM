@@ -178,6 +178,7 @@ nav:
       - The native surface decision: architecture/native_surface_decision.md
       - One scheduler, many models: architecture/one_scheduler_many_models.md
       - One scheduler, lifted: architecture/scheduler_2026_10.md
+      - The KV declaration: architecture/kv_declaration.md
   - Migration:
       - Overview: migration/index.md
       - A max_tokens the context cannot hold is refused: migration/overlong-max-tokens-is-refused.md

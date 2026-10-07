@@ -87,6 +87,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [The native surface decision](https://lvyufeng.github.io/RelicLLM/architecture/native_surface_decision/)
 - [One scheduler, many models](https://lvyufeng.github.io/RelicLLM/architecture/one_scheduler_many_models/)
 - [One scheduler, lifted](https://lvyufeng.github.io/RelicLLM/architecture/scheduler_2026_10/)
+- [The KV declaration](https://lvyufeng.github.io/RelicLLM/architecture/kv_declaration/)
 
 ## Migration
 

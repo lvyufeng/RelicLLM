@@ -524,17 +524,173 @@ def kv_geometry(
                 "(ssm_a/linear_attn vs attn_k/k_proj), not assumed"
             )
 
-    builder = _BUILDERS.get(canonical)
-    if builder is None:
-        geometry = _generic(config, architecture=arch, layers=layers, head_dim=head_dim)
+    # Where a declaration exists it is the authority for the geometry; the builder below is the
+    # computation that predates it and the fallback for an architecture this tree does not serve.
+    declared = _from_declaration(canonical, config) if canonical in _DECLARED else None
+    if declared is not None:
+        geometry = declared
     else:
-        geometry = builder(config, layers=layers, head_dim=head_dim)
-        if geometry is None:
+        builder = _BUILDERS.get(canonical)
+        if builder is None:
             geometry = _generic(config, architecture=arch, layers=layers, head_dim=head_dim)
+        else:
+            geometry = builder(config, layers=layers, head_dim=head_dim)
+            if geometry is None:
+                geometry = _generic(config, architecture=arch, layers=layers, head_dim=head_dim)
     for note in (trunk_note, evidence_note):
         if note:
             geometry = replace(geometry, notes=geometry.notes + (note,))
     return geometry
+
+
+#: Served architectures whose KV shape the model side declares, and the module that declares it. A
+#: declaration states the *allocated* shape (`relicllm/runtime/kv_spec.py`); this reads it back into
+#: the marginal costing the fit test wants. The row is the seam between the two artefacts, and it is
+#: a table rather than a convention so that adding a declaration without teaching triage about it is
+#: a visible omission rather than a silent fall-through to the old computation.
+_DECLARED = {
+    "deepseek_v4": "relicllm.models.deepseek_v4.kv_spec",
+    "deepseek_v4_1": "relicllm.models.deepseek_v4_1.kv_spec",
+    "mimo": "relicllm.models.mimo_v2.kv_spec",
+    "qwen4_exp": "relicllm.models.qwen4_exp.kv_spec",
+    "xing4": "relicllm.models.xing4_0.kv_spec",
+}
+
+#: The `source` a layer class gets when its geometry came from a declaration rather than from a
+#: builder's own `file.py:NNN`. Deliberately not a path: no single line holds this number any more,
+#: and inventing one would be the false precision this module's provenance rule exists to prevent.
+_DECLARED_SOURCE = "relicllm/runtime/kv_spec.py (declared by the model)"
+
+#: The five shapes a declaration's cache can be, as the `kind` strings the fit test and the report
+#: already render. `_from_declaration` maps every spec onto one of these plus `"indexer"`.
+_KIND_FULL = "full"
+_KIND_SLIDING = "sliding_window"
+_KIND_LINEAR = "linear"
+
+#: A declaration's second cache on layers the attention spec already counts -- DeepSeek's indexer
+#: key and Qwen's QSA index key. Emitted under the `"indexer"` kind so the layer-count sum, which
+#: excludes it, does not count those layers twice.
+_INDEXER_NAMES = frozenset({"k_cache", "index_k"})
+
+
+def _from_declaration(canonical: str, config: Mapping[str, Any]) -> KvGeometry | None:
+    """Read an architecture's own KV declaration into the geometry this module costs.
+
+    Only the **growing** caches are margined: the declared `values_per_token` is the per-token cost a
+    full-attention or absorbed layer adds to the context, and a
+    :class:`~relicllm.runtime.kv_spec.SlidingWindowSpec` or `StateSpec` declares zero because the
+    context does not lengthen them. The *allocated* size of those bounded caches is the declaration's
+    other number (`allocated_bytes`) and is deliberately not added here -- the fit test budgets what
+    a context grows into, not what a ring reserves.
+
+    A DeepSeek indexer spec is a second cache on layers the attention spec already counts, so it is
+    emitted under the `"indexer"` kind the layer-count sum subtracts, exactly as the builders did.
+
+    Returns ``None`` for a config the declaration cannot read (a GGUF whose keys are namespaced, say),
+    so the caller falls back to the computation that predates this rather than reporting nothing.
+    """
+    import importlib
+
+    from relicllm.runtime.kv_spec import MLASpec, StateSpec
+
+    module = importlib.import_module(_DECLARED[canonical])
+    try:
+        specs = module.kv_spec(config)
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not specs:
+        return None
+
+    classes: list[LayerGeometry] = []
+    for spec in specs:
+        count = spec.layer_count
+        values = spec.values_per_token
+        if spec.name in _INDEXER_NAMES:  # a second cache under the "indexer" kind
+            kind = "indexer"
+        elif values <= 0:
+            # A bounded cache: `SlidingWindowSpec` (a ring) or `StateSpec` (a recurrent/conv state).
+            kind = _KIND_LINEAR if isinstance(spec, StateSpec) else _KIND_SLIDING
+        else:
+            kind = _KIND_FULL if not isinstance(spec, MLASpec) else "compressed_full"
+        classes.append(
+            LayerGeometry(
+                count=count,
+                kind=kind,
+                values_per_token=values,
+                source=_DECLARED_SOURCE,
+                compress_ratio=getattr(spec, "compress_ratio", None) if kind != "indexer" else None,
+                note=f"declared by {_DECLARED[canonical]}",
+            )
+        )
+
+    indexer = [c for c in classes if c.kind == "indexer"]
+    attention = [c for c in classes if c.kind != "indexer"]
+    if not attention:
+        return None
+    # The indexer counts toward the byte total -- it is a real second cache -- and is excluded only
+    # from the layer *count*, which the fixtures assert against the model depth.
+    total = sum(c.count * c.values_per_token for c in classes)
+    extra = tuple(
+        f"indexer: {c.count} layers x {c.values_per_token} values/token" for c in indexer
+    )
+    notes = ["the per-layer geometry is the model's own declaration (relicllm/runtime/kv_spec.py)"]
+    if indexer:
+        notes.append("the indexer is a second cache on layers the attention classes already count")
+    return KvGeometry(
+        attention_kind=_attention_kind_of(attention),
+        layers=tuple(attention + indexer),
+        values_per_token_per_layer=total,
+        dtype_bytes=2,
+        sharding=_SHARDING_BY_ARCH[canonical][0],
+        sharding_source=_SHARDING_BY_ARCH[canonical][1],
+        preallocated=canonical != "qwen4_exp",
+        confidence=Confidence.DERIVED,
+        extra_caches=extra,
+        notes=tuple(notes),
+        sources=(_DECLARED_SOURCE,),
+    )
+
+
+def _attention_kind_of(attention: list[LayerGeometry]) -> str:
+    """``mla_latent`` when every growing class is an MLA latent, ``hybrid`` when they disagree."""
+    kinds = {c.kind for c in attention if c.values_per_token > 0}
+    if kinds == {"compressed_full"} or kinds == {"compressed"} or kinds == {"compressed_full", "compressed"}:
+        return "mla_latent"
+    if not kinds:
+        return "hybrid"
+    return "hybrid" if len(kinds) > 1 else "gqa"
+
+
+#: Sharding and its provenance, per declared architecture -- the facts a declaration does not carry
+#: because they are properties of the *runtime*, not of the cache's shape. Same strings the builders
+#: used, moved here so the declaration path and the fallback agree about them.
+_SHARDING_BY_ARCH: dict[str, tuple[str, str]] = {
+    "deepseek_v4": (
+        REPLICATED,
+        "relicllm/models/deepseek_v4/runtime.py:1408 — the allocation carries no rank term; head_dim "
+        "is not divided by tp_world_size (:1301) while the heads are (:1309)",
+    ),
+    "deepseek_v4_1": (
+        REPLICATED,
+        "relicllm/models/deepseek_v4_1/attention.py:1294 — the constructor divides n_heads and "
+        "o_groups by world, and neither is a cache",
+    ),
+    "mimo": (
+        SHARDED,
+        "relicllm/models/mimo_v2/device_model.py:516 — shards/shard come from the expert-parallel "
+        "group's attention_shards and are passed into the cache constructor (:685)",
+    ),
+    "qwen4_exp": (
+        SHARDED,
+        "relicllm/models/qwen4_exp/builder.py:265 — the same 24/4 GQA geometry binds each rank to "
+        "one KV head",
+    ),
+    "xing4": (
+        SINGLE_CARD,
+        "relicllm/backends/xing4_backend.py:12 — there is no tensor-parallel group and a width above "
+        "1 is refused, so one process holds the cache whole",
+    ),
+}
 
 
 #: Architectures whose runtime builds the *trunk* only, dropping the trailing NextN/MTP blocks a
