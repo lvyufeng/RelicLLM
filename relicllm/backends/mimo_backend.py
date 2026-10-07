@@ -451,10 +451,6 @@ class MimoBackend(ShardedWorkerMixin, RuntimeAdapter):
             "cancellation": "per-step broadcast; not inside the prompt's forward",
         }
 
-    def _say(self, message: str) -> None:
-        if self._world <= 1 or self._rank == 0:
-            print(f"[mimo] {message}", flush=True)
-
     def _ensure_prefix_cache(self) -> None:
         """Build this rank's store, once, or leave it off and say why.
 

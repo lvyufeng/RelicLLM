@@ -160,3 +160,44 @@ methods. Their cache algorithms differ; this evidence supports the lifecycle own
 RelicLLM's private flag or a change to its locking. `tests/test_runtime_preparation.py` pins
 shared-method ownership, call order, refusal before loading a closed adapter, load-failure
 short-circuiting, and V4.1's unchanged under-lock construction without a second outside-lock call.
+
+## `_say`, and why `TorchBackend` stays where it is, 2026-10-07
+
+The last piece of #55 was "fold `TorchBackend` onto `RuntimeAdapter`". Re-measuring the tree on
+master `6ce4037` first — a content-first scan (`ast`, docstrings stripped, every *cross-class* pair at
+≥0.6 over ≥5 lines) rather than the same-name table above — changed what that piece is.
+
+The four real clusters that were still live, and what happened to each:
+
+| ratio | method | pair | decision |
+| ---: | --- | --- | --- |
+| 0.92 | `_say` | mimo ~ qwen4_exp (~ xing4) | **folded** onto `RuntimeAdapter`, label from `_RUNTIME_LABEL` |
+| 0.87 | `_generate_injected` ~ `_stream_injected` | torch ~ torch | **folded** into one `_injected_callback(name)` |
+| 0.86 | `__init__` | mimo ~ qwen4_exp | kept: 23/20 lines, but the differ is 4 runtime-specific attributes on each side, and 1 of mimo's is dead |
+| 0.85 | `_ensure_loaded` | mimo ~ qwen4_exp | kept: a shared body needs 3-4 new hooks (injected-load shape, cache-from-model, details) to save 2 lines |
+| 0.71 | `_init_distributed` | mimo ~ qwen4_exp | kept: two different group readers (`mimo_v2.ep` / `qwen4_exp.runtime`); only the store-back differs |
+
+**`TorchBackend` is not folded, and that is the finding rather than a deferral.** Every method it
+shares a *name* with `RuntimeAdapter` has a different *body*: the DeepSeek serving engine returns a
+**mapping** (`_format_completion_result`) where the family's loop returns an object
+(`generation.tokens` / `stopped` / `prefill_seconds`), it reads a third-party `DeepSeekServingEngine`
+that owns its own queue and worker thread, and its `generate`/`stream`/`_loop`/`_result`/`_decode`/
+`_tokenize`/`_budget`/`_eos_tokens` are each its own. Moving it under `RuntimeAdapter` would make it
+override ~12 methods to keep behaving identically, against a base that contributes one method
+(`audit_request`) it already carries a copy of — more code, a GPU-generating path with thin test
+coverage, and no duplication actually removed. The change is a *declaration* away from being
+uniform, not a body away.
+
+`_say` was the one body that genuinely wanted a home. Three of the four runtimes wrote the identical
+rank-0 progress line and differed only in `[mimo]` / `[xing4]` / `[qwen4_exp]`; the base prints
+`[<runtime label>]`, so the log prefix is now `[MiMo]` / `[Xing4]` / `[Qwen3.8-Flash-Next]`. V4.1 keeps
+its own: it gates the line on `--progress` and prefixes the rank number, which is a different program
+and not this one misplaced. While folding it, `RankedWorker` gained class-attribute defaults
+`_rank = 0` / `_world = 1`, because `xing4` never set them and a shared reader had to be safe on the
+runtime that never joins a group.
+
+`tests/test_backend_contract.py::test_the_tokenizer_and_eos_resolution_have_one_definition` now pins
+`_say` (`base.py` + the named `v41` exception) and `_injected_callback` alongside the tokenizer and eos
+names, and `test_the_progress_line_is_rank_zero_only_and_wears_the_runtime_label` pins the rank-0
+gating and the label. Net: three `_say` bodies and a duplicated injected-callback guard removed; the
+adapter hierarchy unchanged.

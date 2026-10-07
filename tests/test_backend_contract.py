@@ -1258,6 +1258,12 @@ def test_the_tokenizer_and_eos_resolution_have_one_definition():
         "_eos_tokens": {"base.py", "v41_backend.py"},
         "_tokenizer_directory": {"base.py", "xing4_backend.py"},
         "_checkpoint_eos_token_id": {"base.py", "mimo_backend.py", "xing4_backend.py", "qwen4_exp_backend.py"},
+        # `_say` is here for the same reason: three sharded runtimes wrote the rank-0 progress line
+        # out to the character, differing only in the label, and none of the three has a reason to
+        # carry a copy. `v41` is the named exception -- it gates the line on a `--progress` option
+        # and prefixes the rank number, which is a different program and not this one misplaced.
+        "_say": {"base.py", "v41_backend.py"},
+        "_injected_callback": {"torch_backend.py"},
     }
 
     offenders: list[str] = []
@@ -1270,8 +1276,8 @@ def test_the_tokenizer_and_eos_resolution_have_one_definition():
                 offenders.append(f"{path.relative_to(root)}:{node.lineno} {node.name}")
 
     assert offenders == [], (
-        "the tokenizer read and the eos union are written once on `RuntimeAdapter`, over the two "
-        f"hooks each adapter answers; these carry a second copy: {offenders}"
+        "the tokenizer read, the eos union and the rank-0 progress line are written once on "
+        f"`RuntimeAdapter`, over the hooks each adapter answers; these carry a second copy: {offenders}"
     )
 
 
@@ -1315,6 +1321,29 @@ def test_the_eos_union_takes_the_checkpoint_and_the_tokenizers_ids():
     stub._tokenizer = SimpleNamespace()
     with pytest.raises(ConfigurationError, match="names no end-of-turn token"):
         stub._eos_tokens()
+
+
+def test_the_progress_line_is_rank_zero_only_and_wears_the_runtime_label(capsys):
+    """The rank-0 progress line, shared: the label from `_RUNTIME_LABEL`, quiet on the other ranks.
+
+    What the three copies agreed on, and the one way they differed -- which label -- is now the one
+    input. A mirror of the same line from every rank is noise, so a rank that is not 0 prints
+    nothing; a single-rank world has no other ranks to drop and prints.
+    """
+    stub = _PathStub()
+    stub._RUNTIME_LABEL = "MiMo"
+
+    stub._say("reading the checkpoint")
+    assert capsys.readouterr().out == "[MiMo] reading the checkpoint\n"
+
+    # Rank 1 of a sharded world says nothing; rank 0 of it still does.
+    stub._world, stub._rank = 4, 1
+    stub._say("reading the checkpoint")
+    assert capsys.readouterr().out == ""
+
+    stub._rank = 0
+    stub._say("reading the checkpoint")
+    assert capsys.readouterr().out == "[MiMo] reading the checkpoint\n"
 
 
 def test_v41_keeps_its_own_eos_read_because_its_contract_is_different():

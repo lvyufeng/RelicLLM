@@ -319,13 +319,22 @@ class TorchBackend(BackendBase):
             }},
         )
 
-    def _generate_injected(self, request: GenerationRequest) -> GenerationResult | Mapping[str, Any]:
+    def _injected_callback(self, name: str) -> Callable[[GenerationRequest], Any]:
+        """The injected runtime's ``name`` callback, or a refusal naming what is missing.
+
+        The two callers -- the serial and the streamed route -- guarded this the same way and
+        differed only in the key they asked for, so the guards live here once and each caller keeps
+        the one line that is its own: call it, or iterate it.
+        """
         if self._runtime is None:
             raise RuntimeError("TorchBackend runtime is not loaded")
-        callback = self._runtime.get("backend_generate")
+        callback = self._runtime.get(name)
         if not callable(callback):
-            raise RuntimeError("injected Torch runtime has no backend_generate callback")
-        return callback(request)
+            raise RuntimeError(f"injected Torch runtime has no {name} callback")
+        return callback
+
+    def _generate_injected(self, request: GenerationRequest) -> GenerationResult | Mapping[str, Any]:
+        return self._injected_callback("backend_generate")(request)
 
     def metrics(self) -> dict[str, float]:
         """The runtime's own gauges, or nothing when it publishes none."""
@@ -334,9 +343,13 @@ class TorchBackend(BackendBase):
     def audit_request(self, body: Mapping[str, Any], *, endpoint: str = CHAT) -> FieldRefusal | None:
         """The audit against this runtime's declaration, which is not the family's.
 
-        This adapter extends :class:`BackendBase` rather than :class:`RuntimeAdapter`, so it does not
-        inherit the family's override and has to state the same read itself: the table row for
-        ``torch``, which is the one row with ``logprobs`` and ``structured_outputs`` set.
+        This adapter extends :class:`BackendBase` rather than :class:`RuntimeAdapter` and so states
+        this read itself -- deliberately, because folding it onto the family base would mean
+        overriding the dozen methods where this adapter's body genuinely differs (the DeepSeek
+        serving engine returns a mapping where the family's loop returns an object) to gain the one
+        method it already carries. See
+        ``docs/architecture/per_method_duplication_2026_09.md``. The row read is ``torch``'s, the one
+        row with ``logprobs`` and ``structured_outputs`` set.
         """
         return audit(body, endpoint=endpoint, serves=served_fields(self.name))
 
@@ -372,12 +385,7 @@ class TorchBackend(BackendBase):
         return outputs
 
     def _stream_injected(self, request: GenerationRequest) -> Iterator[Any]:
-        if self._runtime is None:
-            raise RuntimeError("TorchBackend runtime is not loaded")
-        callback = self._runtime.get("backend_stream")
-        if not callable(callback):
-            raise RuntimeError("injected Torch runtime has no backend_stream callback")
-        yield from callback(request)
+        yield from self._injected_callback("backend_stream")(request)
 
     def stream(self, request: GenerationRequest) -> Iterator[TokenEvent]:
         self._ensure_loaded()

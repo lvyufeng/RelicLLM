@@ -308,8 +308,11 @@ class RuntimeAdapter(RankedWorker, BackendBase):
     for the next fix to miss.
 
     Which adapters are on this base is a fact about how far the convergence has got, not about
-    which ones the body fits: ``v41`` and ``torch`` keep their own copies until the differences
-    they carry are resolved one at a time.
+    which ones the body fits: ``v41`` keeps its own copies where its contract differs, and ``torch``
+    is deliberately not on it at all -- the DeepSeek serving engine hands back a mapping where this
+    family's loop hands back an object, so every method ``torch`` shares a *name* with is a
+    different *body*, and moving it here would be a dozen overrides against one shared method.
+    See ``docs/architecture/per_method_duplication_2026_09.md``.
 
     A subclass supplies its runtime's name through :attr:`_RUNTIME_LABEL`, and overrides whatever
     it does differently: ``_encode_chat`` where the checkpoint's format is not a jinja template,
@@ -322,19 +325,39 @@ class RuntimeAdapter(RankedWorker, BackendBase):
     here too, because the one fact that genuinely varies between runtimes is answered by a
     one-expression hook: :meth:`_tokenizer_directory` for the path and
     :meth:`_checkpoint_eos_token_id` for the config object the release carries its eos ids on.
+    :meth:`_say`, the rank-0 progress line, is here for the same reason and is read by the loads
+    below it.
 
-    The only state read here is ``_tokenizer``, ``_max_seq_len``, ``_tokenizer_path`` and
-    ``_checkpoint_dir`` -- which every adapter in this family has by the time a request arrives.
+    The only state read here is ``_tokenizer``, ``_max_seq_len``, ``_tokenizer_path``,
+    ``_checkpoint_dir``, ``_RUNTIME_LABEL`` and ``_rank``/``_world`` -- which every adapter in this
+    family has by the time a request arrives.
     """
 
     #: How this adapter's own messages spell its runtime, as this family spells it in "the MiMo
-    #: tokenizer is not loaded".  Read by :meth:`_tokenize` alone: nothing else here needs to know
-    #: which runtime it is.
+    #: tokenizer is not loaded".  Read by :meth:`_tokenize` and by :meth:`_say`, the two places a
+    #: runtime's name is needed.
     _RUNTIME_LABEL = ""
 
     #: MiMo and Xing4 build their prefix stores after loading. V4.1 builds under its load lock,
     #: and Qwen4-Exp has no store, so neither adds a post-load step here.
     _PREPARE_PREFIX_CACHE = False
+
+    def _say(self, message: str) -> None:
+        """Print a startup progress line, on rank 0.
+
+        Three of this family's four runtimes wrote this out to the character, differing only in the
+        runtime's name -- and two of those three wrote it for a message none of them ever emits.  The
+        name is :attr:`_RUNTIME_LABEL`, which is already the spelling every other message on this
+        base uses.
+
+        Rank 0 alone once there is more than one rank: every rank loads, and a mirror of the same
+        line from each of them is noise rather than progress.  V4.1 keeps its own, because it gates
+        the line on a ``--progress`` option and prefixes the rank number rather than dropping the
+        line on the other ranks; neither is the shape here.
+        """
+        if self._world > 1 and self._rank != 0:
+            return
+        print(f"[{self._RUNTIME_LABEL}] {message}", flush=True)
 
     def audit_request(self, body: Mapping[str, Any], *, endpoint: str = CHAT) -> FieldRefusal | None:
         """The base class's audit, against this runtime's own declaration.
