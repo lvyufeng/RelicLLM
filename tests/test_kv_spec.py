@@ -186,6 +186,38 @@ def test_the_declared_cache_matches_the_verified_geometry(model: dict[str, Any])
     )
 
 
+def test_a_layer_with_two_caches_is_declared_in_two_but_counted_once() -> None:
+    """V4.1's four source layers hold a window ring *and* a compressed latent.
+
+    The declaration names both -- the ring is real and allocated on every layer -- but the layer is
+    one layer. Triage counts it once, in the class that grows; counting the ring's members as well
+    would report 44 layers for a 40-layer model. This pins both halves, because a test of the count
+    alone would pass a declaration that had simply dropped the owning layers' rings.
+    """
+    from relicllm.models.deepseek_v4_1.kv_spec import kv_spec
+    from relicllm.triage.kv import kv_geometry
+
+    config = {
+        "compress_ratios": [0, 0, 2, 2, 2, 2] + [0] * 34,
+        "num_hidden_layers": 40,
+        "kv_source_layer_ids": [2, 8, 14, 20],
+        "head_dim": 512,
+        "index_head_dim": 128,
+        "window_size": 128,
+    }
+    specs = {spec.name: spec for spec in kv_spec(config)}
+
+    assert specs["window_kv_cache"].layer_ids == tuple(range(40)), "the ring is on every layer"
+    # The four source layers are in the ring *and* the compressed cache.
+    assert set(specs["compress_kv_cache"].layer_ids) <= set(specs["window_kv_cache"].layer_ids)
+
+    geometry = kv_geometry(config, architecture="deepseek_v4_1")
+    counted = sum(
+        layer.count for layer in geometry.layers if layer.kind not in ("indexer",)
+    )
+    assert counted == 40, f"{counted} layer classes for a 40-layer model"
+
+
 def test_the_declarations_are_readable_without_importing_torch() -> None:
     """#129's first acceptance item, checked the way the device tests check theirs: in a fresh process.
 

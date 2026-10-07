@@ -76,12 +76,21 @@ and one-for-one with this tree's buffer names. Layers that differ in geometry ge
 compressor is ratio 2 on its first three source layers and ratio 1 on the fourth, and merging them
 would report a shape none of them has.
 
+**A cache may name a layer another cache already names.** That is not the same as double-counting the
+layer, and the two must be told apart. V4.1 registers `window_kv_cache` on **every** layer, including
+the four that also grow a compressed latent, so those four appear in two specs. The rule triage
+applies is *a second buffer on a layer is not a second layer*: the layer is counted once, in the class
+that grows, and the ring is counted only for the layers no growing class claims. The declaration names
+all forty rings because all forty exist; the count still lands on forty.
+
 **Two costs, because two callers ask.** `page_size_bytes(block_size)` is the allocated size a paged
 allocator lays out, and `values_per_token` is the marginal cost one more token adds, which the fit
 test budgets against. They differ exactly where it matters: a sliding window reserves a 128-slot ring
-and margins zero. A declaration that reported one number would be read wrong by one of the two
-callers — and the fit test's verification story from 2026-10-02 is a *marginal* number, so the
-round-trip through this declaration has to reproduce it.
+and margins zero — which is also why declaring the four source layers' rings is free here: their
+marginal contribution is zero, so the verified per-token number is unmoved, and the *allocated* fact
+the paged allocator needs is no longer missing. A declaration that reported one number would be read
+wrong by one of the two callers — and the fit test's verification story from 2026-10-02 is a *marginal*
+number, so the round-trip through this declaration has to reproduce it.
 
 ## What a publisher looks like
 

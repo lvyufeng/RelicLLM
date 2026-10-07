@@ -79,7 +79,9 @@ def test_layer_classes_account_for_every_layer(model: dict[str, Any]) -> None:
     """A class list that does not sum to the layer count has silently dropped some layers.
 
     ``indexer`` classes are excluded: DeepSeek's second cache is a *second* buffer on layers the
-    attention classes have already counted, so including it would double-count them.
+    attention classes have already counted, so including it would double-count them. A *sliding
+    window* names the same layers V4.1's compressor grows on, and for the same reason only the layers
+    it does not share with a growing class are counted -- so the sum lands on the depth once.
 
     The pinned count is the **trunk** where the fixture carries one, because a GGUF's
     ``block_count`` includes the trailing NextN/MTP blocks the runtime does not build -- GLM-5.2

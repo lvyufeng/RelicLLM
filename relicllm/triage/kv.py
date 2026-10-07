@@ -113,6 +113,11 @@ class LayerGeometry:
 
     note: str = ""
 
+    layer_ids: tuple[int, ...] = ()
+    """The layers this class covers, when the source states them (a declaration does; a builder often
+    does not). It is what lets two classes that share a layer -- V4.1's window ring and its compressed
+    latent, on the same four source layers -- be told apart from two classes that do not."""
+
     @property
     def grows(self) -> bool:
         """Whether this class costs anything as the context grows."""
@@ -601,9 +606,10 @@ def _from_declaration(canonical: str, config: Mapping[str, Any]) -> KvGeometry |
     if not specs:
         return None
 
+    _GROWING_KINDS = frozenset({_KIND_FULL, "compressed_full"})
+
     classes: list[LayerGeometry] = []
     for spec in specs:
-        count = spec.layer_count
         values = spec.values_per_token
         if spec.name in _INDEXER_NAMES:  # a second cache under the "indexer" kind
             kind = "indexer"
@@ -614,19 +620,38 @@ def _from_declaration(canonical: str, config: Mapping[str, Any]) -> KvGeometry |
             kind = _KIND_FULL if not isinstance(spec, MLASpec) else "compressed_full"
         classes.append(
             LayerGeometry(
-                count=count,
+                count=spec.layer_count,
                 kind=kind,
                 values_per_token=values,
                 source=_DECLARED_SOURCE,
                 compress_ratio=getattr(spec, "compress_ratio", None) if kind != "indexer" else None,
                 note=f"declared by {_DECLARED[canonical]}",
+                layer_ids=tuple(spec.layer_ids),
             )
         )
 
     indexer = [c for c in classes if c.kind == "indexer"]
-    attention = [c for c in classes if c.kind != "indexer"]
+    attention = [c for c in classes if c.kind not in ("indexer", _KIND_SLIDING)]
     if not attention:
         return None
+    # A layer is counted once, by the class that *grows* with context. A ring names a layer the
+    # growing class already counts whenever both exist -- V4.1's four source layers each hold a window
+    # ring *and* a compressed latent -- so its members that a growing class claims are not counted
+    # again. That is the same rule the indexer follows, for the same reason: a second buffer on a
+    # layer is not a second layer.
+    growing_members: set[int] = set()
+    for layer_class in classes:
+        if layer_class.kind in _GROWING_KINDS or layer_class.kind == "indexer":
+            growing_members |= set(layer_class.layer_ids)
+    counted: list[LayerGeometry] = []
+    for layer_class in classes:
+        if layer_class.kind == _KIND_SLIDING:
+            overlap = len(set(layer_class.layer_ids) & growing_members)
+            if overlap:
+                layer_class = replace(layer_class, count=layer_class.count - overlap)
+                if layer_class.count == 0:
+                    continue
+        counted.append(layer_class)
     # The indexer counts toward the byte total -- it is a real second cache -- and is excluded only
     # from the layer *count*, which the fixtures assert against the model depth.
     total = sum(c.count * c.values_per_token for c in classes)
@@ -638,7 +663,7 @@ def _from_declaration(canonical: str, config: Mapping[str, Any]) -> KvGeometry |
         notes.append("the indexer is a second cache on layers the attention classes already count")
     return KvGeometry(
         attention_kind=_attention_kind_of(attention),
-        layers=tuple(attention + indexer),
+        layers=tuple(counted),
         values_per_token_per_layer=total,
         dtype_bytes=2,
         sharding=_SHARDING_BY_ARCH[canonical][0],

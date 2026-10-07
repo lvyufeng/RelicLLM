@@ -6,13 +6,12 @@ gets it backwards. V4.1 has ``compress_ratios`` like V4, but a non-zero ratio he
 ``kv_source_layer_ids`` -- own a growing buffer, and costing every non-zero ratio as a growing layer
 counts 38 where there are 4.
 
-**Every** layer registers a ``window_kv_cache`` (``attention.py:1341``, unconditional), yet the window
-spec below names only the 36 *non-owning* layers. That is a deliberate gap, not an oversight: naming
-all forty would put the four source layers in two cache classes at once, and `KvGeometry.layers` sums
-per-class counts back to the trunk depth, so a layer counted twice reads as a 44-layer model. The
-allocated ring on those four layers is therefore unstated here; stating it needs the declaration to
-express "each layer in exactly one class by default, plus this layer also in that one", which is a
-triage-side change rather than a publisher-side one.
+**Every** layer registers a ``window_kv_cache`` (``attention.py:1341``, unconditional), including the
+four source layers, so the ring spec names all forty. That puts a source layer in **two** cache
+classes at once -- its ring and its compressed latent -- which is why the consumer counts layers by
+identity (the union of the specs' ``layer_ids``) rather than by summing per-class counts. A ring's
+marginal cost is zero, so naming the owning layers' rings adds nothing to what a token costs and
+everything to what the layers actually allocate.
 
 The indexer is guarded and follows the same list: its ``k_cache`` is registered inside
 ``if self.owns_k`` (``attention.py:809``), and ``owns_k`` is membership of the source list, so only
@@ -101,22 +100,20 @@ def kv_spec(config: Mapping[str, Any]) -> tuple[KVCacheSpec, ...]:
                 )
             )
 
-    # Every layer registers a `window_kv_cache` (`attention.py:1341`), source or not. Declaring it on
-    # only the *non-owning* layers keeps this cache class disjoint from the compressed one, which is
-    # what `KvGeometry.layers` assumes when it sums per-class counts back to the trunk depth. The
-    # owning layers' rings are therefore not named here; see the module docstring for why that is a
-    # known, deliberate gap rather than an oversight.
-    consuming = tuple(layer for layer in range(len(ratios)) if layer not in owning)
-    if consuming:
-        specs.append(
-            SlidingWindowSpec(
-                name="window_kv_cache",
-                layer_ids=consuming,
-                dtype="bfloat16",
-                num_kv_heads=1,
-                head_dim=head_dim,
-                v_head_dim=0,
-                sliding_window=window,
-            )
+    # Every layer registers a `window_kv_cache` (`attention.py:1341`), source or not, so the ring
+    # names all of them. Its marginal cost is zero, so this is a pure *allocated-shape* fact -- but it
+    # does mean a source layer appears in two cache classes at once (its ring and its compressed
+    # latent), which is why the consumer counts layers by identity rather than by summing per-class
+    # counts.
+    specs.append(
+        SlidingWindowSpec(
+            name="window_kv_cache",
+            layer_ids=tuple(range(len(ratios))),
+            dtype="bfloat16",
+            num_kv_heads=1,
+            head_dim=head_dim,
+            v_head_dim=0,
+            sliding_window=window,
         )
+    )
     return tuple(specs)
