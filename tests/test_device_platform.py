@@ -98,6 +98,101 @@ def test_the_platform_set_is_spelled_once() -> None:
 # ------------------------------------------------------------------------ the probe
 
 
+def test_the_card_probe_takes_its_answers_rather_than_finding_them() -> None:
+    """The card arm is reachable on a box that has that card's *sibling*.
+
+    The 2080 Ti host runs this suite and has no Ada device, so the only way the sm_89 branch is
+    tested anywhere is by handing the capability in -- exactly as the Ascend arm is reached. The
+    numbers are the ones `torch.cuda.get_device_capability()` reports on the two boxes.
+    """
+    turing = plane.probe_card_capability(capability=(7, 5), name="NVIDIA GeForce RTX 2080 Ti")
+    ada = plane.probe_card_capability(capability=(8, 9), name="NVIDIA GeForce RTX 4090")
+
+    assert (turing.major, turing.minor, turing.cc) == (7, 5, 750)
+    assert (ada.major, ada.minor, ada.cc) == (8, 9, 890)
+    assert turing.known and ada.known, "both cards are ones the tree ships on"
+
+
+def test_the_two_cards_this_tree_ships_on_differ_at_the_cut_relic_core_forks_at() -> None:
+    """The two cards sit on opposite sides of `major >= 8`.
+
+    This pins the boundary and the direction -- sm_75 below it, sm_89 at or above it -- which is the
+    fork `relic-core`'s `ops.py` makes. It does **not** prove the two agree: `relic-core` is another
+    repository, nothing here imports it, and an edit to either side's cut still passes. The
+    agreement is a convention this test documents and the property docstring states, not a fact it
+    can hold across a repository boundary.
+
+    A boundary mutation is what this catches: `>=` to `>` on either predicate moves a card across
+    the line and one of these assertions fails.
+    """
+    turing = plane.probe_card_capability(capability=(7, 5))
+    ada = plane.probe_card_capability(capability=(8, 9))
+
+    assert not turing.supports_fp8_tensor_core, "sm_75 is below the FP8 cut"
+    assert ada.supports_fp8_tensor_core, "sm_89 is at or above it"
+    assert not turing.supports_fp4_tensor_core and not ada.supports_fp4_tensor_core, (
+        "neither card has an FP4 tensor core; that is Blackwell and up"
+    )
+
+    # The two cuts are pinned at their own boundary, not just at these two cards: `>=` to `>` on
+    # either predicate moves these four cases and fails the assertion beside it.
+    assert plane.probe_card_capability(capability=(8, 0)).supports_fp8_tensor_core
+    assert not plane.probe_card_capability(capability=(7, 9)).supports_fp8_tensor_core
+    assert plane.probe_card_capability(capability=(10, 0)).supports_fp4_tensor_core
+    assert not plane.probe_card_capability(capability=(9, 9)).supports_fp4_tensor_core
+
+
+def test_an_unreadable_card_is_the_turing_floor_and_not_a_failure() -> None:
+    """No card to read is an answer, and the conservative one.
+
+    A host platform, or a CUDA host whose probe fails, gets `known=False` at the oldest capability
+    the tree supports rather than an exception -- so a capability gate on a cardless host takes the
+    branch that assumes none of the newer card's hardware, which is the safe way to be wrong.
+    """
+    unknown = plane.UNKNOWN_CAPABILITY
+
+    assert not unknown.known
+    assert (unknown.major, unknown.minor) == (7, 5)
+    assert unknown.cc == 750
+    assert not unknown.supports_fp8_tensor_core
+    assert not unknown.supports_fp4_tensor_core
+
+    # The floor is Turing -- but it is not the same value as a *probed* Turing card, and the
+    # difference is the point: this one is not `known`, because nothing was read. Asserting the two
+    # are equal would be a tautology (`unknown.known` is already false) and would hide the case a
+    # caller has to get right: no card read at all, versus a Turing card read.
+    probed_turing = plane.probe_card_capability(capability=(7, 5))
+    assert probed_turing.known, "a probed sm_75 is a card the tree was validated on"
+    assert not unknown.known, "the floor was never validated -- nothing was read"
+    assert (probed_turing.major, probed_turing.minor) == (unknown.major, unknown.minor)
+
+
+def test_a_card_the_tree_has_never_seen_keeps_its_real_numbers() -> None:
+    """`known` is provenance, not a gate: an unseen card is still described accurately.
+
+    Hopper (`sm_90`) is real hardware with a compute capability this repository has not validated
+    a build on. Reporting it as "unknown" must not also report it as Turing -- the numbers are
+    what a caller decides with, and `known` is only whether anyone has promised they work.
+    """
+    hopper = plane.probe_card_capability(capability=(9, 0), name="NVIDIA H100")
+
+    assert not hopper.known
+    assert (hopper.major, hopper.minor, hopper.cc) == (9, 0, 900)
+    assert hopper.supports_fp8_tensor_core, "the real capability still drives the capability flags"
+    assert hopper.name == "NVIDIA H100", "an unknown card keeps the name it was given"
+
+
+def test_a_known_cards_label_is_the_known_one() -> None:
+    """A known card is labelled from the table, not from whatever the driver calls it.
+
+    The label is for a log line and a golden fixture's record; taking it from the table keeps two
+    hosts that write the same card differently in their driver from producing two different
+    fixture labels for the same hardware.
+    """
+    ada = plane.probe_card_capability(capability=(8, 9), name="whatever the driver says")
+    assert ada.name == plane.KNOWN_CAPABILITIES[890]
+
+
 def test_the_probe_takes_its_answers_rather_than_finding_them() -> None:
     """Every host is reachable from every other host, which is what makes the Ascend arm testable.
 
