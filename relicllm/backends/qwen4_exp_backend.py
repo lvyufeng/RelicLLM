@@ -289,10 +289,6 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             "cancellation": "per-step broadcast; not inside a prefill chunk",
         }
 
-    def _say(self, message: str) -> None:
-        if self._world <= 1 or self._rank == 0:
-            print(f"[qwen4_exp] {message}", flush=True)
-
     # ------------------------------------------------------------------ contract
 
     @property

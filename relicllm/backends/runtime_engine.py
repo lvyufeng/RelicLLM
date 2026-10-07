@@ -183,6 +183,16 @@ class RankedWorker:
     #: runtime whose other exceptions really are desynchronizations.
     _WORKER_ABORTS: ClassVar[tuple[type[BaseException], ...]] = (RequestCancelledError,)
 
+    #: This rank and the world it is in, until :meth:`_init_distributed` reads the real pair.
+    #:
+    #: A single-rank world, which is what a run that never joins a group is and what every class
+    #: attribute read below has to mean before one does. Declared here rather than set in an
+    #: ``__init__`` because this half is a mixin: it has no constructor of its own, and a runtime
+    #: that never enters a process group -- ``xing4`` today -- would otherwise read a name that was
+    #: never bound. A runtime whose group is real overwrites both in its own ``_init_distributed``.
+    _rank: ClassVar[int] = 0
+    _world: ClassVar[int] = 1
+
     def run_worker(self, on_ready: Callable[[], None] | None = None) -> None:
         """Load, announce, then serve rank 0's requests until it says to stop."""
         self._ensure_open()

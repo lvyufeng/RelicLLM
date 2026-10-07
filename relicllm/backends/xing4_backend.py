@@ -520,9 +520,6 @@ class Xing4Backend(RuntimeAdapter):
         """
         return getattr(self, "_checkpoint_dir", None) or self._tokenizer_path or self._model_path
 
-    def _say(self, message: str) -> None:
-        print(f"[xing4] {message}", flush=True)
-
     # ------------------------------------------------------------------ description
 
     @property
