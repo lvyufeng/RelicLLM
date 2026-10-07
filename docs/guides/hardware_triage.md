@@ -350,8 +350,12 @@ is the one row that is not a candidate, the card counts, the bank sizes, and the
 - **Gate 2's harness.** The tool prints a command built from `tests/bench_serving.py`'s real flags and
   `relicllm.cli`'s `serve` subcommand; it does not build a new one.
 - **Multi-node and Ascend.** No runtime declares `ascend` — `RUNTIMES`' devices are `cuda` and `cpu`
-  only — and `relicllm/backends/factory.py` refuses an undeclared platform, so a 910A column would be
-  arithmetic on a platform this tree cannot execute.
+  only — so the tool will report on this box's declaration, not a 910A's. The arithmetic itself is
+  platform-neutral: `relicllm/runtime/device.py` declares `ascend`/`npu`/`hccl` in full and
+  `probe_accelerator` returns the Ascend answer, so a 910A column is a *card count and card memory
+  this file was not given*, not a platform the tree cannot execute. What is missing is a runtime
+  declaration and an operator provider, both of which [Joining a machine, and joining a
+  family](../architecture/joining_a_machine_or_a_family.md) sets out.
 - **Fixing the GLM-5.2 allocation.** Triage reports it. The fix belongs in `glm_dsa/architecture.py`
   and is the cheapest single win in the roster: it would turn GLM's per-rank KV at 32k from 156.0 GiB
   into 2.74 GiB.

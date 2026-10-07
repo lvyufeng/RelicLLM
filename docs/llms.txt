@@ -83,6 +83,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [The command-line surface against vLLM and SGLang](https://lvyufeng.github.io/RelicLLM/architecture/cli_surface_design_2026_09/)
 - [Per-method duplication across the five adapters](https://lvyufeng.github.io/RelicLLM/architecture/per_method_duplication_2026_09/)
 - [The device plane](https://lvyufeng.github.io/RelicLLM/architecture/device_plane/)
+- [Joining a machine, and joining a family](https://lvyufeng.github.io/RelicLLM/architecture/joining_a_machine_or_a_family/)
 - [The package layers](https://lvyufeng.github.io/RelicLLM/architecture/package_layers/)
 - [The native surface decision](https://lvyufeng.github.io/RelicLLM/architecture/native_surface_decision/)
 - [One scheduler, many models](https://lvyufeng.github.io/RelicLLM/architecture/one_scheduler_many_models/)
