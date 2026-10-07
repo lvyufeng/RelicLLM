@@ -157,18 +157,26 @@ from their spec with a generic kernel-side writer; this tree has no such writer,
 a separate piece of work. Making the caches independent `nn.Module` tensors — rather than buffers that
 share the model's tree — is likewise out of scope here.
 
-**Three runtimes still derive their own shapes**, and each is deferred for a concrete reason rather
-than left undone:
+**Two runtimes still derive their own shapes**, each deferred for a concrete reason rather than left
+undone:
 
-- **V4.1 and V4** register their KV buffers as `nn.Module` buffers *inside* `Attention`, `Indexer` and
-  `Compressor`, so reading the declaration needs the spec threaded `Backbone → Block → Attention` —
-  three constructors in one file per runtime, and V4's live in a single 4,700-line `runtime.py`. Only
-  the plumbing is outstanding: the declaration already reproduces V4.1's geometry exactly, and the
-  window ring #146 added names every layer one of these buffers is allocated on.
+- **V4** (`models/deepseek_v4/runtime.py`) keeps a *single* `Attention.kv_cache` sized
+  `window_size + max_seq_len // compress_ratio` — the sliding window and the compressed latent
+  concatenated into one buffer — and its `Compressor` scales its state by an overlap factor (`coff`)
+  the publisher does not carry. So its buffers cannot be read back from the current declaration
+  without widening `AttentionSpec` to describe an *allocated, non-per-token* shape; that is a
+  publisher/taxonomy change, not plumbing. (V4.1, the sibling architecture, *is* wired — see below.)
 - **qwen4_exp's `GatedDeltaNetCache`** shards its head counts per tensor-parallel rank before sizing
   its two state tensors, while `StateSpec` states the unsharded geometry. Wiring it means giving a
   state spec a rank's share the way `AttentionSpec` already does, which is a change to the taxonomy
   rather than to one constructor.
+
+**V4.1 is wired end to end.** Its four KV-shaped buffers — `window_kv_cache` (every layer),
+`compress_kv_cache` and the compressor's `kv_state`/`score_state` (the source layers), and the
+indexer's `k_cache` (the layers that `own_k`) — are sized from the declaration rather than from
+`_compress_ratio_at`/`window_size`/`head_dim`, so the two cannot drift;
+`tests/test_kv_spec_deepseek_allocation.py` holds both the shapes and the line, by forcing a
+declaration that disagrees with the config and asserting the buffer follows the declaration.
 
 ## Not decided here
 

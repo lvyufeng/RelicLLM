@@ -41,7 +41,9 @@ from relic_core.kernels.ops import act_quant, fp4_act_quant, sparse_attn
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
 from relicllm.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3
+from relicllm.models.deepseek_v4_1.kv_spec import kv_spec
 from relicllm.models.deepseek_v4_1.tp import indexer_row_split
+from relicllm.runtime.kv_spec import KVCacheSpec
 
 # Re-exported rather than defined here. Every node in this stack builds its own copy of the rope
 # table and they share one by asking for the same key, and `torch.device("cuda")` is not the same
@@ -102,6 +104,11 @@ LINEAR_DTYPE = torch.bfloat16
 # dtype, so a cache at a different width from the projections filling it is silent corruption rather
 # than an error. It is a separate name only because it also sizes three persistent buffers.
 CACHE_DTYPE = torch.bfloat16
+
+# The declaration names this module's index-key buffer `k_cache` (see `kv_spec.py`); the same string
+# is what an index source's `owning_layers` group carries. Named here so the buffer registration and
+# its spec lookup cannot drift apart by a typo.
+_INDEX_CACHE_NAME = "k_cache"
 
 
 class RMSNorm(nn.Module):
@@ -344,8 +351,14 @@ class Compressor(nn.Module):
         device: torch.device | str | None = None,
     ):
         super().__init__()
-        ratio = _compress_ratio_at(cfg, layer_id)
-        head_dim = _required_int(cfg, "head_dim")
+        # The `compress_kv_cache` this compressor fills is the declaration's, so its ratio and width
+        # are read back from that spec rather than re-derived from the config. `kv_state`/`score_state`
+        # are sized from the same two numbers here: they hold one partial group of exactly the shape
+        # the cache stores, so a state wider or deeper than the cache would be the same drift one
+        # level down.
+        spec = _declared_spec(cfg, "compress_kv_cache", layer_id)
+        ratio = int(spec.compress_ratio) if spec is not None else _compress_ratio_at(cfg, layer_id)
+        head_dim = int(spec.head_dim) if spec is not None else _required_int(cfg, "head_dim")
         self.compress_ratio = ratio
         self.head_dim = head_dim
         # Which decode body this forward is, when it is being *recorded* rather than run: `None`
@@ -804,12 +817,18 @@ class Indexer(nn.Module):
             )
 
             self.k_norm = RMSNorm(self.index_head_dim, _required_float(cfg, "norm_eps"), device=device)
+            # The declaration's index spec names this buffer and its ratio/width, so `k_cache` is
+            # sized from it; a layer that only reads compressed positions (`not owns_k`) has no spec
+            # and no buffer, which is the same condition the publisher states.
+            index_spec = _declared_spec(cfg, _INDEX_CACHE_NAME, layer_id)
+            index_ratio = int(index_spec.compress_ratio) if index_spec is not None else self.compress_ratio
+            index_dim = int(index_spec.head_dim) if index_spec is not None else self.index_head_dim
             self.register_buffer(
                 "k_cache",
                 torch.zeros(
                     max_batch_size,
-                    max_seq_len // self.compress_ratio,
-                    self.index_head_dim,
+                    max_seq_len // index_ratio,
+                    index_dim,
                     dtype=CACHE_DTYPE,
                     device=device,
                 ),
@@ -1338,18 +1357,31 @@ class Attention(nn.Module):
         if self.is_index_source:
             self.indexer = Indexer(cfg, layer_id, max_batch_size, max_seq_len, device=device, world=world)
 
+        # Every layer registers a ring, so the declaration names every layer for it and this spec is
+        # always present; the fallback keeps a config outside the declaration's reach -- one whose
+        # `compress_ratios` does not cover this layer -- building the ring the config arithmetic
+        # above would have given it.
+        window_spec = _declared_spec(cfg, "window_kv_cache", layer_id)
+        window_slots = int(window_spec.sliding_window) if window_spec is not None else self.window_size
+        window_head_dim = int(window_spec.head_dim) if window_spec is not None else self.head_dim
         self.register_buffer(
             "window_kv_cache",
-            torch.zeros(max_batch_size, self.window_size, self.head_dim, dtype=CACHE_DTYPE, device=device),
+            torch.zeros(max_batch_size, window_slots, window_head_dim, dtype=CACHE_DTYPE, device=device),
             persistent=False,
         )
         if self.is_kv_source:
+            # The declaration names a `compress_kv_cache` for exactly the `kv_source_layers`, at the
+            # width and ratio this layer's compressor fills; `self.compress_ratio` and this layer's
+            # `Compressor` are already read from the same spec, so the two agree by construction.
+            compress_spec = _declared_spec(cfg, "compress_kv_cache", layer_id)
+            compress_ratio = int(compress_spec.compress_ratio) if compress_spec is not None else self.compress_ratio
+            compress_head_dim = int(compress_spec.head_dim) if compress_spec is not None else self.head_dim
             self.register_buffer(
                 "compress_kv_cache",
                 torch.zeros(
                     max_batch_size,
-                    max_seq_len // self.compress_ratio,
-                    self.head_dim,
+                    max_seq_len // compress_ratio,
+                    compress_head_dim,
                     dtype=CACHE_DTYPE,
                     device=device,
                 ),
@@ -1582,6 +1614,23 @@ def _compress_ratio_at(cfg: V41TextConfig, layer_id: int) -> int:
     if not 0 <= layer_id < len(ratios):
         raise ValueError(f"layer {layer_id} has no compress_ratio: the tuple covers {len(ratios)} layers")
     return ratios[layer_id]
+
+
+def _declared_spec(cfg: V41TextConfig, name: str, layer_id: int) -> KVCacheSpec | None:
+    """The declaration's spec for one of this layer's caches, or ``None`` if the layer has none.
+
+    The KV shapes were derived twice before #129: once by `models/deepseek_v4_1/kv_spec.py` (the
+    declaration a host allocator reads) and again inside `Attention`/`Indexer`/`Compressor` from
+    `_compress_ratio_at`, `window_size` and `head_dim`. They cannot be allowed to disagree -- a
+    declaration that names a width the cache does not allocate is worse than no declaration -- so the
+    constructors below size their buffers *from* this, and this reads the declaration rather than
+    re-deriving it. A layer with no spec keeps its old arithmetic: the window ring is on every layer
+    and so is declared, but a layer that owns no growing cache has no `compress_kv_cache` to size.
+    """
+    for spec in kv_spec(cfg):
+        if spec.name == name and layer_id in spec.layer_ids:
+            return spec
+    return None
 
 
 def _required_int(cfg: V41TextConfig, name: str) -> int:
