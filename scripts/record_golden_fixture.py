@@ -69,6 +69,19 @@ def _current_commit() -> str:
         return ""
 
 
+def _resolved_notes(explicit: str | None, entry: str, golden) -> str:
+    """The notes to record: what the caller passed, or what the fixture already carried.
+
+    An explicit `--notes` (including an empty one, written intentionally) wins. Omitted, the
+    existing fixture's notes are read back, so a re-record that is only picking up a new field does
+    not quietly erase the sentence a person wrote about why this checkpoint is the one recorded.
+    """
+    if explicit is not None:
+        return explicit
+    existing = golden.load_fixture(entry)
+    return existing.notes if existing is not None else ""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--entry", required=True, choices=list(_load_module().ENTRY_POINTS))
@@ -87,7 +100,15 @@ def main(argv: list[str] | None = None) -> int:
             "allocates; the two bank-using entries need 458 and 150 GiB and do not fit together"
         ),
     )
-    parser.add_argument("--notes", default="")
+    parser.add_argument(
+        "--notes",
+        default=None,
+        help=(
+            "free text kept beside the answer. Omitted, an existing fixture's notes are carried "
+            "over rather than blanked: re-recording to pick up a new field is not a claim that the "
+            "old note stopped being true, and the note is the one field here a person wrote."
+        ),
+    )
     parser.add_argument("--out", type=pathlib.Path, help="defaults to tests/fixtures/golden/<entry>.json")
     parser.add_argument("extra", nargs="*", help="flags passed through to the entry point")
     args = parser.parse_args(argv)
@@ -127,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
         commit=_current_commit(),
         taken_at=datetime.date.today().isoformat(),
         card=golden.captured_card(),
-        notes=args.notes,
+        notes=_resolved_notes(args.notes, args.entry, golden),
     )
 
     print(f"recording {args.entry}: {' '.join(fixture.argv)}", flush=True)
