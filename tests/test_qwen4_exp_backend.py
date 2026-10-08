@@ -20,6 +20,7 @@ import pytest
 
 from relicllm.api import ConfigurationError, EngineArgs, UnsupportedFeatureError
 from relicllm.backends import factory, qwen4_exp_backend
+from relicllm.scheduler import Scheduler
 
 
 def _write_config(directory, payload) -> None:
@@ -137,3 +138,62 @@ def test_an_unknown_option_is_refused_rather_than_ignored():
     )
     with pytest.raises(ConfigurationError):
         qwen4_exp_backend._Options.from_args(args)
+
+
+# ---------------------------------------------------------------------------------------------
+# the capacity admission reads
+# ---------------------------------------------------------------------------------------------
+
+
+def _backend(max_model_len: int):
+    """An adapter with nothing loaded, which is all these tests need: they read `_max_seq_len`."""
+    return qwen4_exp_backend.Qwen4ExpBackend(
+        EngineArgs(model="/nonexistent-for-a-capacity-test", max_model_len=max_model_len)
+    )
+
+
+def test_the_capacity_says_the_cache_was_sized_from_the_request_not_the_flag():
+    """The flag that stops admission comparing a request to a number that never built its buffer.
+
+    This runtime's QSA key/value and index buffers are allocated per request -- ``prompt_len + budget
+    + 1`` at ``models/qwen4_exp/runtime.py:300`` -- and ``--max-model-len`` never reaches an
+    allocation. So the capacity this adapter reports has to carry ``sizes_from_request``, or
+    admission would refuse requests whose cache was, at that moment, being built to fit them.
+    """
+    capacity = _backend(max_model_len=8192)._kv_capacity()
+
+    assert capacity.positions == 8192
+    assert capacity.sizes_from_request is True
+
+
+def test_admission_lets_a_request_past_the_configured_context_through():
+    """The behaviour that has to survive the lift: this runtime admits what it can build for.
+
+    A ~10k-token request against a `--max-model-len 8192` is the case the check would wrongly refuse
+    -- the buffer for it is `prompt + budget + 1`, sized far past the flag. Admission reading a
+    request-sized capacity admits it, and `pending_count` says it really queued.
+    """
+    backend = _backend(max_model_len=8192)
+    scheduler = Scheduler(capacity=backend._kv_capacity)
+
+    admitted = scheduler.submit(list(range(10_000)), 1000)
+
+    assert admitted.max_new_tokens == 1000
+    assert scheduler.pending_count() == 1
+
+
+def test_the_details_do_not_claim_the_context_is_the_caches_size():
+    """`context` used to read `8192 positions`, the number no allocation here holds.
+
+    A deployment reading the details string decides how wide a context it can afford, so the string
+    a run publishes has to name the flag as a ceiling and say where the real size comes from. The
+    builder needs only the config and the options, so it is called directly rather than behind a
+    load this host cannot perform.
+    """
+    backend = _backend(max_model_len=8192)
+    backend._build_details()
+
+    text = backend._details["context"]
+
+    assert "8192 positions at most" in text
+    assert "each request" in text

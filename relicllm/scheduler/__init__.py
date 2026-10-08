@@ -11,6 +11,6 @@ reaches the scheduler as a :class:`~relicllm.scheduler.core.ExecutionPlan` and a
 counters, never as a branch on which model is being served.
 """
 
-from relicllm.scheduler.core import ExecutionPlan, Request, Scheduler
+from relicllm.scheduler.core import AdmissionRefused, ExecutionPlan, KVCapacity, Request, Scheduler
 
-__all__ = ["ExecutionPlan", "Request", "Scheduler"]
+__all__ = ["AdmissionRefused", "ExecutionPlan", "KVCapacity", "Request", "Scheduler"]

@@ -832,40 +832,79 @@ def test_the_shared_adapter_copies_the_prompt_ids_it_was_handed():
 
 
 def test_the_shared_adapter_refuses_a_prompt_that_leaves_no_room():
-    """A prompt filling the context is an error about the context, not an empty generation."""
+    """A prompt filling the context is an error about the context, not an empty generation.
+
+    The refusal is the scheduler's now, reached the way the adapter reaches it: derive the budget,
+    hand both to `submit`, and let admission be the one that says no. The prompt alone fills the
+    context, so the derived budget is floored at one and the request arrives at admission as one
+    that does not fit rather than as a budget of zero.
+    """
     adapter = _StubRuntimeAdapter(max_seq_len=4)
     request = GenerationRequest(prompt_tokens=[1, 2, 3, 4], request_id="r")
+    prompt = [1, 2, 3, 4]
 
     with pytest.raises(ConfigurationError, match="raise --max-model-len and restart"):
-        adapter._budget([1, 2, 3, 4], request)
+        adapter._scheduler.submit(prompt, adapter._budget(prompt, request))
+
+    assert adapter._scheduler.pending_count() == 0, "a refused request never entered the queue"
 
 
 def test_the_shared_adapter_refuses_a_cap_the_context_cannot_hold():
     """The second half of `token_budget`'s contract, and the half that was missing on two adapters.
 
     `SamplingParams.token_budget` hands an explicit `max_tokens` back **unchanged**, on the written
-    condition that "the caller's length check keeps the last word on it" (`api/types.py:339`). The
-    check is here because the number is derived here, and a caller that resolves a budget and never
-    compares it to the context is one that hands the runtime a cap its caches were not sized for.
+    condition that "the caller's length check keeps the last word on it" (`api/types.py:339`). That
+    check is `Scheduler.submit`'s -- it is asked once, before the request queues, rather than
+    re-derived and re-compared at each call site -- and this drives it through the composition the
+    adapter performs: the sampler's budget first, admission second.
     """
     adapter = _StubRuntimeAdapter(max_seq_len=8)
+    prompt = [1, 2, 3]
+
+    def submit(body: GenerationRequest):
+        return adapter._scheduler.submit(prompt, adapter._budget(prompt, body))
 
     # Explicit and over the context: both numbers are named, so the caller can see which to change.
-    over = GenerationRequest(prompt_tokens=[1, 2, 3], sampling_params=SamplingParams(max_tokens=9), request_id="r")
+    over = GenerationRequest(prompt_tokens=prompt, sampling_params=SamplingParams(max_tokens=9), request_id="r")
     with pytest.raises(ConfigurationError, match=r"needs 12 positions \(3 prompt tokens and 9 new\)"):
-        adapter._budget([1, 2, 3], over)
+        submit(over)
 
     # Explicit and exactly filling it: the boundary is `<=`, so this is answered.
-    exact = GenerationRequest(prompt_tokens=[1, 2, 3], sampling_params=SamplingParams(max_tokens=5), request_id="r")
-    assert adapter._budget([1, 2, 3], exact) == 5
+    exact = GenerationRequest(prompt_tokens=prompt, sampling_params=SamplingParams(max_tokens=5), request_id="r")
+    assert adapter._budget(prompt, exact) == 5
+    assert submit(exact).max_new_tokens == 5
 
     # Explicit and smaller than the room, which is the caller's to choose and not the check's to raise.
-    small = GenerationRequest(prompt_tokens=[1, 2, 3], sampling_params=SamplingParams(max_tokens=2), request_id="r")
-    assert adapter._budget([1, 2, 3], small) == 2
+    small = GenerationRequest(prompt_tokens=prompt, sampling_params=SamplingParams(max_tokens=2), request_id="r")
+    assert submit(small).max_new_tokens == 2
 
     # Absent and derived: everything the prompt leaves.
-    derived = GenerationRequest(prompt_tokens=[1, 2, 3], request_id="r")
-    assert adapter._budget([1, 2, 3], derived) == 5
+    derived = GenerationRequest(prompt_tokens=prompt, request_id="r")
+    assert adapter._budget(prompt, derived) == 5
+
+
+def test_the_budget_a_shared_adapter_derives_is_now_only_a_number():
+    """The lift in one assertion: `_budget` derives and does not refuse.
+
+    It used to raise, so that a request over the context was refused wherever the budget was asked
+    for. The refusal is `Scheduler.submit`'s now, and what has to stay true of this method is the
+    part a lift can silently break -- that it returns the number the sampler named or everything the
+    prompt leaves, and never a zero that would read as an empty generation.
+    """
+    adapter = _StubRuntimeAdapter(max_seq_len=8)
+    prompt = [1, 2, 3]
+
+    # An explicit cap is the sampler's, returned unchanged -- even one admission will refuse.
+    named = GenerationRequest(prompt_tokens=prompt, sampling_params=SamplingParams(max_tokens=9), request_id="r")
+    assert adapter._budget(prompt, named) == 9
+
+    # Absent: everything the prompt leaves. The boundary is not this method's to decide.
+    derived = GenerationRequest(prompt_tokens=prompt, request_id="r")
+    assert adapter._budget(prompt, derived) == 5
+
+    # A request that fills the context floors at one rather than returning zero.
+    full = GenerationRequest(prompt_tokens=[1, 2, 3, 4, 5, 6, 7, 8], request_id="r")
+    assert adapter._budget([1, 2, 3, 4, 5, 6, 7, 8], full) == 1
 
 
 def test_the_shared_adapter_answers_a_missing_tokenizer_with_its_runtime_name():
