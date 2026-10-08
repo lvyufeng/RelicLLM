@@ -53,7 +53,8 @@
     ],
     "text": " The golden fixture. The golden fixture. This is a test. This is a"
   },
-  "commit": "832ca8c",
-  "taken_at": "2026-09-26",
+  "commit": "cb4b6ee",
+  "taken_at": "2026-10-08",
+  "card": "cuda 7.5 (Turing / RTX 2080 Ti)",
   "notes": "the host-PyTorch V4.1 runtime: four ranks, experts in a resident host bank; startup pins the bank before the rank answers"
 }
