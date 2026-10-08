@@ -104,7 +104,12 @@ def test_served_path_matches_the_recorded_answer(entry: str, fixture: GoldenFixt
         )
 
     compared = False
-    if fixture.expected_token_ids:
+    # `is not None` and not truthiness: an empty `token_ids` is a recorded *list*, and the point of
+    # recording it is to assert the answer is still empty -- that the entry point has *stopped*
+    # producing ids, which is a regression a positive list could not show. A truthiness test reads
+    # `token_ids: []` as "the fixture records none", skips the comparison, and lets an entry point
+    # that silently stopped returning ids pass on its text alone.
+    if fixture.expected_token_ids is not None:
         assert outcome.token_ids is not None, (
             f"the {entry} fixture records token ids but this entry point produced none; either the "
             f"entry point stopped returning ids or the fixture was recorded under a different kind"

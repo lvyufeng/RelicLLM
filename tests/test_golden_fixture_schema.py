@@ -66,6 +66,21 @@ def test_the_expected_side_is_read_by_name_and_not_by_position() -> None:
     assert fixture.expected_prompt_tokens == 9
 
 
+def test_an_empty_recorded_answer_is_not_the_same_as_no_recorded_answer() -> None:
+    """Three states, not two: ids, an empty answer held to be empty, and a field that was never read.
+
+    `token_ids: []` is a claim -- this entry point returns no ids -- and the thing that makes it worth
+    recording is that the suite still holds the entry point to it. Folding it into "records none"
+    with an `or ()` is how a fixture that records no ids becomes a fixture that checks nothing.
+    """
+    empty = GoldenFixture.from_json({**PAYLOAD, "expected": {**PAYLOAD["expected"], "token_ids": []}})
+    absent_payload = {key: value for key, value in PAYLOAD["expected"].items() if key != "token_ids"}
+    absent = GoldenFixture.from_json({**PAYLOAD, "expected": absent_payload})
+
+    assert empty.expected_token_ids == ()
+    assert absent.expected_token_ids is None
+
+
 def test_a_fixture_without_the_required_fields_is_refused() -> None:
     """Every one of these is load-bearing, so a truncated fixture fails at load, not at compare."""
     for missing in ("entry", "checkpoint", "argv", "prompt", "expected"):
@@ -119,7 +134,7 @@ def test_a_recorded_fixture_names_its_own_entry_point() -> None:
 def test_every_loaded_fixture_can_be_compared() -> None:
     """A fixture with no recorded answer cannot fail, and a thing that cannot fail is not a test."""
     for entry, fixture in load_fixtures().items():
-        has_answer = bool(fixture.expected_token_ids) or fixture.expected_text is not None
+        has_answer = fixture.expected_token_ids is not None or fixture.expected_text is not None
         assert has_answer, f"{entry} records neither token ids nor text"
 
 
