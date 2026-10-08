@@ -713,22 +713,32 @@ def _layout(checkpoint: MimoV2Checkpoint) -> tuple[dict[int, _Layer], int]:
 def open_expert_bank(
     checkpoint: MimoV2Checkpoint,
     *,
+    rank: int = 0,
     root_dir: str | None = None,
     progress: Callable[[str], None] | None = None,
     force_fill: bool = False,
+    timeout_s: float = 3600.0,
 ) -> MimoV2ExpertBank:
-    """The bank for this checkpoint, filled if the host does not already have one.
+    """The bank for this checkpoint, filled by rank 0 and attached by every other rank.
 
     A segment that is already marked ready is attached and not refilled, and the layout is rebuilt from
     the checkpoint either way rather than read back out of `bank.json`, because the layout is what
     `_validate_header` checks the segment against -- a metadata file that agreed with itself and not
     with the checkpoint would be worse than no file at all.
 
-    The fill is serialized by the ready marker and not by a lock: `os.replace` is atomic, so a rank
-    that finds no marker creates the segment, fills it and marks it, and a rank that arrives in the
-    middle waits for the marker rather than filling a second copy. Two processes that both find no
-    marker both fill, which is wasteful and correct -- the second one's `_unlink_stale` is what makes
-    it safe, and the window is the microseconds between the `exists` and the create.
+    **The fill is rank 0's alone.** The ready marker is not enough to serialize it: a cold host brings
+    every rank up at once, all of them find no marker, and each one then fills a segment of its own and
+    writes the same `bank.json.tmp` -- so the first rank to `os.replace` wins and the rest die on a
+    missing source, or a later `_unlink_stale` tears the segment out from under a rank already reading
+    it. The marker serializes a *restart*, not a cold start. With rank 0 the only filler, every other
+    rank waits for the marker and attaches, which is the shape `deepseek_v4_1.resident_bank` already
+    uses for the same 457.8 GiB problem.
+
+    Rank defaults to 0 so a single-process run and every existing caller keep filling in place, and a
+    runtime that does not pass it is one process with nothing to race against. `force_fill` is the
+    *filler's* instruction and is read on rank 0 alone: a rank that is not 0 never rewrites the
+    segment, because rewriting it out from under the peers already attached is the failure this gate
+    exists to prevent.
     """
     root = _root_dir(root_dir)
     name = _shm_name(checkpoint)
@@ -736,7 +746,24 @@ def open_expert_bank(
     ready = os.path.join(root, "bank.ready")
     held = os.path.exists(ready) and os.path.exists(_segment_path(name))
 
+    if int(rank) != 0:
+        if not held:
+            # Cold host and this is not the filler: wait for rank 0's marker rather than filling a
+            # second copy. The timeout is the loader's rendezvous budget -- the fill is minutes.
+            MimoV2ExpertBank.wait_until_ready(root, timeout_s)
+        return MimoV2ExpertBank(
+            checkpoint=checkpoint,
+            shm_name=name,
+            root_dir=root,
+            size=size,
+            n_routed_experts=checkpoint.layout.n_experts,
+            layers=layers,
+            create=False,
+        )
+
     if held and not force_fill:
+        # Rank 0 joins its own bank rather than refilling it: the fill is twelve minutes and the
+        # marker says it has already been paid.
         return MimoV2ExpertBank(
             checkpoint=checkpoint,
             shm_name=name,

@@ -338,6 +338,75 @@ def test_a_bank_that_is_already_ready_is_attached_and_not_refilled(mini, tmp_pat
         first.close(unlink=True)
 
 
+def test_a_nonzero_rank_attaches_the_bank_rank_zero_filled(mini, tmp_path):
+    """A rank that is not 0 never fills: it waits for rank 0's marker and attaches what is there.
+
+    One process, but the two halves of the rendezvous in the order they happen on a host that is
+    already warm -- rank 0's fill completes first, then a peer arrives. The cold order, where the
+    peer arrives to no segment at all, is `test_a_cold_bank_is_filled_once_when_every_rank_starts_together`
+    below, which needs real processes to be a test of anything.
+    """
+    root_dir = str(tmp_path / "bank")
+    filler = bank_module.open_expert_bank(mini, rank=0, root_dir=root_dir)
+    try:
+        peer = bank_module.open_expert_bank(mini, rank=3, root_dir=root_dir)
+        try:
+            assert not peer.create
+            assert torch.equal(
+                filler.tensor(1, 8, "gate_proj", "weight"),
+                peer.tensor(1, 8, "gate_proj", "weight"),
+            )
+        finally:
+            peer.close()
+    finally:
+        filler.close(unlink=True)
+
+
+def _open_as_rank(payload):
+    """Fill or attach as one rank of a group, in a process of its own.
+
+    Module level so it survives the trip to a worker. It returns `create` and one expert's bytes
+    rather than the bank: the bank holds a `memoryview` over the segment, which does not pickle, and
+    the bytes are the thing every rank has to agree on anyway.
+    """
+    checkpoint_dir, root_dir, rank = payload
+    from relicllm.models.mimo_v2.loader import MimoV2Checkpoint
+
+    bank = bank_module.open_expert_bank(
+        MimoV2Checkpoint(checkpoint_dir), rank=rank, root_dir=root_dir, timeout_s=300.0
+    )
+    try:
+        # `numpy().tobytes()` and not `Tensor.tobytes()`: this build of torch has the latter.
+        return bank.create, bank.tensor(1, 8, "gate_proj", "weight").numpy().tobytes()
+    finally:
+        bank.close()
+
+
+def test_a_cold_bank_is_filled_once_when_every_rank_starts_together(mini, tmp_path):
+    """Four ranks, no segment and no marker: one fill, three attaches, one set of bytes.
+
+    This is the shape the four-rank MiMo serve launch has, and the reason the rank gate exists. The
+    ready marker alone does not serialize a *cold* start -- it serializes a restart, where the
+    segment is already there to be attached. Started together on a host that has never built a bank,
+    every rank finds no marker, so without the gate every rank fills a segment of its own and writes
+    the same `bank.json.tmp`: whichever `os.replace` lands first wins and the rest raise
+    `FileNotFoundError`, or `_unlink_stale` tears the segment out from under a rank already reading
+    it. The processes are what makes this observable -- in one process the four calls are sequential
+    and the first one's marker hides the race from the other three.
+    """
+    from concurrent.futures import ProcessPoolExecutor
+
+    root_dir = str(tmp_path / "bank")
+    payloads = [(mini.root, root_dir, rank) for rank in range(4)]
+    with ProcessPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(_open_as_rank, payloads))
+
+    filled = [create for create, _ in results]
+    assert filled == [True, False, False, False], "exactly rank 0 may fill"
+    assert len({data for _, data in results}) == 1, "every rank has to read the same expert"
+    assert results[0][1] == mini.expert_arrays(1, 8)[("gate_proj", "weight")].numpy().tobytes()
+
+
 def test_a_fill_reports_the_bytes_it_moved(mini, tmp_path):
     bank = bank_module.open_expert_bank(mini, root_dir=str(tmp_path / "bank"))
     try:
