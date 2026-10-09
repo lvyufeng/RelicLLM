@@ -438,6 +438,36 @@ def test_a_host_without_the_override_gets_the_recorded_path(monkeypatch):
     assert resolved.argv == tuple(PAYLOAD["argv"])
 
 
+def _with_logits(expected_logits):
+    return GoldenFixture.from_json({**PAYLOAD, "expected": {**PAYLOAD["expected"],
+                                                           "logits_check": expected_logits}})
+
+
+def test_a_well_formed_logits_check_is_read_back():
+    record = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5, 6], "values": [1.5, 0.5],
+              "atol": 0.0, "rtol": 1e-5}
+    fixture = _with_logits(record)
+    assert fixture.expected_logits_check == record
+
+
+def test_a_fixture_without_a_logits_check_reads_as_none():
+    fixture = GoldenFixture.from_json(PAYLOAD)
+    assert fixture.expected_logits_check is None
+
+
+def test_a_logits_check_whose_lengths_disagree_is_refused():
+    bad = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5], "values": [1.5, 0.5],
+           "atol": 0.0, "rtol": 1e-5}
+    with pytest.raises(ValueError, match="token_ids and values"):
+        _with_logits(bad)
+
+
+def test_a_logits_check_missing_a_field_is_refused():
+    bad = {"step": 0, "prompt_tokens": 9, "token_ids": [5], "values": [1.5]}
+    with pytest.raises(ValueError, match="logits_check is missing"):
+        _with_logits(bad)
+
+
 def test_the_served_path_skip_is_decided_on_the_host_checkpoint(monkeypatch, tmp_path) -> None:
     """The skip the served-path test takes and the path `run_isolated` opens must be the same one.
 

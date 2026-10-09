@@ -172,6 +172,15 @@ class GoldenFixture:
     def expected_prompt_tokens(self) -> int | None:
         return self.expected.get("prompt_tokens")
 
+    @property
+    def expected_logits_check(self) -> dict[str, Any] | None:
+        """The recorded first-step logits, or `None` when the fixture records none.
+
+        Shape is validated in `from_json` rather than here, so a malformed record fails at load
+        with a fixture name rather than at comparison with a bare KeyError.
+        """
+        return self.expected.get("logits_check")
+
     @classmethod
     def from_json(cls, payload: dict[str, Any]) -> "GoldenFixture":
         missing = [
@@ -181,12 +190,16 @@ class GoldenFixture:
         ]
         if missing:
             raise ValueError(f"golden fixture is missing {', '.join(missing)}")
+        expected = dict(payload["expected"])
+        recorded = expected.get("logits_check")
+        if recorded is not None:
+            _check_logits_check(recorded)
         return cls(
             entry=str(payload["entry"]),
             checkpoint=str(payload["checkpoint"]),
             argv=tuple(str(item) for item in payload["argv"]),
             prompt=str(payload["prompt"]),
-            expected=dict(payload["expected"]),
+            expected=expected,
             env={str(k): str(v) for k, v in (payload.get("env") or {}).items()},
             sampling=dict(payload.get("sampling") or DEFAULT_SAMPLING),
             requires={str(k): int(v) for k, v in (payload.get("requires") or {}).items()},
@@ -247,6 +260,27 @@ class GoldenFixture:
                 f"(rm -rf /dev/shm/pocketllm_*_experts*)"
             )
         return None
+
+
+_LOGITS_CHECK_FIELDS = ("step", "prompt_tokens", "top_k", "token_ids", "values", "atol", "rtol")
+
+
+def _check_logits_check(record: Mapping[str, Any]) -> None:
+    """Refuse a record the comparison cannot trust.
+
+    The pairing of `token_ids` and `values` is the whole point of the record -- it is what makes a
+    divergence attributable -- so a length mismatch is not a warning, it is a fixture that would
+    compare the wrong things.
+    """
+    missing = [field for field in _LOGITS_CHECK_FIELDS if field not in record]
+    if missing:
+        raise ValueError(f"logits_check is missing {', '.join(missing)}")
+    if len(record["token_ids"]) != len(record["values"]):
+        raise ValueError(
+            "logits_check token_ids and values must be the same length, "
+            f"got {len(record['token_ids'])} and {len(record['values'])}"
+        )
+
 
 def _dev_shm_free_bytes() -> int | None:
     """Free space on `/dev/shm`, or `None` when it is not a separate mount.
