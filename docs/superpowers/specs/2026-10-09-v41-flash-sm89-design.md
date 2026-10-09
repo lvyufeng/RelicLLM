@@ -116,6 +116,7 @@ deliberately minimal and additive:
   "text": "...",
   "logits_check": {
     "step": 0,
+    "prompt_tokens": 9,
     "top_k": 8,
     "token_ids": [ ... ],
     "values": [ ... ],
