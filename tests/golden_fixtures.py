@@ -475,8 +475,7 @@ def _run_python(fixture: GoldenFixture) -> Outcome:
                 os.environ.pop(key, None)
             else:
                 os.environ[key] = value
-    record = getattr(result, "metadata", None) or {}
-    logits_check = record.get("logits_check")
+    logits_check = result.metadata.get("logits_check")
     prompt_tokens = int(getattr(result.usage, "prompt_tokens", 0)) or None
     if logits_check is not None:
         # The spec's record names the prompt token count so a mismatch in what was compared is

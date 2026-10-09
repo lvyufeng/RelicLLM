@@ -190,11 +190,37 @@ def test_the_outcome_survives_the_trip_through_the_child() -> None:
     entry point, not a missing field, and a round trip that turned it into `[]` would make `torch`'s
     fixture look like it had been compared when it had not.
     """
+    with_record = Outcome(
+        token_ids=[1, 2],
+        text="hi",
+        prompt_tokens=3,
+        logits_check={"step": 0, "prompt_tokens": 3, "top_k": 2,
+                      "token_ids": [5, 6], "values": [1.5, 0.5]},
+    )
     for outcome in (
         Outcome(token_ids=[35, 48972], text="\ngolden fixture", prompt_tokens=9, elapsed_seconds=1.5),
         Outcome(text="golden fixture.", prompt_tokens=21, elapsed_seconds=16.0),
+        with_record,
     ):
         assert Outcome.from_json(json.loads(json.dumps(outcome.to_json()))) == outcome
+
+    # The record is read by name by the tolerance leg, so its shape is asserted directly and not
+    # only through dataclass equality.
+    back = Outcome.from_json(json.loads(json.dumps(with_record.to_json())))
+    assert back.logits_check == {"step": 0, "prompt_tokens": 3, "top_k": 2,
+                                 "token_ids": [5, 6], "values": [1.5, 0.5]}
+
+
+def test_a_payload_recorded_before_the_logits_field_still_loads() -> None:
+    """Every fixture committed before this field exists has no `logits_check` key at all.
+
+    `from_json` reads it with `.get()`, so an old payload loads with the record absent rather than
+    raising -- which is what keeps the committed fixtures readable.
+    """
+    older = {"token_ids": [35, 48972], "text": "\ngolden fixture", "prompt_tokens": 9,
+             "elapsed_seconds": 1.5}
+
+    assert Outcome.from_json(older).logits_check is None
 
 
 def test_the_child_module_is_launchable() -> None:

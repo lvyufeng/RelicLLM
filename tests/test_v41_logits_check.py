@@ -59,32 +59,3 @@ def test_a_bad_env_value_is_off_rather_than_a_crash(monkeypatch):
 
     monkeypatch.setenv("POCKETLLM_V41_LOGITS_CHECK", "yes")
     assert _logits_check_top_k() == 0
-
-
-def test_an_outcome_carries_a_logits_record_through_json():
-    import json
-
-    from tests.golden_fixtures import Outcome
-
-    outcome = Outcome(
-        token_ids=[1, 2],
-        text="hi",
-        prompt_tokens=3,
-        logits_check={"step": 0, "prompt_tokens": 3, "top_k": 2,
-                      "token_ids": [5, 6], "values": [1.5, 0.5]},
-    )
-    back = Outcome.from_json(json.loads(json.dumps(outcome.to_json())))
-    assert back == outcome
-    assert back.logits_check == {"step": 0, "prompt_tokens": 3, "top_k": 2,
-                                 "token_ids": [5, 6], "values": [1.5, 0.5]}
-
-
-def test_an_outcome_without_a_record_round_trips_as_none():
-    import json
-
-    from tests.golden_fixtures import Outcome
-
-    outcome = Outcome(token_ids=[1], text="x", prompt_tokens=1)
-    back = Outcome.from_json(json.loads(json.dumps(outcome.to_json())))
-    assert back == outcome
-    assert back.logits_check is None
