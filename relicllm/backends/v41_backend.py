@@ -312,6 +312,28 @@ class _Marks:
     first_token: float | None = None
 
 
+def _logits_check(row: Any, top_k: int) -> dict[str, Any]:
+    """The first decoded step's distribution as a small, ordered, comparable record.
+
+    Raw pre-softmax logits at the ``top_k`` highest positions, sorted descending, with the vocab
+    ids of those positions in the same order. Two architectures that agree produce the same arrays;
+    the ids make a divergence attributable -- same ids with different values is a numeric gap,
+    different ids is a wrong argmax. Clamped rather than raising when ``top_k`` exceeds the row, so
+    a tiny test vocabulary records what it has.
+
+    JSON-native on purpose: this crosses a process boundary (see ``tests/golden_fixtures.py``).
+    """
+    import torch
+
+    values, indices = torch.topk(row.detach().float().reshape(-1), min(int(top_k), row.numel()))
+    return {
+        "step": 0,
+        "top_k": int(values.numel()),
+        "token_ids": [int(item) for item in indices.tolist()],
+        "values": [float(item) for item in values.tolist()],
+    }
+
+
 @dataclass(slots=True)
 class _Options:
     """The ``backend_options`` this adapter reads, resolved once at construction."""
