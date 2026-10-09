@@ -468,6 +468,47 @@ def test_a_logits_check_missing_a_field_is_refused():
         _with_logits(bad)
 
 
+@pytest.mark.parametrize("malformed", [["step", "prompt_tokens"], "step prompt_tokens"])
+def test_a_logits_check_that_is_not_an_object_is_refused(malformed):
+    """A JSON fixture is untrusted, and the type has to be checked before membership.
+
+    A *string* answers `in` by substring -- one containing all seven field names passes the
+    missing-field check and then dies indexing -- and a *list* answers by equality, so every name
+    reads as missing and the complaint is misleading about what is actually wrong. Both have to be
+    refused as the wrong type, at load, before either quirk is reached.
+    """
+    with pytest.raises(ValueError, match="logits_check must be an object"):
+        _with_logits(malformed)
+
+
+@pytest.mark.parametrize("field", ["token_ids", "values"])
+def test_a_logits_check_whose_sequence_field_is_not_a_sequence_is_refused(field):
+    """`null` passes presence and then dies at `len(None)` with a TypeError, not a fixture error."""
+    bad = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5], "values": [1.5],
+           "atol": 0.0, "rtol": 1e-5}
+    bad[field] = None
+    with pytest.raises(ValueError, match=f"logits_check {field} must be a list"):
+        _with_logits(bad)
+
+
+def test_a_malformed_fixture_names_the_file_it_came_from(monkeypatch, tmp_path):
+    """`from_json` names the field; the loader is the one place that knows the file, so it names that.
+
+    The accessor's docstring promises a failure that names the fixture, and a bare `ValueError` out
+    of `from_json` does not keep it. `load_fixture` wraps, so the claim is made true where the path
+    is actually in hand.
+    """
+    from tests import golden_fixtures
+
+    payload = {**PAYLOAD, "expected": {**PAYLOAD["expected"], "logits_check": {"values": None}}}
+    path = tmp_path / "broken.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    monkeypatch.setattr(golden_fixtures, "fixture_path", lambda entry: path)
+
+    with pytest.raises(ValueError, match="broken.json"):
+        golden_fixtures.load_fixture("broken")
+
+
 def test_the_served_path_skip_is_decided_on_the_host_checkpoint(monkeypatch, tmp_path) -> None:
     """The skip the served-path test takes and the path `run_isolated` opens must be the same one.
 

@@ -271,10 +271,20 @@ def _check_logits_check(record: Mapping[str, Any]) -> None:
     The pairing of `token_ids` and `values` is the whole point of the record -- it is what makes a
     divergence attributable -- so a length mismatch is not a warning, it is a fixture that would
     compare the wrong things.
+
+    The type checks come before membership because a JSON fixture is untrusted: a string record
+    answers `in` by substring, so one containing all seven names passes the missing-field check and
+    then dies indexing, and a list answers by equality, so every name reads as missing and the
+    complaint misdescribes the problem. A `None` field passes presence and then dies at `len()`.
     """
+    if not isinstance(record, Mapping):
+        raise ValueError(f"logits_check must be an object, got {type(record).__name__}")
     missing = [field for field in _LOGITS_CHECK_FIELDS if field not in record]
     if missing:
         raise ValueError(f"logits_check is missing {', '.join(missing)}")
+    for field in ("token_ids", "values"):
+        if not isinstance(record[field], (list, tuple)):
+            raise ValueError(f"logits_check {field} must be a list")
     if len(record["token_ids"]) != len(record["values"]):
         raise ValueError(
             "logits_check token_ids and values must be the same length, "
@@ -303,7 +313,10 @@ def load_fixture(entry: str) -> GoldenFixture | None:
     path = fixture_path(entry)
     if not path.exists():
         return None
-    return GoldenFixture.from_json(json.loads(path.read_text(encoding="utf-8")))
+    try:
+        return GoldenFixture.from_json(json.loads(path.read_text(encoding="utf-8")))
+    except ValueError as error:
+        raise ValueError(f"{path.name}: {error}") from error
 
 
 def load_fixtures() -> dict[str, GoldenFixture]:
