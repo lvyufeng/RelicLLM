@@ -162,7 +162,8 @@ def main(argv: list[str] | None = None) -> int:
         traceback.print_exc()
         return 1
 
-    expected = _expected_from(outcome)
+    tolerances = _frozen_tolerances(golden.load_fixture(args.entry))
+    expected = _expected_from(outcome, tolerances)
     if "token_ids" not in expected and "text" not in expected:
         print("the entry point produced neither token ids nor text; nothing to record", file=sys.stderr)
         return 1
@@ -174,12 +175,27 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _expected_from(outcome: Any) -> dict[str, object]:
+def _frozen_tolerances(existing) -> dict[str, float]:
+    """The tolerances to record: what the fixture already froze, or the 0.0 placeholder.
+
+    `atol`/`rtol` start at 0.0 and are frozen to measured values after the first cross-architecture
+    run (see the spec's "Producing the sm_75 numeric record"). A re-record that rebuilt them from
+    0.0 would silently un-freeze a tolerance a person chose -- and a leg that should compare would
+    fail instead. Mirrors `_resolved_notes` for the same reason.
+    """
+    if existing is not None:
+        recorded = existing.expected_logits_check
+        if recorded is not None:
+            return {"atol": float(recorded["atol"]), "rtol": float(recorded["rtol"])}
+    return {"atol": 0.0, "rtol": 0.0}
+
+
+def _expected_from(outcome: Any, tolerances: dict[str, float]) -> dict[str, object]:
     """The `expected` block a fixture records from one run.
 
-    The first-step logits are recorded with placeholder tolerances: the real `atol`/`rtol` are frozen
-    in after the first cross-architecture measurement, and writing a guessed tolerance here would
-    make the guess look authoritative. See the spec's "Producing the sm_75 numeric record".
+    The first-step logits carry `tolerances` -- resolved by `_frozen_tolerances`, so a re-record
+    keeps a frozen value and a fixture that has none gets the 0.0 placeholder. Writing a guessed
+    tolerance here would make the guess look authoritative.
     """
     expected: dict[str, object] = {}
     if outcome.prompt_tokens is not None:
@@ -189,7 +205,7 @@ def _expected_from(outcome: Any) -> dict[str, object]:
     if outcome.text is not None:
         expected["text"] = outcome.text
     if outcome.logits_check is not None:
-        expected["logits_check"] = {**outcome.logits_check, "atol": 0.0, "rtol": 0.0}
+        expected["logits_check"] = {**outcome.logits_check, **tolerances}
     return expected
 
 

@@ -492,3 +492,83 @@ def test_the_served_path_skip_is_decided_on_the_host_checkpoint(monkeypatch, tmp
         "the served-path skip is still reading the recorded path; resolve the fixture with "
         "_with_host_checkpoint before deciding to skip"
     )
+
+
+def _load_recorder():
+    """The recorder script, imported by path -- it is a script, not an importable module."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "record_golden_fixture",
+        pathlib.Path(__file__).resolve().parents[1] / "scripts" / "record_golden_fixture.py",
+    )
+    recorder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(recorder)
+    return recorder
+
+
+def test_the_recorder_adds_a_logits_check_only_when_one_was_produced():
+    recorder = _load_recorder()
+    placeholders = {"atol": 0.0, "rtol": 0.0}
+
+    without = Outcome(token_ids=[1], text="x", prompt_tokens=1)
+    assert "logits_check" not in recorder._expected_from(without, placeholders)
+
+    # The record as it reaches the recorder: the backend's four fields plus the prompt count the
+    # child stamped on it. The recorder adds the tolerances.
+    record = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5, 6], "values": [1.5, 0.5]}
+    with_record = Outcome(token_ids=[1], text="x", prompt_tokens=1, logits_check=record)
+    assert recorder._expected_from(with_record, placeholders)["logits_check"] == {
+        **record,
+        "atol": 0.0,
+        "rtol": 0.0,
+    }
+
+
+def test_the_recorder_lets_the_tolerances_it_was_given_win():
+    """A stale tolerance in the record must not outrank the one the recorder resolved.
+
+    The spread order is the whole precedence rule, and a reversed implementation would read the
+    same on every record the backend actually produces -- it carries no `atol`/`rtol` at all. The
+    record here carries a wrong one so the reversal is visible.
+    """
+    recorder = _load_recorder()
+    record = {
+        "step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5], "values": [1.5],
+        "atol": 0.9, "rtol": 0.9,
+    }
+    outcome = Outcome(token_ids=[1], text="x", prompt_tokens=1, logits_check=record)
+
+    assert recorder._expected_from(outcome, {"atol": 1e-5, "rtol": 1e-4})["logits_check"] == {
+        **record, "atol": 1e-5, "rtol": 1e-4,
+    }
+
+
+def test_frozen_tolerances_survive_a_re_record():
+    """A re-record keeps what the fixture already froze, and only a fresh fixture gets 0.0.
+
+    `atol`/`rtol` are written as 0.0 on the first record and frozen to measured values afterwards.
+    Rebuilding them from 0.0 on the next run would silently un-freeze a tolerance a person chose,
+    which is the trap `_resolved_notes` already exists to close for the notes -- and here it would
+    make the tolerance leg fail on a leg that should compare.
+    """
+    recorder = _load_recorder()
+    # A complete record, not just the tolerances: `GoldenFixture.from_json` validates the shape, so
+    # `{"atol": ..., "rtol": ...}` alone is refused for the missing comparison fields. The record is
+    # whole and this test is about the two numbers inside it.
+    frozen = GoldenFixture.from_json(
+        {
+            **PAYLOAD,
+            "expected": {
+                **PAYLOAD["expected"],
+                "logits_check": {
+                    "step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5, 6],
+                    "values": [1.5, 0.5], "atol": 3e-4, "rtol": 0.0,
+                },
+            },
+        }
+    )
+
+    assert recorder._frozen_tolerances(frozen) == {"atol": 3e-4, "rtol": 0.0}
+    assert recorder._frozen_tolerances(None) == {"atol": 0.0, "rtol": 0.0}
+    assert recorder._frozen_tolerances(GoldenFixture.from_json(PAYLOAD)) == {"atol": 0.0, "rtol": 0.0}

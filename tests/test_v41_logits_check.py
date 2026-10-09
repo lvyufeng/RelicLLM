@@ -59,26 +59,3 @@ def test_a_bad_env_value_is_off_rather_than_a_crash(monkeypatch):
 
     monkeypatch.setenv("POCKETLLM_V41_LOGITS_CHECK", "yes")
     assert _logits_check_top_k() == 0
-
-
-def test_the_recorder_adds_a_logits_check_only_when_one_was_produced(monkeypatch):
-    import importlib.util
-    import pathlib
-
-    spec = importlib.util.spec_from_file_location(
-        "record_golden_fixture",
-        pathlib.Path(__file__).resolve().parents[1] / "scripts" / "record_golden_fixture.py",
-    )
-    recorder = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(recorder)
-
-    from tests.golden_fixtures import Outcome
-
-    without = Outcome(token_ids=[1], text="x", prompt_tokens=1)
-    assert "logits_check" not in recorder._expected_from(without)
-
-    # The record as it reaches the recorder: the backend's four fields plus the prompt count the
-    # child stamped on it. The recorder adds the tolerance placeholders.
-    record = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5, 6], "values": [1.5, 0.5]}
-    with_record = Outcome(token_ids=[1], text="x", prompt_tokens=1, logits_check=record)
-    assert recorder._expected_from(with_record)["logits_check"] == {**record, "atol": 0.0, "rtol": 0.0}
