@@ -380,7 +380,9 @@ class MimoBackend(ShardedWorkerMixin, RuntimeAdapter):
         if not os.path.isdir(self._checkpoint_dir):
             raise ConfigurationError(f"no checkpoint at {self._checkpoint_dir}")
         self._checkpoint = MimoV2Checkpoint(self._checkpoint_dir)
-        self._bank = open_expert_bank(self._checkpoint, progress=self._say)
+        # Rank 0 fills a cold host's bank and every other rank waits for its marker. `_init_distributed`
+        # has already run, so `_rank` is this process's rank in the expert-parallel group.
+        self._bank = open_expert_bank(self._checkpoint, rank=self._rank, progress=self._say)
         self._model = MimoV2DeviceModel(
             self._checkpoint,
             device=self._device,
