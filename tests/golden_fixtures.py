@@ -292,6 +292,47 @@ def _check_logits_check(record: Mapping[str, Any]) -> None:
         )
 
 
+def logits_check_mismatch(
+    observed: Mapping[str, Any], recorded: Mapping[str, Any]
+) -> str | None:
+    """Why `observed` disagrees with `recorded`, or `None` when it agrees.
+
+    Two things are compared, and they answer different questions. The ids say whether the argmax
+    moved -- a divergence large enough to change what the model would say next. The values say how
+    far the distribution moved when it did not. A message is returned rather than raised so the
+    caller can report the size of the gap, which is the deliverable when triton and torch differ.
+
+    A length mismatch between the two `values` lists is itself a failure and is reported as one. The
+    schema refuses a record whose `token_ids` and `values` disagree in length, but `observed` comes
+    from a live run and nothing checks it -- and `zip` would silently truncate to the shorter list,
+    comparing a prefix and reporting agreement. That is the one way this helper could pass a run it
+    should not, so it is checked before the values are walked.
+    """
+    if list(observed.get("token_ids", ())) != list(recorded.get("token_ids", ())):
+        return (
+            "the top-k ordering diverged: the argmax moved between architectures\n"
+            f"  recorded ids: {recorded.get('token_ids')}\n"
+            f"  observed ids: {observed.get('token_ids')}"
+        )
+    seen_values = list(observed.get("values", ()))
+    want_values = list(recorded.get("values", ()))
+    if len(seen_values) != len(want_values):
+        return (
+            f"the runs recorded a different number of logits: observed {len(seen_values)}, "
+            f"recorded {len(want_values)}"
+        )
+    atol = float(recorded.get("atol", 0.0))
+    rtol = float(recorded.get("rtol", 0.0))
+    for index, (seen, want) in enumerate(zip(seen_values, want_values)):
+        gap = abs(float(seen) - float(want)) - (atol + rtol * abs(float(want)))
+        if gap > 0:
+            return (
+                f"logit {index} is outside tolerance: observed {seen:.6g}, recorded {want:.6g}, "
+                f"atol {atol:g} rtol {rtol:g}"
+            )
+    return None
+
+
 def _dev_shm_free_bytes() -> int | None:
     """Free space on `/dev/shm`, or `None` when it is not a separate mount.
 

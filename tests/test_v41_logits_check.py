@@ -59,3 +59,52 @@ def test_a_bad_env_value_is_off_rather_than_a_crash(monkeypatch):
 
     monkeypatch.setenv("POCKETLLM_V41_LOGITS_CHECK", "yes")
     assert _logits_check_top_k() == 0
+
+
+def test_a_record_within_tolerance_matches():
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0009, 0.5]}
+    assert logits_check_mismatch(observed, recorded) is None
+
+
+def test_a_record_outside_tolerance_reports_the_gap():
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.5, 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "0.5" in message or "1.5" in message
+
+
+def test_different_argmax_ids_are_reported_as_an_ordering_divergence():
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 0, "top_k": 2, "token_ids": [6, 5], "values": [1.0, 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "argmax" in message or "order" in message
+
+
+def test_a_shorter_observed_record_is_refused_rather_than_compared_by_prefix():
+    """`zip` truncates, so two unequal lists would compare as agreeing on the shorter one.
+
+    The schema refuses a recorded record whose `token_ids` and `values` disagree in length, but
+    `observed` comes from a live run and nothing checks it -- so the comparison helper is the only
+    place this can be caught.
+    """
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 3, "token_ids": [5, 6, 7], "values": [1.0, 0.5, 0.25],
+                "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 0, "top_k": 3, "token_ids": [5, 6, 7], "values": [1.0, 0.5]}
+
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "different number of logits" in message
