@@ -9,6 +9,11 @@ The skip rule is the one worth being explicit about, and it has exactly two reas
 machine rather than about the answer: the checkpoint is not here, and a resource the fixture states
 it needs is not free. Both are asserted below so that nothing else can quietly join that list: a
 fixture that skipped because its *answer* moved would be a regression wearing a skip.
+
+The `card` a fixture records is deliberately *not* a third reason, and there is a test below that
+holds it to being recorded-and-never-read: the field answers which silicon produced the answer, and
+a fixture whose card differs from the one reading it has not moved its answer -- it was simply taken
+somewhere else. Skipping on it would report that as an unrunnable host, which is a different claim.
 """
 
 from __future__ import annotations
@@ -30,6 +35,7 @@ from tests.golden_fixtures import (
     GoldenFixture,
     Outcome,
     _with_repo_root_on_the_path,
+    captured_card,
     fixture_path,
     load_fixture,
     load_fixtures,
@@ -56,6 +62,44 @@ def test_a_fixture_round_trips_through_json() -> None:
     fixture = GoldenFixture.from_json(PAYLOAD)
 
     assert GoldenFixture.from_json(json.loads(json.dumps(fixture.to_json()))) == fixture
+
+
+def test_the_card_is_recorded_and_a_fixture_without_one_is_not_a_skip() -> None:
+    """The field is provenance, not a requirement, and the two are kept apart on purpose.
+
+    Every fixture recorded before the field existed has no card, and reading one has to stay a
+    non-event: an empty `card` is a gap in what the file knows, not a host that cannot run. If this
+    ever grew into a skip reason it would report "different silicon" as "cannot run here", which is
+    the wrong claim about the wrong thing.
+    """
+    without = GoldenFixture.from_json(PAYLOAD)
+    assert without.card == ""
+
+    with_card = GoldenFixture.from_json({**PAYLOAD, "card": "cuda 8.9 (Ada / RTX 4090)"})
+    assert with_card.card == "cuda 8.9 (Ada / RTX 4090)"
+    # Same checkpoint, same reason, card or no card: the field never reaches the skip rule.
+    assert with_card.unwritable_reason() == without.unwritable_reason()
+
+
+def test_a_card_is_only_named_when_it_was_read_and_recognised() -> None:
+    """An unread or unrecognised card is `""`, not the floor the probe falls back to.
+
+    `probe_card_capability` answers Turing (``7.5``) on a host it cannot read a device on, and that
+    value is right about *capability* and wrong about *identity* -- recording it would pin a lie.
+    The two cases below are the ones a recording host actually hits, and both either name the card
+    or say nothing.
+    """
+    assert captured_card(platform="cuda", capability=(8, 9)) == "cuda 8.9 (Ada / RTX 4090)"
+    # A recognised but older card is still named -- the descriptor knows it.
+    assert captured_card(platform="cuda", capability=(7, 5)) == "cuda 7.5 (Turing / RTX 2080 Ti)"
+    # A capability the descriptor does not recognise: read, but not believed, so nothing is named.
+    assert captured_card(platform="cuda", capability=(6, 1)) == ""
+
+
+def test_the_card_label_names_the_platform_it_was_read_on() -> None:
+    """A non-CUDA host is named as hardware, never as a compute capability it does not have."""
+    assert captured_card(platform="ascend") == "ascend 910B"
+    assert captured_card(platform="cpu") == ""
 
 
 def test_the_expected_side_is_read_by_name_and_not_by_position() -> None:

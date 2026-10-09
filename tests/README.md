@@ -126,6 +126,7 @@ to reproduce it:
 | `expected.token_ids` | what came out (empty for `torch`, whose runtime does not report ids) |
 | `expected.text` | what came out |
 | `commit`, `taken_at` | the revision and the day it was recorded |
+| `card` | the silicon it was recorded on, as free text (`cuda 8.9 (Ada / RTX 4090)`), or `""` when nothing was read |
 
 Four things about that list are load-bearing, and the third is about how a fixture *runs* rather
 than what it records.
@@ -166,6 +167,20 @@ Without the field the second one would die partway through a fill with an error 
 model bug. With it, the fixture that cannot fit skips and names the size it wanted. The banks are
 worth knowing about for a second reason: they persist, so a *warm* `v41` run is 3 minutes against 41
 cold, and `mimo` is 75 seconds against 12 minutes.
+
+**`card` is the one field that records and does nothing else.** It answers a question `commit` and
+`taken_at` cannot — *which silicon produced this answer* — because `relic-core` forks on compute
+capability (below `sm_80` an FP8 matmul takes its Torch path, and the compute dtype is fp16), so two
+cards can agree on the revision and the day and still disagree on the tokens. That makes it worth
+writing down beside an answer that might one day differ.
+
+It is deliberately **not** a requirement and not a skip reason. A fixture whose recorded card is not
+the card reading it has not changed its answer; it was taken somewhere else, and reporting that as an
+unrunnable host would be a different claim about a different thing. Nothing compares the string and
+`unwritable_reason` never consults it, which is also why the four fixtures recorded before the field
+existed are left empty rather than back-filled with what the tree *would have been* run on: an
+inference is not a measurement, and a field whose whole purpose is provenance is worthless if it
+carries guesses.
 
 The two consequences of that: a full `POCKETLLM_GOLDEN=1` run covers four of the five fixtures and
 skips whichever of the pair the resident bank crowds out, and *which* one is skipped depends on what

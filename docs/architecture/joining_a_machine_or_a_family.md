@@ -217,6 +217,15 @@ true, and "this is a 2080 Ti" is false. So the trap is not a crash. It is a repo
 that says *Turing* for an NPU, and a reader downstream who believes it. A capability gate fails safe
 here; a provenance record does not.
 
+**One of those two is now closed.** A golden fixture records the card it was taken on
+(`tests/golden_fixtures.py`), and the reader that produces the label asks the plane for the platform
+first: a CUDA host names the descriptor, an Ascend host is written as hardware (`ascend 910B`), and
+anything else records nothing. So a fixture cannot say *Turing* for an NPU — it says `""`, which is
+the honest answer to a question nothing could read. The field is recorded and never consumed, which is
+what keeps it a provenance record rather than a gate that would have to be right about capability too.
+The descriptor itself is unchanged: splitting its portable *question* from its NVIDIA *encoding* is
+the work below, and it waits on a second family that has a probe to read.
+
 The generalisation to make before a port is to split the two: the **question** ("does this card have
 an FP8 tensor core, how many of them") is portable and worth asking of every family; the **encoding**
 is one family's, and a second family needs either a discriminator that switches what the numeric
@@ -339,8 +348,12 @@ list:
    id/root-info exchange beside it, and that is open.
 2. **The NPU replacements are unnamed.** `torch.npu` has its own graph API and its own host-pinning
    story; neither is named or wired. This is the largest body of work in a port.
-3. **The capability record is undecided.** Whether `CardCapability` becomes per-family before a port,
-   or stays NVIDIA-only and is bypassed, is a design decision that can be made now.
+3. **The capability record is undecided, and now deliberately so.** A golden fixture bypasses it —
+   the recorded card is free text, and only the CUDA branch of the label reads the descriptor — so the
+   two halves have come apart: the *portable string schema* is settled, and whether `CardCapability`
+   grows a family discriminator or is superseded by a per-family record is left until a second family
+   has a probe to read. Deciding its shape now would be designing for a caller that does not exist;
+   the label only ever needed a string.
 4. **The triage platform key does not exist.** A `--platform` flag on the fit, and per-family restatements
    of the reserve and the workspace default, are unspecified.
 5. **No accelerator-agnostic skip predicate.** The suite's 41 `torch.cuda.is_available` gates cannot

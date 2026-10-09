@@ -2,9 +2,14 @@
 """Record a served-path golden fixture for one entry point.
 
 Run this once per entry point, when the entry point's answer is believed correct. It runs the entry
-point for real, records the command line, the environment and the answer, and writes
-`tests/fixtures/golden/<entry>.json`. `tests/test_served_path_golden.py` then re-runs the same thing
-on every suite run, and skips when the checkpoint is not on the machine reading it.
+point for real, records the command line, the environment, the card it ran on and the answer, and
+writes `tests/fixtures/golden/<entry>.json`. `tests/test_served_path_golden.py` then re-runs the same
+thing on every suite run, and skips when the checkpoint is not on the machine reading it.
+
+The card is read from the recording host and recorded as free text -- the one field here that
+answers "which silicon was this", which `commit` and `taken_at` cannot. It is recorded and never
+read: nothing compares it and no skip consults it, so a fixture with no card (every one recorded
+before this field existed) is a gap in provenance and not a host that cannot run.
 
 Recording is a deliberate act rather than a side effect: a fixture is only worth having if a human
 looked at the answer and agreed it was right, because re-recording is how a real regression gets
@@ -64,6 +69,19 @@ def _current_commit() -> str:
         return ""
 
 
+def _resolved_notes(explicit: str | None, entry: str, golden) -> str:
+    """The notes to record: what the caller passed, or what the fixture already carried.
+
+    An explicit `--notes` (including an empty one, written intentionally) wins. Omitted, the
+    existing fixture's notes are read back, so a re-record that is only picking up a new field does
+    not quietly erase the sentence a person wrote about why this checkpoint is the one recorded.
+    """
+    if explicit is not None:
+        return explicit
+    existing = golden.load_fixture(entry)
+    return existing.notes if existing is not None else ""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--entry", required=True, choices=list(_load_module().ENTRY_POINTS))
@@ -82,7 +100,15 @@ def main(argv: list[str] | None = None) -> int:
             "allocates; the two bank-using entries need 458 and 150 GiB and do not fit together"
         ),
     )
-    parser.add_argument("--notes", default="")
+    parser.add_argument(
+        "--notes",
+        default=None,
+        help=(
+            "free text kept beside the answer. Omitted, an existing fixture's notes are carried "
+            "over rather than blanked: re-recording to pick up a new field is not a claim that the "
+            "old note stopped being true, and the note is the one field here a person wrote."
+        ),
+    )
     parser.add_argument("--out", type=pathlib.Path, help="defaults to tests/fixtures/golden/<entry>.json")
     parser.add_argument("extra", nargs="*", help="flags passed through to the entry point")
     args = parser.parse_args(argv)
@@ -121,7 +147,8 @@ def main(argv: list[str] | None = None) -> int:
         requires=requires,
         commit=_current_commit(),
         taken_at=datetime.date.today().isoformat(),
-        notes=args.notes,
+        card=golden.captured_card(),
+        notes=_resolved_notes(args.notes, args.entry, golden),
     )
 
     print(f"recording {args.entry}: {' '.join(fixture.argv)}", flush=True)

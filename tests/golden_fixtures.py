@@ -81,6 +81,49 @@ GOLDEN_GATE_ENV = "POCKETLLM_GOLDEN"
 DEFAULT_SAMPLING: dict[str, Any] = {"temperature": 0.0, "max_tokens": 16}
 
 
+def captured_card(
+    *,
+    platform: str | None = None,
+    capability: tuple[int, int] | None = None,
+    name: str | None = None,
+) -> str:
+    """A free-text label for the card that produced an answer, or `""` when it could not be read.
+
+    Recorded, never consumed: nothing compares this string and no skip consults it, so an empty one
+    is a gap in provenance and not a host that cannot run. It goes in the fixture beside `commit`
+    and `taken_at` for the same reason they do -- so that a future reader looking at a mismatch can
+    see what the answer was taken on, which is a question the file otherwise cannot answer.
+
+    The platform is part of the label, and that is the whole point of asking the plane for it first.
+    :func:`probe_card_capability` reads ``torch.cuda.get_device_capability``, which on a host with
+    no CUDA device answers ``UNKNOWN_CAPABILITY`` -- Turing, the oldest supported cut. That value is
+    *right about capability and wrong about identity*: gating off it is safe, recording it as though
+    it were the card is a lie about a host nobody measured. Prefixing the platform keeps a rock
+    described as a rock, and the three cases below are the honest ones:
+
+    - a CUDA host, where the descriptor can be read: ``cuda 8.9 (Ada / RTX 4090)``;
+    - an Ascend host, named as hardware rather than as a compute capability it does not have:
+      ``ascend 910B`` -- unreachable today, because no runtime declares ``ascend``, and written for
+      the reason :func:`probe_accelerator` already writes a branch nothing can reach;
+    - anything else, *including* a CUDA host whose torch build has no device code for the card
+      plugged into it: ``""``. The build answers capability ``(7, 5)`` for an sm_89 card it was not
+      compiled for, and the descriptor's own ``known`` flag is what separates "read a card I
+      recognise" from "read a number I do not believe".
+    """
+    from relicllm.runtime.device import probe_accelerator, probe_card_capability
+
+    resolved = probe_accelerator().platform if platform is None else platform
+    if resolved == "ascend":
+        return "ascend 910B"
+    if resolved != "cuda":
+        return ""
+
+    card = probe_card_capability(capability=capability, name=name)
+    if not card.known:
+        return ""
+    return f"cuda {card.major}.{card.minor} ({card.name})"
+
+
 # --------------------------------------------------------------------------------------------------
 # the recorded form
 # --------------------------------------------------------------------------------------------------
@@ -98,6 +141,10 @@ class GoldenFixture:
     requires: dict[str, int] = field(default_factory=dict)
     commit: str = ""
     taken_at: str = ""
+    #: Which card produced the answer, as free text (`cuda 8.9 (Ada / RTX 4090)`), or `""` when it
+    #: was not read. **Recorded and never read**: nothing compares it and `unwritable_reason` never
+    #: consults it, so its absence is not a reason to skip -- see `captured_card` for why it exists.
+    card: str = ""
     notes: str = ""
 
     @property
@@ -140,6 +187,7 @@ class GoldenFixture:
             requires={str(k): int(v) for k, v in (payload.get("requires") or {}).items()},
             commit=str(payload.get("commit") or ""),
             taken_at=str(payload.get("taken_at") or ""),
+            card=str(payload.get("card") or ""),
             notes=str(payload.get("notes") or ""),
         )
 
@@ -155,6 +203,7 @@ class GoldenFixture:
             "expected": dict(self.expected),
             "commit": self.commit,
             "taken_at": self.taken_at,
+            "card": self.card,
             "notes": self.notes,
         }
 

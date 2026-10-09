@@ -47,7 +47,8 @@
     ],
     "text": " If you see this, you are in a test environment. Do not perform any"
   },
-  "commit": "832ca8c",
-  "taken_at": "2026-09-26",
+  "commit": "cb4b6ee",
+  "taken_at": "2026-10-08",
+  "card": "cuda 7.5 (Turing / RTX 2080 Ti)",
   "notes": "the heterogeneous four-rank MiMo path: routed experts in a host bank, rank 0 broadcasts the request and the ranks run it as a symmetric group"
 }
