@@ -182,6 +182,10 @@ def _frozen_tolerances(existing) -> dict[str, float]:
     run (see the spec's "Producing the sm_75 numeric record"). A re-record that rebuilt them from
     0.0 would silently un-freeze a tolerance a person chose -- and a leg that should compare would
     fail instead. Mirrors `_resolved_notes` for the same reason.
+
+    `atol`/`rtol` are read directly because `golden_fixtures._check_logits_check` guarantees every
+    field of a record `load_fixture` returned. Unlike `_resolved_notes`, whose field is optional,
+    this one depends on that guarantee holding in another module.
     """
     if existing is not None:
         recorded = existing.expected_logits_check
