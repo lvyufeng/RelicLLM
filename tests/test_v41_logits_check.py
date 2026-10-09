@@ -78,7 +78,9 @@ def test_a_record_outside_tolerance_reports_the_gap():
     observed = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.5, 0.5]}
     message = logits_check_mismatch(observed, recorded)
     assert message is not None
-    assert "0.5" in message or "1.5" in message
+    # The message is the deliverable -- name the offending index and both values, so a change to
+    # the format is a failure rather than a still-nonempty string.
+    assert "logit 0" in message and "1.5" in message and "1" in message
 
 
 def test_different_argmax_ids_are_reported_as_an_ordering_divergence():
@@ -89,7 +91,7 @@ def test_different_argmax_ids_are_reported_as_an_ordering_divergence():
     observed = {"step": 0, "top_k": 2, "token_ids": [6, 5], "values": [1.0, 0.5]}
     message = logits_check_mismatch(observed, recorded)
     assert message is not None
-    assert "argmax" in message or "order" in message
+    assert "ids diverged" in message and "[6, 5]" in message
 
 
 def test_a_shorter_observed_record_is_refused_rather_than_compared_by_prefix():
@@ -108,3 +110,55 @@ def test_a_shorter_observed_record_is_refused_rather_than_compared_by_prefix():
     message = logits_check_mismatch(observed, recorded)
     assert message is not None
     assert "different number of logits" in message
+
+
+def test_a_non_finite_observed_logit_is_reported_rather_than_passing():
+    """`nan > 0` is False, so without a finiteness guard a blown-up run reads as agreement.
+
+    A triton/torch numeric divergence is exactly what produces a non-finite logit, so this is the
+    one divergence the tolerance leg exists to catch -- it must not be compared away.
+    """
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [float("nan"), 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "logit 0" in message and "finite" in message
+
+
+def test_a_non_finite_infinite_observed_logit_is_reported():
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [float("inf"), 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "logit 0" in message and "finite" in message
+
+
+def test_a_different_step_is_reported_with_the_field_named():
+    """A record taken at another step is a different quantity, not a different number."""
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 1, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "step" in message
+
+
+def test_a_different_prompt_tokens_is_reported_with_the_field_named():
+    """A prompt that tokenized differently was not the same question, whatever the logits say."""
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "prompt_tokens": 12, "top_k": 2, "token_ids": [5, 6],
+                "values": [1.0, 0.5], "atol": 1e-3, "rtol": 1e-5}
+    observed = {"step": 0, "prompt_tokens": 13, "top_k": 2, "token_ids": [5, 6],
+                "values": [1.0, 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "prompt_tokens" in message

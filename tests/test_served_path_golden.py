@@ -38,6 +38,7 @@ from tests.golden_fixtures import (
     ENTRY_POINTS,
     GOLDEN_GATE_ENV,
     GoldenFixture,
+    Outcome,
     _with_host_checkpoint,
     fixture_path,
     load_fixture,
@@ -147,7 +148,7 @@ def test_served_path_matches_the_recorded_answer(entry: str, fixture: GoldenFixt
     )
 
 
-def _run_under(entry_fixture, extra_env):
+def _run_under(fixture: GoldenFixture, extra_env: dict[str, str]) -> Outcome:
     """Run one fixture in a child with extra env injected, skipping for the same host reasons.
 
     The gate check here duplicates the caller's on purpose: this is the helper the one caller uses,
@@ -156,7 +157,6 @@ def _run_under(entry_fixture, extra_env):
     `unwritable_reason` for the reason that helper documents -- a skip decided on the recorded path
     while the child opens the host's passes vacuously on the host the override exists for.
     """
-    entry, fixture = entry_fixture
     if not os.environ.get(GOLDEN_GATE_ENV):
         pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
     reason = _served_skip_reason(fixture)
@@ -190,7 +190,7 @@ def test_the_v41_logits_agree_with_the_recorded_ones():
     )
 
     outcome = _run_under(
-        ("v41", fixture),
+        fixture,
         {"POCKETLLM_V41_LOGITS_CHECK": str(fixture.expected_logits_check["top_k"])},
     )
     assert outcome.logits_check is not None, (

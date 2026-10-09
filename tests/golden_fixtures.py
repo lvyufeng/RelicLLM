@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import math
 import os
 import pathlib
 import subprocess
@@ -305,15 +306,25 @@ def logits_check_mismatch(
     A length mismatch between the two `values` lists is itself a failure and is reported as one. The
     schema refuses a record whose `token_ids` and `values` disagree in length, but `observed` comes
     from a live run and nothing checks it -- and `zip` would silently truncate to the shorter list,
-    comparing a prefix and reporting agreement. That is the one way this helper could pass a run it
-    should not, so it is checked before the values are walked.
+    comparing a prefix and reporting agreement. That, and a non-finite logit, are the ways this
+    helper could pass a run it should not, so both are checked before the values are walked.
+
+    `step` and `prompt_tokens` are compared because the values below them only mean anything if
+    they describe the same quantity; a record taken at a different step, or against a prompt that
+    tokenized differently, is not a mismatch of numbers but of what was measured.
     """
     if list(observed.get("token_ids", ())) != list(recorded.get("token_ids", ())):
         return (
-            "the top-k ordering diverged: the argmax moved between architectures\n"
+            "the top-k ids diverged between architectures\n"
             f"  recorded ids: {recorded.get('token_ids')}\n"
             f"  observed ids: {observed.get('token_ids')}"
         )
+    for field in ("step", "prompt_tokens"):
+        if observed.get(field) != recorded.get(field):
+            return (
+                f"the runs compared a different {field}: observed {observed.get(field)!r}, "
+                f"recorded {recorded.get(field)!r}. The values below are not comparable"
+            )
     seen_values = list(observed.get("values", ()))
     want_values = list(recorded.get("values", ()))
     if len(seen_values) != len(want_values):
@@ -324,11 +335,20 @@ def logits_check_mismatch(
     atol = float(recorded.get("atol", 0.0))
     rtol = float(recorded.get("rtol", 0.0))
     for index, (seen, want) in enumerate(zip(seen_values, want_values)):
-        gap = abs(float(seen) - float(want)) - (atol + rtol * abs(float(want)))
+        seen_f = float(seen)
+        want_f = float(want)
+        # `nan > 0` is False, so a non-finite logit would compare as agreement -- and a numeric
+        # blow-up (the thing this leg exists to catch) is exactly what produces one. numpy's
+        # `allclose` refuses nan for this reason; the gap formula alone does not.
+        if not (math.isfinite(seen_f) and math.isfinite(want_f)):
+            return (
+                f"logit {index} is not finite: observed {seen!r}, recorded {want!r}"
+            )
+        gap = abs(seen_f - want_f) - (atol + rtol * abs(want_f))
         if gap > 0:
             return (
-                f"logit {index} is outside tolerance: observed {seen:.6g}, recorded {want:.6g}, "
-                f"atol {atol:g} rtol {rtol:g}"
+                f"logit {index} is outside tolerance: observed {seen_f:.6g}, "
+                f"recorded {want_f:.6g}, atol {atol:g} rtol {rtol:g}"
             )
     return None
 
