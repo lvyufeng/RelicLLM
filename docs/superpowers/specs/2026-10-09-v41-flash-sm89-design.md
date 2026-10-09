@@ -52,12 +52,16 @@ collapses into the bit-identical leg; if they do not, the size of the gap is the
 ## Preconditions
 
 1. **Checkpoint.** 475 GiB, 48 shards, `deepseek-ai/DeepSeek-V4.1-Flash` on ModelScope. Not present
-   on ts-134. This is the critical path and is started first, in the background. It must land at
-   **the path the fixture's `argv` names** — `/mnt/data3/DeepSeek-V4.1-Flash`, which
-   `tests/fixtures/golden/v41.json` hardcodes in both `checkpoint` and `argv`. If it lands anywhere
-   else the fixture would have to be edited, which changes the thing being tested, so the recorder
-   downloads to that path (symlink or download target) rather than editing the fixture. ts-134 has
-   no `/mnt/data3` today; creating it, or pointing it at the download, is a precondition step.
+   on ts-134. This is the critical path and is started first, in the background. It lands under the
+   ModelScope cache, not at the path `tests/fixtures/golden/v41.json` records
+   (`/mnt/data3/DeepSeek-V4.1-Flash`, hardcoded in both `checkpoint` and `argv`), because ts-134 has
+   no `/mnt/data3` and no writable `/mnt` at all — the mount is root-owned and the account has no
+   passwordless sudo. The fixture is **not** edited to point elsewhere: its recorded paths are
+   provenance, and rewriting them would change the thing being tested. Instead the golden harness
+   gains a **checkpoint override** (`POCKETLLM_GOLDEN_CHECKPOINT`), which substitutes the recorded
+   path wherever it appears in the fixture's command line at run time. The recorded path stays as
+   the record of where the oracle was taken; the env var is how a host that keeps the same bytes
+   somewhere else runs the same fixture. This is the mechanism the host-agnostic task below adds.
 2. **Sources.** ts-134's `/home/mseco/relic/RelicLLM` and `/home/mseco/relic/relic-core` are on
    non-master branches. Sync both to merged master (RelicLLM `169f94a`, relic-core `b84ff02`).
 3. **Extension.** ts-134 already builds `cuda_kernel` for sm_89 (`(8,9)`, `relicllm` env, torch
@@ -159,10 +163,18 @@ first-written tolerance as authoritative.
 | **child result protocol extension** (`tests/golden_fixtures.py` `Outcome` + `to_payload`/`from_payload` + `CHILD_RESULT_ENV` payload) | carries `logits_check` out of the served child alongside `token_ids` | `generate.py` `on_token` (already yields the producing logits) |
 | **logits recorder** in the child (`serve` side) | captures the first step's logits via `on_token` into the payload | the protocol extension |
 | cross-arch golden check (in `tests/`) | runs fixture argv under injected forced-torch env on any card, asserts tokens (bit-identical leg); reruns under native `auto` and compares `logits_check` within tolerance (tolerance leg) | golden runner, the two units above, `relic_core` env knobs |
+| **checkpoint override** (`tests/golden_fixtures.py`) | lets a host that holds the same checkpoint at a different path run the fixture without editing it | the recorded `checkpoint`/`argv` |
 | schema test (`tests/test_golden_fixture_schema.py`) | validates `logits_check` shape when present | fixture schema |
 
-Each is separately testable: the schema test needs no GPU; the child-protocol extension is unit
-testable in-process; the cross-arch check needs a card and the fixture's checkpoint.
+Each is separately testable: the schema test needs no GPU; the child-protocol extension and the
+checkpoint override are unit testable in-process; the cross-arch check needs a card and the
+fixture's checkpoint.
+
+**Why the checkpoint override is required:** the fixture names an absolute path that exists only on
+the sm_75 box. A host holding the identical checkpoint elsewhere — ts-134, where the download lands
+in the ModelScope cache and `/mnt` is not writable — can otherwise only run it by editing the
+fixture, which rewrites the record being tested. The override leaves the recorded path intact and
+substitutes it at launch, so the fixture stays one fixture and the comparison stays honest.
 
 **Why the protocol extension is required:** `Outcome` today carries only
 `token_ids`/`text`/`prompt_tokens`/`elapsed_seconds`, and `_run_python` never extracts logits. The
