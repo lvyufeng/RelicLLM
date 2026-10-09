@@ -56,6 +56,11 @@ GOLDEN_MODULE = pathlib.Path(__file__).resolve()
 #: be parsed out of whatever they say next.
 CHILD_RESULT_ENV = "POCKETLLM_GOLDEN_RESULT"
 
+#: Where the parent leaves the fixture for the child to run. The child is handed one rather than
+#: looking up `fixtures/golden/<entry>.json` itself, so that the fixture a recorder built from
+#: `--checkpoint` is the one that runs and not the committed one that happens to share its entry name.
+CHILD_FIXTURE_ENV = "POCKETLLM_GOLDEN_FIXTURE"
+
 #: How long a child may run. Generous on purpose: the `v41` fixture pins a 457.8 GiB expert bank and
 #: takes forty minutes on a cold segment, and a suite that killed it at ten would report a timeout
 #: where it meant to report a fixture.
@@ -305,11 +310,23 @@ def run_isolated(fixture: GoldenFixture, *, verbose: bool = False) -> Outcome:
     import tempfile
 
     with tempfile.TemporaryDirectory(prefix="pll-golden-") as tmp:
+        # The fixture under test is handed to the child rather than re-read by it. The child used to
+        # load `fixtures/golden/<entry>.json` itself, which was correct only while the only caller was
+        # the comparison -- there the fixture on disk *is* the fixture under test. The recorder is the
+        # other caller, and it runs a fixture it built from `--checkpoint` and has not written yet, so
+        # a child that re-read from disk would run the *committed* checkpoint and the recording would
+        # describe an answer this launcher never produced. That is a silent mismatch between the file
+        # written and the run behind it, which is worse than a failure.
+        fixture_path = pathlib.Path(tmp) / "fixture.json"
+        fixture_path.write_text(
+            json.dumps(fixture.to_json(), indent=2) + "\n", encoding="utf-8"
+        )
         result_path = pathlib.Path(tmp) / "outcome.json"
         env = {
             **os.environ,
             **fixture.env,
             CHILD_RESULT_ENV: str(result_path),
+            CHILD_FIXTURE_ENV: str(fixture_path),
             # The child is launched by path, so the interpreter would put `tests/` on `sys.path` and
             # never the repository root -- and `relicllm` is imported from the root rather than
             # installed into the environment. PYTHONPATH rather than a `sys.path` insert in the
@@ -429,9 +446,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--entry", required=True, choices=list(ENTRY_POINTS))
     args = parser.parse_args(argv)
 
-    fixture = load_fixture(args.entry)
-    if fixture is None:
-        raise SystemExit(f"no golden fixture recorded for {args.entry!r} in {FIXTURE_DIR}")
+    # The fixture comes from the parent, not from `fixtures/golden/<entry>.json`. The recorder runs a
+    # fixture it has not written yet, so reading the file by name would run the *committed* checkpoint
+    # while the recording described this one -- a mismatch between the answer recorded and the run
+    # behind it, and silent, because both are the same entry point. The path is required rather than
+    # defaulted for the same reason the result path is: a child run by hand should say it was not
+    # handed a fixture, and the state that means "use whatever is on disk" is one `run_isolated`
+    # never wants.
+    fixture_env = os.environ.get(CHILD_FIXTURE_ENV)
+    if not fixture_env:
+        raise SystemExit(
+            f"{CHILD_FIXTURE_ENV} is not set, so there is no fixture to run. This module is spawned "
+            f"by tests/golden_fixtures.py::run_isolated, which writes the fixture and sets it"
+        )
+    fixture_path = pathlib.Path(fixture_env)
+    if not fixture_path.exists():
+        raise SystemExit(f"the fixture named by {CHILD_FIXTURE_ENV} is not there: {fixture_env}")
+    fixture = GoldenFixture.from_json(json.loads(fixture_path.read_text(encoding="utf-8")))
+    if fixture.entry != args.entry:
+        raise SystemExit(
+            f"the fixture at {fixture_env} is for {fixture.entry!r}, not {args.entry!r}"
+        )
 
     destination = os.environ.get(CHILD_RESULT_ENV)
     if not destination:

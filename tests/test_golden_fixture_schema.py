@@ -21,6 +21,7 @@ import sys
 
 import pytest
 from tests.golden_fixtures import (
+    CHILD_FIXTURE_ENV,
     CHILD_RESULT_ENV,
     DEFAULT_SAMPLING,
     ENTRY_POINTS,
@@ -177,13 +178,48 @@ def test_the_child_refuses_an_entry_point_with_no_fixture() -> None:
     assert "invalid choice" in completed.stderr
 
 
-def test_the_child_needs_somewhere_to_write_the_outcome() -> None:
+def test_the_child_runs_the_fixture_it_is_handed_and_not_the_one_on_disk(tmp_path) -> None:
+    """The fixture travels to the child, so a recorder runs what it built and not the committed one.
+
+    The child used to re-read `fixtures/golden/<entry>.json`, which is right for the *comparison* --
+    there the file is the thing under test -- and wrong for the recorder, which runs a fixture it has
+    not written yet. The two share an entry name, so the mismatch is silent: the recorded answer comes
+    from the committed checkpoint while the file written describes the one just named. Handing the
+    fixture over is what makes the recorder's `--checkpoint` mean something.
+    """
+    handed = tmp_path / "handed.json"
+    handed.write_text(json.dumps({**PAYLOAD, "entry": "torch"}), encoding="utf-8")
+    env = {**os.environ, CHILD_FIXTURE_ENV: str(handed), CHILD_RESULT_ENV: str(tmp_path / "out.json")}
+    completed = subprocess.run(
+        [sys.executable, str(GOLDEN_MODULE), "--entry", "xing4", "--help"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    # `--help` exits before the fixture is read, so this only proves the option parses; the mismatch
+    # check is what the next run exercises.
+    assert completed.returncode == 0, completed.stderr
+
+    completed = subprocess.run(
+        [sys.executable, str(GOLDEN_MODULE), "--entry", "xing4"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert completed.returncode != 0
+    assert "is for 'torch', not 'xing4'" in completed.stderr, completed.stderr
+
+
+def test_the_child_needs_somewhere_to_write_the_outcome(tmp_path) -> None:
     """Without the env var there is nowhere for the answer to go, so it stops before loading weights.
 
     Required rather than defaulted: a child that defaulted to stdout would print its JSON into a
     stream the entry point is also writing to, and the parent would parse whatever came first.
     """
-    env = {k: v for k, v in __import__("os").environ.items() if k != CHILD_RESULT_ENV}
+    handed = tmp_path / "handed.json"
+    handed.write_text(json.dumps(PAYLOAD), encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if k != CHILD_RESULT_ENV}
+    env[CHILD_FIXTURE_ENV] = str(handed)
     completed = subprocess.run(
         [sys.executable, str(GOLDEN_MODULE), "--entry", "xing4"],
         capture_output=True,
@@ -193,6 +229,23 @@ def test_the_child_needs_somewhere_to_write_the_outcome() -> None:
 
     assert completed.returncode != 0
     assert CHILD_RESULT_ENV in completed.stderr
+
+
+def test_the_child_needs_a_fixture_to_run(tmp_path) -> None:
+    """Required rather than defaulted, for the reason `run_isolated` gives: a child that fell back to
+    the file on disk is exactly the recorder bug this replaced."""
+    env = {k: v for k, v in os.environ.items() if k != CHILD_FIXTURE_ENV}
+    env[CHILD_RESULT_ENV] = str(tmp_path / "out.json")
+    completed = subprocess.run(
+        [sys.executable, str(GOLDEN_MODULE), "--entry", "xing4"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert completed.returncode != 0
+    assert CHILD_FIXTURE_ENV in completed.stderr
+    assert not (tmp_path / "out.json").exists(), "nothing should have run, so nothing was written"
 
 
 def test_a_fixture_that_cannot_run_here_raises_rather_than_spawning_a_child() -> None:
