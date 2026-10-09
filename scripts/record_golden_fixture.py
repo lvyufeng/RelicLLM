@@ -37,6 +37,7 @@ import pathlib
 import subprocess
 import sys
 import traceback
+from typing import Any
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -161,13 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         traceback.print_exc()
         return 1
 
-    expected: dict[str, object] = {}
-    if outcome.prompt_tokens is not None:
-        expected["prompt_tokens"] = int(outcome.prompt_tokens)
-    if outcome.token_ids is not None:
-        expected["token_ids"] = list(outcome.token_ids)
-    if outcome.text is not None:
-        expected["text"] = outcome.text
+    expected = _expected_from(outcome)
     if "token_ids" not in expected and "text" not in expected:
         print("the entry point produced neither token ids nor text; nothing to record", file=sys.stderr)
         return 1
@@ -177,6 +172,25 @@ def main(argv: list[str] | None = None) -> int:
     print(f"wrote {path} in {outcome.elapsed_seconds:.1f}s")
     print(f"  expected = {expected}")
     return 0
+
+
+def _expected_from(outcome: Any) -> dict[str, object]:
+    """The `expected` block a fixture records from one run.
+
+    The first-step logits are recorded with placeholder tolerances: the real `atol`/`rtol` are frozen
+    in after the first cross-architecture measurement, and writing a guessed tolerance here would
+    make the guess look authoritative. See the spec's "Producing the sm_75 numeric record".
+    """
+    expected: dict[str, object] = {}
+    if outcome.prompt_tokens is not None:
+        expected["prompt_tokens"] = int(outcome.prompt_tokens)
+    if outcome.token_ids is not None:
+        expected["token_ids"] = list(outcome.token_ids)
+    if outcome.text is not None:
+        expected["text"] = outcome.text
+    if outcome.logits_check is not None:
+        expected["logits_check"] = {**outcome.logits_check, "atol": 0.0, "rtol": 0.0}
+    return expected
 
 
 def extra_flags(items: list[str]) -> list[str]:
