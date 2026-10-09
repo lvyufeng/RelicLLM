@@ -59,7 +59,8 @@ collapses into the bit-identical leg; if they do not, the size of the gap is the
    passwordless sudo. The fixture is **not** edited to point elsewhere: its recorded paths are
    provenance, and rewriting them would change the thing being tested. Instead the golden harness
    gains a **checkpoint override** (`POCKETLLM_GOLDEN_CHECKPOINT`), which substitutes the recorded
-   path wherever it appears in the fixture's command line at run time. The recorded path stays as
+   path wherever it *is* a command-line item at run time (exact match, never a substring). The
+   recorded path stays as
    the record of where the oracle was taken; the env var is how a host that keeps the same bytes
    somewhere else runs the same fixture. This is the mechanism the host-agnostic task below adds.
 2. **Sources.** ts-134's `/home/mseco/relic/RelicLLM` and `/home/mseco/relic/relic-core` are on

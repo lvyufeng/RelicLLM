@@ -392,7 +392,7 @@ def test_extra_env_reaches_the_child(monkeypatch):
 
 
 def test_the_checkpoint_can_come_from_this_host(monkeypatch):
-    """`POCKETLLM_GOLDEN_CHECKPOINT` substitutes the recorded path, wherever it appears.
+    """`POCKETLLM_GOLDEN_CHECKPOINT` substitutes the recorded path, wherever it *is* an argv item.
 
     Two substitutions, and both matter: the `checkpoint` field is what `unwritable_reason` consults
     before deciding to skip, and the `argv` entry is what the engine opens. A harness that moved
