@@ -80,10 +80,10 @@ def test_a_record_outside_tolerance_reports_the_gap():
     assert message is not None
     # The message is the deliverable -- name the offending index and both values, so a change to
     # the format is a failure rather than a still-nonempty string.
-    assert "logit 0" in message and "1.5" in message and "1" in message
+    assert "logit 0" in message and "1.5" in message
 
 
-def test_different_argmax_ids_are_reported_as_an_ordering_divergence():
+def test_different_top_k_ids_are_reported_as_a_divergence():
     from tests.golden_fixtures import logits_check_mismatch
 
     recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
@@ -162,3 +162,31 @@ def test_a_different_prompt_tokens_is_reported_with_the_field_named():
     message = logits_check_mismatch(observed, recorded)
     assert message is not None
     assert "prompt_tokens" in message
+
+
+def test_a_non_finite_atol_is_refused_rather_than_disabling_the_tolerance():
+    """A NaN tolerance makes `gap` NaN and `gap > 0` reads that as agreement.
+
+    The record's tolerances come from the fixture, and JSON round-trips `NaN`/`Infinity` through
+    Python's `json`, so a corrupted or badly frozen pair silently passes every logit. It is the
+    same hole as a non-finite logit, one level up, and refused for the same reason.
+    """
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": float("nan"), "rtol": 1e-5}
+    observed = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [99.0, 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "tolerance" in message and "finite" in message
+
+
+def test_a_non_finite_rtol_is_refused_rather_than_disabling_the_tolerance():
+    from tests.golden_fixtures import logits_check_mismatch
+
+    recorded = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [1.0, 0.5],
+                "atol": 1e-3, "rtol": float("inf")}
+    observed = {"step": 0, "top_k": 2, "token_ids": [5, 6], "values": [99.0, 0.5]}
+    message = logits_check_mismatch(observed, recorded)
+    assert message is not None
+    assert "tolerance" in message and "finite" in message

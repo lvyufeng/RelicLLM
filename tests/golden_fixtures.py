@@ -306,8 +306,9 @@ def logits_check_mismatch(
     A length mismatch between the two `values` lists is itself a failure and is reported as one. The
     schema refuses a record whose `token_ids` and `values` disagree in length, but `observed` comes
     from a live run and nothing checks it -- and `zip` would silently truncate to the shorter list,
-    comparing a prefix and reporting agreement. That, and a non-finite logit, are the ways this
-    helper could pass a run it should not, so both are checked before the values are walked.
+    comparing a prefix and reporting agreement. That, a non-finite logit, and a non-finite recorded
+    tolerance -- which turns the comparison off, because `nan > 0` is False -- are the ways this
+    helper could pass a run it should not, so each is checked before the values are walked.
 
     `step` and `prompt_tokens` are compared because the values below them only mean anything if
     they describe the same quantity; a record taken at a different step, or against a prompt that
@@ -334,6 +335,14 @@ def logits_check_mismatch(
         )
     atol = float(recorded.get("atol", 0.0))
     rtol = float(recorded.get("rtol", 0.0))
+    # The tolerances are read from the fixture, and a corrupted non-finite one makes `gap` itself
+    # NaN -- which `gap > 0` reads as agreement, turning the tolerance off entirely. Same hole as
+    # the non-finite logit below, one level up, so it is refused for the same reason.
+    if not (math.isfinite(atol) and math.isfinite(rtol)):
+        return (
+            f"the recorded tolerance is not finite: atol {atol!r}, rtol {rtol!r}. "
+            f"A non-finite tolerance compares everything as agreeing"
+        )
     for index, (seen, want) in enumerate(zip(seen_values, want_values)):
         seen_f = float(seen)
         want_f = float(want)
