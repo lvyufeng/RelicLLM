@@ -96,8 +96,16 @@ class GoldenFixture:
     notes: str = ""
 
     @property
-    def expected_token_ids(self) -> tuple[int, ...]:
-        return tuple(self.expected.get("token_ids") or ())
+    def expected_token_ids(self) -> tuple[int, ...] | None:
+        """The recorded ids, `()` when the fixture records an empty answer, `None` when it records none.
+
+        The two are not the same claim and collapsing them is how a fixture stops checking anything:
+        `token_ids: []` says "this entry point returns no ids" and is a thing to hold the entry point
+        to, while a fixture with no `token_ids` key was recorded before the field and has nothing to
+        say. `or ()` would fold the first into the second.
+        """
+        recorded = self.expected.get("token_ids")
+        return None if recorded is None else tuple(recorded)
 
     @property
     def expected_text(self) -> str | None:
