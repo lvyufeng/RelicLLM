@@ -42,7 +42,7 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Mapping
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 FIXTURE_DIR = pathlib.Path(__file__).resolve().parent / "fixtures" / "golden"
@@ -337,7 +337,12 @@ def _with_repo_root_on_the_path() -> str:
     return str(REPO_ROOT) if not existing else f"{REPO_ROOT}{os.pathsep}{existing}"
 
 
-def run_isolated(fixture: GoldenFixture, *, verbose: bool = False) -> Outcome:
+def run_isolated(
+    fixture: GoldenFixture,
+    *,
+    verbose: bool = False,
+    extra_env: Mapping[str, str] | None = None,
+) -> Outcome:
     """Run one fixture in a child interpreter and return what it produced.
 
     **One entry point is one process.** Running all six in whatever process pytest happens to be in
@@ -356,6 +361,10 @@ def run_isolated(fixture: GoldenFixture, *, verbose: bool = False) -> Outcome:
 
     The child's output is streamed when `verbose`, and its last lines are kept either way so that a
     child that dies during a load reports what it was doing rather than just a non-zero exit.
+
+    `extra_env` is injected between the fixture's own env and the child-protocol keys. It is how the
+    cross-architecture check runs the same fixture under a different fp8/fp4 implementation without
+    editing the fixture -- the two legs differ in nothing else.
     """
     reason = fixture.unwritable_reason()
     if reason is not None:
@@ -379,6 +388,7 @@ def run_isolated(fixture: GoldenFixture, *, verbose: bool = False) -> Outcome:
         env = {
             **os.environ,
             **fixture.env,
+            **(extra_env or {}),
             CHILD_RESULT_ENV: str(result_path),
             CHILD_FIXTURE_ENV: str(fixture_path),
             # The child is launched by path, so the interpreter would put `tests/` on `sys.path` and

@@ -344,3 +344,42 @@ def test_the_child_is_given_the_repository_root_on_its_import_path(monkeypatch) 
     # An existing path is kept, behind the root: the root has to win, or a stale install shadows it.
     monkeypatch.setenv("PYTHONPATH", "/somewhere/else")
     assert _with_repo_root_on_the_path().split(os.pathsep) == [str(REPO_ROOT), "/somewhere/else"]
+
+
+def test_extra_env_reaches_the_child(monkeypatch):
+    """`run_isolated(extra_env=...)` is how the two parity legs differ.
+
+    The child is never actually spawned -- `Popen` is stubbed -- so this proves the env dict
+    `run_isolated` assembles, which is the whole mechanism. `unwritable_reason` is stubbed to
+    `None` because the point is the env, not the checkpoint, and no fixture on this host has one.
+    """
+    import inspect
+
+    from tests import golden_fixtures
+
+    assert "extra_env" in inspect.signature(run_isolated).parameters
+
+    captured: dict[str, object] = {}
+
+    class _FakeProcess:
+        stdout = iter(())
+
+        def wait(self):
+            return 0
+
+    def _fake_popen(argv, **kwargs):
+        captured.update(kwargs["env"])
+        return _FakeProcess()
+
+    monkeypatch.setattr(golden_fixtures.subprocess, "Popen", _fake_popen)
+    fixture = GoldenFixture.from_json(PAYLOAD)
+    monkeypatch.setattr(type(fixture), "unwritable_reason", lambda self: None)
+
+    with pytest.raises(RuntimeError):  # no result file, so run_isolated ends in its own check
+        run_isolated(fixture, extra_env={"DEEPSEEK_FP8_IMPL": "torch"})
+
+    assert captured["DEEPSEEK_FP8_IMPL"] == "torch"
+    # The child-protocol keys survive an injection and are not overridable by it.
+    assert captured[CHILD_RESULT_ENV]
+    assert captured[CHILD_FIXTURE_ENV]
+    assert captured["PYTHONPATH"] == _with_repo_root_on_the_path()
