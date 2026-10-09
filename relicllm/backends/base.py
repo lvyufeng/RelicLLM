@@ -6,7 +6,7 @@ import queue
 import threading
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import Any
+from typing import Any, Optional
 
 from relicllm.api import (
     BackendCapabilities,
@@ -23,7 +23,7 @@ from relicllm.api import (
 from relicllm.choices import CHOICE_MARK
 from relicllm.protocol.chat import apply_stop_to_text
 from relicllm.protocol.contract import CHAT, FieldRefusal, audit
-from relicllm.scheduler import Scheduler
+from relicllm.scheduler import KVCapacity, Scheduler
 
 from .capabilities import served_fields
 from .runtime_engine import RankedWorker, cancel_key
@@ -90,8 +90,10 @@ class BackendBase:
         self._state_lock = threading.RLock()
         #: The one engine slot, shared by this backend's serial and streamed paths. A subclass may
         #: replace it with a scheduler built over a gate it injects (the server does, to bound the
-        #: wait); the default is an unbounded one.
-        self._scheduler = Scheduler()
+        #: wait); the default is an unbounded one. The capacity rides beside the gate because
+        #: admission belongs to the queue: a request that does not fit is refused before it is
+        #: visible to anyone, and on a sharded runtime before any peer is told about it.
+        self._scheduler = Scheduler(capacity=self._kv_capacity, refusal=ConfigurationError)
         self._cancelled: set[str] = set()
         self._active_requests: set[str] = set()
         #: What :meth:`_publish_cache_metrics` last read, in the exporter's spelling, and what
@@ -116,6 +118,17 @@ class BackendBase:
             backend=self.capabilities.name,
             ready=ready,
         )
+
+    def _kv_capacity(self) -> Optional[KVCapacity]:
+        """The capacity admission reads, or ``None`` when this backend does not check.
+
+        ``None`` is the answer for a class that is not a :class:`RuntimeAdapter` -- the ``torch``
+        backend, whose route never had the context refusal, and the fakes the contract tests build.
+        Present here rather than only on :class:`RuntimeAdapter` because the scheduler is built in
+        :meth:`__init__`, where a subclass's override is not yet the one that resolves; this method
+        is the default that exists at that moment.
+        """
+        return None
 
     def cancel(self, request_id: str) -> bool:
         """Cancel ``request_id``, and every choice of it when it is a fan-out.
@@ -606,29 +619,32 @@ class RuntimeAdapter(RankedWorker, BackendBase):
         # The rendered prompt opens with its own control tokens, so nothing may be added here.
         return [int(token) for token in tokenizer(text, add_special_tokens=False)["input_ids"]]
 
+    def _kv_capacity(self) -> KVCapacity:
+        """How far this run's KV cache reaches, for admission to check against.
+
+        The default is the configured context, which is what every runtime in this family sizes its
+        attention caches to and what the scheduler compared against when the check lived here. An
+        adapter whose cache is built from the request instead -- ``qwen4_exp`` is the one -- overrides
+        this with :attr:`KVCapacity.sizes_from_request` set, so admission does not compare a request
+        to a number that had no part in building the buffer it runs in.
+        """
+        return KVCapacity(positions=int(self._max_seq_len), label="the attention caches")
+
     def _budget(self, prompt_ids: Sequence[int], request: GenerationRequest) -> int:
         """How many tokens this request may generate, from the request and this run's context.
 
-        The number is derived and then checked, and the check is the second half of
-        :meth:`SamplingParams.token_budget`'s contract: an explicit ``max_tokens`` is handed back
-        unchanged by that method *because* the caller is the one that gets to refuse it. This is
-        that refusal, and it is here rather than at the three call sites because a budget that came
-        back from a context this run cannot hold is wrong wherever it was asked for.
+        The number only. Whether the request *fits* is :meth:`Scheduler.submit`'s question now, and
+        it is asked there for the reason it was always meant to be: a request that does not fit must
+        be refused before it queues, once, rather than re-derived and re-compared at each call site.
+        What is left here is the arithmetic, and it is the half of :meth:`SamplingParams.token_budget`'s
+        contract that survives a lift -- an explicit ``max_tokens`` is handed back unchanged by that
+        method, and a request that named neither is given everything the prompt leaves.
 
-        This is also what refuses a prompt that already fills the context: the derived budget is
-        floored at one, so such a prompt arrives at the check as a request that does not fit rather
-        than as a budget of zero.
+        A prompt that already fills the context still arrives at admission as a request that does not
+        fit rather than as a budget of zero, because this floors the remainder at one token.
         """
         params = request.sampling_params
-        budget = int(params.token_budget(self._max_seq_len - len(prompt_ids)))
-        wanted = len(prompt_ids) + budget
-        if wanted <= self._max_seq_len:
-            return budget
-        raise ConfigurationError(
-            f"this request needs {wanted} positions ({len(prompt_ids)} prompt tokens and "
-            f"{budget} new), and the attention caches were sized at "
-            f"{self._max_seq_len} at startup; raise --max-model-len and restart"
-        )
+        return int(params.token_budget(self._max_seq_len - len(prompt_ids)))
 
     def _decode(self, token_ids: Sequence[int], skip_special_tokens: bool | None = None) -> str:
         """The text of ``token_ids``, or ``""`` when there is nothing that can read them.

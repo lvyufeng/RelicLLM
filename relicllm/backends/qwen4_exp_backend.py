@@ -47,6 +47,8 @@ from relicllm.api import (
     GenerationRequest,
 )
 
+from relicllm.scheduler import KVCapacity
+
 from .base import RuntimeAdapter
 from .capabilities import IGNORED_OPTIONS, declared_capabilities
 from .options import BackendOption, Group, Kind, decode_args
@@ -279,7 +281,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
                 if layers
                 else "hybrid GatedDeltaNet and QSA"
             ),
-            "context": f"{self._max_seq_len} positions",
+            "context": (
+                f"{self._max_seq_len} positions at most; each request's QSA cache is sized to "
+                f"its own prompt plus its budget"
+            ),
             "prefill": f"one forward a {self._options.prefill_chunk}-token chunk",
             "tensor_parallel": (
                 f"world {self._world}, a per-layer all-reduce" if self._world > 1 else "one rank"
@@ -319,9 +324,30 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             allocated = int(torch.cuda.memory_allocated(self._device))
         return {
             "qwen4_exp_device_bytes": float(allocated),
+            #: The configured ceiling, **not** the cache's size: this runtime's QSA buffers are
+            #: sized per request (``prompt + budget + 1``) and never from ``--max-model-len``, so
+            #: no resident allocation holds this many positions. Kept under the name it was
+            #: published as -- a scrape contract -- with the meaning stated here; the details
+            #: string is where that is said to a caller.
             "qwen4_exp_context_positions": float(self._max_seq_len),
             "qwen4_exp_world": float(self._world),
         }
+
+    def _kv_capacity(self) -> KVCapacity:
+        """This run's context ceiling, marked as a number no cache was sized from.
+
+        The QSA key/value and index buffers are built per request -- ``prompt_len + budget + 1`` at
+        ``models/qwen4_exp/runtime.py:300`` -- so ``--max-model-len`` never reaches an allocation
+        here. Checking a request against it would compare the request to a bound that had no part in
+        building the buffer it runs in, and would refuse a request the runtime would have served.
+        :attr:`KVCapacity.sizes_from_request` is what says so, and admission then admits everything,
+        which is what this runtime did before the check had a name.
+        """
+        return KVCapacity(
+            positions=int(self._max_seq_len),
+            label="this run's context",
+            sizes_from_request=True,
+        )
 
     # -------------------------------------------------------------------- requests
 

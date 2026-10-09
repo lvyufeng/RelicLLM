@@ -31,7 +31,10 @@ module instead of five. Everything a model needs to say reaches it as data:
   keyword arguments by that name. (The name is historical and now belongs to two models
   -- ``deepseek_v4`` and the GGUF token driver -- but the scheduler does not read it, so a third's
   convention arrives as a new plan, not a new branch here.)
-* the KV declaration (#129), once it lands, as the numbers admission accounts against.
+* the KV declaration (#129) as the numbers a caller's fit check accounts against -- not as a
+  capacity here. The declaration states cost per token, never a position count, so the capacity
+  admission compares against is the one the *adapter* reports it allocated, as a
+  :class:`KVCapacity`. The scheduler reads that number and does not derive it.
 * the request's own counters.
 
 ``tests/test_scheduler_core.py`` scans this package for an architecture name or a ``relicllm.models``
@@ -46,6 +49,61 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Deque, Optional
 
 import collections
+
+
+class AdmissionRefused(RuntimeError):
+    """A request the run's capacity cannot hold.
+
+    Raised by :meth:`Scheduler.submit` when the capacity provider says no. This is the default type,
+    for a caller that has no HTTP layer to satisfy; an adapter that serves requests injects its own
+    -- ``ConfigurationError``, which the server maps to a 400 -- so the queue needs no import of the
+    API to refuse a request. Same shape as the gate: the class does not name the type, the caller
+    passes it.
+    """
+
+
+@dataclass(frozen=True)
+class KVCapacity:
+    """How far the run's KV cache reaches, as the adapter that built it reports it.
+
+    The number is the adapter's because the declaration is not the writer: ``kv_spec`` states what a
+    token *costs* -- ``values_per_token``, ``page_size_bytes`` -- and never how many positions a
+    buffer holds, which is set by the allocation each runtime performs at load. ``mimo`` and ``xing4``
+    size ``max_model_len`` rows outright, ``v41`` packs the same context into ``max_model_len //
+    ratio`` rows, and ``qwen4_exp`` sizes from the request and never sees ``max_model_len`` at all.
+    A capacity is therefore stated here rather than derived, and :attr:`sizes_from_request` is the
+    flag that keeps the third case from being checked against a number that never reached it.
+
+    ``positions`` is a context length and not a byte count: the refusal this admits against is about
+    positions, and a byte budget compared to a position count is the unit mistake this module exists
+    to keep out of the way. "How many tokens fit" is what ``positions`` already is.
+    """
+
+    positions: int
+    """How many context positions the run's cache holds."""
+
+    label: str = "the attention caches"
+    """What a refusal names, so the message is about the buffer the run really allocated."""
+
+    sizes_from_request: bool = False
+    """``True`` when the cache is built per request and never sized from ``--max-model-len``.
+
+    ``qwen4_exp`` is the one runtime that does this: its QSA buffers are ``prompt_len + budget + 1``,
+    so a check against a configured context would compare a request to a number that had no part in
+    building it. Such a run is admitted unconditionally -- which is what it did before this existed.
+    """
+
+    def admits(self, prompt_len: int, new_tokens: int) -> bool:
+        """Whether a request of this length fits. Positional, and the boundary is inclusive."""
+        return int(prompt_len) + int(new_tokens) <= self.positions
+
+    def refusal(self, prompt_len: int, new_tokens: int) -> str:
+        """The one refusal message, so the scheduler and any adapter that still derives share it."""
+        return (
+            f"this request needs {int(prompt_len) + int(new_tokens)} positions "
+            f"({int(prompt_len)} prompt tokens and {int(new_tokens)} new), and {self.label} were "
+            f"sized at {self.positions} at startup; raise --max-model-len and restart"
+        )
 
 
 @dataclass
@@ -129,10 +187,32 @@ class Scheduler:
     (``threading.Lock``), turning the wait into a bounded one -- a request that would have blocked on
     the lock forever gets a 503 instead. The class does not import a server type to do this; the
     server passes the object.
+
+    Admission is the other half, and it is checked here rather than by a caller because the check
+    has to happen *before* the request queues: a request that does not fit may not hold the engine
+    slot while it is discovered, and on a sharded run it must be refused before any collective the
+    other ranks are already inside. The capacity is a callable rather than a value because the
+    adapter builds the scheduler before it has read the config the capacity comes from, and because
+    it must be read at submit time -- a later load is the read that counts.
     """
 
-    def __init__(self, gate: Optional[Any] = None) -> None:
+    def __init__(
+        self,
+        gate: Optional[Any] = None,
+        capacity: Optional[Callable[[], Optional[KVCapacity]]] = None,
+        refusal: type = AdmissionRefused,
+    ) -> None:
         self._gate = gate if gate is not None else threading.Semaphore(1)
+        #: A provider rather than a value: the adapter that builds this one sets its capacity after
+        #: `super().__init__()`, and `None` means "this run does not check" -- which is what the
+        #: `torch` backend, whose route never had the check, and every unit test that does not care
+        #: about admission keep passing.
+        self._capacity = capacity
+        #: The type a refusal is raised as. Defaulted to this module's own so the class is usable
+        #: with no API in sight; a serving adapter passes `ConfigurationError`, whose 400 mapping
+        #: the server owns. This is the one bit of the refusal's presentation the queue carries,
+        #: and it is a type rather than a string so the message stays here.
+        self._refusal = refusal
         self._pending: Deque[Request] = collections.deque()
         self._next_request_id = 0
         #: Rank matters only for the id counter's collision story across processes; nothing here is
@@ -150,6 +230,13 @@ class Scheduler:
         *,
         metadata: Optional[dict[str, Any]] = None,
     ) -> Request:
+        """Admit and enqueue a request, or refuse it before it becomes visible to anyone.
+
+        The refusal is raised here, outside the queue and before the slot is touched: a request that
+        cannot run must not be one the engine is asked to pick up, and on the sharded runtimes it must
+        not be one whose peers are told about. Returning a request is a promise that it will be run.
+        """
+        self._admit(prompt_tokens, max_new_tokens)
         with self._lock:
             request = Request(
                 request_id=self._next_request_id,
@@ -160,6 +247,25 @@ class Scheduler:
             self._next_request_id += 1
             self._pending.append(request)
             return request
+
+    def _admit(self, prompt_tokens: list[int], max_new_tokens: int) -> None:
+        """Refuse a request the run's capacity cannot hold, or return.
+
+        Read outside the lock on purpose: the provider touches no state this class guards, and a
+        capacity that changed since the last submit is a reload, which is not a thing a held lock
+        should decide the question for.
+        """
+        if self._capacity is None:
+            return
+        capacity = self._capacity()
+        if capacity is None or capacity.sizes_from_request:
+            return
+        if not capacity.admits(len(prompt_tokens), max_new_tokens):
+            raise self._refusal(capacity.refusal(len(prompt_tokens), max_new_tokens))
+
+    def capacity(self) -> Optional[KVCapacity]:
+        """The capacity admission is reading, or ``None`` when this run does not check."""
+        return None if self._capacity is None else self._capacity()
 
     def next_request(self) -> Optional[Request]:
         """The oldest waiting request, or ``None``. Read-only; does not admit or remove it."""
@@ -226,4 +332,4 @@ class _Slot:
         return False
 
 
-__all__ = ["ExecutionPlan", "Request", "Scheduler"]
+__all__ = ["AdmissionRefused", "ExecutionPlan", "KVCapacity", "Request", "Scheduler"]

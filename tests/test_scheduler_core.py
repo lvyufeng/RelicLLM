@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from relicllm.scheduler import ExecutionPlan, Request, Scheduler
+from relicllm.scheduler import AdmissionRefused, ExecutionPlan, KVCapacity, Request, Scheduler
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -178,3 +178,106 @@ def test_the_plan_is_passed_through_without_the_scheduler_reading_it() -> None:
     # And the callback is only carried, never invoked by the scheduler.
     assert phases == []
     assert ExecutionPlan().generation_kwargs() == {"prefill_chunk_tokens": 0}
+
+
+# ---------------------------------------------------------------------------------------------
+# Admission -- the capacity the run reports, checked before anything queues
+# ---------------------------------------------------------------------------------------------
+
+
+def test_a_request_over_the_capacity_is_refused_before_it_enters_the_queue() -> None:
+    """The refusal is outside the queue, which is the whole reason admission is here.
+
+    A request that cannot run must not become one the engine is asked to pick up, and the queue is
+    where the engine looks. `pending_count` is the assertion that says so: a refused request is
+    absent, not merely unwound afterwards.
+    """
+    scheduler = Scheduler(capacity=lambda: KVCapacity(positions=8))
+    prompt = [1, 2, 3]
+
+    with pytest.raises(AdmissionRefused, match=r"needs 12 positions \(3 prompt tokens and 9 new\)"):
+        scheduler.submit(prompt, 9)
+
+    assert scheduler.pending_count() == 0
+    assert not scheduler.has_work()
+
+    # The boundary is inclusive: exactly filling the context is answered.
+    admitted = scheduler.submit(prompt, 5)
+    assert scheduler.pending_count() == 1
+    assert admitted.max_new_tokens == 5
+
+
+def test_a_refusal_names_the_buffer_the_run_reported() -> None:
+    """The message is built from the capacity, so a run with an unusual buffer says so."""
+    scheduler = Scheduler(
+        capacity=lambda: KVCapacity(positions=4, label="this run's context")
+    )
+
+    with pytest.raises(AdmissionRefused, match="this run's context were sized at 4"):
+        scheduler.submit([1, 2, 3], 2)
+
+
+def test_no_capacity_provider_means_no_admission_rule() -> None:
+    """`None` is "this run does not check", which is what the torch route and the fakes get.
+
+    The check is opt-in per adapter rather than a default every scheduler inherits, so a backend
+    whose route never had a context refusal does not acquire one by being handed a scheduler.
+    """
+    scheduler = Scheduler()
+
+    assert scheduler.capacity() is None
+    # Far past any plausible context, and admitted, because nothing here is checking.
+    assert scheduler.submit(list(range(10_000)), 10_000).max_new_tokens == 10_000
+
+
+def test_a_capacity_that_sizes_from_the_request_admits_anything() -> None:
+    """The runtime whose cache is built per request is not checked against a configured number.
+
+    `qwen4_exp` is the one: its QSA buffers are `prompt + budget + 1`, so a capacity derived from
+    `--max-model-len` would refuse requests the runtime would have served. The flag is what makes
+    that explicit rather than a check that happens to pass.
+    """
+    scheduler = Scheduler(
+        capacity=lambda: KVCapacity(positions=8, sizes_from_request=True)
+    )
+
+    assert scheduler.submit(list(range(1000)), 1000).max_new_tokens == 1000
+    assert scheduler.capacity().sizes_from_request is True
+
+
+def test_the_capacity_provider_is_read_at_submit_time_not_at_construction() -> None:
+    """A capacity that arrives after the scheduler was built is the one that is checked.
+
+    This is the reason the argument is a callable. `BackendBase.__init__` builds the scheduler before
+    a subclass has read the config its capacity comes from, so a value captured at construction
+    would be `None` forever.
+    """
+    box: dict[str, KVCapacity | None] = {"capacity": None}
+    scheduler = Scheduler(capacity=lambda: box["capacity"])
+
+    # Nothing to check against yet: the request is admitted.
+    assert scheduler.submit([1, 2, 3], 9).max_new_tokens == 9
+
+    # The load happened, and now the same request is refused.
+    box["capacity"] = KVCapacity(positions=8)
+    with pytest.raises(AdmissionRefused):
+        scheduler.submit([1, 2, 3], 9)
+
+
+def test_the_refusal_type_is_the_callers_to_choose() -> None:
+    """The queue raises what it is told to, so it needs no import of the API to say no.
+
+    ``scheduler`` is the bottom layer with ``runtime`` and may not import ``relicllm.api`` (the
+    package stack in ``tests/test_package_boundaries.py``). A serving adapter passes
+    ``ConfigurationError`` -- which the server maps to a 400 -- and a caller with no HTTP layer gets
+    this module's ``AdmissionRefused``. Same division as the gate: the caller passes the object.
+    """
+    class Refused(RuntimeError):
+        pass
+
+    scheduler = Scheduler(
+        capacity=lambda: KVCapacity(positions=1), refusal=Refused
+    )
+
+    with pytest.raises(Refused):
+        scheduler.submit([1, 2], 1)

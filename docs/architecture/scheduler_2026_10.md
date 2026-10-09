@@ -87,11 +87,32 @@ a second model's arrival a new `ExecutionPlan` rather than a new branch.
 `runtime/`: both are model- and format-agnostic, and the scheduler is the plane every runtime reaches
 the engine through.
 
+## Admission, and what the declaration turned out to hold
+
+`Scheduler.submit` is where a request that does not fit is refused. It checks a
+`KVCapacity` the *adapter* reports — `positions`, a label, and `sizes_from_request` — and raises
+before the request queues, once, rather than the several times the derived budget was compared to
+the context before. A refusal therefore cannot reach a collective on a sharded run, which is what
+keeps V4.1's "refuse on rank 0 before the broadcast" guarantee.
+
+The capacity is reported rather than derived, and that is the finding behind this lift: **#129's
+declaration states cost, not capacity.** A `KVCacheSpec` carries `values_per_token` and
+`page_size_bytes` — bytes a token adds, bytes a block occupies — and never a position count. The
+position count is set by the allocation each runtime performs at load, and the runtimes disagree:
+`mimo` and `xing4` size `max_model_len` rows outright, `v41` packs the same context into
+`max_model_len // ratio` rows, and `qwen4_exp` sizes each request's QSA cache from `prompt + budget
++ 1` and never reads `--max-model-len` at all. That last one is why `sizes_from_request` exists:
+against a flag its buffer never saw, the check would refuse requests the runtime would have served.
+
+The declaration stays what it is — the fit check's input, feeding `triage` — and does not become the
+serving path's authority. `kv_spec.py`'s own docstring rules that out: the declaration is the shape,
+not the writer.
+
 ## What this is not
 
-- **Not continuous batching.** That is #33, and it needs #129's KV declaration to account admission
-  against. At width 1 nothing batches; the scheduler is the place batching lands, and its counter
-  state is the shape batching extends.
+- **Not continuous batching.** That is #33. At width 1 nothing batches; the scheduler is the place
+  batching lands, and its counter state is the shape batching extends. Admission now accounts
+  against a reported capacity, which is the step before a *paged* allocator can report one.
 - **Not the phase policy generalized.** `PDPhasePolicy` stays V4's. If a second model grows a
   host-resident-expert run it copies the shape, or the policy is lifted then — not before, and not by
   widening the scheduler.
@@ -100,8 +121,9 @@ the engine through.
 
 - **#130** — this page is its record. The lift is done; the width-1 acceptance is the per-runtime
   serving tests.
-- **#129** — the KV declaration admission will account against next. The scheduler reads no KV numbers
-  yet because there are none to read.
+- **#129** — the KV declaration. It is not admission's input: the declaration states cost per token
+  and per block, never a position count, so admission accounts against a capacity the adapter
+  reports from what it allocated. The declaration's readers are the fit check and `triage`.
 - **#33 / #34** — continuous batching and paged KV, both downstream of #129 and of this queue.
 - **#18** — "port the C++ BatchScheduler loop to a pure-Python scheduler". This is that Python
   scheduler existing once; #18 narrows to its porting detail or closes into this.
