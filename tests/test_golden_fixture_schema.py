@@ -26,6 +26,7 @@ import sys
 
 import pytest
 from tests.golden_fixtures import (
+    CHECKPOINT_ENV,
     CHILD_FIXTURE_ENV,
     CHILD_RESULT_ENV,
     DEFAULT_SAMPLING,
@@ -318,12 +319,17 @@ def test_the_child_needs_a_fixture_to_run(tmp_path) -> None:
     assert not (tmp_path / "out.json").exists(), "nothing should have run, so nothing was written"
 
 
-def test_a_fixture_that_cannot_run_here_raises_rather_than_spawning_a_child() -> None:
+def test_a_fixture_that_cannot_run_here_raises_rather_than_spawning_a_child(monkeypatch) -> None:
     """The parent checks the host first, so an unrunnable fixture costs no process and no model load.
 
     `run_isolated` is what the suite calls; a fixture whose checkpoint is absent must raise there --
     the test that calls it skips earlier, and this is the belt to that pair of braces.
     """
+    # The override is how a host runs a fixture it keeps elsewhere, and an on-box run exports it. It
+    # would rewrite this deliberately-absent path to a real checkpoint for *every* fixture, so the
+    # raise would not happen -- leaving the meaning of this test depending on the shell. It asserts
+    # the skip rule, so it decides its own environment.
+    monkeypatch.delenv(CHECKPOINT_ENV, raising=False)
     fixture = GoldenFixture.from_json(PAYLOAD)
 
     with pytest.raises(RuntimeError, match="checkpoint not present"):
@@ -383,3 +389,34 @@ def test_extra_env_reaches_the_child(monkeypatch):
     assert captured[CHILD_RESULT_ENV]
     assert captured[CHILD_FIXTURE_ENV]
     assert captured["PYTHONPATH"] == _with_repo_root_on_the_path()
+
+
+def test_the_checkpoint_can_come_from_this_host(monkeypatch):
+    """`POCKETLLM_GOLDEN_CHECKPOINT` substitutes the recorded path, wherever it appears.
+
+    Two substitutions, and both matter: the `checkpoint` field is what `unwritable_reason` consults
+    before deciding to skip, and the `argv` entry is what the engine opens. A harness that moved
+    only one of them would either skip on a host that has the bytes, or launch against a path that
+    is not there.
+    """
+    from tests import golden_fixtures
+
+    monkeypatch.setenv(golden_fixtures.CHECKPOINT_ENV, "/elsewhere/v41")
+    moved = golden_fixtures.GoldenFixture.from_json(PAYLOAD)
+
+    resolved = golden_fixtures._with_host_checkpoint(moved)
+
+    assert resolved.checkpoint == "/elsewhere/v41"
+    assert "/elsewhere/v41" in resolved.argv
+    assert PAYLOAD["checkpoint"] not in resolved.argv
+    assert PAYLOAD["checkpoint"] in moved.argv  # the fixture handed in is not mutated
+
+
+def test_a_host_without_the_override_gets_the_recorded_path(monkeypatch):
+    from tests import golden_fixtures
+
+    monkeypatch.delenv(golden_fixtures.CHECKPOINT_ENV, raising=False)
+    resolved = golden_fixtures._with_host_checkpoint(golden_fixtures.GoldenFixture.from_json(PAYLOAD))
+
+    assert resolved.checkpoint == PAYLOAD["checkpoint"]
+    assert resolved.argv == tuple(PAYLOAD["argv"])

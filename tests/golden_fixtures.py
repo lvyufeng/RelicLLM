@@ -41,7 +41,7 @@ import subprocess
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -60,6 +60,11 @@ CHILD_RESULT_ENV = "POCKETLLM_GOLDEN_RESULT"
 #: looking up `fixtures/golden/<entry>.json` itself, so that the fixture a recorder built from
 #: `--checkpoint` is the one that runs and not the committed one that happens to share its entry name.
 CHILD_FIXTURE_ENV = "POCKETLLM_GOLDEN_FIXTURE"
+
+#: Where this host keeps the fixture's checkpoint, when it is not where the recording host kept it.
+#: The recorded path is provenance -- it is what the oracle was taken against and it is never
+#: rewritten -- and this is how a host holding the same bytes elsewhere runs the same fixture.
+CHECKPOINT_ENV = "POCKETLLM_GOLDEN_CHECKPOINT"
 
 #: How long a child may run. Generous on purpose: the `v41` fixture pins a 457.8 GiB expert bank and
 #: takes forty minutes on a cold segment, and a suite that killed it at ten would report a timeout
@@ -337,6 +342,29 @@ def _with_repo_root_on_the_path() -> str:
     return str(REPO_ROOT) if not existing else f"{REPO_ROOT}{os.pathsep}{existing}"
 
 
+def _with_host_checkpoint(fixture: GoldenFixture) -> GoldenFixture:
+    """The fixture as this host must run it: its checkpoint path moved to where this host keeps it.
+
+    Returns `fixture` unchanged when the override is unset, so the recorded path is the default and
+    the ordinary case stays exactly what it was. When it is set, **both** the `checkpoint` field and
+    every appearance of the recorded path in `argv` are moved:
+
+    - `checkpoint` is what `unwritable_reason` consults. Leaving it alone makes a host that has the
+      bytes at another path skip, and a skipped acceptance gate reads as a pass.
+    - `argv` is what the engine opens. Leaving it alone makes the run die on a path that is not
+      there.
+
+    The fixture handed in is not mutated -- a caller may compare against it afterwards, and mutating
+    a loaded fixture is how a run and the record of it drift apart.
+    """
+    imported = os.environ.get(CHECKPOINT_ENV)
+    if not imported:
+        return fixture
+    recorded = fixture.checkpoint
+    argv = tuple(imported if item == recorded else item for item in fixture.argv)
+    return replace(fixture, checkpoint=imported, argv=argv)
+
+
 def run_isolated(
     fixture: GoldenFixture,
     *,
@@ -366,6 +394,8 @@ def run_isolated(
     cross-architecture check runs the same fixture under a different fp8/fp4 implementation without
     editing the fixture -- the two legs differ in nothing else.
     """
+    fixture = _with_host_checkpoint(fixture)
+
     reason = fixture.unwritable_reason()
     if reason is not None:
         raise RuntimeError(reason)
