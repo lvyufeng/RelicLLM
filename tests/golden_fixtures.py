@@ -291,6 +291,9 @@ class Outcome:
     text: str | None = None
     prompt_tokens: int | None = None
     elapsed_seconds: float = 0.0
+    #: The first decoded step's top-k logits, when the run was asked for them (see
+    #: `POCKETLLM_V41_LOGITS_CHECK`). Absent for every entry point that does not record one.
+    logits_check: dict[str, Any] | None = None
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -298,6 +301,7 @@ class Outcome:
             "text": self.text,
             "prompt_tokens": self.prompt_tokens,
             "elapsed_seconds": self.elapsed_seconds,
+            "logits_check": self.logits_check,
         }
 
     @classmethod
@@ -308,6 +312,7 @@ class Outcome:
             text=payload.get("text"),
             prompt_tokens=payload.get("prompt_tokens"),
             elapsed_seconds=float(payload.get("elapsed_seconds") or 0.0),
+            logits_check=payload.get("logits_check"),
         )
 
 
@@ -470,11 +475,19 @@ def _run_python(fixture: GoldenFixture) -> Outcome:
                 os.environ.pop(key, None)
             else:
                 os.environ[key] = value
+    record = getattr(result, "metadata", None) or {}
+    logits_check = record.get("logits_check")
+    prompt_tokens = int(getattr(result.usage, "prompt_tokens", 0)) or None
+    if logits_check is not None:
+        # The spec's record names the prompt token count so a mismatch in what was compared is
+        # visible; the backend cannot know it, the run can.
+        logits_check = {**logits_check, "prompt_tokens": prompt_tokens or 0}
     return Outcome(
         token_ids=list(result.token_ids),
         text=result.text,
-        prompt_tokens=int(getattr(result.usage, "prompt_tokens", 0)) or None,
+        prompt_tokens=prompt_tokens,
         elapsed_seconds=time.perf_counter() - started,
+        logits_check=logits_check,
     )
 
 
