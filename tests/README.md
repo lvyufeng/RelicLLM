@@ -217,16 +217,31 @@ The cross-architecture acceptance for `v41` is those same fixtures run twice, in
 separate shells:
 
 ```bash
-POCKETLLM_GOLDEN=1 DEEPSEEK_FP8_IMPL=torch DEEPSEEK_FP4_IMPL=torch \
-    python -m pytest tests/test_served_path_golden.py -q          # bit-identical leg
-POCKETLLM_GOLDEN=1 python -m pytest tests/test_served_path_golden.py -q  # tolerance leg
+# bit-identical leg: select the v41 comparison node, not the whole module
+POCKETLLM_GOLDEN=1 POCKETLLM_GOLDEN_CHECKPOINT=<this host's checkpoint> \
+    DEEPSEEK_FP8_IMPL=torch DEEPSEEK_FP4_IMPL=torch \
+    python -m pytest "tests/test_served_path_golden.py::test_served_path_matches_the_recorded_answer[v41]" -q -rs
+
+# tolerance leg: native implementation, logits compared within the recorded tolerance
+POCKETLLM_GOLDEN=1 POCKETLLM_GOLDEN_CHECKPOINT=<this host's checkpoint> \
+    python -m pytest "tests/test_served_path_golden.py::test_the_v41_logits_agree_with_the_recorded_ones" -q -rs
 ```
 
 The first forces the soft path so `sm_89` is compared against `sm_75` with no kernel difference;
-the second leaves the implementation native. They have to be separate shells — the tolerance leg
-asserts that neither `DEEPSEEK_FP8_IMPL` nor `DEEPSEEK_FP4_IMPL` is exported, so a shell left over
-from the bit-identical leg would make it a second copy of that leg rather than the native run it is
-meant to be.
+the second leaves the implementation native. Two things about running them:
+
+- **Select the node, do not run the whole module.** The bit-identical shell exports the forced-torch
+  vars, and the tolerance test asserts those two are *unset* by design — collecting it here fails
+  the leg with an assertion that reads as the comparison breaking. `-k v41` does not select it
+  either: the tolerance test's name also contains "v41". The node id is the only selection that
+  takes exactly one.
+- **Carry `POCKETLLM_GOLDEN_CHECKPOINT`.** The acceptance host holds the checkpoint at another
+  path, so without it both legs skip for a checkpoint that is sitting on the disk under another
+  name. The paragraph below is what explains the variable; the commands show it so a reader does
+  not have to infer the connection.
+
+Both legs run in separate shells — the first exports vars the second refuses. `-rs` is there so a
+skip names itself instead of passing quietly.
 
 A fixture records the absolute path its oracle was taken at, and a host that holds the same
 checkpoint elsewhere sets `POCKETLLM_GOLDEN_CHECKPOINT` to run the same fixture without editing it.
