@@ -38,6 +38,7 @@ from tests.golden_fixtures import (
     ENTRY_POINTS,
     GOLDEN_GATE_ENV,
     GoldenFixture,
+    _with_host_checkpoint,
     fixture_path,
     load_fixture,
     run_isolated,
@@ -46,6 +47,18 @@ from tests.golden_fixtures import (
 
 def _recorded() -> list[tuple[str, GoldenFixture]]:
     return [(entry, fixture) for entry in ENTRY_POINTS if (fixture := load_fixture(entry)) is not None]
+
+
+def _served_skip_reason(fixture: GoldenFixture) -> str | None:
+    """Why this fixture cannot run here, or `None` when it can.
+
+    Resolving the host's checkpoint first is what keeps this decision and `run_isolated`'s in
+    agreement: if the skip were decided on the recorded path while the launcher opened the host's, a
+    host holding the bytes at another path would skip, and the acceptance gate would pass vacuously
+    -- the failure this whole harness exists to close. Split out so the wiring is testable without a
+    checkpoint on disk.
+    """
+    return _with_host_checkpoint(fixture).unwritable_reason()
 
 
 @pytest.mark.parametrize("entry", ENTRY_POINTS)
@@ -88,7 +101,7 @@ def test_served_path_matches_the_recorded_answer(entry: str, fixture: GoldenFixt
             f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them. They load "
             f"real checkpoints and the cost ranges from seconds to the better part of an hour"
         )
-    reason = fixture.unwritable_reason()
+    reason = _served_skip_reason(fixture)
     if reason is not None:
         pytest.skip(reason)
 

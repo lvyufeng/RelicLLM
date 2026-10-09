@@ -347,7 +347,8 @@ def _with_host_checkpoint(fixture: GoldenFixture) -> GoldenFixture:
 
     Returns `fixture` unchanged when the override is unset, so the recorded path is the default and
     the ordinary case stays exactly what it was. When it is set, **both** the `checkpoint` field and
-    every appearance of the recorded path in `argv` are moved:
+    every `argv` item that *is* the recorded path are moved (exact match, not substring -- a sibling
+    path that merely contains the recorded one is a different file and is left alone):
 
     - `checkpoint` is what `unwritable_reason` consults. Leaving it alone makes a host that has the
       bytes at another path skip, and a skipped acceptance gate reads as a pass.

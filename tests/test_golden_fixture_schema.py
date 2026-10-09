@@ -407,16 +407,58 @@ def test_the_checkpoint_can_come_from_this_host(monkeypatch):
     resolved = golden_fixtures._with_host_checkpoint(moved)
 
     assert resolved.checkpoint == "/elsewhere/v41"
-    assert "/elsewhere/v41" in resolved.argv
+    # The whole command line, so an implementation that rewrote *every* argv item would fail here:
+    # only the `--model` value is the checkpoint, and `serve --backend xing4` has to survive.
+    assert resolved.argv == (
+        "serve",
+        "--backend",
+        "xing4",
+        "--model",
+        "/elsewhere/v41",
+    )
     assert PAYLOAD["checkpoint"] not in resolved.argv
     assert PAYLOAD["checkpoint"] in moved.argv  # the fixture handed in is not mutated
 
 
 def test_a_host_without_the_override_gets_the_recorded_path(monkeypatch):
+    """Unset, the helper is the identity: the recorded path is the default, untouched.
+
+    The object is returned as-is rather than a copy with equal fields, which is the contract the
+    helper's docstring gives and what makes the ordinary case behave exactly as it did before the
+    override existed.
+    """
     from tests import golden_fixtures
 
     monkeypatch.delenv(golden_fixtures.CHECKPOINT_ENV, raising=False)
-    resolved = golden_fixtures._with_host_checkpoint(golden_fixtures.GoldenFixture.from_json(PAYLOAD))
+    fixture = golden_fixtures.GoldenFixture.from_json(PAYLOAD)
+    resolved = golden_fixtures._with_host_checkpoint(fixture)
 
+    assert resolved is fixture
     assert resolved.checkpoint == PAYLOAD["checkpoint"]
     assert resolved.argv == tuple(PAYLOAD["argv"])
+
+
+def test_the_served_path_skip_is_decided_on_the_host_checkpoint(monkeypatch, tmp_path) -> None:
+    """The skip the served-path test takes and the path `run_isolated` opens must be the same one.
+
+    `test_served_path_golden.py` decides its own skip from `unwritable_reason` *before* it calls
+    `run_isolated`, so resolving only inside `run_isolated` leaves the skip reading the recorded
+    path: on the host this override exists for -- checkpoint kept elsewhere, override exported --
+    every fixture would skip on a path it is not going to open, and the acceptance gate would pass
+    vacuously. That is the failure the override closes, so it is pinned here against the production
+    helper rather than a copy of it.
+    """
+    from tests import golden_fixtures
+    from tests.test_served_path_golden import _served_skip_reason
+
+    # A checkpoint that exists here, standing in for the bytes the recording host kept at `/mnt`.
+    monkeypatch.setenv(golden_fixtures.CHECKPOINT_ENV, str(tmp_path))
+
+    # The recorded checkpoint is deliberately absent, so a skip decided on it is a skip; the host
+    # checkpoint is a real directory, so the same decision on the resolved fixture is not. That
+    # difference is the whole point of resolving before deciding.
+    reason = _served_skip_reason(golden_fixtures.GoldenFixture.from_json(PAYLOAD))
+    assert reason is None, (
+        "the served-path skip is still reading the recorded path; resolve the fixture with "
+        "_with_host_checkpoint before deciding to skip"
+    )
