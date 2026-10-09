@@ -43,3 +43,19 @@ def test_the_record_is_json_native_so_it_can_leave_the_child():
     row = torch.randn(16)
     record = _logits_check(row, top_k=4)
     assert json.loads(json.dumps(record)) == record
+
+
+def test_the_capture_is_off_unless_the_env_knob_is_set(monkeypatch):
+    from relicllm.backends.v41_backend import _logits_check_top_k
+
+    monkeypatch.delenv("POCKETLLM_V41_LOGITS_CHECK", raising=False)
+    assert _logits_check_top_k() == 0
+    monkeypatch.setenv("POCKETLLM_V41_LOGITS_CHECK", "8")
+    assert _logits_check_top_k() == 8
+
+
+def test_a_bad_env_value_is_off_rather_than_a_crash(monkeypatch):
+    from relicllm.backends.v41_backend import _logits_check_top_k
+
+    monkeypatch.setenv("POCKETLLM_V41_LOGITS_CHECK", "yes")
+    assert _logits_check_top_k() == 0

@@ -334,6 +334,26 @@ def _logits_check(row: Any, top_k: int) -> dict[str, Any]:
     }
 
 
+#: Set to a positive integer to record the first decoded step's top-k logits into the result's
+#: metadata. A diagnostic knob for the cross-architecture golden check, not a serving feature; the
+#: name keeps the `POCKETLLM_` prefix the project's env contract uses.
+_LOGITS_CHECK_ENV = "POCKETLLM_V41_LOGITS_CHECK"
+
+
+def _logits_check_top_k() -> int:
+    """How many logits the caller asked to record, or 0 for none.
+
+    Read at call time, not import time, so a test can set it per request. A value that is not a
+    positive integer reads as 0 -- a diagnostic knob that turns a request into a crash is worse
+    than one that quietly does nothing.
+    """
+    try:
+        wanted = int(os.environ.get(_LOGITS_CHECK_ENV, "0"))
+    except ValueError:
+        return 0
+    return wanted if wanted > 0 else 0
+
+
 @dataclass(slots=True)
 class _Options:
     """The ``backend_options`` this adapter reads, resolved once at construction."""
@@ -1055,7 +1075,8 @@ class V41Backend(RuntimeAdapter):
         from relicllm.models.deepseek_v4_1.generate import generate
 
         request_id = str(payload["request_id"])
-        hook = self._step_hook(request_id, request, on_token, marks)
+        logits_check: list[dict[str, Any]] = []
+        hook = self._step_hook(request_id, request, on_token, marks, logits_check)
         try:
             generation = generate(
                 self._front,
@@ -1082,6 +1103,7 @@ class V41Backend(RuntimeAdapter):
             return self._result(
                 request_id, payload, abort.token_ids, abort.text, "stop", None, marks,
                 authoritative=True,
+                logits_check=logits_check[0] if logits_check else None,
             )
         finally:
             # Under the request lock, like the run itself, so the counters are the state of the store
@@ -1097,6 +1119,7 @@ class V41Backend(RuntimeAdapter):
             generation.decode_seconds,
             marks,
             cached_tokens=generation.cached_tokens,
+            logits_check=logits_check[0] if logits_check else None,
         )
 
     def metrics(self) -> dict[str, float]:
@@ -1144,6 +1167,7 @@ class V41Backend(RuntimeAdapter):
         request: GenerationRequest | None,
         on_token: Callable[[int, Any], None] | None,
         marks: _Marks | None = None,
+        logits_check: list[dict[str, Any]] | None = None,
     ) -> Callable[[int, Any], None]:
         """The one point every rank reaches once a token, and so the one place to agree.
 
@@ -1151,11 +1175,16 @@ class V41Backend(RuntimeAdapter):
         check. With several, the decision becomes an ``all_reduce`` so that a stop only rank 0 can
         see -- a client disconnect, a stop string in the text -- is a stop every rank takes at the
         same token.
+
+        When ``logits_check`` is a list, rank 0 appends one :func:`_logits_check` of the first
+        token's row. It is appended inside the rank-0 branch and before the stop/cancel raises, so
+        a four-rank run records once and a generation cut short still records.
         """
         stops = tuple(getattr(getattr(request, "sampling_params", None), "stop", ()) or ())
         emitted: list[int] = []
         text_so_far = ""
         collective = self._options.cancel_collective and self._world > 1
+        wanted = _logits_check_top_k() if logits_check is not None else 0
         flag = None
         if collective:
             import torch
@@ -1171,6 +1200,11 @@ class V41Backend(RuntimeAdapter):
             text = ""
             if self._rank == 0:
                 emitted.append(int(token))
+                if wanted and not logits_check:
+                    # The first token comes off the prompt's forward. On the graph path that
+                    # forward's caches are rewound by the capture pass that follows it, so the row
+                    # is read here and not after `generate` returns.
+                    logits_check.append(_logits_check(logits, wanted))
                 if self._is_cancelled(request_id):
                     code = _STEP_CANCEL
                 elif stops:
@@ -1286,6 +1320,7 @@ class V41Backend(RuntimeAdapter):
         *,
         authoritative: bool = False,
         cached_tokens: int = 0,
+        logits_check: dict[str, Any] | None = None,
     ) -> GenerationResult:
         structured = self._structured(
             token_ids, text, str(payload.get("thinking_mode") or "chat"), authoritative=authoritative
@@ -1307,6 +1342,8 @@ class V41Backend(RuntimeAdapter):
             "rank0_only": True,
             "reasoning_content": structured["reasoning_content"],
         }
+        if logits_check is not None:
+            metadata["logits_check"] = logits_check
         tool_calls = structured["tool_calls"]
         if tool_calls:
             metadata["tool_calls"] = _identified(tool_calls)
