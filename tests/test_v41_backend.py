@@ -191,6 +191,7 @@ class ScriptedGenerate:
         before_token=None,
         failure=None,
         driver=None,
+        logits=None,
     ) -> None:
         self.tokens = list(tokens)
         self.stopped = stopped
@@ -199,6 +200,10 @@ class ScriptedGenerate:
         self.before_token = before_token
         self.failure = failure
         self.driver = driver
+        #: What every step hands the hook as its raw logits row. ``None`` is the ordinary case --
+        #: the adapter tolerates it -- and a real row is what the logits-record test builds the stub
+        #: with, so the capture has something to summarise.
+        self.logits = logits
         self.calls: list[dict] = []
 
     def __call__(
@@ -236,7 +241,7 @@ class ScriptedGenerate:
             if index == 0 and self.before_token is not None:
                 self.before_token()
             if on_token is not None:
-                on_token(token, None)
+                on_token(token, self.logits)
         return Generation(
             tokens=list(self.tokens),
             prompt_tokens=len(list(prompt_ids)),
@@ -1455,3 +1460,32 @@ def test_the_streaming_producer_and_the_consumer_are_different_threads(tmp_path,
     _drain(backend, request)
 
     assert seen == ["relicllm-v41-stream"]
+
+
+# ---------------------------------------------------------------------------- the logits record
+
+
+def test_the_first_step_logits_are_recorded_when_the_knob_is_set(tmp_path, loop, monkeypatch):
+    import torch
+
+    # A real row, so the capture has something to summarise; the stub's default `None` is what every
+    # other test tolerates and `_logits_check` cannot read.
+    stub = loop(tokens=[11, 12], stopped="eos", logits=torch.tensor([1.0, 5.0, 3.0]))
+    backend, _ = _build(_checkpoint(tmp_path), max_model_len=64)
+    request = GenerationRequest(
+        request_id="r1", prompt_tokens=[4, 5], sampling_params=SamplingParams(max_tokens=2)
+    )
+
+    monkeypatch.setenv("POCKETLLM_V41_LOGITS_CHECK", "2")
+    result = backend.generate([request])[0]
+
+    assert stub.calls  # the loop ran, so the hook the record came from is the adapter's own
+
+    recorded = result.metadata["logits_check"]
+    assert recorded["step"] == 0
+    assert recorded["token_ids"] == [1, 2]   # the indices of 5.0 and 3.0, descending
+    assert recorded["values"] == [5.0, 3.0]
+
+    # With the knob off, a caller that did not ask for a record does not get one.
+    monkeypatch.delenv("POCKETLLM_V41_LOGITS_CHECK")
+    assert "logits_check" not in backend.generate([request])[0].metadata

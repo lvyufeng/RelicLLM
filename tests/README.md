@@ -125,6 +125,7 @@ to reproduce it:
 | `expected.prompt_tokens` | how many tokens the prompt rendered to for this checkpoint's tokenizer |
 | `expected.token_ids` | what came out (empty for `torch`, whose runtime does not report ids) |
 | `expected.text` | what came out |
+| `expected.logits_check` | optional first-decoded-step top-k logits, as paired `token_ids`/`values` with the recorded `atol`/`rtol` the values are compared within; only `v41` records one, and only when the run that produced it had `POCKETLLM_V41_LOGITS_CHECK` set |
 | `commit`, `taken_at` | the revision and the day it was recorded |
 | `card` | the silicon it was recorded on, as free text (`cuda 8.9 (Ada / RTX 4090)`), or `""` when nothing was read |
 
@@ -211,6 +212,43 @@ cold segment. So the *runs* are gated:
 python -m pytest tests/test_served_path_golden.py -q                    # 5 skips, one a fixture
 POCKETLLM_GOLDEN=1 python -m pytest tests/test_served_path_golden.py -q # now they run
 ```
+
+The cross-architecture acceptance for `v41` is those same fixtures run twice, in that order, in
+separate shells:
+
+```bash
+# bit-identical leg: select the v41 comparison node, not the whole module
+POCKETLLM_GOLDEN=1 POCKETLLM_GOLDEN_CHECKPOINT=<this host's checkpoint> \
+    DEEPSEEK_FP8_IMPL=torch DEEPSEEK_FP4_IMPL=torch \
+    python -m pytest "tests/test_served_path_golden.py::test_served_path_matches_the_recorded_answer[v41]" -q -rs
+
+# tolerance leg: native implementation, logits compared within the recorded tolerance
+POCKETLLM_GOLDEN=1 POCKETLLM_GOLDEN_CHECKPOINT=<this host's checkpoint> \
+    python -m pytest "tests/test_served_path_golden.py::test_the_v41_logits_agree_with_the_recorded_ones" -q -rs
+```
+
+The first forces the soft path so `sm_89` is compared against `sm_75` with no kernel difference;
+the second leaves the implementation native. Two things about running them:
+
+- **Select the node, do not run the whole module.** The bit-identical shell exports the forced-torch
+  vars, and the tolerance test asserts those two are *unset* by design — collecting it here fails
+  the leg with an assertion that reads as the comparison breaking. `-k v41` does not select it
+  either: the tolerance test's name also contains "v41". The node id is the only selection that
+  takes exactly one.
+- **Carry `POCKETLLM_GOLDEN_CHECKPOINT`.** The acceptance host holds the checkpoint at another
+  path, so without it both legs skip for a checkpoint that is sitting on the disk under another
+  name. The paragraph below is what explains the variable; the commands show it so a reader does
+  not have to infer the connection.
+
+Both legs run in separate shells — the first exports vars the second refuses. `-rs` is there so a
+skip names itself instead of passing quietly.
+
+A fixture records the absolute path its oracle was taken at, and a host that holds the same
+checkpoint elsewhere sets `POCKETLLM_GOLDEN_CHECKPOINT` to run the same fixture without editing it.
+The variable moves both the recorded `checkpoint` field — which `unwritable_reason` consults before
+deciding to skip — and the `argv` item that *is* that path (exact match, not substring: a path that
+merely contains the recorded one is a different file and is left alone). A run without it uses the
+recorded path.
 
 Everything else in that module always runs, and it is the part that matters for coverage: the
 fixture set is complete, every file parses, and every one carries an answer. What the gate defers is

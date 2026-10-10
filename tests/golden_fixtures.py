@@ -35,14 +35,15 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import math
 import os
 import pathlib
 import subprocess
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass, field, replace
+from typing import Any, Mapping
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 FIXTURE_DIR = pathlib.Path(__file__).resolve().parent / "fixtures" / "golden"
@@ -60,6 +61,11 @@ CHILD_RESULT_ENV = "POCKETLLM_GOLDEN_RESULT"
 #: looking up `fixtures/golden/<entry>.json` itself, so that the fixture a recorder built from
 #: `--checkpoint` is the one that runs and not the committed one that happens to share its entry name.
 CHILD_FIXTURE_ENV = "POCKETLLM_GOLDEN_FIXTURE"
+
+#: Where this host keeps the fixture's checkpoint, when it is not where the recording host kept it.
+#: The recorded path is provenance -- it is what the oracle was taken against and it is never
+#: rewritten -- and this is how a host holding the same bytes elsewhere runs the same fixture.
+CHECKPOINT_ENV = "POCKETLLM_GOLDEN_CHECKPOINT"
 
 #: How long a child may run. Generous on purpose: the `v41` fixture pins a 457.8 GiB expert bank and
 #: takes forty minutes on a cold segment, and a suite that killed it at ten would report a timeout
@@ -167,6 +173,15 @@ class GoldenFixture:
     def expected_prompt_tokens(self) -> int | None:
         return self.expected.get("prompt_tokens")
 
+    @property
+    def expected_logits_check(self) -> dict[str, Any] | None:
+        """The recorded first-step logits, or `None` when the fixture records none.
+
+        Shape is validated in `from_json` rather than here, so a malformed record fails at load
+        with a fixture name rather than at comparison with a bare KeyError.
+        """
+        return self.expected.get("logits_check")
+
     @classmethod
     def from_json(cls, payload: dict[str, Any]) -> "GoldenFixture":
         missing = [
@@ -176,12 +191,16 @@ class GoldenFixture:
         ]
         if missing:
             raise ValueError(f"golden fixture is missing {', '.join(missing)}")
+        expected = dict(payload["expected"])
+        recorded = expected.get("logits_check")
+        if recorded is not None:
+            _check_logits_check(recorded)
         return cls(
             entry=str(payload["entry"]),
             checkpoint=str(payload["checkpoint"]),
             argv=tuple(str(item) for item in payload["argv"]),
             prompt=str(payload["prompt"]),
-            expected=dict(payload["expected"]),
+            expected=expected,
             env={str(k): str(v) for k, v in (payload.get("env") or {}).items()},
             sampling=dict(payload.get("sampling") or DEFAULT_SAMPLING),
             requires={str(k): int(v) for k, v in (payload.get("requires") or {}).items()},
@@ -243,6 +262,106 @@ class GoldenFixture:
             )
         return None
 
+
+_LOGITS_CHECK_FIELDS = ("step", "prompt_tokens", "top_k", "token_ids", "values", "atol", "rtol")
+
+
+def _check_logits_check(record: Mapping[str, Any]) -> None:
+    """Refuse a record the comparison cannot trust.
+
+    The pairing of `token_ids` and `values` is the whole point of the record -- it is what makes a
+    divergence attributable -- so a length mismatch is not a warning, it is a fixture that would
+    compare the wrong things.
+
+    The type checks come before membership because a JSON fixture is untrusted: a string record
+    answers `in` by substring, so one containing all seven names passes the missing-field check and
+    then dies indexing, and a list answers by equality, so every name reads as missing and the
+    complaint misdescribes the problem. A `None` field passes presence and then dies at `len()`.
+    """
+    if not isinstance(record, Mapping):
+        raise ValueError(f"logits_check must be an object, got {type(record).__name__}")
+    missing = [field for field in _LOGITS_CHECK_FIELDS if field not in record]
+    if missing:
+        raise ValueError(f"logits_check is missing {', '.join(missing)}")
+    for field in ("token_ids", "values"):
+        if not isinstance(record[field], (list, tuple)):
+            raise ValueError(f"logits_check {field} must be a list")
+    if len(record["token_ids"]) != len(record["values"]):
+        raise ValueError(
+            "logits_check token_ids and values must be the same length, "
+            f"got {len(record['token_ids'])} and {len(record['values'])}"
+        )
+
+
+def logits_check_mismatch(
+    observed: Mapping[str, Any], recorded: Mapping[str, Any]
+) -> str | None:
+    """Why `observed` disagrees with `recorded`, or `None` when it agrees.
+
+    Two things are compared, and they answer different questions. The ids say whether the argmax
+    moved -- a divergence large enough to change what the model would say next. The values say how
+    far the distribution moved when it did not. A message is returned rather than raised so the
+    caller can report the size of the gap, which is the deliverable when triton and torch differ.
+
+    A length mismatch between the two `values` lists is itself a failure and is reported as one. The
+    schema refuses a record whose `token_ids` and `values` disagree in length, but `observed` comes
+    from a live run and nothing checks it -- and `zip` would silently truncate to the shorter list,
+    comparing a prefix and reporting agreement. That, a non-finite logit, and a non-finite recorded
+    tolerance -- which turns the comparison off, because `nan > 0` is False -- are the ways this
+    helper could pass a run it should not, so each is checked before the values are walked.
+
+    `step` and `prompt_tokens` are compared because the values below them only mean anything if
+    they describe the same quantity; a record taken at a different step, or against a prompt that
+    tokenized differently, is not a mismatch of numbers but of what was measured.
+    """
+    if list(observed.get("token_ids", ())) != list(recorded.get("token_ids", ())):
+        return (
+            "the top-k ids diverged between architectures\n"
+            f"  recorded ids: {recorded.get('token_ids')}\n"
+            f"  observed ids: {observed.get('token_ids')}"
+        )
+    for field in ("step", "prompt_tokens"):
+        if observed.get(field) != recorded.get(field):
+            return (
+                f"the runs compared a different {field}: observed {observed.get(field)!r}, "
+                f"recorded {recorded.get(field)!r}. The values below are not comparable"
+            )
+    seen_values = list(observed.get("values", ()))
+    want_values = list(recorded.get("values", ()))
+    if len(seen_values) != len(want_values):
+        return (
+            f"the runs recorded a different number of logits: observed {len(seen_values)}, "
+            f"recorded {len(want_values)}"
+        )
+    atol = float(recorded.get("atol", 0.0))
+    rtol = float(recorded.get("rtol", 0.0))
+    # The tolerances are read from the fixture, and a corrupted non-finite one makes `gap` itself
+    # NaN -- which `gap > 0` reads as agreement, turning the tolerance off entirely. Same hole as
+    # the non-finite logit below, one level up, so it is refused for the same reason.
+    if not (math.isfinite(atol) and math.isfinite(rtol)):
+        return (
+            f"the recorded tolerance is not finite: atol {atol!r}, rtol {rtol!r}. "
+            f"A non-finite tolerance compares everything as agreeing"
+        )
+    for index, (seen, want) in enumerate(zip(seen_values, want_values)):
+        seen_f = float(seen)
+        want_f = float(want)
+        # `nan > 0` is False, so a non-finite logit would compare as agreement -- and a numeric
+        # blow-up (the thing this leg exists to catch) is exactly what produces one. numpy's
+        # `allclose` refuses nan for this reason; the gap formula alone does not.
+        if not (math.isfinite(seen_f) and math.isfinite(want_f)):
+            return (
+                f"logit {index} is not finite: observed {seen!r}, recorded {want!r}"
+            )
+        gap = abs(seen_f - want_f) - (atol + rtol * abs(want_f))
+        if gap > 0:
+            return (
+                f"logit {index} is outside tolerance: observed {seen_f:.6g}, "
+                f"recorded {want_f:.6g}, atol {atol:g} rtol {rtol:g}"
+            )
+    return None
+
+
 def _dev_shm_free_bytes() -> int | None:
     """Free space on `/dev/shm`, or `None` when it is not a separate mount.
 
@@ -264,7 +383,10 @@ def load_fixture(entry: str) -> GoldenFixture | None:
     path = fixture_path(entry)
     if not path.exists():
         return None
-    return GoldenFixture.from_json(json.loads(path.read_text(encoding="utf-8")))
+    try:
+        return GoldenFixture.from_json(json.loads(path.read_text(encoding="utf-8")))
+    except ValueError as error:
+        raise ValueError(f"{path.name}: {error}") from error
 
 
 def load_fixtures() -> dict[str, GoldenFixture]:
@@ -291,6 +413,9 @@ class Outcome:
     text: str | None = None
     prompt_tokens: int | None = None
     elapsed_seconds: float = 0.0
+    #: The first decoded step's top-k logits, when the run was asked for them (see
+    #: `POCKETLLM_V41_LOGITS_CHECK`). Absent for every entry point that does not record one.
+    logits_check: dict[str, Any] | None = None
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -298,6 +423,7 @@ class Outcome:
             "text": self.text,
             "prompt_tokens": self.prompt_tokens,
             "elapsed_seconds": self.elapsed_seconds,
+            "logits_check": self.logits_check,
         }
 
     @classmethod
@@ -308,6 +434,7 @@ class Outcome:
             text=payload.get("text"),
             prompt_tokens=payload.get("prompt_tokens"),
             elapsed_seconds=float(payload.get("elapsed_seconds") or 0.0),
+            logits_check=payload.get("logits_check"),
         )
 
 
@@ -332,7 +459,36 @@ def _with_repo_root_on_the_path() -> str:
     return str(REPO_ROOT) if not existing else f"{REPO_ROOT}{os.pathsep}{existing}"
 
 
-def run_isolated(fixture: GoldenFixture, *, verbose: bool = False) -> Outcome:
+def _with_host_checkpoint(fixture: GoldenFixture) -> GoldenFixture:
+    """The fixture as this host must run it: its checkpoint path moved to where this host keeps it.
+
+    Returns `fixture` unchanged when the override is unset, so the recorded path is the default and
+    the ordinary case stays exactly what it was. When it is set, **both** the `checkpoint` field and
+    every `argv` item that *is* the recorded path are moved (exact match, not substring -- a sibling
+    path that merely contains the recorded one is a different file and is left alone):
+
+    - `checkpoint` is what `unwritable_reason` consults. Leaving it alone makes a host that has the
+      bytes at another path skip, and a skipped acceptance gate reads as a pass.
+    - `argv` is what the engine opens. Leaving it alone makes the run die on a path that is not
+      there.
+
+    The fixture handed in is not mutated -- a caller may compare against it afterwards, and mutating
+    a loaded fixture is how a run and the record of it drift apart.
+    """
+    imported = os.environ.get(CHECKPOINT_ENV)
+    if not imported:
+        return fixture
+    recorded = fixture.checkpoint
+    argv = tuple(imported if item == recorded else item for item in fixture.argv)
+    return replace(fixture, checkpoint=imported, argv=argv)
+
+
+def run_isolated(
+    fixture: GoldenFixture,
+    *,
+    verbose: bool = False,
+    extra_env: Mapping[str, str] | None = None,
+) -> Outcome:
     """Run one fixture in a child interpreter and return what it produced.
 
     **One entry point is one process.** Running all six in whatever process pytest happens to be in
@@ -351,7 +507,13 @@ def run_isolated(fixture: GoldenFixture, *, verbose: bool = False) -> Outcome:
 
     The child's output is streamed when `verbose`, and its last lines are kept either way so that a
     child that dies during a load reports what it was doing rather than just a non-zero exit.
+
+    `extra_env` is injected between the fixture's own env and the child-protocol keys. It is how the
+    cross-architecture check runs the same fixture under a different fp8/fp4 implementation without
+    editing the fixture -- the two legs differ in nothing else.
     """
+    fixture = _with_host_checkpoint(fixture)
+
     reason = fixture.unwritable_reason()
     if reason is not None:
         raise RuntimeError(reason)
@@ -374,6 +536,7 @@ def run_isolated(fixture: GoldenFixture, *, verbose: bool = False) -> Outcome:
         env = {
             **os.environ,
             **fixture.env,
+            **(extra_env or {}),
             CHILD_RESULT_ENV: str(result_path),
             CHILD_FIXTURE_ENV: str(fixture_path),
             # The child is launched by path, so the interpreter would put `tests/` on `sys.path` and
@@ -470,11 +633,18 @@ def _run_python(fixture: GoldenFixture) -> Outcome:
                 os.environ.pop(key, None)
             else:
                 os.environ[key] = value
+    logits_check = result.metadata.get("logits_check")
+    prompt_tokens = int(getattr(result.usage, "prompt_tokens", 0)) or None
+    if logits_check is not None:
+        # The spec's record names the prompt token count so a mismatch in what was compared is
+        # visible; the backend cannot know it, the run can.
+        logits_check = {**logits_check, "prompt_tokens": prompt_tokens or 0}
     return Outcome(
         token_ids=list(result.token_ids),
         text=result.text,
-        prompt_tokens=int(getattr(result.usage, "prompt_tokens", 0)) or None,
+        prompt_tokens=prompt_tokens,
         elapsed_seconds=time.perf_counter() - started,
+        logits_check=logits_check,
     )
 
 

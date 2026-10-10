@@ -37,6 +37,7 @@ import pathlib
 import subprocess
 import sys
 import traceback
+from typing import Any
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -161,13 +162,8 @@ def main(argv: list[str] | None = None) -> int:
         traceback.print_exc()
         return 1
 
-    expected: dict[str, object] = {}
-    if outcome.prompt_tokens is not None:
-        expected["prompt_tokens"] = int(outcome.prompt_tokens)
-    if outcome.token_ids is not None:
-        expected["token_ids"] = list(outcome.token_ids)
-    if outcome.text is not None:
-        expected["text"] = outcome.text
+    tolerances = _frozen_tolerances(golden.load_fixture(args.entry))
+    expected = _expected_from(outcome, tolerances)
     if "token_ids" not in expected and "text" not in expected:
         print("the entry point produced neither token ids nor text; nothing to record", file=sys.stderr)
         return 1
@@ -177,6 +173,44 @@ def main(argv: list[str] | None = None) -> int:
     print(f"wrote {path} in {outcome.elapsed_seconds:.1f}s")
     print(f"  expected = {expected}")
     return 0
+
+
+def _frozen_tolerances(existing) -> dict[str, float]:
+    """The tolerances to record: what the fixture already froze, or the 0.0 placeholder.
+
+    `atol`/`rtol` start at 0.0 and are frozen to measured values after the first cross-architecture
+    run (see the spec's "Producing the sm_75 numeric record"). A re-record that rebuilt them from
+    0.0 would silently un-freeze a tolerance a person chose -- and a leg that should compare would
+    fail instead. Mirrors `_resolved_notes` for the same reason.
+
+    `atol`/`rtol` are read directly because `golden_fixtures._check_logits_check` guarantees every
+    field of a record `load_fixture` returned. Unlike `_resolved_notes`, whose field is optional,
+    this one depends on that guarantee holding in another module.
+    """
+    if existing is not None:
+        recorded = existing.expected_logits_check
+        if recorded is not None:
+            return {"atol": float(recorded["atol"]), "rtol": float(recorded["rtol"])}
+    return {"atol": 0.0, "rtol": 0.0}
+
+
+def _expected_from(outcome: Any, tolerances: dict[str, float]) -> dict[str, object]:
+    """The `expected` block a fixture records from one run.
+
+    The first-step logits carry `tolerances` -- resolved by `_frozen_tolerances`, so a re-record
+    keeps a frozen value and a fixture that has none gets the 0.0 placeholder. Writing a guessed
+    tolerance here would make the guess look authoritative.
+    """
+    expected: dict[str, object] = {}
+    if outcome.prompt_tokens is not None:
+        expected["prompt_tokens"] = int(outcome.prompt_tokens)
+    if outcome.token_ids is not None:
+        expected["token_ids"] = list(outcome.token_ids)
+    if outcome.text is not None:
+        expected["text"] = outcome.text
+    if outcome.logits_check is not None:
+        expected["logits_check"] = {**outcome.logits_check, **tolerances}
+    return expected
 
 
 def extra_flags(items: list[str]) -> list[str]:

@@ -38,14 +38,29 @@ from tests.golden_fixtures import (
     ENTRY_POINTS,
     GOLDEN_GATE_ENV,
     GoldenFixture,
+    Outcome,
+    _with_host_checkpoint,
     fixture_path,
     load_fixture,
+    logits_check_mismatch,
     run_isolated,
 )
 
 
 def _recorded() -> list[tuple[str, GoldenFixture]]:
     return [(entry, fixture) for entry in ENTRY_POINTS if (fixture := load_fixture(entry)) is not None]
+
+
+def _served_skip_reason(fixture: GoldenFixture) -> str | None:
+    """Why this fixture cannot run here, or `None` when it can.
+
+    Resolving the host's checkpoint first is what keeps this decision and `run_isolated`'s in
+    agreement: if the skip were decided on the recorded path while the launcher opened the host's, a
+    host holding the bytes at another path would skip, and the acceptance gate would pass vacuously
+    -- the failure this whole harness exists to close. Split out so the wiring is testable without a
+    checkpoint on disk.
+    """
+    return _with_host_checkpoint(fixture).unwritable_reason()
 
 
 @pytest.mark.parametrize("entry", ENTRY_POINTS)
@@ -88,7 +103,7 @@ def test_served_path_matches_the_recorded_answer(entry: str, fixture: GoldenFixt
             f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them. They load "
             f"real checkpoints and the cost ranges from seconds to the better part of an hour"
         )
-    reason = fixture.unwritable_reason()
+    reason = _served_skip_reason(fixture)
     if reason is not None:
         pytest.skip(reason)
 
@@ -131,3 +146,55 @@ def test_served_path_matches_the_recorded_answer(entry: str, fixture: GoldenFixt
         f"the {entry} fixture records neither token ids nor text, so it cannot fail and is not a "
         f"fixture"
     )
+
+
+def _run_under(fixture: GoldenFixture, extra_env: dict[str, str]) -> Outcome:
+    """Run one fixture in a child with extra env injected, skipping for the same host reasons.
+
+    The gate check here duplicates the caller's on purpose: this is the helper the one caller uses,
+    but it is written to stand alone, and a reader who "fixes" the duplication would make it depend
+    on a caller it does not name. The skip reason goes through `_served_skip_reason` rather than
+    `unwritable_reason` for the reason that helper documents -- a skip decided on the recorded path
+    while the child opens the host's passes vacuously on the host the override exists for.
+    """
+    if not os.environ.get(GOLDEN_GATE_ENV):
+        pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
+    reason = _served_skip_reason(fixture)
+    if reason is not None:
+        pytest.skip(reason)
+    return run_isolated(fixture, extra_env=extra_env)
+
+
+def test_the_v41_logits_agree_with_the_recorded_ones():
+    """The tolerance leg: the fixture's own argv, native implementation, judged on logits.
+
+    Skips unless the fixture records a `logits_check` -- only v41 does, and only after the sm_75
+    recording pass. When triton and torch agree bit-for-bit this passes with a zero gap; the gap
+    is what the assertion message reports when they do not.
+
+    This leg is only meaningful with the implementation left native, so a shell that already
+    exports `DEEPSEEK_FP8_IMPL`/`DEEPSEEK_FP4_IMPL` from the bit-identical leg would silently make
+    this a second copy of it. The guard below fires only once the leg would actually run, so a host
+    that exports those for unrelated reasons does not fail an ordinary `pytest tests/` run.
+    """
+    fixture = load_fixture("v41")
+    if not os.environ.get(GOLDEN_GATE_ENV):
+        pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
+    if fixture is None or fixture.expected_logits_check is None:
+        pytest.skip("v41 records no logits_check; run the sm_75 recording pass first")
+
+    forced = [key for key in ("DEEPSEEK_FP8_IMPL", "DEEPSEEK_FP4_IMPL") if key in os.environ]
+    assert not forced, (
+        f"{', '.join(forced)} is set, which forces the soft path; the tolerance leg must run with "
+        f"the implementation native. Run the two legs in separate shells."
+    )
+
+    outcome = _run_under(
+        fixture,
+        {"POCKETLLM_V41_LOGITS_CHECK": str(fixture.expected_logits_check["top_k"])},
+    )
+    assert outcome.logits_check is not None, (
+        "the run was asked for a logits record and produced none"
+    )
+    mismatch = logits_check_mismatch(outcome.logits_check, fixture.expected_logits_check)
+    assert mismatch is None, mismatch

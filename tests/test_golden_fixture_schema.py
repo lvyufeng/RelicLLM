@@ -26,6 +26,7 @@ import sys
 
 import pytest
 from tests.golden_fixtures import (
+    CHECKPOINT_ENV,
     CHILD_FIXTURE_ENV,
     CHILD_RESULT_ENV,
     DEFAULT_SAMPLING,
@@ -190,11 +191,37 @@ def test_the_outcome_survives_the_trip_through_the_child() -> None:
     entry point, not a missing field, and a round trip that turned it into `[]` would make `torch`'s
     fixture look like it had been compared when it had not.
     """
+    with_record = Outcome(
+        token_ids=[1, 2],
+        text="hi",
+        prompt_tokens=3,
+        logits_check={"step": 0, "prompt_tokens": 3, "top_k": 2,
+                      "token_ids": [5, 6], "values": [1.5, 0.5]},
+    )
     for outcome in (
         Outcome(token_ids=[35, 48972], text="\ngolden fixture", prompt_tokens=9, elapsed_seconds=1.5),
         Outcome(text="golden fixture.", prompt_tokens=21, elapsed_seconds=16.0),
+        with_record,
     ):
         assert Outcome.from_json(json.loads(json.dumps(outcome.to_json()))) == outcome
+
+    # The record is read by name by the tolerance leg, so its shape is asserted directly and not
+    # only through dataclass equality.
+    back = Outcome.from_json(json.loads(json.dumps(with_record.to_json())))
+    assert back.logits_check == {"step": 0, "prompt_tokens": 3, "top_k": 2,
+                                 "token_ids": [5, 6], "values": [1.5, 0.5]}
+
+
+def test_a_payload_recorded_before_the_logits_field_still_loads() -> None:
+    """Every fixture committed before this field exists has no `logits_check` key at all.
+
+    `from_json` reads it with `.get()`, so an old payload loads with the record absent rather than
+    raising -- which is what keeps the committed fixtures readable.
+    """
+    older = {"token_ids": [35, 48972], "text": "\ngolden fixture", "prompt_tokens": 9,
+             "elapsed_seconds": 1.5}
+
+    assert Outcome.from_json(older).logits_check is None
 
 
 def test_the_child_module_is_launchable() -> None:
@@ -292,12 +319,17 @@ def test_the_child_needs_a_fixture_to_run(tmp_path) -> None:
     assert not (tmp_path / "out.json").exists(), "nothing should have run, so nothing was written"
 
 
-def test_a_fixture_that_cannot_run_here_raises_rather_than_spawning_a_child() -> None:
+def test_a_fixture_that_cannot_run_here_raises_rather_than_spawning_a_child(monkeypatch) -> None:
     """The parent checks the host first, so an unrunnable fixture costs no process and no model load.
 
     `run_isolated` is what the suite calls; a fixture whose checkpoint is absent must raise there --
     the test that calls it skips earlier, and this is the belt to that pair of braces.
     """
+    # The override is how a host runs a fixture it keeps elsewhere, and an on-box run exports it. It
+    # would rewrite this deliberately-absent path to a real checkpoint for *every* fixture, so the
+    # raise would not happen -- leaving the meaning of this test depending on the shell. It asserts
+    # the skip rule, so it decides its own environment.
+    monkeypatch.delenv(CHECKPOINT_ENV, raising=False)
     fixture = GoldenFixture.from_json(PAYLOAD)
 
     with pytest.raises(RuntimeError, match="checkpoint not present"):
@@ -318,3 +350,266 @@ def test_the_child_is_given_the_repository_root_on_its_import_path(monkeypatch) 
     # An existing path is kept, behind the root: the root has to win, or a stale install shadows it.
     monkeypatch.setenv("PYTHONPATH", "/somewhere/else")
     assert _with_repo_root_on_the_path().split(os.pathsep) == [str(REPO_ROOT), "/somewhere/else"]
+
+
+def test_extra_env_reaches_the_child(monkeypatch):
+    """`run_isolated(extra_env=...)` is how the two parity legs differ.
+
+    The child is never actually spawned -- `Popen` is stubbed -- so this proves the env dict
+    `run_isolated` assembles, which is the whole mechanism. `unwritable_reason` is stubbed to
+    `None` because the point is the env, not the checkpoint, and no fixture on this host has one.
+    """
+    import inspect
+
+    from tests import golden_fixtures
+
+    assert "extra_env" in inspect.signature(run_isolated).parameters
+
+    captured: dict[str, object] = {}
+
+    class _FakeProcess:
+        stdout = iter(())
+
+        def wait(self):
+            return 0
+
+    def _fake_popen(argv, **kwargs):
+        captured.update(kwargs["env"])
+        return _FakeProcess()
+
+    monkeypatch.setattr(golden_fixtures.subprocess, "Popen", _fake_popen)
+    fixture = GoldenFixture.from_json(PAYLOAD)
+    monkeypatch.setattr(type(fixture), "unwritable_reason", lambda self: None)
+
+    with pytest.raises(RuntimeError):  # no result file, so run_isolated ends in its own check
+        run_isolated(fixture, extra_env={"DEEPSEEK_FP8_IMPL": "torch"})
+
+    assert captured["DEEPSEEK_FP8_IMPL"] == "torch"
+    # The child-protocol keys survive an injection and are not overridable by it.
+    assert captured[CHILD_RESULT_ENV]
+    assert captured[CHILD_FIXTURE_ENV]
+    assert captured["PYTHONPATH"] == _with_repo_root_on_the_path()
+
+
+def test_the_checkpoint_can_come_from_this_host(monkeypatch):
+    """`POCKETLLM_GOLDEN_CHECKPOINT` substitutes the recorded path, wherever it *is* an argv item.
+
+    Two substitutions, and both matter: the `checkpoint` field is what `unwritable_reason` consults
+    before deciding to skip, and the `argv` entry is what the engine opens. A harness that moved
+    only one of them would either skip on a host that has the bytes, or launch against a path that
+    is not there.
+    """
+    from tests import golden_fixtures
+
+    monkeypatch.setenv(golden_fixtures.CHECKPOINT_ENV, "/elsewhere/v41")
+    moved = golden_fixtures.GoldenFixture.from_json(PAYLOAD)
+
+    resolved = golden_fixtures._with_host_checkpoint(moved)
+
+    assert resolved.checkpoint == "/elsewhere/v41"
+    # The whole command line, so an implementation that rewrote *every* argv item would fail here:
+    # only the `--model` value is the checkpoint, and `serve --backend xing4` has to survive.
+    assert resolved.argv == (
+        "serve",
+        "--backend",
+        "xing4",
+        "--model",
+        "/elsewhere/v41",
+    )
+    assert PAYLOAD["checkpoint"] not in resolved.argv
+    assert PAYLOAD["checkpoint"] in moved.argv  # the fixture handed in is not mutated
+
+
+def test_a_host_without_the_override_gets_the_recorded_path(monkeypatch):
+    """Unset, the helper is the identity: the recorded path is the default, untouched.
+
+    The object is returned as-is rather than a copy with equal fields, which is the contract the
+    helper's docstring gives and what makes the ordinary case behave exactly as it did before the
+    override existed.
+    """
+    from tests import golden_fixtures
+
+    monkeypatch.delenv(golden_fixtures.CHECKPOINT_ENV, raising=False)
+    fixture = golden_fixtures.GoldenFixture.from_json(PAYLOAD)
+    resolved = golden_fixtures._with_host_checkpoint(fixture)
+
+    assert resolved is fixture
+    assert resolved.checkpoint == PAYLOAD["checkpoint"]
+    assert resolved.argv == tuple(PAYLOAD["argv"])
+
+
+def _with_logits(expected_logits):
+    return GoldenFixture.from_json({**PAYLOAD, "expected": {**PAYLOAD["expected"],
+                                                           "logits_check": expected_logits}})
+
+
+def test_a_well_formed_logits_check_is_read_back():
+    record = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5, 6], "values": [1.5, 0.5],
+              "atol": 0.0, "rtol": 1e-5}
+    fixture = _with_logits(record)
+    assert fixture.expected_logits_check == record
+
+
+def test_a_fixture_without_a_logits_check_reads_as_none():
+    fixture = GoldenFixture.from_json(PAYLOAD)
+    assert fixture.expected_logits_check is None
+
+
+def test_a_logits_check_whose_lengths_disagree_is_refused():
+    bad = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5], "values": [1.5, 0.5],
+           "atol": 0.0, "rtol": 1e-5}
+    with pytest.raises(ValueError, match="token_ids and values"):
+        _with_logits(bad)
+
+
+def test_a_logits_check_missing_a_field_is_refused():
+    bad = {"step": 0, "prompt_tokens": 9, "token_ids": [5], "values": [1.5]}
+    with pytest.raises(ValueError, match="logits_check is missing"):
+        _with_logits(bad)
+
+
+@pytest.mark.parametrize("malformed", [["step", "prompt_tokens"], "step prompt_tokens"])
+def test_a_logits_check_that_is_not_an_object_is_refused(malformed):
+    """A JSON fixture is untrusted, and the type has to be checked before membership.
+
+    A *string* answers `in` by substring -- one containing all seven field names passes the
+    missing-field check and then dies indexing -- and a *list* answers by equality, so every name
+    reads as missing and the complaint is misleading about what is actually wrong. Both have to be
+    refused as the wrong type, at load, before either quirk is reached.
+    """
+    with pytest.raises(ValueError, match="logits_check must be an object"):
+        _with_logits(malformed)
+
+
+@pytest.mark.parametrize("field", ["token_ids", "values"])
+def test_a_logits_check_whose_sequence_field_is_not_a_sequence_is_refused(field):
+    """`null` passes presence and then dies at `len(None)` with a TypeError, not a fixture error."""
+    bad = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5], "values": [1.5],
+           "atol": 0.0, "rtol": 1e-5}
+    bad[field] = None
+    with pytest.raises(ValueError, match=f"logits_check {field} must be a list"):
+        _with_logits(bad)
+
+
+def test_a_malformed_fixture_names_the_file_it_came_from(monkeypatch, tmp_path):
+    """`from_json` names the field; the loader is the one place that knows the file, so it names that.
+
+    The accessor's docstring promises a failure that names the fixture, and a bare `ValueError` out
+    of `from_json` does not keep it. `load_fixture` wraps, so the claim is made true where the path
+    is actually in hand.
+    """
+    from tests import golden_fixtures
+
+    payload = {**PAYLOAD, "expected": {**PAYLOAD["expected"], "logits_check": {"values": None}}}
+    path = tmp_path / "broken.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    monkeypatch.setattr(golden_fixtures, "fixture_path", lambda entry: path)
+
+    with pytest.raises(ValueError, match="broken.json"):
+        golden_fixtures.load_fixture("broken")
+
+
+def test_the_served_path_skip_is_decided_on_the_host_checkpoint(monkeypatch, tmp_path) -> None:
+    """The skip the served-path test takes and the path `run_isolated` opens must be the same one.
+
+    `test_served_path_golden.py` decides its own skip from `unwritable_reason` *before* it calls
+    `run_isolated`, so resolving only inside `run_isolated` leaves the skip reading the recorded
+    path: on the host this override exists for -- checkpoint kept elsewhere, override exported --
+    every fixture would skip on a path it is not going to open, and the acceptance gate would pass
+    vacuously. That is the failure the override closes, so it is pinned here against the production
+    helper rather than a copy of it.
+    """
+    from tests import golden_fixtures
+    from tests.test_served_path_golden import _served_skip_reason
+
+    # A checkpoint that exists here, standing in for the bytes the recording host kept at `/mnt`.
+    monkeypatch.setenv(golden_fixtures.CHECKPOINT_ENV, str(tmp_path))
+
+    # The recorded checkpoint is deliberately absent, so a skip decided on it is a skip; the host
+    # checkpoint is a real directory, so the same decision on the resolved fixture is not. That
+    # difference is the whole point of resolving before deciding.
+    reason = _served_skip_reason(golden_fixtures.GoldenFixture.from_json(PAYLOAD))
+    assert reason is None, (
+        "the served-path skip is still reading the recorded path; resolve the fixture with "
+        "_with_host_checkpoint before deciding to skip"
+    )
+
+
+def _load_recorder():
+    """The recorder script, imported by path -- it is a script, not an importable module."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "record_golden_fixture",
+        pathlib.Path(__file__).resolve().parents[1] / "scripts" / "record_golden_fixture.py",
+    )
+    recorder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(recorder)
+    return recorder
+
+
+def test_the_recorder_adds_a_logits_check_only_when_one_was_produced():
+    recorder = _load_recorder()
+    placeholders = {"atol": 0.0, "rtol": 0.0}
+
+    without = Outcome(token_ids=[1], text="x", prompt_tokens=1)
+    assert "logits_check" not in recorder._expected_from(without, placeholders)
+
+    # The record as it reaches the recorder: the backend's four fields plus the prompt count the
+    # child stamped on it. The recorder adds the tolerances.
+    record = {"step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5, 6], "values": [1.5, 0.5]}
+    with_record = Outcome(token_ids=[1], text="x", prompt_tokens=1, logits_check=record)
+    assert recorder._expected_from(with_record, placeholders)["logits_check"] == {
+        **record,
+        "atol": 0.0,
+        "rtol": 0.0,
+    }
+
+
+def test_the_recorder_lets_the_tolerances_it_was_given_win():
+    """A stale tolerance in the record must not outrank the one the recorder resolved.
+
+    The spread order is the whole precedence rule, and a reversed implementation would read the
+    same on every record the backend actually produces -- it carries no `atol`/`rtol` at all. The
+    record here carries a wrong one so the reversal is visible.
+    """
+    recorder = _load_recorder()
+    record = {
+        "step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5], "values": [1.5],
+        "atol": 0.9, "rtol": 0.9,
+    }
+    outcome = Outcome(token_ids=[1], text="x", prompt_tokens=1, logits_check=record)
+
+    assert recorder._expected_from(outcome, {"atol": 1e-5, "rtol": 1e-4})["logits_check"] == {
+        **record, "atol": 1e-5, "rtol": 1e-4,
+    }
+
+
+def test_frozen_tolerances_survive_a_re_record():
+    """A re-record keeps what the fixture already froze, and only a fresh fixture gets 0.0.
+
+    `atol`/`rtol` are written as 0.0 on the first record and frozen to measured values afterwards.
+    Rebuilding them from 0.0 on the next run would silently un-freeze a tolerance a person chose,
+    which is the trap `_resolved_notes` already exists to close for the notes -- and here it would
+    make the tolerance leg fail on a leg that should compare.
+    """
+    recorder = _load_recorder()
+    # A complete record, not just the tolerances: `GoldenFixture.from_json` validates the shape, so
+    # `{"atol": ..., "rtol": ...}` alone is refused for the missing comparison fields. The record is
+    # whole and this test is about the two numbers inside it.
+    frozen = GoldenFixture.from_json(
+        {
+            **PAYLOAD,
+            "expected": {
+                **PAYLOAD["expected"],
+                "logits_check": {
+                    "step": 0, "prompt_tokens": 9, "top_k": 2, "token_ids": [5, 6],
+                    "values": [1.5, 0.5], "atol": 3e-4, "rtol": 0.0,
+                },
+            },
+        }
+    )
+
+    assert recorder._frozen_tolerances(frozen) == {"atol": 3e-4, "rtol": 0.0}
+    assert recorder._frozen_tolerances(None) == {"atol": 0.0, "rtol": 0.0}
+    assert recorder._frozen_tolerances(GoldenFixture.from_json(PAYLOAD)) == {"atol": 0.0, "rtol": 0.0}
