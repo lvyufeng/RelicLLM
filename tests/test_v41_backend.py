@@ -980,7 +980,7 @@ def test_a_stream_withholds_the_tool_call_block_and_reports_the_call_at_the_end(
     that text either, because the checkpoint's parser wants the end-of-sentence token that the
     decode strips, so it travels on the last event instead, numbered from zero the way OpenAI's own
     stream numbers a delta's calls."""
-    block = {12: "\n", 13: "\n<", 14: "｜DSML｜ calls><tool>"}
+    block = {12: "\n", 13: "\n<", 14: "\uff5cDSML\uff5c calls><tool>"}
     tokenizer = FakeTokenizer(pieces={11: "answer", 1: "<e>", **block})
     loop(tokens=[11, 12, 13, 14, 1], stopped="eos")
     backend, _ = _build(_checkpoint(tmp_path), tokenizer=tokenizer, max_model_len=64)

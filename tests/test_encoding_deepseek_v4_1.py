@@ -1,7 +1,7 @@
 """Reading a V4.1 completion back: the tool-call cut, and the facts about the checkpoint behind it.
 
 The adapter in :mod:`relicllm.backends.v41_backend` streams a *text*, and the format's tool-call
-block is text too -- V4.1 wraps it in ``<｜DSML｜ calls>``, whose ``｜`` is a fullwidth vertical line
+block is text too -- V4.1 wraps it in ``<\uff5cDSML\uff5c calls>``, whose ``\uff5c`` is a fullwidth vertical line
 and not the ASCII character a reader expects, so the block is tokenized as ordinary text and reaches
 a client that is being sent the running decode. :func:`cut_tool_calls` is what stops the answer where
 the checkpoint's own parser stops reading its content, and the second half of this file pins the
@@ -42,13 +42,13 @@ HAS_CHECKPOINT = os.path.isdir(CHECKPOINT)
 
 
 #: The block as a generation writes it, spelled out: two newlines, the tag opened and closed, one
-#: call with one string parameter. The ``｜`` are U+FF1C, as in the checkpoint's own constants.
+#: call with one string parameter. The ``\uff5c`` are U+FF5C, as in the checkpoint's own constants.
 BLOCK = (
-    "\n\n<｜DSML｜ calls>\n"
-    '<｜DSML｜ invoke name="builtin_web_search">\n'
-    '<｜DSML｜ parameter name="additionalContext" string="true">短篇温馨小故事</｜DSML｜ parameter>\n'
-    "</｜DSML｜ invoke>\n"
-    "</｜DSML｜ calls>"
+    "\n\n<\uff5cDSML\uff5c calls>\n"
+    '<\uff5cDSML\uff5c invoke name="builtin_web_search">\n'
+    '<\uff5cDSML\uff5c parameter name="additionalContext" string="true">短篇温馨小故事</\uff5cDSML\uff5c parameter>\n'
+    "</\uff5cDSML\uff5c invoke>\n"
+    "</\uff5cDSML\uff5c calls>"
 )
 
 

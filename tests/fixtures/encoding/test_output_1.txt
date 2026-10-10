@@ -1,18 +1,18 @@
-<｜begin▁of▁sentence｜>You are a helpful assistant.
+<\uff5cbegin▁of▁sentence\uff5c>You are a helpful assistant.
 
 ## Tools
 
-You have access to a set of tools to help answer the user's question. You can invoke tools by writing a "<｜DSML｜tool_calls>" block like the following:
+You have access to a set of tools to help answer the user's question. You can invoke tools by writing a "<\uff5cDSML\uff5ctool_calls>" block like the following:
 
-<｜DSML｜tool_calls>
-<｜DSML｜invoke name="$TOOL_NAME">
-<｜DSML｜parameter name="$PARAMETER_NAME" string="true|false">$PARAMETER_VALUE</｜DSML｜parameter>
+<\uff5cDSML\uff5ctool_calls>
+<\uff5cDSML\uff5cinvoke name="$TOOL_NAME">
+<\uff5cDSML\uff5cparameter name="$PARAMETER_NAME" string="true|false">$PARAMETER_VALUE</\uff5cDSML\uff5cparameter>
 ...
-</｜DSML｜invoke>
-<｜DSML｜invoke name="$TOOL_NAME2">
+</\uff5cDSML\uff5cinvoke>
+<\uff5cDSML\uff5cinvoke name="$TOOL_NAME2">
 ...
-</｜DSML｜invoke>
-</｜DSML｜tool_calls>
+</\uff5cDSML\uff5cinvoke>
+</\uff5cDSML\uff5ctool_calls>
 
 String parameters should be specified as is and set `string="true"`. For all other types (numbers, booleans, arrays, objects), pass the value in JSON format and set `string="false"`.
 
@@ -26,11 +26,11 @@ Otherwise, output directly after </think> with tool calls or final response.
 {"name": "search", "description": "Search the web for information", "parameters": {"type": "object", "properties": {"query": {"type": "string", "description": "Search query"}, "num_results": {"type": "integer", "description": "Number of results to return"}}, "required": ["query"]}}
 
 You MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls.
-<｜User｜>What's the weather in Beijing?<｜Assistant｜><think>The user wants to know the weather in Beijing. I should use the get_weather tool.</think>
+<\uff5cUser\uff5c>What's the weather in Beijing?<\uff5cAssistant\uff5c><think>The user wants to know the weather in Beijing. I should use the get_weather tool.</think>
 
-<｜DSML｜tool_calls>
-<｜DSML｜invoke name="get_weather">
-<｜DSML｜parameter name="location" string="true">Beijing</｜DSML｜parameter>
-<｜DSML｜parameter name="unit" string="true">celsius</｜DSML｜parameter>
-</｜DSML｜invoke>
-</｜DSML｜tool_calls><｜end▁of▁sentence｜><｜User｜><tool_result>{"temperature": 22, "condition": "sunny", "humidity": 45}</tool_result><｜Assistant｜><think>Got the weather data. Let me format a nice response.</think>The weather in Beijing is currently sunny with a temperature of 22°C and 45% humidity.<｜end▁of▁sentence｜>
+<\uff5cDSML\uff5ctool_calls>
+<\uff5cDSML\uff5cinvoke name="get_weather">
+<\uff5cDSML\uff5cparameter name="location" string="true">Beijing</\uff5cDSML\uff5cparameter>
+<\uff5cDSML\uff5cparameter name="unit" string="true">celsius</\uff5cDSML\uff5cparameter>
+</\uff5cDSML\uff5cinvoke>
+</\uff5cDSML\uff5ctool_calls><\uff5cend▁of▁sentence\uff5c><\uff5cUser\uff5c><tool_result>{"temperature": 22, "condition": "sunny", "humidity": 45}</tool_result><\uff5cAssistant\uff5c><think>Got the weather data. Let me format a nice response.</think>The weather in Beijing is currently sunny with a temperature of 22°C and 45% humidity.<\uff5cend▁of▁sentence\uff5c>

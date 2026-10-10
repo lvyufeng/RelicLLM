@@ -338,7 +338,7 @@ def test_compressed_token_map_on_a_real_tokenizer() -> None:
 
     This is the V4-Flash tokenizer, which is not byte-identical to V4.1's: its
     `tokenizer.json` is 6,367,146 bytes against V4.1's 6,367,257, and it lacks the
-    `<｜deepseek_image｜>` and `<｜System｜>` added tokens V4.1's prompt format
+    `<\uff5cdeepseek_image\uff5c>` and `<\uff5cSystem\uff5c>` added tokens V4.1's prompt format
     needs. The count agreeing is therefore strong evidence, not a self-contained
     proof -- see the V4.1 model page.
     """

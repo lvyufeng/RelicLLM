@@ -12,20 +12,32 @@ from relicllm.encoding.deepseek_v4 import encode_messages, parse_message_from_co
 TESTS_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "encoding")
 
 
+def _read_gold(name):
+    """Read a golden file, decoding the fullwidth vertical line escape.
+
+    The checkpoint's delimiters are U+FF5C, which the prompt encoder must emit
+    verbatim. The golden files store it as the six-character escape ``\\uff5c``
+    so the raw character never sits in a tracked file, where grepping or reading
+    the tree would copy it into a model transcript.
+    """
+    with open(os.path.join(TESTS_DIR, name)) as handle:
+        return handle.read().replace("\\uff5c", "\uff5c")
+
+
 def test_case_1():
     """Thinking mode with tool calls (multi-turn, tool results merged into user)."""
     with open(os.path.join(TESTS_DIR, "test_input_1.json")) as f:
         td = json.load(f)
         messages = td["messages"]
         messages[0]["tools"] = td["tools"]
-    gold = open(os.path.join(TESTS_DIR, "test_output_1.txt")).read()
+    gold = _read_gold("test_output_1.txt")
     prompt = encode_messages(messages, thinking_mode="thinking")
     assert prompt == gold
 
     # Parse: assistant turn with tool call
-    marker = "<｜Assistant｜><think>"
+    marker = "<\uff5cAssistant\uff5c><think>"
     first_start = prompt.find(marker) + len(marker)
-    first_end = prompt.find("<｜User｜>", first_start)
+    first_end = prompt.find("<\uff5cUser\uff5c>", first_start)
     parsed_tc = parse_message_from_completion_text(prompt[first_start:first_end], thinking_mode="thinking")
     assert parsed_tc["reasoning_content"] == "The user wants to know the weather in Beijing. I should use the get_weather tool."
     assert parsed_tc["content"] == ""
@@ -46,12 +58,12 @@ def test_case_1():
 def test_case_2():
     """Thinking mode without tools (drop_thinking removes earlier reasoning)."""
     messages = json.load(open(os.path.join(TESTS_DIR, "test_input_2.json")))
-    gold = open(os.path.join(TESTS_DIR, "test_output_2.txt")).read()
+    gold = _read_gold("test_output_2.txt")
     prompt = encode_messages(messages, thinking_mode="thinking")
     assert prompt == gold
 
     # Parse: last assistant turn
-    marker = "<｜Assistant｜><think>"
+    marker = "<\uff5cAssistant\uff5c><think>"
     last_start = prompt.rfind(marker) + len(marker)
     parsed = parse_message_from_completion_text(prompt[last_start:], thinking_mode="thinking")
     assert parsed["reasoning_content"] == "The user asks about the capital of France. It is Paris."
@@ -67,7 +79,7 @@ def test_case_2():
 def test_case_3():
     """Interleaved thinking + search (developer with tools, latest_reminder)."""
     messages = json.load(open(os.path.join(TESTS_DIR, "test_input_3.json")))
-    gold = open(os.path.join(TESTS_DIR, "test_output_3.txt")).read()
+    gold = _read_gold("test_output_3.txt")
     assert encode_messages(messages, thinking_mode="thinking") == gold
     print("  [PASS] case 3: interleaved thinking + search")
 
@@ -75,7 +87,7 @@ def test_case_3():
 def test_case_4():
     """Quick instruction task with latest_reminder (chat mode, action task)."""
     messages = json.load(open(os.path.join(TESTS_DIR, "test_input_4.json")))
-    gold = open(os.path.join(TESTS_DIR, "test_output_4.txt")).read()
+    gold = _read_gold("test_output_4.txt")
     assert encode_messages(messages, thinking_mode="chat") == gold
     print("  [PASS] case 4: quick instruction task")
 

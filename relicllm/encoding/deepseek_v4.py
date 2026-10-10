@@ -14,24 +14,24 @@ import re
 # Special Tokens
 # ============================================================
 
-bos_token: str = "<｜begin▁of▁sentence｜>"
-eos_token: str = "<｜end▁of▁sentence｜>"
+bos_token: str = "<\uff5cbegin▁of▁sentence\uff5c>"
+eos_token: str = "<\uff5cend▁of▁sentence\uff5c>"
 thinking_start_token: str = "<think>"
 thinking_end_token: str = "</think>"
-dsml_token: str = "｜DSML｜"
+dsml_token: str = "\uff5cDSML\uff5c"
 
-USER_SP_TOKEN = "<｜User｜>"
-ASSISTANT_SP_TOKEN = "<｜Assistant｜>"
-LATEST_REMINDER_SP_TOKEN = "<｜latest_reminder｜>"
+USER_SP_TOKEN = "<\uff5cUser\uff5c>"
+ASSISTANT_SP_TOKEN = "<\uff5cAssistant\uff5c>"
+LATEST_REMINDER_SP_TOKEN = "<\uff5clatest_reminder\uff5c>"
 
 # Task special tokens for internal classification tasks
 DS_TASK_SP_TOKENS = {
-    "action": "<｜action｜>",
-    "query": "<｜query｜>",
-    "authority": "<｜authority｜>",
-    "domain": "<｜domain｜>",
-    "title": "<｜title｜>",
-    "read_url": "<｜read_url｜>",
+    "action": "<\uff5caction\uff5c>",
+    "query": "<\uff5cquery\uff5c>",
+    "authority": "<\uff5cauthority\uff5c>",
+    "domain": "<\uff5cdomain\uff5c>",
+    "title": "<\uff5ctitle\uff5c>",
+    "read_url": "<\uff5cread_url\uff5c>",
 }
 VALID_TASKS = set(DS_TASK_SP_TOKENS.keys())
 
