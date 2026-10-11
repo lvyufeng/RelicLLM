@@ -81,7 +81,7 @@ def _reference_sinkhorn(comb, iters, eps):
 
 
 def test_shared_ops_are_reexported_not_reimplemented() -> None:
-    """Six names are `src/kernels/ops.py`'s, four are additions that module does not have."""
+    """Seven names are `relic_core.kernels.ops`'s; five are additions that module does not have."""
     for name in ("act_quant", "fp4_act_quant", "fp8_gemm", "fp4_gemm", "sparse_attn", "hc_split_sinkhorn"):
         assert getattr(v41_kernels, name) is getattr(shared_kernels, name), name
     assert not hasattr(shared_kernels, "fp4_act_quant_e4m3")
@@ -90,9 +90,13 @@ def test_shared_ops_are_reexported_not_reimplemented() -> None:
     assert v41_kernels.Packed4BitWeightAlongK is shared_kernels.Packed4BitWeightAlongK
     assert v41_kernels.dequant_fp8_weight is not getattr(shared_kernels, "dequant_fp8_weight", None)
     assert v41_kernels.dequant_fp4_weight is not getattr(shared_kernels, "dequant_fp4_weight", None)
+    # `block_fp8_act_quant` / `quantized_linear` are this module's own too: the reference's
+    # activation quantization written in soft torch, so the with-scales path is the same arithmetic
+    # on every card. `relic_core`'s `act_quant` is a kernel binding, not this.
     assert set(v41_kernels.__all__) == {
         "Packed4BitWeightAlongK",
         "act_quant",
+        "block_fp8_act_quant",
         "dequant_fp4_weight",
         "dequant_fp8_weight",
         "fp4_act_quant",
@@ -100,6 +104,7 @@ def test_shared_ops_are_reexported_not_reimplemented() -> None:
         "fp4_gemm",
         "fp8_gemm",
         "hc_split_sinkhorn",
+        "quantized_linear",
         "sparse_attn",
     }
 
