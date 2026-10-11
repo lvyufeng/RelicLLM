@@ -256,3 +256,43 @@ the end-to-end execution, not the claim that the fixture exists.
 
 The file is a statement about the repository, so it is checked in even when the checkpoint lives only
 on one machine; a run skips when the path is absent, and `-rs` prints the path it wanted.
+
+### The reference oracle, and why it is a separate file
+
+A fixture under `fixtures/golden/` is a record of what *this repository* produced, so a test that
+runs it and compares establishes only that the port is **stable** -- the same input still gives the
+same answer. It cannot say whether that answer is **right**, because the fixture and the run share
+one implementation. A port whose bias became its own standard would pass that check forever.
+
+`fixtures/reference/<entry>.json` is the other half: what an **upstream** implementation produced for
+the same prompt. It is written by `scripts/record_reference_v41.py`, which runs the checkpoint's own
+`inference/model.py`, **imported unmodified by path** and never edited -- so the arithmetic under it
+is DeepSeek's, not relicllm's. The record is loaded by `load_reference()`, which returns a plain dict
+rather than a `GoldenFixture`: a reference carries no `argv` that runs *here* and must not be
+loadable as one of this repository's served-path answers.
+
+The one deviation in the recorder is memory placement, and it is forced rather than chosen -- a stock
+forward needs ~62.5 GiB per rank and a 24 GiB card cannot hold it, so the two sparse tables stay in
+host RAM and their active slice is streamed in per step. That patch replaces `MoE.forward` and
+`ParallelEngramEmbedding.forward` with a version that differs from the released one **only by the
+`.to(device)` moves**; the arithmetic, the clamps, the routing and the reduction order are the
+checkpoint's. The two `forward` bodies are there to diff against `model.py`.
+
+The oracle seeds the **raw** prompt ids, not `inference/generate.py`'s chat-templated ones: the
+golden fixture feeds raw ids (9 tokens), the chat template renders 13, and an oracle for a prompt the
+fixture does not use is not an oracle for it. `logits_check` records the reference's step-0 top-k for
+the same reason the fixture does.
+
+`test_the_v41_tokens_agree_with_the_official_reference` is the leg that compares them, and it is
+gated the same way as the rest. It is the one test in the module that can fail with a **port defect**
+rather than a tolerance drift, and its message says so. To record or refresh the oracle, on a box
+holding the converted checkpoint and the reference's own env:
+
+```bash
+python scripts/record_reference_v41.py \
+    --ckpt <converted TP checkpoint> --inference <checkpoint>/inference \
+    --out tests/fixtures/reference/v41.json
+```
+
+A human reads the printed tokens and step-0 top-k before the record is committed, exactly as
+`record_golden_fixture.py` expects for its own answer.

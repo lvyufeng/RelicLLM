@@ -1,10 +1,10 @@
 """DeepSeek-V4.1's prompt format, taken from the checkpoint that ships it.
 
 V4.1 is not V4 with a renamed tokenizer. Three changes separate the two formats and every one of them
-is visible in the rendered prompt: tool calls are wrapped in ``<｜DSML｜ calls>`` with a leading space
-in the tag name, where V4 wrote ``<｜DSML｜tool_calls>``; reasoning effort became a numeric budget
+is visible in the rendered prompt: tool calls are wrapped in ``<\uff5cDSML\uff5c calls>`` with a leading space
+in the tag name, where V4 wrote ``<\uff5cDSML\uff5ctool_calls>``; reasoning effort became a numeric budget
 rendered as ``Reasoning Effort: {budget} (range 1-100, ...)`` instead of a sentence; and a
-mid-conversation message can be a system message via ``<｜System｜>``. A prompt built by
+mid-conversation message can be a system message via ``<\uff5cSystem\uff5c>``. A prompt built by
 :mod:`relicllm.encoding.deepseek_v4` is therefore *plausible* for this model and wrong, which is the
 failure mode worth spending a module to avoid: it does not raise, it just answers a differently
 formatted question.
@@ -53,7 +53,7 @@ THINKING_END = "</think>"
 #: here stops where the parser starts reading. Written out rather than read off the loaded encoder
 #: because the readers below run on a text that may be truncated at any character, and a comparison
 #: that cannot fail is worth more there than a name that cannot be wrong.
-TOOL_CALLS_START = "\n\n<｜DSML｜ calls"
+TOOL_CALLS_START = "\n\n<\uff5cDSML\uff5c calls"
 
 #: OpenAI's effort names mapped onto V4.1's 1-100 budget. Three of these are the checkpoint's own
 #: aliases and are passed through under their own names; `minimal` and `medium` are this package's

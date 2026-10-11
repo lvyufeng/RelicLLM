@@ -85,7 +85,7 @@ fp16 trades exponent range for mantissa width — 65504 is the largest finite fp
 **This is the section that was wrong, and the fault is the chunk rather than the arithmetic.**
 `probe_v41_chunk_scaling.prose(...)` tokenizes prose with `add_special_tokens=False`, so the metered
 chunk is the *no-BOS* case, and every number above is a no-BOS number. The model's own serving path
-does not produce that case: `encode_messages` embeds a leading `<｜begin▁of▁sentence｜>` and tokenizes
+does not produce that case: `encode_messages` embeds a leading `<\uff5cbegin▁of▁sentence\uff5c>` and tokenizes
 with `add_special_tokens=False`, so the first token of every chat prompt is id 0. On that prompt the
 same `x.abs().max()` measurement reads **2.04e+06** — the largest tensor in the forward is the Hyper
 Connections mixing projection's own fp32 `F.linear (24, 20480)` output at site 879 of 956 — with

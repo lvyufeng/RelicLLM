@@ -1,20 +1,20 @@
-<｜begin▁of▁sentence｜>该助手为DeepSeek，由深度求索公司创造。<｜latest_reminder｜>2026-02-21,星期六,广州,App,中文<｜User｜>小柴胡冲剂和布洛芬能一起吃吗？
+<\uff5cbegin▁of▁sentence\uff5c>该助手为DeepSeek，由深度求索公司创造。<\uff5clatest_reminder\uff5c>2026-02-21,星期六,广州,App,中文<\uff5cUser\uff5c>小柴胡冲剂和布洛芬能一起吃吗？
 
 CITATION FORMAT: 【{cursor_id}†L{start_line_id}(-L{end_line_id})?】
 
 ## Tools
 
-You have access to a set of tools to help answer the user's question. You can invoke tools by writing a "<｜DSML｜tool_calls>" block like the following:
+You have access to a set of tools to help answer the user's question. You can invoke tools by writing a "<\uff5cDSML\uff5ctool_calls>" block like the following:
 
-<｜DSML｜tool_calls>
-<｜DSML｜invoke name="$TOOL_NAME">
-<｜DSML｜parameter name="$PARAMETER_NAME" string="true|false">$PARAMETER_VALUE</｜DSML｜parameter>
+<\uff5cDSML\uff5ctool_calls>
+<\uff5cDSML\uff5cinvoke name="$TOOL_NAME">
+<\uff5cDSML\uff5cparameter name="$PARAMETER_NAME" string="true|false">$PARAMETER_VALUE</\uff5cDSML\uff5cparameter>
 ...
-</｜DSML｜invoke>
-<｜DSML｜invoke name="$TOOL_NAME2">
+</\uff5cDSML\uff5cinvoke>
+<\uff5cDSML\uff5cinvoke name="$TOOL_NAME2">
 ...
-</｜DSML｜invoke>
-</｜DSML｜tool_calls>
+</\uff5cDSML\uff5cinvoke>
+</\uff5cDSML\uff5ctool_calls>
 
 String parameters should be specified as is and set `string="true"`. For all other types (numbers, booleans, arrays, objects), pass the value in JSON format and set `string="false"`.
 
@@ -29,10 +29,10 @@ Otherwise, output directly after </think> with tool calls or final response.
 {"name": "find", "description": "Find exact text pattern in pages.", "parameters": {"type": "object", "properties": {"find_list": {"type": "array", "items": {"type": "object", "properties": {"pattern": {"type": "string", "description": ""}, "cursor": {"type": "integer", "description": "", "default": -1}}, "required": ["pattern"], "additionalProperties": false}, "description": ""}}, "required": ["find_list"], "additionalProperties": false, "$schema": "http://json-schema.org/draft-07/schema#"}}
 
 You MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls.
-<｜Assistant｜><think>用户想知道小柴胡冲剂和布洛芬能否一起服用。</think>
+<\uff5cAssistant\uff5c><think>用户想知道小柴胡冲剂和布洛芬能否一起服用。</think>
 
-<｜DSML｜tool_calls>
-<｜DSML｜invoke name="search">
-<｜DSML｜parameter name="queries" string="true">小柴胡冲剂 布洛芬 相互作用 一起吃</｜DSML｜parameter>
-</｜DSML｜invoke>
-</｜DSML｜tool_calls><｜end▁of▁sentence｜><｜User｜><tool_result>[0]</tool_result><｜Assistant｜><think>现在开始组织回答。</think>请及时就医。<｜end▁of▁sentence｜>
+<\uff5cDSML\uff5ctool_calls>
+<\uff5cDSML\uff5cinvoke name="search">
+<\uff5cDSML\uff5cparameter name="queries" string="true">小柴胡冲剂 布洛芬 相互作用 一起吃</\uff5cDSML\uff5cparameter>
+</\uff5cDSML\uff5cinvoke>
+</\uff5cDSML\uff5ctool_calls><\uff5cend▁of▁sentence\uff5c><\uff5cUser\uff5c><tool_result>[0]</tool_result><\uff5cAssistant\uff5c><think>现在开始组织回答。</think>请及时就医。<\uff5cend▁of▁sentence\uff5c>

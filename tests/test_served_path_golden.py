@@ -42,6 +42,7 @@ from tests.golden_fixtures import (
     _with_host_checkpoint,
     fixture_path,
     load_fixture,
+    load_reference,
     logits_check_mismatch,
     run_isolated,
 )
@@ -198,3 +199,37 @@ def test_the_v41_logits_agree_with_the_recorded_ones():
     )
     mismatch = logits_check_mismatch(outcome.logits_check, fixture.expected_logits_check)
     assert mismatch is None, mismatch
+
+
+def test_the_v41_tokens_agree_with_the_official_reference():
+    """The upstream leg: this card's greedy tokens against DeepSeek's own reference.
+
+    The oracle is recorded by `scripts/record_reference_v41.py` from the checkpoint's **unmodified**
+    `inference/model.py` (host-offloaded to fit a 24 GiB card), not from a relicllm run -- so this is
+    the one check here that compares the port to the model rather than to itself. The served-path
+    fixture's own `token_ids` are a record of what *sm_75* produced, which is a different question:
+    a fixture that matches itself proves the port is stable, not that it is right.
+
+    The comparison is on greedy **tokens** only. The reference's step-0 logits come from an fp32 head
+    on the reference's own arithmetic; a per-value tolerance across two implementations is a weaker
+    statement than "the argmax sequence agrees", and the token sequence is what a served answer is.
+    """
+    fixture = load_fixture("v41")
+    reference = load_reference("v41")
+    if not os.environ.get(GOLDEN_GATE_ENV):
+        pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
+    if fixture is None or reference is None:
+        pytest.skip("v41 has no recorded official reference; run scripts/record_reference_v41.py")
+
+    expected_tokens = list(reference["tokens"])
+    outcome = _run_under(fixture, {})
+
+    assert outcome.token_ids is not None, "the run produced no token ids"
+    assert list(outcome.token_ids) == expected_tokens, (
+        f"v41: the greedy tokens diverge from the official reference.\n"
+        f"  reference: {expected_tokens}\n"
+        f"  this card: {list(outcome.token_ids)}\n"
+        f"The reference is {reference['source']} at commit {reference.get('commit') or 'unknown'}; "
+        f"the run is {fixture.card or 'an unrecorded card'}. A divergence here is a port defect, "
+        f"not a kernel tolerance."
+    )

@@ -206,7 +206,7 @@ Greedy decode from `The capital of France is`, stepped through one token at a ti
 prefilled, at temperature 0, through the host-offload path:
 
 ```text
-The capital of France is  ->  ' Paris.<｜end▁of▁sentence｜>\n\n\n\n\n'
+The capital of France is  ->  ' Paris.<\uff5cend▁of▁sentence\uff5c>\n\n\n\n\n'
 engram rows gathered:    {1: 456, 14: 456}
 ```
 

@@ -1,0 +1,62 @@
+{
+  "entry": "v41",
+  "source": "official DeepSeek-V4.1 reference (inference/model.py, unmodified)",
+  "prompt": "Reply with the single line: golden fixture.",
+  "raw_token_ids": [
+    19905,
+    418,
+    270,
+    4031,
+    2562,
+    28,
+    22471,
+    45117,
+    16
+  ],
+  "tokens": [
+    455,
+    1950,
+    1531,
+    366,
+    260,
+    6405,
+    26639,
+    16,
+    455,
+    1950,
+    1531,
+    366,
+    260,
+    6405,
+    26639,
+    16
+  ],
+  "logits_check": {
+    "step": 0,
+    "prompt_tokens": 9,
+    "top_k": 8,
+    "token_ids": [
+      455,
+      223,
+      342,
+      539,
+      2275,
+      1004,
+      983,
+      1162
+    ],
+    "values": [
+      19.91009521484375,
+      19.716999053955078,
+      19.289779663085938,
+      19.071205139160156,
+      18.7437801361084,
+      18.718765258789062,
+      18.601818084716797,
+      18.550548553466797
+    ]
+  },
+  "commit": "385a18f",
+  "taken_at": "2026-10-11",
+  "notes": "the checkpoint's own model.py, imported unmodified and host-offloaded to fit a 24 GiB card; see scripts/record_reference_v41.py for the one deviation"
+}

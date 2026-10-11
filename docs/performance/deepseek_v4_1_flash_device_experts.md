@@ -575,14 +575,14 @@ loaded in 73.7 s
 routed experts: DeviceRoutedExperts on 40 layers, world 4
 prompt 5 tokens: ['The', 'Ġcapital', 'Ġof', 'ĠFrance', 'Ġis']
 3 tokens in 7.2 s (2.41 s/token), stopped on eos
-The capital of France is Paris.<｜end▁of▁sentence｜>
+The capital of France is Paris.<\uff5cend▁of▁sentence\uff5c>
 
 $ ... --expert-device cuda --expert-world 1
 loaded in 72.2 s
 routed experts: DeviceRoutedExperts on 40 layers, world 1
 prompt 5 tokens: ['The', 'Ġcapital', 'Ġof', 'ĠFrance', 'Ġis']
 3 tokens in 8.6 s (2.87 s/token), stopped on eos
-The capital of France is Paris.<｜end▁of▁sentence｜>
+The capital of France is Paris.<\uff5cend▁of▁sentence\uff5c>
 ```
 
 `--max-new-tokens 4` and 3 tokens, because token 3 is the EOS the model actually chose. The `routed
@@ -606,7 +606,7 @@ the fp4 kernel's: the first two tokens score 1.690 and 2.060 logits higher on th
 host, which is the 6.7%-of-scale layer difference above showing up where it can flip an argmax.
 
 **And the host path is not a single answer at that token either.** `probe_accept.py`'s stepwise decode
-of the same prompt — the host page's recorded `' Paris.<｜end▁of▁sentence｜>'` — emits EOS there from
+of the same prompt — the host page's recorded `' Paris.<\uff5cend▁of▁sentence\uff5c>'` — emits EOS there from
 the same host weights, and the host page measures a prefill against a stepwise decode of this prompt
 at 6.0748 max abs logits, two orders of magnitude above the 1.69 the cards move it. So the side of a
 0.5-logit tie this token lands on was never a property of the host weights; both device worlds land on
@@ -670,7 +670,7 @@ re-measured step is in that section.
 **Before the ordering fix a decode step was 1.23–1.42 s at `world=4` across three runs of two probes,
 and 1.40 s at `world=1`, warm**; a 5-token prefill is 4.50–5.00 s and 5.52 s. After it the step is
 **1.06–1.14 s** at `world=4`, which is [measured below](#the-launch-was-four-kernels-serialized-not-one-plus-copies).
-Every one of those runs returns `'The capital of France is Paris.<｜end▁of▁sentence｜>'` with tokens
+Every one of those runs returns `'The capital of France is Paris.<\uff5cend▁of▁sentence\uff5c>'` with tokens
 `[11111, 16, 1]`. Against the host path's 15.3 s for a warm decode step and 14.5–29 s of expert
 expansion alone, the step is an order of magnitude and the expansion is gone entirely.
 
@@ -785,7 +785,7 @@ Re-measured in a real step, warm (`/tmp/probe_launch_cost.py --world 4`, which a
 | `_launch` | **0.16 s** | **0.15 s** |
 | everything else | 0.57 s | 0.66 s |
 
-Both passes decode `'The capital of France is Paris.<｜end▁of▁sentence｜>'`, and the 0.16 s is the
+Both passes decode `'The capital of France is Paris.<\uff5cend▁of▁sentence\uff5c>'`, and the 0.16 s is the
 0.27 s the phase measured before. In the class's own isolation the same change is `world=4`
 17.4 ms → **14.8 ms** per row-layer, 0.70 s → **0.59 s** per token, and `world=1` now measures
 **21.9 ms**, 0.88 s per token. The one-card configuration moves too and by more of its own total,
@@ -963,7 +963,7 @@ times, and 128 rows is what it says it is.
 result is identical on all four, the head and the embedding are replicated rather than cut, and a ring
 all-reduce sums in one order everywhere, so all four compute the same logits; greedy decoding is an
 argmax over that and needs no message to enforce what is already true. Every run above prints
-`The capital of France is Paris.<｜end▁of▁sentence｜>` on all four ranks, 3 tokens, `stopped on eos`,
+`The capital of France is Paris.<\uff5cend▁of▁sentence\uff5c>` on all four ranks, 3 tokens, `stopped on eos`,
 and the same text comes out of the `world=1` host run. That is a statement about the four ranks within
 one run and not about two runs of the same configuration; [the caveats](#what-this-does-not-do-yet)
 carry the second question.
