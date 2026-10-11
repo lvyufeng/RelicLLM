@@ -54,27 +54,46 @@ relic-core, and it does not go through a Triton lowering.
 
 The fp32 accumulator is load-bearing, and this is the one place the measurements matter most. Against
 the fp64 truth of the *same operands*, the recipe as `quantized_linear` writes it -- fp32 accumulate,
-narrow once to bf16 -- is **0.000 ulp**: at these magnitudes the fp32 reduction is already exact
-enough that its bf16 rounding is bit-identical to rounding the fp64 result, so the accumulator width
-costs nothing. relic-core's own soft GEMM agrees with the recipe bit for bit when it takes the
-`"torch"` implementation, and diverges by **592 ulp** (mean 2.97, `max_rel_to_amax` 5.5e-03) when it
-takes the `"triton"` one -- which is the width the fp16 path computes at. The explicit
-`.to(torch.float32)` in `quantized_linear` is therefore what keeps the soft path on the exact side of
-that split; a later "optimization" that lets the accumulator follow the card's default width would
-move it to the triton column, not by a little.
+narrow once to bf16 -- is **<= 0.5 bf16 ulp**, which is the half-ulp the single final narrowing to
+bf16 irreducibly costs (measured 0.5000 max / 0.2498 mean at M=128/N=512/K=512, and 0.5000 / 0.2505 at
+M=64/N=2048/K=2048). `probe5.py` reports **0.000 ulp** at its one shape -- there the fp32 reduction
+rounds to the same bf16 as the fp64 one -- but that is a statement about that operand scale, not an
+invariant; the bound a later change must not exceed is the half-ulp, and `probe2.py` is what measures
+it across shapes.
+
+The same probe shows that dequantizing the weight to bf16 before the GEMM costs nothing: with the
+weight cast to bf16 and with the weight kept fp32, the output is identical to the last digit at both
+shapes. The weight sits far enough below the activation that its bf16 rounding never reaches the
+output's ulp, which is what justifies storing the weight densely in bf16. What *does* move it is
+narrowing the weight to **fp16**: that path is off by **642 ulp** (mean 2.96) at the wide shape and
+**539 ulp** at the small one. Quote the 642 with its caveat -- it is the max over elements with
+`|t| > 1e-3 amax`; across *all* elements the same fp16 error is tens of thousands of ulp (52222 /
+266450), because a fixed yardstick near the amax is the wrong measure at elements close to zero.
+
+relic-core's own soft GEMM agrees with the recipe bit for bit when it takes the `"torch"`
+implementation, and diverges by **592 ulp** (mean 2.97, `max_rel_to_amax` 5.5e-03) when it takes the
+`"triton"` one. That 592 and the fp16-weight 642 above are *separate* measurements -- probe5's triton
+kernel versus probe2's fp16 weight -- though both land in the same ~600 ulp band for the same reason:
+both compute in fp16 instead of accumulating in fp32. The explicit `.to(torch.float32)` in
+`quantized_linear` is therefore what keeps the soft path on the exact side of that split; a later
+"optimization" that lets the accumulator follow the card's default width would move it to the triton
+column, not by a little.
 
 ## A fourth trap, in the cast rather than the GEMM
 
 A bare `torch.float4_e2m1fn_x2 -> torch.float32` cast asserts on sm_75
-(`DynamicCast.h:78 fetch_and_cast false`), independent of any quantizer. `fp4_act_quant` itself is
+(`DynamicCast.h:78 fetch_and_cast false`), independent of any quantizer. On the CPU it fails rather
+than asserts: `NotImplementedError: "copy_kernel" not implemented for 'Float4_e2m1fn_x2'`. Either
+way the cast is unusable, on the card and off it. `fp4_act_quant` itself is
 fine -- hand-decoding its nibbles reproduces the input's amax. Use a levels-gather or
 `soft_fp4_blockfp4_weight_dequant` instead of the cast.
 
 ## Reproducing
 
-The probes are `scripts/v41_sm75_probes/probe.py`, `probe3.py`, `probe4.py`, `probe5.py` and
-`probe6.py`. Each is read-only and touches no model weights. `probe6.py` is the one that produces
-finding 1's numbers, and it is the one to run first:
+The probes are `scripts/v41_sm75_probes/probe.py`, `probe2.py`, `probe3.py`, `probe4.py`, `probe5.py`
+and `probe6.py`. Each is read-only and touches no model weights. `probe6.py` is the one that produces
+finding 1's numbers, and it is the one to run first; `probe2.py` produces the ulp table quoted above
+and `probe5.py` the triton/recipe comparison:
 
 ```bash
 cd scripts/v41_sm75_probes

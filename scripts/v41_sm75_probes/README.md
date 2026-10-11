@@ -17,7 +17,8 @@ and isolated mode keeps the script's directory and the CWD off `sys.path`.
 | Script | What it establishes |
 |---|---|
 | `probe6.py` | Finding 1: `fp4_gemm` hardcodes `act_block_size=128` and silently returns wrong numbers on V4.1's block-32 activation scales. Its three cases (block-32 usage, block-128 control, and the 128-wide re-read that reproduces the error) are the whole proof. |
-| `probe5.py` | The ulp figures: the fp32-accumulate recipe is 0.000 ulp against the fp64 truth, relic-core's `"torch"` soft GEMM is bitwise identical to it, and its `"triton"` one is 592 ulp. |
+| `probe2.py` | The per-element bf16-ulp table: the recipe vs fp64 at two shapes (the <= 0.5 ulp bound), and the fp16-weight-dequant penalty (642 / 539 ulp). This is where the note's 0.5-ulp and ~600-ulp fp16 figures come from. |
+| `probe5.py` | The ulp figures: the fp32-accumulate recipe is 0.000 ulp against the fp64 truth at its shape, relic-core's `"torch"` soft GEMM is bitwise identical to it, and its `"triton"` one is 592 ulp. |
 | `probe4.py` | Finding 4: a bare `float4_e2m1fn_x2 -> float32` cast asserts on sm_75, while `fp4_act_quant` itself is fine. Cases: `quant_only`, `cast_fp4`, `cast_fp4_cpu`, `fp4_roundtrip`, `fp8_cast`. |
 | `probe3.py` | Finding 3: forcing `impl="triton"` on the e4m3 quantizer hard-fails on Turing. Cases: `fp8_triton`, `fp4_act_quant`, `fp4_act_quant_fp32`, `fp4_gemm`, `triton_gemm`. |
 | `probe.py` | The capability-fork resolution (`_auto_impl`, `_choose_compute_dtype`) and a broad sweep of which paths work on sm_75. The context for the four findings. |
