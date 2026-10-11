@@ -85,4 +85,4 @@ for (M, N, K) in [(128, 512, 512), (64, 2048, 2048)]:
     report("(b) weight dequantized to fp16", soft(x, w, wsf, 32, torch.float16), t)
     report("(c) weight kept fp32", soft(x, w, wsf, 32, torch.float32), t)
 
-print("DONE")
+print("\nDONE")
