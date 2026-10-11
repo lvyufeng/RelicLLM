@@ -48,6 +48,14 @@ from typing import Any, Mapping
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 FIXTURE_DIR = pathlib.Path(__file__).resolve().parent / "fixtures" / "golden"
 
+#: The reference oracles, one per model whose format has an outside authority to check against.
+#: Separate from `FIXTURE_DIR` on purpose: a file under `fixtures/golden/` is a served-path answer
+#: recorded from *this* repository and is checked against the entry-point set, while these are what
+#: an **upstream** implementation produced (see `scripts/record_reference_v41.py`). Keeping them
+#: apart is what lets "does relicllm reproduce the model" and "does relicllm reproduce itself"
+#: stay two different questions.
+REFERENCE_DIR = pathlib.Path(__file__).resolve().parent / "fixtures" / "reference"
+
 #: This file, which is also the child launcher: `run_isolated` spawns it with `--entry <name>` and
 #: the `__main__` block at the bottom runs exactly one fixture and exits.
 GOLDEN_MODULE = pathlib.Path(__file__).resolve()
@@ -391,6 +399,24 @@ def load_fixture(entry: str) -> GoldenFixture | None:
 
 def load_fixtures() -> dict[str, GoldenFixture]:
     return {entry: fixture for entry in ENTRY_POINTS if (fixture := load_fixture(entry)) is not None}
+
+
+def reference_path(entry: str) -> pathlib.Path:
+    return REFERENCE_DIR / f"{entry}.json"
+
+
+def load_reference(entry: str) -> dict[str, Any] | None:
+    """The upstream reference oracle for `entry`, or `None` when none was recorded.
+
+    A plain dict rather than a `GoldenFixture`: this is not one of this repository's served-path
+    answers and must not be loadable as one. A `GoldenFixture` carries an `argv` that runs *here*;
+    a reference carries what an outside implementation produced, and the two are compared, never
+    conflated. See `scripts/record_reference_v41.py` for what writes it.
+    """
+    path = reference_path(entry)
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def write_fixture(fixture: GoldenFixture) -> pathlib.Path:
