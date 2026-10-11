@@ -31,10 +31,19 @@ use_directory_urls: true
 # in `docs/hooks/` would vanish from the site with a clean exit 0. Leaving the directory publishable
 # costs one caveat instead -- a second helper can be added under `docs/hooks/` without being
 # excluded, so add it here when there is one.
+#
+# `superpowers/` is the one directory exclusion, and the reason it is a directory is the reason the
+# two above are not: the silent-vanish failure mode is the *intended* one here. That tree is process
+# material -- plans, specs and working notes -- that lives in the repository for the people working
+# on it, not pages of the published site, so a new file under it should stay off the site with no
+# further edit here. It is excluded rather than navved because none of it belongs on the site;
+# excluding the directory is what keeps the next note from silently reopening the build failure this
+# line fixes (a tracked-but-unlisted page is a `--strict` abort, which is how this was found).
 exclude_docs: |
   /hooks/llms_txt_staleness.py
   /hooks/__pycache__/
   /overrides/main.html
+  /superpowers/
 
 theme:
   name: material
