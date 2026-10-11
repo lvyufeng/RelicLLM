@@ -44,6 +44,7 @@ implicit in V4-Flash's runtime.
 from __future__ import annotations
 
 import torch
+import torch.nn.functional as F
 
 from relic_core.kernels.ops import (
     Packed4BitWeightAlongK,
@@ -60,6 +61,7 @@ from relic_core.kernels.ops import (
 __all__ = [
     "Packed4BitWeightAlongK",
     "act_quant",
+    "block_fp8_act_quant",
     "dequant_fp4_weight",
     "dequant_fp8_weight",
     "fp4_act_quant",
@@ -67,6 +69,7 @@ __all__ = [
     "fp4_gemm",
     "fp8_gemm",
     "hc_split_sinkhorn",
+    "quantized_linear",
     "sparse_attn",
 ]
 
@@ -196,3 +199,80 @@ def dequant_fp4_weight(
     return soft_fp4_blockfp4_weight_dequant(
         Packed4BitWeightAlongK.convert_from(weight), scale, block_size, impl="auto"
     )
+
+
+# The reference's `kernel.py` globals: one fp8 scale per 32 activations, E4M3 as the code format,
+# 448 as its largest finite, and 1e-4 as the amax floor. `scale_fmt="ue8m0"` is not optional -- the
+# E8M0 scale the GEMM reads is the power of two these three constants produce.
+_FP8_BLOCK_SIZE = 32
+_FP8_MAX = 448.0
+_FP8_AMAX_FLOOR = 1e-4
+
+
+def block_fp8_act_quant(
+    x: torch.Tensor, block_size: int = _FP8_BLOCK_SIZE
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """The reference's `act_quant(x, 32, "ue8m0", float8_e8m0fnu)` without a kernel.
+
+    `relic_core.kernels.ops.act_quant` reproduces the same block-32 arithmetic, but it is a *kernel*
+    binding whose output dtype and implementation are chosen by the host. The fix needs this to be
+    pure torch: on a card with no fp8 tensor path (sm_75) the kernel binding still resolves to a
+    soft path and would agree, but on a card that has one it may not, and the point of the primitive
+    is to be the same arithmetic on every card. So the three steps are written out here:
+
+    1. ``amax = x.abs().view(-1, K // block_size, block_size).amax(-1)``, then ``clamp_min(1e-4)``.
+       The floor is the reference's ``T.max(amax_local[i], 1e-4)`` -- an all-zero block must still
+       get a nonzero scale, because that scale is divided out on the way back.
+    2. ``scale = 2 ** ceil(log2(amax / 448))``. The reference's ``fast_round_scale(amax, 1/448)`` is
+       exactly this bit trick, so the result is the smallest power of two at or above ``amax / 448``,
+       which is what makes the clamped ratio land inside the fp8 range without a second clamp.
+    3. ``quant = clamp(x / scale, -448, 448).to(torch.float8_e4m3fn)``.
+
+    Returns ``(quant, scale)`` where ``quant`` is ``float8_e4m3fn`` shaped like ``x`` and ``scale``
+    is fp32 ``[..., K // block_size]``.
+    """
+    k = x.size(-1)
+    if k == 0 or block_size <= 0 or k % block_size:
+        raise ValueError(f"last dim {k} is not a positive multiple of block_size {block_size}")
+
+    flat = x.contiguous().view(-1, k).to(torch.float32)
+    amax = flat.abs().view(-1, k // block_size, block_size).amax(dim=-1)
+    amax = amax.clamp_min(_FP8_AMAX_FLOOR)
+    scale = torch.pow(2.0, torch.ceil(torch.log2(amax / _FP8_MAX)))
+    scale_full = scale.repeat_interleave(block_size, dim=-1)
+    quant = torch.clamp(flat / scale_full, -_FP8_MAX, _FP8_MAX).to(torch.float8_e4m3fn)
+    return quant.view_as(x), scale.to(torch.float32).view(*x.shape[:-1], k // block_size)
+
+
+def quantized_linear(
+    x: torch.Tensor,
+    weight: torch.Tensor,
+    *,
+    quantized: bool = False,
+    block_size: int = _FP8_BLOCK_SIZE,
+) -> torch.Tensor:
+    """The reference's `linear()` on the soft path, with the weight already dequantized.
+
+    ``quantized=False`` is the no-scales path and it is exactly ``F.linear(x, weight)`` -- not an
+    approximation of it, the same call. That is the seam the bf16 build stays on, and the seam
+    ``test_models_deepseek_v4_1_reference_parity.py`` exercises with ``dtype="bf16",
+    expert_dtype=None``.
+
+    ``quantized=True`` is the reference's with-scales path. The ``weight`` handed in is the *dense*
+    tensor the loader already produced, so there is no weight scale here and none is needed: an fp8
+    e4m3 or fp4 e2m1 code carries at most three mantissa bits and a block scale is a power of two,
+    so the loader's ``dequant`` is exact and ``weight`` equals the reference's ``dequant(weight,
+    scale)`` bit for bit. What is missing from the port and restored here is the *activation*: it
+    goes through :func:`block_fp8_act_quant`, and the product accumulates in fp32 and is narrowed
+    once, to ``x.dtype``.
+
+    The weight is upcast to fp32 explicitly even though it is already bf16, so the accumulator's
+    width is a property of this function and not of what the caller happened to hand in; the upcast
+    is free of information (bf16 is exact in fp32) and it fixes the reduction's width, which is what
+    the reference's GEMM does.
+    """
+    if not quantized:
+        return F.linear(x, weight)
+    act, act_scale = block_fp8_act_quant(x, block_size)
+    dequant_act = act.to(torch.float32) * act_scale.repeat_interleave(block_size, dim=-1)
+    return torch.matmul(dequant_act, weight.to(torch.float32).transpose(0, 1)).to(x.dtype)
