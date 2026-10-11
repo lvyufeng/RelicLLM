@@ -327,6 +327,13 @@ def test_w2_quantizes_the_post_cast_activation_not_the_fp32_one(monkeypatch) -> 
 
     expert_forward(x, w1, w2, w3, limit, None, quantized=True)
 
+    # Snapshot w2's input NOW, before rebuilding the expected value. The rebuild below runs its own
+    # `quantized_linear(..., quantized=True)` calls, which go through the still-installed spy and
+    # append to `seen` -- so a `seen[-1]` read after the rebuild is the rebuild's input, not w2's.
+    # This is the bug that made the first version of this test fail against a correct implementation.
+    assert len(seen) == 3, f"{len(seen)} quantizations from the forward, expected 3"
+    w2_input = seen[-1]
+
     # The intermediate has to be rebuilt the *quantized* way: in the real forward the gate and up
     # projections are themselves quantized, so a `mid_cast` built from plain `F.linear` is a different
     # tensor and would fail this assertion even though the implementation quantized the right value.
@@ -336,9 +343,9 @@ def test_w2_quantizes_the_post_cast_activation_not_the_fp32_one(monkeypatch) -> 
     mid_cast = mid_fp32.to(x.dtype)
 
     # The third quantization is w2's, and it is the post-cast value: an fp32 input would have left
-    # `seen[-1].dtype` at fp32, which is the bug this pins.
-    assert seen[-1].dtype == x.dtype, f"w2's activation reached the quantizer at {seen[-1].dtype}"
-    assert torch.equal(seen[-1], mid_cast), "w2 did not quantize the post-cast activation"
+    # `w2_input.dtype` at fp32, which is the bug this pins.
+    assert w2_input.dtype == x.dtype, f"w2's activation reached the quantizer at {w2_input.dtype}"
+    assert torch.equal(w2_input, mid_cast), "w2 did not quantize the post-cast activation"
 
 
 def test_only_the_reference_fp8_sites_are_quantized(monkeypatch) -> None:
