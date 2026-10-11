@@ -51,10 +51,37 @@
       344,
       260
     ],
-    "text": " The golden fixture. The golden fixture. This is a test. This is a"
+    "text": " The golden fixture. The golden fixture. This is a test. This is a",
+    "logits_check": {
+      "step": 0,
+      "top_k": 8,
+      "token_ids": [
+        455,
+        1,
+        1162,
+        223,
+        342,
+        660,
+        2600,
+        983
+      ],
+      "values": [
+        17.896812438964844,
+        17.556438446044922,
+        17.105012893676758,
+        16.888290405273438,
+        16.666645050048828,
+        16.65645980834961,
+        16.49590301513672,
+        16.400062561035156
+      ],
+      "prompt_tokens": 9,
+      "atol": 0.0,
+      "rtol": 0.0
+    }
   },
-  "commit": "cb4b6ee",
-  "taken_at": "2026-10-08",
+  "commit": "f4bc30f",
+  "taken_at": "2026-10-10",
   "card": "cuda 7.5 (Turing / RTX 2080 Ti)",
   "notes": "the host-PyTorch V4.1 runtime: four ranks, experts in a resident host bank; startup pins the bank before the rank answers"
 }
