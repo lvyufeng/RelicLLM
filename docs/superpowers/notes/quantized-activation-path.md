@@ -30,20 +30,43 @@ weight; what it drops is (a) quantizing the activation to fp8 and (b) accumulati
 ## The experiment (single-variable)
 
 Run DeepSeek's unmodified `model.py` on the same 8 cards, same TP8 weights, same host-offload, and
-replace **only** the `linear` function. Three variants, one prompt (the 9 raw token ids the golden
-fixture uses), step-0 logits:
+replace **only** the `linear` function. One prompt (the 9 raw token ids the golden fixture uses):
 
 | step-0 top-8 | argmax |
 |---|---|
-| official, unmodified | `[455, 2052, 983, 1162, 5715, 12025, 6948, 35857]` | **455** |
-| official, `linear` = dequant weight -> bf16 `F.linear` (the port's arithmetic) | `[1, 455, 1162, 223, 983, 342, 2143, 539]` | **1 (EOS)** |
-| official, `linear` = `act_quant` + dequant weight -> **fp32** matmul -> bf16 | `[455, 1, 4895, 1162, 223, 983, 342, 19414]` | **455** |
+| official, unmodified (the fixture's step 0) | `[455, 223, 342, 539, 2275, 1004, 983, 1162]` | **455** |
+| official, `linear` = dequant weight -> bf16 `F.linear` (the port's arithmetic) | see below | **1 (EOS)** |
+| official, `linear` = `act_quant` + dequant weight -> **fp32** matmul -> bf16 | see below | 455 or 1 -- not reproducible |
+
+**Correction, 2026-10-11.** An earlier version of this table quoted the official step-0 row as
+`[455, 2052, 983, 1162, 5715, 12025, 6948, 35857]`. That is **step 8**, not step 0: the raw dump
+`/tmp/ref_logits_raw9.pt` is shaped `(16, 129280)` -- sixteen autoregressive steps, despite the
+"raw9" name -- and the earlier comparison indexed row 8. Row 0 is
+`[455, 223, 342, 539, 2275, 1004, 983, 1162]`, which is exactly the committed fixture
+`tests/fixtures/reference/v41.json`. **The fixture is correct; this note was not.** Rows 2 and 3 of
+the old table were drawn from the same mis-indexed comparison and their step-0 values are being
+re-measured.
 
 Row 2 is the falsification: the port's arithmetic alone, with every other part of the official model
-untouched, produces the port's EOS-first answer. Row 3 shows the reference's own activation
-quantization restores the official argmax. The residual in row 3's tail (max_abs 9.6 vs official)
-is the block-32 activation scale and the fp32 accumulation being approximated rather than reproduced
-exactly; it is the subject of the fix, not evidence against the diagnosis.
+untouched, produces the port's EOS-first answer (argmax 1). Row 3 shows the reference's own
+activation quantization moving the answer back toward 455.
+
+**Row 3 is not bit-reproducible, and that is the sharper finding.** The official is: two independent
+official processes agree to `max_abs = 0.000000`, argmax 455. But the soft `act_quant` + fp32-matmul
+proxy gives step-0 argmax **455 in one run of three and 1 in the other two**, with pairwise
+`max_abs` of 3.8-6.5 between its own runs -- on an RTX 4090 the soft `x @ w.T` runs through cuBLAS
+with unpinned algorithm selection, while the official runs its own deterministic tilelang kernel.
+Per-op the soft is *unbiased* (signed mean -0.0011 bf16 ulp, <= 1.0 ulp against the fp64 truth) and
+the kernel is one rounding event noisier (<= 1.075 ulp). So the ~9 step-0 `max_abs` is ~1 ulp/layer
+of rounding-order difference chained over 40 layers, not a bias -- and **no pure-torch soft path can
+be made bit-identical to the oracle**. The acceptance is therefore **token-level agreement, not
+value-level**; do not assert a tiny logits tolerance against the reference.
+
+One number is *not* noise and remains open: the official `logit[1]` (EOS) is 15.05, while the soft
+gives a stable ~18.5 (+3.4 logits, ~55 ulp) even as `logit[455]` only wobbles (18.0-18.85). An
+unbiased <= 1 ulp/op chain cannot lift one logit by a stable 55 ulp, so the soft path carries a
+systematic error somewhere -- the fp4 expert path, a host-offload summation order, or the head's
+accumulator width -- and it is what decides the flip. It is being localized.
 
 ## Why no existing test caught it
 
