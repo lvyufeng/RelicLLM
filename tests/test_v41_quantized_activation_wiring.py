@@ -181,8 +181,27 @@ def test_the_dense_flag_reaches_the_attention_projections() -> None:
     assert torch.equal(out_bf16, out_bf16_second)
 
 
-def test_the_dense_flag_reaches_the_engram_wkv() -> None:
-    """`Engram.wkv` is declared fp8 in the reference too, so it takes the same flag."""
+def test_the_dense_flag_reaches_the_engram_wkv(monkeypatch) -> None:
+    """`Engram.wkv` is declared fp8 in the reference too, so the flag has to arrive at that site.
+
+    The *output* cannot be the discriminator here, and asserting on it is a test bug rather than a
+    wiring gap. `wkv`'s input is `embed.lookup(...)` -- a table of fp8 e4m3 codes dequantized to
+    `LINEAR_DTYPE` -- so it is fp8-exact by construction and re-quantizing it is lossless. Measured:
+    `quantized_linear(kv, w, True)` and `(..., False)` differ by `max|diff| == 0.0`, and quantizing
+    `kv` itself is a no-op. That is *faithful*: the reference's own `act_quant` on this activation is
+    a no-op for the same reason, so the two builds agreeing bit for bit is the correct behaviour, not
+    a dropped flag. What the flag really chooses is whether the site runs the quantized path at all,
+    so this asserts at the quantizer's input instead.
+    """
+    seen: list[torch.Tensor] = []
+    real = kernels.block_fp8_act_quant
+
+    def spy(value, block_size=32):
+        seen.append(value.detach().clone())
+        return real(value, block_size)
+
+    monkeypatch.setattr(kernels, "block_fp8_act_quant", spy)
+
     layout = EngramLayout.from_config(_cfg().__dict__)
     torch.manual_seed(0)
     table = ResidentEngramTable(
@@ -196,11 +215,10 @@ def test_the_dense_flag_reaches_the_engram_wkv() -> None:
     on = _fill(Engram(_cfg(), 0, layout, table, quantized=True), seed=0)
     assert off._quantized is False and on._quantized is True
 
-    a = off(x, ids)
-    b = on(x, ids)
-    assert not torch.allclose(a.float(), b.float(), atol=1e-5), (
-        "the Engram's wkv runs the same arithmetic with and without the flag"
-    )
+    off(x, ids)
+    assert seen == [], "the Engram's wkv quantized its activation with the flag off"
+    on(x, ids)
+    assert len(seen) == 1, f"the Engram's wkv ran {len(seen)} quantizations, expected one for wkv"
 
 
 def test_the_routed_flag_reaches_the_store_and_the_shared_expert() -> None:
@@ -309,8 +327,11 @@ def test_w2_quantizes_the_post_cast_activation_not_the_fp32_one(monkeypatch) -> 
 
     expert_forward(x, w1, w2, w3, limit, None, quantized=True)
 
-    gate = F.linear(x, w1).float().clamp(max=limit)
-    up = F.linear(x, w3).float().clamp(min=-limit, max=limit)
+    # The intermediate has to be rebuilt the *quantized* way: in the real forward the gate and up
+    # projections are themselves quantized, so a `mid_cast` built from plain `F.linear` is a different
+    # tensor and would fail this assertion even though the implementation quantized the right value.
+    gate = kernels.quantized_linear(x, w1, quantized=True).float().clamp(max=limit)
+    up = kernels.quantized_linear(x, w3, quantized=True).float().clamp(min=-limit, max=limit)
     mid_fp32 = F.silu(gate) * up
     mid_cast = mid_fp32.to(x.dtype)
 
