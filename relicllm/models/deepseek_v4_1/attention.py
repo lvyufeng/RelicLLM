@@ -40,7 +40,7 @@ import torch.nn.functional as F
 from relic_core.kernels.ops import act_quant, fp4_act_quant, sparse_attn
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
-from relicllm.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3
+from relicllm.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3, quantized_linear
 from relicllm.models.deepseek_v4_1.kv_spec import kv_spec
 from relicllm.models.deepseek_v4_1.tp import indexer_row_split
 from relicllm.runtime.kv_spec import KVCacheSpec
@@ -786,6 +786,11 @@ class Indexer(nn.Module):
         self.rope_head_dim = _required_int(cfg, "rope_head_dim")
         self.index_topk = _required_int(cfg, "index_topk")
         self.softmax_scale = self.index_head_dim**-0.5
+        # `Indexer.wq_b` declares no dtype in the reference, so it takes the quantized-activation path
+        # like the attention projections. `weights_proj` and `wk` are declared bf16 there and the
+        # `Compressor` is not part of this seam at all, so neither carries this flag -- only the
+        # `wq_b` consumption sites below read it.
+        self._quantized = cfg.dtype == "fp8"
         self.wq_b = nn.Linear(
             _required_int(cfg, "q_lora_rank"),
             self.n_heads * self.index_head_dim,
@@ -958,7 +963,9 @@ class Indexer(nn.Module):
                 "module was built with the head split, which means the constructor's world and the "
                 "loader's cut disagree about the axis"
             )
-            q = self.wq_b(qr).unflatten(-1, (self.n_heads_global, self.index_head_dim))
+            q = quantized_linear(qr, self.wq_b.weight, quantized=self._quantized).unflatten(
+                -1, (self.n_heads_global, self.index_head_dim)
+            )
             weights = self.weights_proj(x) * (self.softmax_scale * self.n_heads_global**-0.5)
             tp = None
         else:
@@ -967,9 +974,9 @@ class Indexer(nn.Module):
             # narrower than the world has to take the head band out of it. `world=1` is the control
             # in both, and its module is the whole width, so it goes through the module either way.
             q = (
-                F.linear(qr, self._wq_b_for_heads())
+                quantized_linear(qr, self._wq_b_for_heads(), quantized=self._quantized)
                 if self.row_split and self.tp is not None
-                else self.wq_b(qr)
+                else quantized_linear(qr, self.wq_b.weight, quantized=self._quantized)
             ).unflatten(-1, (self._local_heads(), self.index_head_dim))
             # `weights` is one number per index head, and the sum below runs over heads -- so this
             # rank needs its own slice of the output while the scale stays the *global* head count.
@@ -1322,6 +1329,12 @@ class Attention(nn.Module):
         self.window_size = _required_int(cfg, "window_size")
         self.softmax_scale = self.head_dim**-0.5
         self.eps = _required_float(cfg, "norm_eps")
+        # `wq_a`, `wq_b`, `wkv` and `wo_b` declare no dtype in the reference, so they resolve to its
+        # `default_dtype` -- fp8 when the run is fp8 -- and take the quantized-activation path. The
+        # flag is read from the config once here because the loader has already collapsed every fp8
+        # weight to `LINEAR_DTYPE` and no tensor is left to test; `wo_a` is deliberately not this
+        # case -- the reference declares it bf16 -- so its einsum below stays untouched.
+        self._quantized = cfg.dtype == "fp8"
 
         self.attn_sink = nn.Parameter(torch.empty(self.n_heads, dtype=torch.float32, device=device))
         self.wq_a = nn.Linear(
@@ -1431,7 +1444,7 @@ class Attention(nn.Module):
         pos = Pos.of(pos)
         bsz, seqlen, _ = x.size()
         win = self.window_size
-        kv = self.kv_norm(self.wkv(x))
+        kv = self.kv_norm(quantized_linear(x, self.wkv.weight, quantized=self._quantized))
         apply_rotary_emb(kv[..., -self.rope_head_dim :], freqs_cis)
         act_quant(kv, FP8_BLOCK_SIZE, SCALE_FMT, SCALE_DTYPE, True)
         if pos.first():  # prefill: attend over this chunk, seeding the ring buffer for decode
@@ -1532,8 +1545,10 @@ class Attention(nn.Module):
         freqs_cis = self.freqs_cis[pos.span(seqlen)]
         rd = self.rope_head_dim
 
-        qr = self.q_norm(self.wq_a(x))
-        q = self.wq_b(qr).unflatten(-1, (self.n_heads, self.head_dim))
+        qr = self.q_norm(quantized_linear(x, self.wq_a.weight, quantized=self._quantized))
+        q = quantized_linear(qr, self.wq_b.weight, quantized=self._quantized).unflatten(
+            -1, (self.n_heads, self.head_dim)
+        )
         apply_rotary_emb(q[..., -rd:], freqs_cis)
 
         kv, topk_idxs = self._window_kv(x, freqs_cis, pos)
@@ -1553,7 +1568,7 @@ class Attention(nn.Module):
         o = o.view(bsz, seqlen, self.n_groups, -1)
         wo_a = self.wo_a.weight.view(self.n_groups, self.o_lora_rank, -1)
         o = torch.einsum("bsgd,grd->bsgr", o, wo_a)
-        y = self.wo_b(o.flatten(2))
+        y = quantized_linear(o.flatten(2), self.wo_b.weight, quantized=self._quantized)
         # wo_b is row-parallel, so this is the partial sum over groups and the one collective the
         # attention half of a layer needs.
         tp = self.tp

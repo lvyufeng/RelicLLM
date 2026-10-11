@@ -45,6 +45,7 @@ from relicllm.models.deepseek_v4_1.attention import (
     canonical_device,
 )
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
+from relicllm.models.deepseek_v4_1.kernels import quantized_linear
 from relic_core.kernels.ops import hc_split_sinkhorn
 
 __all__ = [
@@ -104,6 +105,7 @@ class Expert(nn.Module):
         swiglu_limit: float = 0.0,
         device: torch.device | str | None = None,
         world: int = 1,
+        quantized: bool = False,
     ):
         super().__init__()
         # `nn.Linear` rather than bare parameters so that the names line up with the checkpoint's:
@@ -118,9 +120,16 @@ class Expert(nn.Module):
         self.w2 = nn.Linear(inter, dim, bias=False, dtype=dtype, device=device)
         self.w3 = nn.Linear(dim, inter, bias=False, dtype=dtype, device=device)
         self.swiglu_limit = swiglu_limit
+        # Recorded at construction from the config's dtype, never re-derived from a weight: the
+        # loader has already collapsed the checkpoint's fp8/fp4 to `LINEAR_DTYPE`, so the tensor
+        # carries no trace of what it was and the flag is the only place that fact still lives.
+        self._quantized = quantized
 
     def forward(self, x: torch.Tensor, weights: torch.Tensor | None = None) -> torch.Tensor:
-        return expert_forward(x, self.w1.weight, self.w2.weight, self.w3.weight, self.swiglu_limit, weights)
+        return expert_forward(
+            x, self.w1.weight, self.w2.weight, self.w3.weight, self.swiglu_limit, weights,
+            quantized=self._quantized,
+        )
 
 
 def expert_forward(
@@ -130,6 +139,8 @@ def expert_forward(
     w3: torch.Tensor,
     swiglu_limit: float = 0.0,
     weights: torch.Tensor | None = None,
+    quantized: bool = False,
+    block_size: int = 32,
 ) -> torch.Tensor:
     """The reference's `Expert.forward`, with the three matrices passed in rather than owned.
 
@@ -140,17 +151,25 @@ def expert_forward(
     The gate and up projections are computed in fp32 and the clamp is applied there. That is not
     decoration -- `swiglu_limit` is 10.0 and the expert activations routinely exceed it, so doing
     the clamp in bf16 would round a value that is about to be clamped and change the result.
+
+    `quantized`/`block_size` are the reference's with-scales path, threaded here rather than read
+    off a weight dtype because the loader has already collapsed fp4 to `LINEAR_DTYPE` and there is
+    nothing left in the tensor to test. `w1` and `w3` each quantize `x` on their own -- the reference
+    is two separate `Linear` calls, not one, so the two quantizations are not folded into one. `w2`
+    quantizes after the `.to(dtype)`: the reference passes it `x.to(dtype)`, so the value that is
+    quantized is the cast one and not the fp32 intermediate. `quantized=False` is exactly
+    `F.linear`, which is what keeps a bf16 build bit-for-bit where it was.
     """
     dtype = x.dtype
-    gate = F.linear(x, w1).float()
-    up = F.linear(x, w3).float()
+    gate = quantized_linear(x, w1, quantized=quantized, block_size=block_size).float()
+    up = quantized_linear(x, w3, quantized=quantized, block_size=block_size).float()
     if swiglu_limit > 0:
         up = torch.clamp(up, min=-swiglu_limit, max=swiglu_limit)
         gate = torch.clamp(gate, max=swiglu_limit)
     out = F.silu(gate) * up
     if weights is not None:
         out = weights * out
-    return F.linear(out.to(dtype), w2)
+    return quantized_linear(out.to(dtype), w2, quantized=quantized, block_size=block_size)
 
 
 class RoutedExperts:
@@ -241,10 +260,14 @@ class ResidentRoutedExperts(RoutedExperts, nn.Module):
         swiglu_limit: float = 0.0,
         dtype: torch.dtype = LINEAR_DTYPE,
         device: torch.device | str | None = None,
+        quantized: bool = False,
     ):
         super().__init__()
         self.n_experts = n_experts
         self.swiglu_limit = swiglu_limit
+        # The routed half's flag, `cfg.expert_dtype == "fp4"` at the one caller that holds a config
+        # (`MoE.__init__`); `CheckpointRoutedExperts` takes the same value from `load_backbone`.
+        self._quantized = quantized
         # One leading axis per matrix rather than one `Expert` module per expert. The checkpoint's
         # names are `experts.{i}.w{1,2,3}.weight`; a bank indexes instead, so a loader mapping one
         # onto the other has to slice. That is the whole of the difference, and it is what keeps a
@@ -264,7 +287,10 @@ class ResidentRoutedExperts(RoutedExperts, nn.Module):
             if counts[i] == 0:
                 continue
             idx, top = torch.where(indices == i)
-            y[idx] += expert_forward(x[idx], self.w1[i], self.w2[i], self.w3[i], self.swiglu_limit, weights[idx, top, None])
+            y[idx] += expert_forward(
+                x[idx], self.w1[i], self.w2[i], self.w3[i], self.swiglu_limit,
+                weights[idx, top, None], quantized=self._quantized,
+            )
         return y
 
 
@@ -330,13 +356,17 @@ class Engram(nn.Module):
     sigmoid, which is what the training kernel does and not what a plain sigmoid would.
     """
 
-    def __init__(self, cfg: V41TextConfig, layer_id: int, layout, table: EngramTable, device=None):
+    def __init__(self, cfg: V41TextConfig, layer_id: int, layout, table: EngramTable, device=None,
+                 quantized: bool = False):
         super().__init__()
         self.layer_id = layer_id
         self.layer_hash_index = list(layout.layer_ids).index(layer_id)
         self.dim = cfg.dim
         self.hc_mult = cfg.hc_mult
         self.clamp_value = 1e-6
+        # `wkv` is fp8 in the reference (no dtype declared), so the `Block` that builds this Engram
+        # records the same `cfg.dtype == "fp8"` flag the attention and shared experts carry.
+        self._quantized = quantized
 
         self.embed = table
         n_hash_cols = (layout.max_ngram_size - 1) * layout.n_heads
@@ -360,7 +390,10 @@ class Engram(nn.Module):
 
         x: [B, L, hc_mult, dim]; hash_ids: [B, L, n_hash_cols]; token_mask: [B, L], False shuts the
         gate so those positions pass through untouched."""
-        kv = self.wkv(self.embed.lookup(hash_ids, x.device).flatten(-2))
+        kv = quantized_linear(
+            self.embed.lookup(hash_ids, x.device).flatten(-2), self.wkv.weight,
+            quantized=self._quantized,
+        )
         key, value = kv.split([self.hc_mult * self.dim, self.dim], dim=-1)
         key = key.float().unflatten(-1, (self.hc_mult, self.dim))
         weight = self.q_weight.float() * self.k_weight.float()  # only ever used as a product
@@ -489,10 +522,12 @@ class MoE(nn.Module):
         # width other than the activation's is not a choice the two halves can make independently.
         # See `RoutedExperts.forward` for what a mismatch costs.
         self.shared_experts = Expert(
-            cfg.dim, cfg.moe_inter_dim, LINEAR_DTYPE, cfg.swiglu_limit, device=device, world=world
+            cfg.dim, cfg.moe_inter_dim, LINEAR_DTYPE, cfg.swiglu_limit, device=device, world=world,
+            quantized=(cfg.dtype == "fp8"),
         )
         self.routed = routed if routed is not None else ResidentRoutedExperts(
-            n_routed_experts, cfg.dim, cfg.moe_inter_dim, cfg.swiglu_limit, LINEAR_DTYPE, device=device
+            n_routed_experts, cfg.dim, cfg.moe_inter_dim, cfg.swiglu_limit, LINEAR_DTYPE, device=device,
+            quantized=(cfg.expert_dtype == "fp4"),
         )
         self.tp = None
 
@@ -551,7 +586,9 @@ class Block(nn.Module):
         if layout is not None and layer_id in layout.layer_ids:
             if engram_table is None:
                 raise ValueError(f"layer {layer_id} carries an Engram memory but no table was supplied")
-            self.engram = Engram(cfg, layer_id, layout, engram_table, device=device)
+            self.engram = Engram(
+                cfg, layer_id, layout, engram_table, device=device, quantized=(cfg.dtype == "fp8")
+            )
         self.attn_norm = RMSNorm(cfg.dim, self.norm_eps, device=device)
         self.ffn_norm = RMSNorm(cfg.dim, self.norm_eps, device=device)
         self.hc_mult = hc_mult = cfg.hc_mult

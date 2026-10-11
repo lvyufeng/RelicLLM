@@ -443,6 +443,7 @@ class CheckpointRoutedExperts(RoutedExperts):
         inter_dim: int,
         swiglu_limit: float = 0.0,
         cache_size: int = DEFAULT_EXPERT_CACHE,
+        quantized: bool = False,
     ) -> None:
         self.checkpoint = checkpoint
         self.layer_id = layer_id
@@ -451,6 +452,10 @@ class CheckpointRoutedExperts(RoutedExperts):
         self.inter_dim = inter_dim
         self.swiglu_limit = swiglu_limit
         self.cache_size = cache_size
+        # The routed half's flag, `config.expert_dtype == "fp4"`, threaded from `load_backbone` --
+        # this class holds no config. It never tests a weight: `expert()` already expanded the packed
+        # fp4 to `LINEAR_DTYPE`, so there is nothing in the tensor for a runtime check to read.
+        self._quantized = quantized
         self._cache: dict[int, tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = {}
         self._order: list[int] = []
         self.misses = 0
@@ -495,7 +500,10 @@ class CheckpointRoutedExperts(RoutedExperts):
                 continue
             rows, slot = torch.where(indices == expert)
             w1, w2, w3 = self.expert(expert)
-            y[rows] += expert_forward(x[rows], w1, w2, w3, self.swiglu_limit, weights[rows, slot, None])
+            y[rows] += expert_forward(
+                x[rows], w1, w2, w3, self.swiglu_limit, weights[rows, slot, None],
+                quantized=self._quantized,
+            )
         return y
 
 
@@ -1023,6 +1031,7 @@ def load_backbone(
             residents = instance.residents
         return instance
 
+    routed_quantized = config.expert_dtype == "fp4"
     routed = {}
     for layer_id in range(n_layers):
         n_experts = _moe_shape(config, layer_id)[0]
@@ -1034,6 +1043,7 @@ def load_backbone(
             inter_dim=config.moe_inter_dim,
             swiglu_limit=config.swiglu_limit or 0.0,
             cache_size=expert_cache,
+            quantized=routed_quantized,
         )
     tables = (
         {
