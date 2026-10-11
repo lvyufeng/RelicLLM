@@ -193,6 +193,21 @@ time and dispatches on it.
   shared expert (the reference builds `Expert(..., dtype=None)` there, so it is fp8, not fp4).
 * `bias=None` everywhere: the reference's `linear()` asserts it.
 
+One site's quantization is a *no-op*, and that is faithful rather than a bug to remove. `Engram.wkv`
+is quantized -- it is on the list above for the right reason -- but its input is
+`self.embed.lookup(hash_ids, ...)`, the dequantized rows of an fp8 e4m3 engram table. Those rows carry
+three mantissa bits, so the block quantizer reproduces them exactly: measured, `quantized_linear(kv,
+w, True)` and `(..., False)` differ by `max|diff| == 0.0`, and `act_quant` on `kv` alone is lossless.
+The reference's own `act_quant` on this activation is the same no-op, so wiring the flag there does not
+change a single bit today. It is wired anyway because the *dispatch* is what has to be right: the site
+belongs to the quantized path by the reference's own dtype resolution, and a later change to the
+engram table's width (a bf16 table, a finer scale layout) would make the quantization bite with no
+code change here. Do not delete the flag from `Engram.wkv` on the strength of today's no-op -- that
+would move the seam's decision site back into the reference's constructor and make it invisible. The
+test that would once have caught a *regression* here cannot observe the output either, for the same
+reason, so `test_the_dense_flag_reaches_the_engram_wkv` asserts at the quantizer's input (zero calls
+with the flag off, one with it on) rather than on the forward's numbers.
+
 The split must not break `test_models_deepseek_v4_1_reference_parity.py`, which builds random
 parameters with `dtype="bf16", expert_dtype=None`. Under that config every boolean is off, every
 `quantized_linear` is called with `quantized=False`, and the tree is the plain `F.linear` tree it is
