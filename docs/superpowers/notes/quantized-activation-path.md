@@ -62,11 +62,27 @@ of rounding-order difference chained over 40 layers, not a bias -- and **no pure
 be made bit-identical to the oracle**. The acceptance is therefore **token-level agreement, not
 value-level**; do not assert a tiny logits tolerance against the reference.
 
-One number is *not* noise and remains open: the official `logit[1]` (EOS) is 15.05, while the soft
-gives a stable ~18.5 (+3.4 logits, ~55 ulp) even as `logit[455]` only wobbles (18.0-18.85). An
-unbiased <= 1 ulp/op chain cannot lift one logit by a stable 55 ulp, so the soft path carries a
-systematic error somewhere -- the fp4 expert path, a host-offload summation order, or the head's
-accumulator width -- and it is what decides the flip. It is being localized.
+One number is *not* noise: the official `logit[1]` (EOS) is 15.05 (rank 137), while the soft gives a
+stable ~19.2 (rank 1) -- a run-invariant **+4.16**, even as `logit[455]` only wobbles (18.0-18.9).
+Every no-op cause was ruled out: no linear op is biased (fp8 *and* all three fp4 expert weights sit
+within +/-0.003 ulp of the fp64 truth), and the MoE, engram, shared-expert, head, norm and dtype
+paths are byte-identical between the official and soft runs -- only `linear()` is swapped. Pinning
+`CUBLAS_WORKSPACE_CONFIG` and `NCCL_ALGO` does not remove it. So the residual is a **token-specific,
+data-dependent toggle** -- most plausibly one MoE routing near-tie (the gate's expert choice flips
+when a hidden state moves by a ulp) amplified over 40 layers and per-step KV re-quantization -- whose
+sign on this token sits at the rounding floor. It is not a bias and not fixable by a rounding order.
+
+**This is why the soft is a diagnostic, not the fix's proof.** The soft is a correct, unbiased,
+<=1-ulp reimplementation, but it reaches only rank-2 on token 455 and flips argmax because two
+tokens are ~4 logits from a tie. The **port (relicllm) runs its own kernels and its own MoE
+dispatch**, so whether *it* reproduces 455 is a separate, still-unmeasured question -- the official
+oracle can only be settled by running the port itself, not the soft proxy.
+
+**A design-relevant fact this pinned:** the fp4 branch of the reference casts `e2m1 -> fp32 -> e4m3`
+per element (exact, since e2m1 is a subset of e4m3) and then runs the **same fp8x fp8 kernel** as the
+fp8 branch, with `block_K = 32` and the same fp32 accumulator. So the activation is *always* fp8 and
+the fp4/fp8 distinction is only the weight's storage format -- which is why one activation path (the
+primitive's single `block_fp8_act_quant`) serves both weight kinds.
 
 ## Why no existing test caught it
 
