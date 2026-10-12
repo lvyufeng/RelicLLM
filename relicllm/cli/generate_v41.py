@@ -325,7 +325,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
                              "same positions as the eager path, and a pool of card memory on the "
                              "other side of the choice: 40 layers share one pool. Needs a card "
                              "(the position reaches the graphs as a tensor) and a "
-                             "--max-new-tokens above zero (the recording is a decode step). "
+                             "--max-new-tokens above zero (the recording is a decode step). A tree "
+                             "that is not on a CUDA card -- the host, or another accelerator -- has "
+                             "no stream to capture onto and nothing to replay beside, so asking "
+                             "there is dropped rather than refused: the banner says "
+                             "`decode not graphed: ...` and the run decodes eagerly. "
                              "Default off. `--no-decode-graphs` is the control column")
     parser.add_argument("--dump-logits", default=None, metavar="PATH",
                         help="write every generated token and the full logits row that produced "
@@ -459,6 +463,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     from transformers import AutoTokenizer
 
     from relicllm.models.deepseek_v4_1.config import load_config
+    from relicllm.models.deepseek_v4_1.graphs import GRAPH_DEVICE_TYPE
     from relicllm.models.deepseek_v4_1.loader import DEFAULT_EXPERT_CACHE, V41Checkpoint, build_hasher
     from relicllm.models.deepseek_v4_1.loader import load_backbone
     from relicllm.models.deepseek_v4_1 import resident_bank
@@ -508,18 +513,25 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # What the banner prints, what `generate` is asked for and what the dump records is the loop that
     # actually runs, not the option's value. A decode graph is captured onto a CUDA stream and
-    # replayed beside the attention caches, so a tree on the host has nothing to record and
-    # `DecodeGraphs` refuses it outright -- the answer here is not to ask.
-    decode_graphs = bool(args.decode_graphs) and device is not None
+    # replayed beside the attention caches, so a tree that is not on a CUDA card has nothing to
+    # record and `DecodeGraphs` refuses it outright -- the answer here is not to ask. The predicate
+    # is that class's own (`graphs.GRAPH_DEVICE_TYPE`) rather than "a device was named": `--device`
+    # is a free-form string that nothing validates against the host, so `--device cpu` on a card host
+    # is a host tree, and a torchrun launch on an Ascend host drives an npu one -- both would be
+    # claimed as graphed here and then refused one line into the run. One constant, so what this
+    # asks for and what that class refuses cannot drift apart.
+    tree_where = "the host" if device is None else str(device)
+    decode_graphs = (
+        bool(args.decode_graphs) and device is not None and device.type == GRAPH_DEVICE_TYPE
+    )
     if decode_graphs:
         decode_note = ", decode graphed a block at a time"
     elif args.decode_graphs:
-        decode_note = ", decode not graphed: the tree is on the host"
+        decode_note = f", decode not graphed: the tree is on {tree_where}"
     else:
         decode_note = ""
     say(
-        f"network {world} rank{'s' if world > 1 else ''}, tree on "
-        f"{'the host' if device is None else device}, experts on "
+        f"network {world} rank{'s' if world > 1 else ''}, tree on {tree_where}, experts on "
         f"{'the host' if expert_device is None else f'{expert_device} x{expert_world}'}, "
         f"context {max_seq_len}, resident checkpoint "
         f"{'on' if resident_bank.enabled() else 'off'}"

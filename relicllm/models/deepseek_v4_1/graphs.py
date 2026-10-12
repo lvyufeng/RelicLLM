@@ -148,22 +148,54 @@ def _record(body: Callable[[], None], pool, warmup: int = CAPTURE_WARMUP) -> tor
     return graph
 
 
-def _cache_device(model: torch.nn.Module) -> torch.device:
-    """The card a recording lands on: the one the attention caches are on.
+#: The device type a recording can land on. These are ``torch.cuda`` graphs -- the stream, the pool
+#: handle and the capture all come from that namespace -- so a tree whose caches are anywhere else,
+#: the host or an Ascend card, has nothing to record into. Named once because two callers have to
+#: agree on it: `DecodeGraphs` refuses a tree that is not on this type, and a caller deciding whether
+#: to *ask* for graphs resolves its option against the same constant instead of spelling "cuda" again.
+GRAPH_DEVICE_TYPE = "cuda"
 
-    Read the same way ``generate._cache_device`` and ``v41_backend._flag_device`` read it, and for
-    the same reason -- nothing in ``load_backbone`` promises that this process's current device is
-    the one the tree is on, and the caches are buffers, so a buffer is the only place the answer is
-    written down. The three readers differ in what they do with the answer: one places a position
-    tensor on it, one puts a collective's flag there, and this one refuses to record anywhere else.
+
+def cache_device_or_none(model: torch.nn.Module) -> torch.device | None:
+    """The device the attention caches are on, or ``None`` for a model that has no such buffer.
+
+    The walk is the one ``generate._cache_device`` makes, and for the same reason -- nothing in
+    ``load_backbone`` promises that this process's current device is the one the tree is on, and the
+    caches are buffers, so a buffer is the only place the answer is written down. What is not the
+    same is the policy, which belongs to the caller and not to the walk: a caller *about to record*
+    has to be told when there is no cache to record beside, and :func:`_cache_device` is that
+    caller; a caller asking only "can a graph be captured here at all" -- ``v41_backend`` resolving
+    its ``decode_graphs`` option -- has the same answer for a model without the buffer as for one
+    whose cache is on the host, and gets it here rather than having to catch a refusal it never
+    meant to make.
     """
     for name, buffer in model.named_buffers():
         if name.endswith("window_kv_cache"):
-            return buffer.device
-    raise RuntimeError(
-        "the decode graphs replay the attention layers, and this model has no `window_kv_cache` "
-        "buffer for their position to be sized against -- it is not a V4.1 backbone"
-    )
+            return torch.device(buffer.device)
+    return None
+
+
+def _cache_device(model: torch.nn.Module) -> torch.device:
+    """The card a recording lands on: the one the attention caches are on.
+
+    Read the way ``generate._cache_device`` reads it -- the same walk of ``named_buffers``, over the
+    same buffer name, against a model the caller has already unwrapped -- because nothing in
+    ``load_backbone`` promises that this process's current device is the one the tree is on, and the
+    caches are buffers, so a buffer is the only place the answer is written down.
+
+    ``v41_backend._flag_device`` reads that buffer for those reasons too, but it is not the same
+    reader and the three are not interchangeable: it reaches the model through ``self._front.model``
+    rather than unwrapping, so a bare-module front raises ``AttributeError`` there and not here, and
+    it answers ``torch.device("cpu")`` for a model without the buffer where this refuses by name.
+    What the readers share is the buffer and the name, not the contract.
+    """
+    caches = cache_device_or_none(model)
+    if caches is None:
+        raise RuntimeError(
+            "the decode graphs replay the attention layers, and this model has no `window_kv_cache` "
+            "buffer for their position to be sized against -- it is not a V4.1 backbone"
+        )
+    return caches
 
 
 class LayerGraphs:
@@ -382,9 +414,10 @@ class DecodeGraphs:
         # on reading the values the capture pass left there: the loop picks the capture step's token
         # over and over and the answer is one token repeated. Refusing is the only answer that cannot
         # be mistaken for a working run; the eager loop is what a caller in that position wants, and
-        # `v41_backend` asks for it rather than asking for graphs.
+        # `v41_backend` asks for it rather than asking for graphs -- off this same constant, so the
+        # callers that decide not to ask and the refusal below cannot drift apart.
         caches = _cache_device(model)
-        if caches.type != "cuda":
+        if caches.type != GRAPH_DEVICE_TYPE:
             raise RuntimeError(
                 "the decode graphs are captured onto a card and replayed beside the attention "
                 f"caches, and this model's are on {caches}. A capture here records an empty graph "

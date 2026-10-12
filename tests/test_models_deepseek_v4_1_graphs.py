@@ -32,10 +32,12 @@ WINDOW = 4
 
 
 class _Attention(torch.nn.Module):
-    """The buffer and nothing else -- the placement reader reads the cache, not the layer."""
+    """The buffer and the one other attribute the class reads: the placement off the cache, the
+    compressor variant off the attention (``None`` is the no-compressor layer, ratio 0)."""
 
     def __init__(self, device: str, *, cached: bool = True) -> None:
         super().__init__()
+        self.compressor = None
         if cached:
             self.register_buffer("window_kv_cache", torch.zeros(1, WINDOW, device=device))
 
@@ -89,12 +91,24 @@ def test_the_placement_is_read_off_the_buffer_itself() -> None:
 
 @CUDA
 def test_a_tree_whose_caches_are_on_a_card_is_not_refused() -> None:
-    """The check refuses a placement, not the option. `layer_ids=[]` keeps the walk off the blocks, so
-    what is asserted here is the precondition and not a layer recording a graph -- that is
-    `test_models_deepseek_v4_1_attention.py`'s subject."""
-    graphs = DecodeGraphs(_Backbone("cuda"), layer_ids=[])
+    """The other half of the same predicate, and the half a check like this is easy to get wrong from
+    the far side: a tree that *is* on a card has to reach the walk, because the walk is what a host
+    tree loses -- one `LayerGraphs` installed per block, and the pool every recording will share.
+
+    So the constructor is run with the real selection rather than `layer_ids=[]`, which would leave
+    `layers` empty no matter what the walk did, and what is asserted is the installation. `captured`
+    is still False afterwards because a constructor records nothing -- `capture_pass` is what
+    records, and a layer recording a graph is `test_models_deepseek_v4_1_attention.py`'s subject.
+    """
+    model = _Backbone("cuda")
+    graphs = DecodeGraphs(model)
     try:
+        assert graphs.pool is not None
         assert graphs.captured is False
-        assert graphs.layers == []
+        assert [layer.block for layer in graphs.layers] == list(model.layers)
+        assert all(block.decode_graph is layer for block, layer in zip(model.layers, graphs.layers))
     finally:
         graphs.release()
+    # Releasing is the other end of installing: the blocks go back to the eager body, so a layer that
+    # outlives the graphs does not replay into a pool nothing owns.
+    assert all(block.decode_graph is None for block in model.layers)

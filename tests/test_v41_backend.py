@@ -414,6 +414,38 @@ def test_the_decode_graph_is_on_unless_the_launch_says_otherwise(tmp_path):
     assert backend._options.decode_graphs is False
 
 
+def test_the_decode_graph_is_dropped_where_the_tree_cannot_carry_one(tmp_path):
+    """The option is the ask; the answer is read off the tree that was loaded.
+
+    A recording is a CUDA stream and a replay beside the attention caches, so a front with no cache
+    at all -- the injected-``loader`` shape, where ``_load`` never runs -- and a host-resident one
+    both resolve to the eager loop, and a front whose caches are on a card resolves to the graphed
+    one. The option is on throughout: what differs between the three is the placement and nothing
+    else, which is the point of resolving it here rather than trusting the flag.
+    """
+    caches = "layers.0.attention.window_kv_cache"
+
+    # Nothing is resolved at construction: the answer is a fact about a tree, and there is no tree
+    # yet. It is `_ensure_loaded` that makes the call, on every path that leaves one behind.
+    bufferless, _ = _build(_checkpoint(tmp_path))
+    assert bufferless._decode_graphs is None
+    bufferless._resolve_decode_graphs()
+    assert bufferless._decode_graphs is False
+
+    host, _ = _build(_checkpoint(tmp_path), buffers=[(caches, FakeBuffer("cpu"))])
+    host._resolve_decode_graphs()
+    assert host._decode_graphs is False
+
+    card, _ = _build(_checkpoint(tmp_path), buffers=[(caches, FakeBuffer("cuda:0"))])
+    card._resolve_decode_graphs()
+    assert card._decode_graphs is True
+
+    # The option's own off switch is answered without reading the tree at all.
+    off, _ = _build(_checkpoint(tmp_path), backend_options={"decode_graphs": False})
+    off._resolve_decode_graphs()
+    assert off._decode_graphs is False
+
+
 @pytest.mark.parametrize(
     "overrides, message",
     [
@@ -591,7 +623,11 @@ def test_the_loop_gets_the_requests_sampling_and_this_runs_levers(tmp_path, loop
     assert call["top_k"] == 40
     assert call["seed"] == 99
     assert call["eos_token_id"] == 1
-    assert call["graphs"] is True
+    # The option asked for graphs; what the loop is *handed* is the reading of the tree that was
+    # loaded, and this `FakeFront` has no attention cache at all -- the injected-`loader` shape. The
+    # resolution runs in `_ensure_loaded`, so this is the end-to-end answer for a host tree: the
+    # option is True and the request still runs, eagerly.
+    assert call["graphs"] is False
     assert call["front"] is backend._front
 
 

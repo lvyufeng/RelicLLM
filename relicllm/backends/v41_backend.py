@@ -432,11 +432,14 @@ class V41Backend(RuntimeAdapter):
         self._tokenizer_path = getattr(args, "tokenizer_path", None) or self._checkpoint
         self._max_seq_len = getattr(args, "max_model_len", None) or DEFAULT_MAX_SEQ_LEN
         self._prefill_chunk = self._options.prefill_chunk
-        # The option's own value, until `_load` can refine it against where the tree actually went: a
-        # decode graph is captured onto a card and replayed beside the attention caches, and `_load`
-        # is where that placement is decided. A backend that never loaded still has to answer
-        # `_run_payload`, and until something has placed the tree the option is the honest answer.
-        self._decode_graphs = bool(self._options.decode_graphs)
+        # `None` until a tree is loaded, and then what that tree can carry rather than what the
+        # option asked for: a decode graph is captured onto a card beside the attention caches, so a
+        # tree on the host has nothing to record and `_run_payload` must ask `generate` for the eager
+        # loop instead. `_resolve_decode_graphs` makes that call, and it is called from
+        # `_ensure_loaded` rather than from here or from `_load` because the answer is written on the
+        # loaded tree -- see that method for why the two injected paths need it there. Until then
+        # `None` is falsy, which is the honest answer for a backend that has not placed anything yet.
+        self._decode_graphs: bool | None = None
         self._world = int(getattr(args, "tensor_parallel_size", 1) or 1)
         self._rank = int(getattr(args, "tensor_parallel_rank", 0) or 0)
         #: The cards this launch named, in rank order -- empty when it named none, which is the
@@ -568,7 +571,53 @@ class V41Backend(RuntimeAdapter):
             # ones -- a caller's own `front`, a caller's own `loader` -- and `_load` returns early on
             # the loader's. The lock is what keeps it a single store: the build is idempotent but not
             # atomic, and a second one would replace a store that the first is already serving from.
+            self._resolve_decode_graphs()
             self._ensure_prefix_cache()
+
+    def _resolve_decode_graphs(self) -> None:
+        """Ask for graphs only where the tree that was loaded can carry one.
+
+        `_run_payload` hands `generate` this field, and the answer is a fact about the loaded tree
+        rather than about the option: a decode graph is captured onto a CUDA stream and replayed
+        beside the attention caches, so a tree whose caches are in host memory has nothing to record.
+        It is resolved here, beside the other per-loaded-front refinement, because this is the method
+        every path that ends with a loaded `_front` passes through -- and the two injected paths are
+        exactly the ones where a resolution kept anywhere else is skipped: `_load` returns at its top
+        for a caller's own `loader`, and a caller's own `front` never reaches it at all. Asking for
+        graphs on either of those and letting `DecodeGraphs` refuse is not a slower run but no run:
+        the refusal lands after the prompt's forward and after the hook has been handed the first
+        token, so the request dies mid-stream where the eager loop would have answered it.
+
+        The placement is read with the same reader `DecodeGraphs` is about to refuse on
+        (`graphs.cache_device_or_none`, off the caches' buffers) and compared against the same
+        constant, so "this caller does not ask" and "that class would refuse" are one rule rather
+        than two that have to be kept in step. A model with no `window_kv_cache` buffer at all
+        answers like the host tree it is not: there is no card here to record on, and a caller that
+        has to be told its front is not a V4.1 backbone is told by whatever built it.
+        """
+        if self._decode_graphs is not None:
+            return
+        if not self._options.decode_graphs:
+            self._decode_graphs = False
+            return
+        from relicllm.models.deepseek_v4_1.graphs import GRAPH_DEVICE_TYPE, cache_device_or_none
+
+        # `LoadedBackbone` wraps the tree rather than being an `nn.Module`, and the buffers the
+        # placement is read off are the tree's -- the same `getattr` `generate` and
+        # `_ensure_prefix_cache` take.
+        caches = cache_device_or_none(getattr(self._front, "model", self._front))
+        self._decode_graphs = caches is not None and caches.type == GRAPH_DEVICE_TYPE
+        if self._decode_graphs:
+            self._say("decode graphed a block at a time")
+        elif self._options.decode_graphs:
+            # The banner cannot carry this: it is printed before `load_backbone` is called, so all it
+            # could say is where the tree was *asked* to go. This is the tree the caches are on.
+            reason = (
+                "this front has no attention cache to record beside"
+                if caches is None
+                else "the tree is on " + ("the host" if caches.type == "cpu" else str(caches))
+            )
+            self._say(f"decode not graphed: {reason}")
 
     def _init_distributed(self) -> None:
         if self._world <= 1:
@@ -674,19 +723,11 @@ class V41Backend(RuntimeAdapter):
         # size the loader would only warn about; this is the launcher's `resolve_pool_rows`.
         pool_rows = int(self._options.expert_pool_rows) if self._expert_device is not None else 0
         device = self._tree_device()
-        # What the banner prints and what `_generate` passes down is the loop that actually runs, not
-        # the option's value. A decode graph is captured onto a CUDA stream and replayed beside the
-        # attention caches, so a tree on the host has nothing to record: `DecodeGraphs` refuses that
-        # outright, and the answer here is not to ask. A banner that said "graphed" over a host tree
-        # would report a speedup that is not happening.
-        self._decode_graphs = self._options.decode_graphs and device is not None
-        if self._decode_graphs:
-            decode_note = ", decode graphed a block at a time"
-        elif self._options.decode_graphs:
-            decode_note = ", decode not graphed: the tree is on the host"
-        else:
-            decode_note = ""
-
+        # The banner says where the tree is *going*; whether a decode graph can be captured beside it
+        # is not this method's to say and is not said here. `_resolve_decode_graphs` reads the
+        # placement off the loaded tree -- the only place it is written down, and the same reading on
+        # the two injected paths, where this banner never runs at all -- and `_ensure_loaded` calls it
+        # immediately after this method returns. One answer, said once.
         self._say(
             f"network {self._world} rank{'s' if self._world > 1 else ''}, tree on "
             f"{'the host' if device is None else device}, experts on "
@@ -694,7 +735,6 @@ class V41Backend(RuntimeAdapter):
             f", context {self._max_seq_len}"
             + (f", {pool_rows} pooled rows a card" if pool_rows else "")
             + (f", prefill {self._prefill_chunk} tokens a forward" if self._prefill_chunk else "")
-            + decode_note
         )
         self._front = load_backbone(
             config,
