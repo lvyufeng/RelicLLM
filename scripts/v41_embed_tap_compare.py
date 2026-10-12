@@ -101,6 +101,40 @@ def main() -> int:
             line(f"{name} {i}", pick(port[name][i]), pick(ref[name][i]))
 
     print()
+    rkeys = sorted(set(port.get("route", {})) & set(ref.get("route", {})))
+    if rkeys:
+        print("routing (the discrete decision: how many positions picked a different set of experts)")
+        first_flip = None
+        for i in rkeys:
+            a = port["route"][i].reshape(-1, port["route"][i].shape[-1])
+            b = ref["route"][i].reshape(-1, ref["route"][i].shape[-1])
+            if a.shape != b.shape:
+                print(f"  layer {i:<4} shapes differ: {tuple(a.shape)} vs {tuple(b.shape)}")
+                continue
+            same = sum(1 for ra, rb in zip(a.tolist(), b.tolist()) if ra == rb)
+            row = f"  layer {i:<4} identical rows {same}/{len(a)}"
+            if first_flip is None and same != len(a):
+                first_flip = i
+                # which position: the first row whose expert set differs, and how its scores sit
+                for j, (ra, rb) in enumerate(zip(a.tolist(), b.tolist())):
+                    if ra != rb:
+                        wa = port["route_w"][i].reshape(a.shape + (-1,))[j].tolist()
+                        wb = ref["route_w"][i].reshape(b.shape + (-1,))[j].tolist()
+                        row += (f"; first at position {j}\n"
+                                f"      port ids {ra}\n"
+                                f"      ref  ids {rb}\n"
+                                f"      port w   {[round(v, 5) for v in wa]}\n"
+                                f"      ref  w   {[round(v, 5) for v in wb]}")
+                        break
+            print(row)
+        print(f"\nFIRST LAYER WITH A DIFFERENT EXPERT SET: {first_flip}"
+              if first_flip is not None else "\nevery layer routed to the same experts")
+        print("A flip is not by itself a defect: it is what a small upstream difference does when two")
+        print("experts are within that difference of each other at the top-k boundary. What it does")
+        print("mean is that every layer below it is comparing two different functions, so a")
+        print("cosine ladder that decays without a flip is a different finding from one that steps.")
+        print()
+
     print(f"port step0 argmax {port.get('step0_argmax')}  ref step0 argmax {ref.get('step0_argmax')}")
     return 0
 

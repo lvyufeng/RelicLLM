@@ -18,6 +18,10 @@ What this records needs no reconstruction and no head:
   itself is checkable rather than only its result.
 * `attn[i]` / `ffn[i]` for the leading `--detail` blocks -- the block's two halves as the block
   used them, which attributes a block-level error to one of them.
+* `route[i]` / `route_w[i]` -- the router's chosen expert ids and their scores for every layer. A
+  block whose FFN output has moved further than its attention output is usually a block whose router
+  picked a different set of experts: the choice is discrete, so a small upstream difference becomes a
+  different function rather than a perturbed one, and the ids say which of the two happened.
 
 Run on the box holding the released checkpoint, with the port's env:
 
@@ -37,6 +41,10 @@ import argparse
 import sys
 
 import torch
+
+
+class _EnoughBlocks(Exception):
+    """Abandons the forward once the requested number of blocks has been tapped. See `--blocks`."""
 
 
 def _quantized_holders(model):
@@ -65,6 +73,17 @@ def main() -> int:
     parser.add_argument("--out", default="/tmp/port-embed-tap.pt")
     parser.add_argument("--detail", type=int, default=4,
                         help="how many leading blocks also record their attn/ffn sublayer outputs")
+    parser.add_argument("--expert-device", default=None,
+                        help="a card to stage routed-expert rows onto (`cuda:0`), or unset for the "
+                             "host path. The host path is the one the loader calls the correctness "
+                             "path, but it streams every activated expert off disk, so a 40-block "
+                             "tap of it costs most of an hour; the device path keeps the same "
+                             "arithmetic and runs the whole stack in minutes")
+    parser.add_argument("--blocks", type=int, default=0,
+                        help="stop after this many blocks instead of running all 40; 0 runs the "
+                             "whole stack and the head. The truncated record has no logits, so its "
+                             "`step0_argmax` is None -- it isolates the per-block streams, which is "
+                             "what localises a divergence and costs one layer's expert reads each")
     parser.add_argument("--no-quantized", action="store_true",
                         help="clear every `_quantized` flag the forward reads before it runs, so the "
                              "run is the reference's arithmetic with the activation quantization "
@@ -87,13 +106,14 @@ def main() -> int:
     _, hasher = build_hasher(config, args.checkpoint, tokenizer=tokenizer)
     checkpoint = V41Checkpoint(args.checkpoint)
 
-    # `expert_device=None` is the host path, the one the loader calls the correctness path.
     front = load_backbone(
-        config, checkpoint, hasher=hasher, resident_engram=False, expert_device=None, progress=say,
+        config, checkpoint, hasher=hasher, resident_engram=False,
+        expert_device=args.expert_device, progress=say,
     )
     model = front.model
     kinds = sorted({type(layer.ffn.routed).__name__ for layer in model.layers})
-    say(f"routed experts: {', '.join(kinds)} on {len(model.layers)} layers")
+    say(f"routed experts: {', '.join(kinds)} on {len(model.layers)} layers; "
+        f"expert_device={args.expert_device}")
 
     holders = list(_quantized_holders(model))
     if args.no_quantized:
@@ -103,7 +123,8 @@ def main() -> int:
         f"({', '.join(sorted({type(h).__name__ for h in holders}))}) "
         f"(cleared: {args.no_quantized})")
 
-    record: dict = {"embed": None, "h": {}, "pre_mix": {}, "attn": {}, "ffn": {}}
+    record: dict = {"embed": None, "h": {}, "pre_mix": {}, "attn": {}, "ffn": {},
+                    "route": {}, "route_w": {}}
     handles = []
 
     def embed_hook(_module, _inputs, output):
@@ -116,6 +137,12 @@ def main() -> int:
             h, pre_mix = output
             record["h"][i] = h.detach().to(torch.float32).cpu().clone()
             record["pre_mix"][i] = pre_mix.detach().to(torch.float32).cpu().clone()
+            if args.blocks and i + 1 >= args.blocks:
+                # The host path streams each layer's activated experts off disk, so a 40-block
+                # forward is most of an hour and the first divergent block is what the comparison
+                # is for. Raising out of the hook abandons the forward with the taps taken so far;
+                # the caller below treats that as the run's end rather than as a failure.
+                raise _EnoughBlocks
         return hook
 
     def make_sub(name, i):
@@ -123,21 +150,48 @@ def main() -> int:
             record[name][i] = output.detach().to(torch.float32).cpu().clone()
         return hook
 
+    def make_gate(i):
+        def hook(_module, _inputs, output):
+            weights, indices = output
+            record["route"][i] = indices.detach().to(torch.int32).cpu().clone()
+            record["route_w"][i] = weights.detach().to(torch.float32).cpu().clone()
+        return hook
+
     for i, block in enumerate(model.layers):
         handles.append(block.register_forward_hook(make_block(i)))
+        for gate in (m for m in block.modules() if type(m).__name__ == "Gate"):
+            # The router is a discrete decision, so it is the one place in a block where a small
+            # upstream difference stops being a small difference: when two experts are close, the
+            # top-k flips and the block computes a different function rather than a perturbed one.
+            # Recording the chosen ids per layer is what separates "the FFN is wrong" from "the FFN
+            # was asked a different question".
+            handles.append(gate.register_forward_hook(make_gate(i)))
         if i < args.detail:
             # `attn` and `ffn` are each called once per block and each returns one tensor, so a
             # forward hook on the submodule is that sublayer's contribution and nothing else.
             handles.append(block.attn.register_forward_hook(make_sub("attn", i)))
             handles.append(block.ffn.register_forward_hook(make_sub("ffn", i)))
 
+    logits = None
     with torch.inference_mode():
-        _out, logits, _main = front(torch.tensor([ids]))
+        try:
+            _out, logits, _main = front(torch.tensor([ids]))
+        except _EnoughBlocks:
+            say(f"stopped after block {args.blocks}: `--blocks` was given, so no head ran")
     for handle in handles:
         handle.remove()
 
-    # The row `generate` would pick from, so the record says what this forward answered.
-    record["step0_argmax"] = int(logits[0, -1].float().argmax())
+    if logits is not None:
+        # The row `generate` would pick from. `Head` has already narrowed to the last position, so
+        # the tensor is [b, vocab]: indexing `[0, -1]` there reads the *last vocabulary entry* and
+        # reports its argmax, which is 0 for any row, not the model's answer.
+        row = logits[0] if logits.dim() == 2 else logits[0, -1]
+        record["step0_argmax"] = int(row.float().argmax())
+        record["logits"] = row.detach().to(torch.float32).cpu().clone()
+    else:
+        # Absent rather than guessed: a truncated forward has no head row, and a comparison that
+        # reads one it did not compute would report the truncation as agreement.
+        record["step0_argmax"] = None
     record["prompt_tokens"] = len(ids)
     say(f"captured embed + {len(record['h'])} of {len(model.layers)} blocks")
     say(f"step0 argmax {record['step0_argmax']}")

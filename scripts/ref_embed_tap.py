@@ -149,7 +149,8 @@ def main():
     patch_moe(MoE)
     patch_engram_embed(ParallelEngramEmbedding)
 
-    record = {"embed": None, "h": {}, "pre_mix": {}, "attn": {}, "ffn": {}}
+    record = {"embed": None, "h": {}, "pre_mix": {}, "attn": {}, "ffn": {},
+              "route": {}, "route_w": {}}
     handles = []
 
     # `model.embed` is a ParallelEmbedding: its forward all_reduces, so the hook sees the finished
@@ -169,6 +170,18 @@ def main():
                 record["pre_mix"][idx] = pre_mix.detach().float().cpu().clone()
             return hook
         handles.append(block.register_forward_hook(make_block(i)))
+        for gate in (m for m in block.modules() if type(m).__name__ == "Gate"):
+            # The router is a discrete decision: when two experts are close the top-k flips and the
+            # block computes a different function rather than a perturbed one. Recorded per layer so
+            # a block whose FFN moved further than its attention can be told apart from one that was
+            # simply asked a different question.
+            def make_gate(idx):
+                def hook(_module, _inputs, output):
+                    weights, indices = output
+                    record["route"][idx] = indices.detach().to(torch.int32).cpu().clone()
+                    record["route_w"][idx] = weights.detach().float().cpu().clone()
+                return hook
+            handles.append(gate.register_forward_hook(make_gate(i)))
         if i < DETAIL:
             def make_sub(name, idx):
                 def hook(_module, _inputs, output):
