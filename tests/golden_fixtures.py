@@ -95,7 +95,7 @@ GOLDEN_GATE_ENV = "POCKETLLM_GOLDEN"
 DEFAULT_SAMPLING: dict[str, Any] = {"temperature": 0.0, "max_tokens": 16}
 
 #: How a fixture drives the entry point. `"raw"` sends `prompt` as a completion prefix through
-#: `generate`; `"chat"` renders it through the checkpoint's chat template and sends the user turn
+#: `generate`; `"chat"` renders it through the entry point's chat renderer and sends the user turn
 #: through `chat`. The distinction is the whole question for an instruct model: the same prompt is a
 #: different sequence of tokens on each route, so an answer recorded on one and replayed on the
 #: other compares two answers to two questions. What decides which route a fixture may claim is the
@@ -676,7 +676,7 @@ def _invoke(llm, fixture: GoldenFixture):
     """Drive the entry point the way the fixture's `path` says, returning one result.
 
     `raw` sends the prompt as a completion prefix; `chat` renders one user turn through the
-    checkpoint's chat template first. The two ask the model different questions, and the recorded
+    entry point's chat renderer first. The two ask the model different questions, and the recorded
     oracle decides which one a fixture is allowed to claim -- see `GOLDEN_PATHS`.
     """
     if fixture.path == PATH_CHAT:

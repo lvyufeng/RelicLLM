@@ -221,6 +221,15 @@ def test_the_v41_tokens_agree_with_the_official_reference():
     if fixture is None or reference is None:
         pytest.skip("v41 has no recorded official reference; run scripts/record_reference_v41.py")
 
+    # The oracle is the raw route: `scripts/record_reference_v41.py` seeds the nine raw ids, not a
+    # chat render. A fixture claiming the other route answers a different question, and comparing
+    # the two would fail as "a port defect" while the port is fine. The route is only checkable
+    # here, because the oracle is what decides which route the fixture is allowed to claim.
+    assert fixture.path == "raw", (
+        f"the v41 fixture records the {fixture.path!r} route, but the official reference was "
+        f"recorded on the raw ids; the two answers are not to the same question"
+    )
+
     expected_tokens = list(reference["tokens"])
     outcome = _run_under(fixture, {})
 

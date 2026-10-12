@@ -638,3 +638,72 @@ def test_frozen_tolerances_survive_a_re_record():
     assert recorder._frozen_tolerances(frozen) == {"atol": 3e-4, "rtol": 0.0}
     assert recorder._frozen_tolerances(None) == {"atol": 0.0, "rtol": 0.0}
     assert recorder._frozen_tolerances(GoldenFixture.from_json(PAYLOAD)) == {"atol": 0.0, "rtol": 0.0}
+
+
+def test_the_recorder_carries_the_route_over_rather_than_resetting_it():
+    """A re-record that omits `--path` must not move a fixture onto the other route.
+
+    `--path` defaulted to `raw` and was written unconditionally, so re-recording a `chat` fixture
+    without the flag rewrote it as `raw` -- carrying the old note and the old tolerances forward,
+    which is what makes it invisible: the file still reads as the same fixture. What changed is the
+    question it answers, and v41's oracle is recorded on the raw ids, so a fixture moved to `raw`
+    is then compared against an oracle that happens to match its new label.
+    """
+    recorder = _load_recorder()
+
+    class _Fixture:
+        path = "chat"
+
+    class _Golden:
+        def __init__(self, fixture):
+            self._fixture = fixture
+
+        def load_fixture(self, entry):
+            return self._fixture
+
+    existing, absent = _Golden(_Fixture()), _Golden(None)
+
+    assert recorder._resolved_path("raw", "v41", existing) == "raw", "an explicit route must win"
+    assert recorder._resolved_path("chat", "v41", absent) == "chat", "an explicit route must win"
+    assert recorder._resolved_path(None, "v41", existing) == "chat", "the recorded route is carried"
+    assert recorder._resolved_path(None, "v41", absent) == "raw", "a first record gets the raw route"
+
+
+def test_the_invoke_route_reaches_the_entry_point_the_fixture_names():
+    """Both branches, the argument each one builds, and which element the caller gets back.
+
+    `_invoke` is where the two routes diverge, and it only ever runs behind the `POCKETLLM_GOLDEN`
+    gate on a machine holding the checkpoint -- and every committed fixture is `raw`. So the chat
+    branch is dead code in every run a person does. A stub backend is the only thing that holds it:
+    reorder `chat`'s parameters, or drop the `[0]`, and without this the whole suite stays green.
+    """
+    from tests import golden_fixtures as gf
+
+    class _LLM:
+        """Records how it was called; returns two results so the `[0]` is observable."""
+
+        def __init__(self):
+            self.calls = []
+
+        def generate(self, prompts, sampling_params):
+            self.calls.append(("generate", prompts, sampling_params))
+            return ["first", "second"]
+
+        def chat(self, messages, sampling_params):
+            self.calls.append(("chat", messages, sampling_params))
+            return ["first", "second"]
+
+    raw = gf.GoldenFixture.from_json({**PAYLOAD, "path": "raw"})
+    chat = gf.GoldenFixture.from_json({**PAYLOAD, "path": "chat"})
+
+    llm = _LLM()
+    assert gf._invoke(llm, raw) == "first", "the caller gets the first result, not the list"
+    route, first_argument, _ = llm.calls[-1]
+    assert route == "generate", "the raw route is a completion, not a chat turn"
+    assert first_argument == [raw.prompt], "the raw route sends the prompt as a prompt prefix"
+
+    llm = _LLM()
+    assert gf._invoke(llm, chat) == "first", "the caller gets the first result, not the list"
+    route, first_argument, _ = llm.calls[-1]
+    assert route == "chat", "the chat route is a chat turn, not a completion"
+    assert first_argument == [{"role": "user", "content": chat.prompt}], "one user turn"
