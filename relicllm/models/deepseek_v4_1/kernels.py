@@ -7,16 +7,16 @@ the reference's own fallbacks. The reference therefore cannot execute here and t
 numeric oracle** for a V4.1 forward pass on this machine.
 
 The response is not a second implementation. `relic_core/kernels/ops.py` already implements all six ops
-the reference declares, and its torch paths were checked against the reference's arithmetic rather
-than assumed to match:
+the reference declares, and the paths this forward pass actually calls were checked against the
+reference's arithmetic rather than assumed to match:
 
 | reference op | `relic_core/kernels/ops.py` |
 | --- | --- |
 | `act_quant` | `act_quant` — `eps=1e-4` amax floor and `round_scale_to_pow2` are the reference's `T.max(amax, 1e-4)` and `fast_round_scale` |
 | `fp4_act_quant` | `fp4_act_quant` — E8M0 scales, the branch the indexer takes |
-| `fp8_gemm` | `fp8_gemm` |
-| `fp4_gemm` | `fp4_gemm` |
-| `sparse_attn` | `sparse_attn` — agrees with the reference's arithmetic to the bit on the fixture in `tests/test_models_deepseek_v4_1_kernels.py` |
+| `fp8_gemm` | `fp8_gemm` — re-exported, but the linear layers here do not call it: it hardcodes V3's block of 128 and drops V4.1's `block_size=32`, so they go through `quantized_linear` instead |
+| `fp4_gemm` | `fp4_gemm` — the same block of 128, and on block-32 scales it returns wrong numbers rather than failing; `docs/superpowers/notes/relic-core-gemm-block-size-hazards.md` measures both |
+| `sparse_attn` | `sparse_attn` — held to a longhand softmax in `tests/test_models_deepseek_v4_1_kernels.py`, at `atol=rtol=2e-2` over bf16-stored inputs, plus the empty-row floor. That is the shape of the computation, not bit parity |
 | `hc_split_sinkhorn` | `hc_split_sinkhorn` |
 
 so this module re-exports them and adds the two things that are genuinely missing.
