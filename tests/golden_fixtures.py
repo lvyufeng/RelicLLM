@@ -94,6 +94,19 @@ GOLDEN_GATE_ENV = "POCKETLLM_GOLDEN"
 
 DEFAULT_SAMPLING: dict[str, Any] = {"temperature": 0.0, "max_tokens": 16}
 
+#: How a fixture drives the entry point. `"raw"` sends `prompt` as a completion prefix through
+#: `generate`; `"chat"` renders it through the checkpoint's chat template and sends the user turn
+#: through `chat`. The distinction is the whole question for an instruct model: the same prompt is a
+#: different sequence of tokens on each route, so an answer recorded on one and replayed on the
+#: other compares two answers to two questions. What decides which route a fixture may claim is the
+#: *oracle*, and the one this repository has -- `fixtures/reference/v41.json` -- is raw:
+#: `scripts/record_reference_v41.py` seeds the checkpoint's own model with the raw ids, where
+#: `inference/generate.py` renders the template for its interactive path. Absent means `"raw"`, so
+#: every fixture on disk keeps its meaning.
+PATH_RAW = "raw"
+PATH_CHAT = "chat"
+GOLDEN_PATHS = (PATH_RAW, PATH_CHAT)
+
 
 def captured_card(
     *,
@@ -153,6 +166,9 @@ class GoldenFixture:
     env: dict[str, str] = field(default_factory=dict)
     sampling: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_SAMPLING))
     requires: dict[str, int] = field(default_factory=dict)
+    #: `"raw"` or `"chat"` -- which of the two paths `prompt` is fed through. See `GOLDEN_PATHS`;
+    #: absent in a recorded file means `"raw"`.
+    path: str = PATH_RAW
     commit: str = ""
     taken_at: str = ""
     #: Which card produced the answer, as free text (`cuda 8.9 (Ada / RTX 4090)`), or `""` when it
@@ -212,6 +228,7 @@ class GoldenFixture:
             env={str(k): str(v) for k, v in (payload.get("env") or {}).items()},
             sampling=dict(payload.get("sampling") or DEFAULT_SAMPLING),
             requires={str(k): int(v) for k, v in (payload.get("requires") or {}).items()},
+            path=_read_path(payload.get("path")),
             commit=str(payload.get("commit") or ""),
             taken_at=str(payload.get("taken_at") or ""),
             card=str(payload.get("card") or ""),
@@ -227,6 +244,7 @@ class GoldenFixture:
             "prompt": self.prompt,
             "sampling": dict(self.sampling),
             "requires": dict(self.requires),
+            "path": self.path,
             "expected": dict(self.expected),
             "commit": self.commit,
             "taken_at": self.taken_at,
@@ -272,6 +290,20 @@ class GoldenFixture:
 
 
 _LOGITS_CHECK_FIELDS = ("step", "prompt_tokens", "top_k", "token_ids", "values", "atol", "rtol")
+
+
+def _read_path(value: Any) -> str:
+    """The recorded `path`, defaulted for a fixture written before the field existed.
+
+    A recorded file without `path` drove `generate`, so `"raw"` is the only answer that keeps it
+    meaning what it meant. A value that is present but unknown is refused rather than defaulted:
+    an unrecognised path would run the wrong route and compare an answer to a different question.
+    """
+    if value is None:
+        return PATH_RAW
+    if value not in GOLDEN_PATHS:
+        raise ValueError(f"path must be one of {GOLDEN_PATHS}, got {value!r}")
+    return str(value)
 
 
 def _check_logits_check(record: Mapping[str, Any]) -> None:
@@ -640,6 +672,20 @@ def _engine_args_from_argv(fixture: GoldenFixture):
     return _args(namespace)
 
 
+def _invoke(llm, fixture: GoldenFixture):
+    """Drive the entry point the way the fixture's `path` says, returning one result.
+
+    `raw` sends the prompt as a completion prefix; `chat` renders one user turn through the
+    checkpoint's chat template first. The two ask the model different questions, and the recorded
+    oracle decides which one a fixture is allowed to claim -- see `GOLDEN_PATHS`.
+    """
+    if fixture.path == PATH_CHAT:
+        return llm.chat(
+            [{"role": "user", "content": fixture.prompt}], _sampling_params(fixture)
+        )[0]
+    return llm.generate([fixture.prompt], _sampling_params(fixture))[0]
+
+
 def _run_python(fixture: GoldenFixture) -> Outcome:
     from relicllm import LLM
 
@@ -650,7 +696,7 @@ def _run_python(fixture: GoldenFixture) -> Outcome:
     llm = None
     try:
         llm = LLM(_engine_args_from_argv(fixture))
-        result = llm.generate([fixture.prompt], _sampling_params(fixture))[0]
+        result = _invoke(llm, fixture)
     finally:
         if llm is not None:
             llm.close()

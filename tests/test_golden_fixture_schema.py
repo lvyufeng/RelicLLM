@@ -112,6 +112,31 @@ def test_the_expected_side_is_read_by_name_and_not_by_position() -> None:
     assert fixture.expected_prompt_tokens == 9
 
 
+def test_the_recorded_path_is_read_and_kept_through_a_round_trip() -> None:
+    """`path` decides which question the fixture asks, so it is recorded and reloaded, not defaulted.
+
+    A chat fixture that reloaded as raw would run the completion route and compare its answer to a
+    templated oracle -- two runs that agree on nothing, reported as a regression.
+    """
+    fixture = GoldenFixture.from_json({**PAYLOAD, "path": "chat"})
+
+    assert fixture.path == "chat"
+    assert GoldenFixture.from_json(json.loads(json.dumps(fixture.to_json()))).path == "chat"
+
+
+def test_a_path_less_fixture_means_the_raw_route() -> None:
+    """Every fixture recorded before the field drove `generate`; defaulting the other way would
+    silently re-point them at a route their recorded answer never came from."""
+    assert GoldenFixture.from_json(PAYLOAD).path == "raw"
+
+
+def test_an_unknown_path_is_refused_rather_than_defaulted() -> None:
+    """A typo in the route is a fixture that would compare two different questions, so it fails at
+    load with the field named rather than running as whatever the default happens to be."""
+    with pytest.raises(ValueError, match="path must be"):
+        GoldenFixture.from_json({**PAYLOAD, "path": "chat-template"})
+
+
 def test_an_empty_recorded_answer_is_not_the_same_as_no_recorded_answer() -> None:
     """Three states, not two: ids, an empty answer held to be empty, and a field that was never read.
 

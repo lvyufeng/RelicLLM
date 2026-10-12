@@ -110,6 +110,17 @@ def main(argv: list[str] | None = None) -> int:
             "old note stopped being true, and the note is the one field here a person wrote."
         ),
     )
+    parser.add_argument(
+        "--path",
+        choices=("raw", "chat"),
+        default="raw",
+        help=(
+            "how the recorded answer is produced: `raw` sends --prompt as a completion prefix, "
+            "`chat` renders it through the checkpoint's chat template first. It has to name the "
+            "route the oracle was recorded on -- record_reference_v41.py seeds the raw ids -- or "
+            "the fixture and the oracle are answers to different questions"
+        ),
+    )
     parser.add_argument("--out", type=pathlib.Path, help="defaults to tests/fixtures/golden/<entry>.json")
     parser.add_argument("extra", nargs="*", help="flags passed through to the entry point")
     args = parser.parse_args(argv)
@@ -149,6 +160,7 @@ def main(argv: list[str] | None = None) -> int:
         commit=_current_commit(),
         taken_at=datetime.date.today().isoformat(),
         card=golden.captured_card(),
+        path=args.path,
         notes=_resolved_notes(args.notes, args.entry, golden),
     )
 
