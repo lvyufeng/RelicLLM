@@ -103,7 +103,9 @@ def main() -> int:
     print()
     rkeys = sorted(set(port.get("route", {})) & set(ref.get("route", {})))
     if rkeys:
-        print("routing (the discrete decision: how many positions picked a different set of experts)")
+        print("routing (the discrete decision: which experts each position picked)")
+        print("  `set` is the question the MoE output depends on; `order` is only the ids' sequence,")
+        print("  which differs whenever two experts are close and is not a different function.")
         first_flip = None
         for i in rkeys:
             a = port["route"][i].reshape(-1, port["route"][i].shape[-1])
@@ -111,28 +113,52 @@ def main() -> int:
             if a.shape != b.shape:
                 print(f"  layer {i:<4} shapes differ: {tuple(a.shape)} vs {tuple(b.shape)}")
                 continue
-            same = sum(1 for ra, rb in zip(a.tolist(), b.tolist()) if ra == rb)
-            row = f"  layer {i:<4} identical rows {same}/{len(a)}"
-            if first_flip is None and same != len(a):
+            rows_a, rows_b = a.tolist(), b.tolist()
+            same = sum(1 for ra, rb in zip(rows_a, rows_b) if ra == rb)
+            same_set = sum(1 for ra, rb in zip(rows_a, rows_b) if sorted(ra) == sorted(rb))
+            row = f"  layer {i:<4} set {same_set}/{len(rows_a)}  order {same}/{len(rows_a)}"
+            if first_flip is None and same_set != len(rows_a):
                 first_flip = i
-                # which position: the first row whose expert set differs, and how its scores sit
-                for j, (ra, rb) in enumerate(zip(a.tolist(), b.tolist())):
-                    if ra != rb:
-                        wa = port["route_w"][i].reshape(a.shape + (-1,))[j].tolist()
-                        wb = ref["route_w"][i].reshape(b.shape + (-1,))[j].tolist()
+                # which position: the first row whose expert *set* differs, and how its scores sit
+                for j, (ra, rb) in enumerate(zip(rows_a, rows_b)):
+                    if sorted(ra) != sorted(rb):
+                        # `route_w` is recorded beside the ids, and a router that keeps a trailing
+                        # axis records `[positions, k, 1]`. Flatten to `[positions, k]` rather than
+                        # to the id tensor's shape, which would leave that axis in and hand the
+                        # formatter a list of lists.
+                        wa = port["route_w"][i].detach().float().reshape(-1, a.shape[-1])[j].tolist()
+                        wb = ref["route_w"][i].detach().float().reshape(-1, b.shape[-1])[j].tolist()
+                        only_a = sorted(set(ra) - set(rb))
+                        only_b = sorted(set(rb) - set(ra))
                         row += (f"; first at position {j}\n"
                                 f"      port ids {ra}\n"
                                 f"      ref  ids {rb}\n"
+                                f"      port-only {only_a}   ref-only {only_b}\n"
                                 f"      port w   {[round(v, 5) for v in wa]}\n"
                                 f"      ref  w   {[round(v, 5) for v in wb]}")
                         break
             print(row)
-        print(f"\nFIRST LAYER WITH A DIFFERENT EXPERT SET: {first_flip}"
-              if first_flip is not None else "\nevery layer routed to the same experts")
+        print(f"\nFIRST LAYER WHOSE EXPERT SET DIFFERS: {first_flip}"
+              if first_flip is not None else "\nevery layer routed to the same expert sets")
         print("A flip is not by itself a defect: it is what a small upstream difference does when two")
         print("experts are within that difference of each other at the top-k boundary. What it does")
         print("mean is that every layer below it is comparing two different functions, so a")
         print("cosine ladder that decays without a flip is a different finding from one that steps.")
+        print()
+
+    pt, rt = port.get("topk"), ref.get("topk")
+    if pt and rt:
+        print("sparse_attn gathered positions (one entry per call, in layer order)")
+        if len(pt) != len(rt):
+            print(f"  call counts differ: port {len(pt)}, ref {len(rt)}")
+        for i in range(min(len(pt), len(rt))):
+            a, b = pt[i].reshape(-1), rt[i].reshape(-1)
+            if a.numel() != b.numel():
+                print(f"  call {i:<3} widths differ: {a.numel()} vs {b.numel()}")
+                continue
+            same = int((a == b).sum())
+            tail = "" if same == a.numel() else f"   first difference at {int((a != b).nonzero()[0])}"
+            print(f"  call {i:<3} identical ids {same}/{a.numel()}{tail}")
         print()
 
     print(f"port step0 argmax {port.get('step0_argmax')}  ref step0 argmax {ref.get('step0_argmax')}")

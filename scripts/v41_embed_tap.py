@@ -22,6 +22,9 @@ What this records needs no reconstruction and no head:
   block whose FFN output has moved further than its attention output is usually a block whose router
   picked a different set of experts: the choice is discrete, so a small upstream difference becomes a
   different function rather than a perturbed one, and the ids say which of the two happened.
+* `topk` -- the position ids each layer's `sparse_attn` was asked to gather, one entry per call in
+  layer order. The attention path's discrete decision, and the analogue of the router's: a layer
+  whose attention output has moved may have been handed a different set of positions to attend to.
 
 Run on the box holding the released checkpoint, with the port's env:
 
@@ -124,7 +127,27 @@ def main() -> int:
         f"(cleared: {args.no_quantized})")
 
     record: dict = {"embed": None, "h": {}, "pre_mix": {}, "attn": {}, "ffn": {},
-                    "route": {}, "route_w": {}}
+                    "route": {}, "route_w": {}, "topk": []}
+
+    # `sparse_attn` is called once per layer, in layer order, and which positions it gathers is the
+    # attention path's discrete decision -- the exact analogue of the router's, and outside any
+    # module a hook can reach. Recording the ids is what separates "the attention output is wrong"
+    # from "the attention was asked to gather different positions".
+    import relicllm.models.deepseek_v4_1.attention as _attn_module
+
+    _original_sparse_attn = _attn_module.sparse_attn
+
+    def _recording_sparse_attn(*a, **kw):
+        # Positionally the fourth argument, but resolved by name as well so a call site that passes
+        # it as a keyword is still recorded rather than silently skipped.
+        topk_idxs = a[3] if len(a) > 3 else kw.get("topk_idxs")
+        if topk_idxs is not None:
+            record["topk"].append(topk_idxs.detach().to(torch.int32).cpu().clone())
+        else:
+            say("a sparse_attn call carried no topk_idxs; recorded nothing for it")
+        return _original_sparse_attn(*a, **kw)
+
+    _attn_module.sparse_attn = _recording_sparse_attn
     handles = []
 
     def embed_hook(_module, _inputs, output):

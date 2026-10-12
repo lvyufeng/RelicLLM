@@ -150,7 +150,24 @@ def main():
     patch_engram_embed(ParallelEngramEmbedding)
 
     record = {"embed": None, "h": {}, "pre_mix": {}, "attn": {}, "ffn": {},
-              "route": {}, "route_w": {}}
+              "route": {}, "route_w": {}, "topk": []}
+
+    # `sparse_attn` is called once per layer, in layer order, and which positions it gathers is the
+    # attention path's discrete decision. `model.py` holds it in its own namespace, so patching the
+    # module attribute is what reaches the call sites.
+    import model as _ref_model
+
+    _original_sparse_attn = _ref_model.sparse_attn
+
+    def _recording_sparse_attn(*a, **kw):
+        # Fourth positional argument, or the same name as a keyword: resolved both ways so a call
+        # site that names it is still recorded.
+        topk_idxs = a[3] if len(a) > 3 else kw.get("topk_idxs")
+        if topk_idxs is not None:
+            record["topk"].append(topk_idxs.detach().to(torch.int32).cpu().clone())
+        return _original_sparse_attn(*a, **kw)
+
+    _ref_model.sparse_attn = _recording_sparse_attn
     handles = []
 
     # `model.embed` is a ParallelEmbedding: its forward all_reduces, so the hook sees the finished
