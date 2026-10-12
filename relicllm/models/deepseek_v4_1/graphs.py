@@ -148,6 +148,24 @@ def _record(body: Callable[[], None], pool, warmup: int = CAPTURE_WARMUP) -> tor
     return graph
 
 
+def _cache_device(model: torch.nn.Module) -> torch.device:
+    """The card a recording lands on: the one the attention caches are on.
+
+    Read the same way ``generate._cache_device`` and ``v41_backend._flag_device`` read it, and for
+    the same reason -- nothing in ``load_backbone`` promises that this process's current device is
+    the one the tree is on, and the caches are buffers, so a buffer is the only place the answer is
+    written down. The three readers differ in what they do with the answer: one places a position
+    tensor on it, one puts a collective's flag there, and this one refuses to record anywhere else.
+    """
+    for name, buffer in model.named_buffers():
+        if name.endswith("window_kv_cache"):
+            return buffer.device
+    raise RuntimeError(
+        "the decode graphs replay the attention layers, and this model has no `window_kv_cache` "
+        "buffer for their position to be sized against -- it is not a V4.1 backbone"
+    )
+
+
 class LayerGraphs:
     """One block's decode forward, cut at the expert call, with each half a captured graph.
 
@@ -357,6 +375,22 @@ class DecodeGraphs:
     ) -> None:
         self.model = model
         self.warmup = warmup
+        # A recording lands on the current CUDA stream and is replayed by the kernels that read the
+        # caches, so a tree whose caches are in host memory has nothing to capture -- and what it
+        # records is not a slow graph but an *empty* one. `torch.cuda.graph` captures the host-side
+        # no-ops, the replay returns having done none of the step, and every reader of the sink goes
+        # on reading the values the capture pass left there: the loop picks the capture step's token
+        # over and over and the answer is one token repeated. Refusing is the only answer that cannot
+        # be mistaken for a working run; the eager loop is what a caller in that position wants, and
+        # `v41_backend` asks for it rather than asking for graphs.
+        caches = _cache_device(model)
+        if caches.type != "cuda":
+            raise RuntimeError(
+                "the decode graphs are captured onto a card and replayed beside the attention "
+                f"caches, and this model's are on {caches}. A capture here records an empty graph "
+                "that replays without advancing anything, so the generation would repeat one token; "
+                "run the eager loop instead of asking a host-resident tree for graphs."
+            )
         self.pool = torch.cuda.graph_pool_handle()
         self.captured = False
         self.layers: list[LayerGraphs] = []

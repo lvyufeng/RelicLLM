@@ -432,6 +432,11 @@ class V41Backend(RuntimeAdapter):
         self._tokenizer_path = getattr(args, "tokenizer_path", None) or self._checkpoint
         self._max_seq_len = getattr(args, "max_model_len", None) or DEFAULT_MAX_SEQ_LEN
         self._prefill_chunk = self._options.prefill_chunk
+        # The option's own value, until `_load` can refine it against where the tree actually went: a
+        # decode graph is captured onto a card and replayed beside the attention caches, and `_load`
+        # is where that placement is decided. A backend that never loaded still has to answer
+        # `_run_payload`, and until something has placed the tree the option is the honest answer.
+        self._decode_graphs = bool(self._options.decode_graphs)
         self._world = int(getattr(args, "tensor_parallel_size", 1) or 1)
         self._rank = int(getattr(args, "tensor_parallel_rank", 0) or 0)
         #: The cards this launch named, in rank order -- empty when it named none, which is the
@@ -669,6 +674,18 @@ class V41Backend(RuntimeAdapter):
         # size the loader would only warn about; this is the launcher's `resolve_pool_rows`.
         pool_rows = int(self._options.expert_pool_rows) if self._expert_device is not None else 0
         device = self._tree_device()
+        # What the banner prints and what `_generate` passes down is the loop that actually runs, not
+        # the option's value. A decode graph is captured onto a CUDA stream and replayed beside the
+        # attention caches, so a tree on the host has nothing to record: `DecodeGraphs` refuses that
+        # outright, and the answer here is not to ask. A banner that said "graphed" over a host tree
+        # would report a speedup that is not happening.
+        self._decode_graphs = self._options.decode_graphs and device is not None
+        if self._decode_graphs:
+            decode_note = ", decode graphed a block at a time"
+        elif self._options.decode_graphs:
+            decode_note = ", decode not graphed: the tree is on the host"
+        else:
+            decode_note = ""
 
         self._say(
             f"network {self._world} rank{'s' if self._world > 1 else ''}, tree on "
@@ -677,7 +694,7 @@ class V41Backend(RuntimeAdapter):
             f", context {self._max_seq_len}"
             + (f", {pool_rows} pooled rows a card" if pool_rows else "")
             + (f", prefill {self._prefill_chunk} tokens a forward" if self._prefill_chunk else "")
-            + (", decode graphed a block at a time" if self._options.decode_graphs else "")
+            + decode_note
         )
         self._front = load_backbone(
             config,
@@ -1087,7 +1104,7 @@ class V41Backend(RuntimeAdapter):
                 eos_token_id=self._eos_token_id(),
                 seed=payload["seed"],
                 on_token=hook,
-                graphs=self._options.decode_graphs,
+                graphs=self._decode_graphs,
                 prefill_chunk=self._prefill_chunk,
                 prefix_cache=self._prefix_cache,
             )

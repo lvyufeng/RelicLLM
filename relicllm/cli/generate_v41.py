@@ -506,6 +506,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         # a token's worth of slack stays slack rather than becoming an off-by-one at the last step.
         max_seq_len = -(-(len(prompt_ids) + args.max_new_tokens) // 64) * 64
 
+    # What the banner prints, what `generate` is asked for and what the dump records is the loop that
+    # actually runs, not the option's value. A decode graph is captured onto a CUDA stream and
+    # replayed beside the attention caches, so a tree on the host has nothing to record and
+    # `DecodeGraphs` refuses it outright -- the answer here is not to ask.
+    decode_graphs = bool(args.decode_graphs) and device is not None
+    if decode_graphs:
+        decode_note = ", decode graphed a block at a time"
+    elif args.decode_graphs:
+        decode_note = ", decode not graphed: the tree is on the host"
+    else:
+        decode_note = ""
     say(
         f"network {world} rank{'s' if world > 1 else ''}, tree on "
         f"{'the host' if device is None else device}, experts on "
@@ -521,7 +532,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         # `device_experts.deal_rule`, and a banner that spelled it a second time would be the place
         # the two disagree after a change instead of the place a change is visible.
         + (f", the {args.expert_deal} expert deal" if args.expert_deal else "")
-        + (", decode graphed a block at a time" if args.decode_graphs else "")
+        + decode_note
     )
     started = time.perf_counter()
     front = load_backbone(
@@ -597,7 +608,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         top_k=args.top_k,
         eos_token_id=tokenizer.eos_token_id,
         seed=args.seed,
-        graphs=args.decode_graphs,
+        graphs=decode_graphs,
         prefill_chunk=args.prefill_chunk_tokens,
         on_token=on_token if dumping else None,
     )
@@ -607,7 +618,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "tokens": tokens_seen,
                 "logits": torch.stack(logits_seen) if logits_seen else torch.empty(0),
                 "read_bytes": io_seen,
-                "decode_graphs": bool(args.decode_graphs),
+                "decode_graphs": decode_graphs,
                 "prompt_tokens": len(prompt_ids),
             },
             args.dump_logits,
