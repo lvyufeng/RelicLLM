@@ -296,3 +296,35 @@ python scripts/record_reference_v41.py \
 
 A human reads the printed tokens and step-0 top-k before the record is committed, exactly as
 `record_golden_fixture.py` expects for its own answer.
+
+### `reproduction`: the configuration the oracle is satisfiable under
+
+The leg above does **not** run the fixture's own `argv`. A reference is a claim about the model, and a
+port can only satisfy it from a configuration whose arithmetic *is* the model's; the served-path
+fixture's argv is what this repository was recorded producing on one card, which is a different
+statement and, for v41, a different computation. So a reference may carry a `reproduction` object
+naming the port configuration that reproduces it:
+
+```json
+"reproduction": {
+  "argv": ["serve", "--backend", "v41", "--model", "/mnt/data3/DeepSeek-V4.1-Flash", ...],
+  "env": {},
+  "requires": {}
+}
+```
+
+`reproduction_fixture()` in `tests/golden_fixtures.py` reads it, and the leg runs that configuration
+instead. The block is **optional and the identity when absent** -- every other entry point has none --
+and it must keep the fixture's `checkpoint` as an item of `argv`, because the harness rewrites the
+recorded path by exact match to wherever this host keeps the bytes. `env` and `requires` **replace**
+the fixture's rather than extending them; for v41 the empty `env` is load-bearing, because the
+fixture's `DEEPSEEK_V41_RESIDENT_EXPERTS=1` pins a 457.8 GiB bank that the host path never reads.
+
+For v41 the configuration is `--tensor-parallel-size 1` with no `--device-ids`, which puts the dense
+tree and the routed experts on the host and runs the MoE through `expert_forward`/`quantized_linear`
+-- the fp8 E4M3 block-32 activation the reference's own `linear()` quantizes. The fixture's world=4
+`argv` routes the same experts through `DeviceRoutedExperts`, whose activation is int8 with one scale
+per row; that is a different quantization by construction, and no re-recording makes it agree.
+
+Because the recorder writes the whole file, it would erase a hand-added `reproduction` block on a
+refresh; it carries an existing one across for that reason.

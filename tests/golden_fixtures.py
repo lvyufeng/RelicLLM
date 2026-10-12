@@ -509,6 +509,55 @@ def _with_host_checkpoint(fixture: GoldenFixture) -> GoldenFixture:
     return replace(fixture, checkpoint=imported, argv=argv)
 
 
+def reproduction_fixture(fixture: GoldenFixture, reference: Mapping[str, Any]) -> GoldenFixture:
+    """The fixture as the *official-reference* leg must run it, or the fixture itself when it does not.
+
+    A reference record can name the port configuration under which the port reproduces it, in a
+    `reproduction` object with `argv`, and optionally `env` and `requires`. That is not the same
+    claim as the fixture's own argv, and for v41 the two differ because the answers differ:
+
+    - the served-path fixture's argv is what this port was recorded producing on *this* card -- a
+      statement about the device path, reasserted against itself;
+    - a reference is a statement about the *model*, and only the configuration whose arithmetic is
+      the model's can satisfy it.
+
+    For v41 that is the correctness path: `--tensor-parallel-size 1` with no `--device-ids`, which
+    `_tree_device`/`_resolve_expert_device` answer with `None` -- the host holds the dense tree and
+    the routed experts. The MoE then runs through `expert_forward`/`quantized_linear`, the fp8
+    E4M3 block-32 activation the reference's own `linear()` quantizes. The served-path fixture's
+    world=4 argv routes the same experts through `DeviceRoutedExperts`, whose activation is int8
+    with one scale per row (`moe_multi_token_fp4_forward_cuda`); that is a different quantization by
+    construction, and no re-recording makes it agree.
+
+    `env` and `requires` **replace** the fixture's, they do not extend them: the row above is the
+    complete set, and the fixture's `DEEPSEEK_V41_RESIDENT_EXPERTS=1` is the case that makes this
+    visible -- `run_isolated` merges `fixture.env` over the ambient environment, so a block that
+    merged could never drop a key, and the host path never reads the bank the pin exists for
+    (457.8 GiB and about eight minutes on the recording host).
+
+    The checkpoint has to survive in `argv` as an item of its own, because `_with_host_checkpoint`
+    -- which `run_isolated` applies *after* this -- moves the recorded path by exact match, and a
+    command line that no longer contains it would run whichever checkpoint the recorder happened to
+    name. A block that does not keep it is refused here rather than at the model load.
+    """
+    block = reference.get("reproduction")
+    if not block:
+        return fixture
+    argv = tuple(str(item) for item in block["argv"])
+    if fixture.checkpoint not in argv:
+        raise ValueError(
+            f"the v41 reference's `reproduction.argv` does not carry the fixture's checkpoint "
+            f"({fixture.checkpoint}) as an item, so it cannot be moved to where this host keeps it; "
+            f"got {' '.join(argv)}"
+        )
+    return replace(
+        fixture,
+        argv=argv,
+        env={str(key): str(value) for key, value in (block.get("env") or {}).items()},
+        requires={str(key): int(value) for key, value in (block.get("requires") or {}).items()},
+    )
+
+
 def run_isolated(
     fixture: GoldenFixture,
     *,

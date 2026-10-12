@@ -44,6 +44,7 @@ from tests.golden_fixtures import (
     load_fixture,
     load_reference,
     logits_check_mismatch,
+    reproduction_fixture,
     run_isolated,
 )
 
@@ -210,6 +211,13 @@ def test_the_v41_tokens_agree_with_the_official_reference():
     fixture's own `token_ids` are a record of what *sm_75* produced, which is a different question:
     a fixture that matches itself proves the port is stable, not that it is right.
 
+    **The configuration this leg runs is the reference's, not the fixture's.** A reference is a claim
+    about the model, and only a port configuration whose arithmetic *is* the model's can satisfy it;
+    the fixture's argv is a device-path configuration that was recorded on the card for a different
+    purpose and, for v41, quantizes the expert activations differently by construction.
+    `reproduction_fixture` reads the configuration the reference names for itself and is the identity
+    for a reference that names none, so this is a no-op for every entry point but v41.
+
     The comparison is on greedy **tokens** only. The reference's step-0 logits come from an fp32 head
     on the reference's own arithmetic; a per-value tolerance across two implementations is a weaker
     statement than "the argmax sequence agrees", and the token sequence is what a served answer is.
@@ -222,7 +230,7 @@ def test_the_v41_tokens_agree_with_the_official_reference():
         pytest.skip("v41 has no recorded official reference; run scripts/record_reference_v41.py")
 
     expected_tokens = list(reference["tokens"])
-    outcome = _run_under(fixture, {})
+    outcome = _run_under(reproduction_fixture(fixture, reference), {})
 
     assert outcome.token_ids is not None, "the run produced no token ids"
     assert list(outcome.token_ids) == expected_tokens, (

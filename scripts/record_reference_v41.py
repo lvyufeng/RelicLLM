@@ -281,6 +281,19 @@ def main(argv: list[str] | None = None) -> int:
         "notes": "the checkpoint's own model.py, imported unmodified and host-offloaded to fit a "
                  "24 GiB card; see scripts/record_reference_v41.py for the one deviation",
     }
+    # A refresh must not silently drop the configuration that makes the oracle satisfiable. This
+    # script records the *model*, not a port configuration, so the `reproduction` block is added to
+    # the record by hand -- but once it is there, re-running the recorder would erase it, and the
+    # oracle leg would quietly go back to running the fixture's own argv. Carry the existing block
+    # across when the file being overwritten has one.
+    existing = {}
+    if args.out.exists():
+        try:
+            existing = json.loads(args.out.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            existing = {}
+    if "reproduction" in existing:
+        payload["reproduction"] = existing["reproduction"]
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {args.out}")
