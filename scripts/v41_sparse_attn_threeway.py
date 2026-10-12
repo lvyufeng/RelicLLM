@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
 """Measure one prefill `sparse_attn` call three ways: CUDA headpair kernel, torch, reference.
 
-`relic_core.kernels.ops.sparse_attn` dispatches prefill on `DEEPSEEK_PREFILL_SPARSE_ATTN_CUDA`
-(default "1") and `..._HEADPAIR_CUDA` (default "1") when `q.size(1) > 1 and q.size(-1) == 512`, and
-the 4090's `cuda_kernel` extension exposes `prefill_sparse_attn_headpair_forward`. The 2080 Ti's does
-not, so the two cards run different attention arithmetic in the same tree -- which is the shape of a
-port that agrees with the reference on one card and not the other.
+`relic_core.kernels.ops.sparse_attn` dispatches prefill on `DEEPSEEK_PREFILL_SPARSE_ATTN_CUDA` and
+`..._HEADPAIR_CUDA`, both read at import, when `q.is_cuda and q.size(1) > 1 and q.size(-1) == 512`.
+The outer knob used to default to "1" and now defaults to "0" (relic-core PR #36, which made
+`_sparse_attn_torch` -- the transcription of the released kernel -- the V4.1 prefill default);
+the headpair knob still defaults to "1" but is inert on its own, selecting only *which* CUDA kernel
+the outer opt-in gets.
 
-This asks whether that difference is large enough to matter, without loading the model: one synthetic
-call at the real shapes, read back from the kernel, from `_sparse_attn_torch`, and -- when the
-checkpoint's own `kernel.py` is importable -- from the reference's `sparse_attn`, which is the thing
-both of the port's paths are supposed to reproduce.
+The fused headpair kernel is a different function of the same inputs: warp `__shfl_xor_sync` dot,
+one global max with the sink folded in, one fp32 denominator, and no bf16 numerator. Its own comment
+says the summation order "does move the whole model". This script asks how far it is from the
+reference, without loading the model: one synthetic call at the real shapes, read back from the
+kernel, from `_sparse_attn_torch`, and -- when the checkpoint's own `kernel.py` is importable --
+from the reference's `sparse_attn`, which is the thing both of the port's paths are supposed to
+reproduce.
+
+This is *not* a card-dependent difference: the 2080 Ti's extension exposes
+`prefill_sparse_attn_headpair_forward` too. Host-expert runs appear to fall through to the torch
+path because their attention tensors are on the CPU, so `q.is_cuda` is False and the branch is
+unreachable -- no knob and no missing symbol is involved.
 
 Run on the box that has the extension and the checkpoint:
 
