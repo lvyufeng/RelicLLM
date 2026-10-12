@@ -463,6 +463,73 @@ def test_a_host_without_the_override_gets_the_recorded_path(monkeypatch):
     assert resolved.argv == tuple(PAYLOAD["argv"])
 
 
+def test_a_reference_without_a_reproduction_is_the_identity():
+    """Most references have none, and the leg they feed must keep running the fixture's own argv.
+
+    A reference is a record of the model, and `reproduction` is an *optional* claim about this port;
+    a helper that defaulted to some other configuration when the field was absent would silently run
+    every other entry point's oracle leg against a command line nobody recorded.
+    """
+    from tests import golden_fixtures
+
+    fixture = golden_fixtures.GoldenFixture.from_json(PAYLOAD)
+
+    resolved = golden_fixtures.reproduction_fixture(fixture, {"tokens": [1]})
+
+    assert resolved is fixture
+
+
+def test_a_reproduction_replaces_the_argv_env_and_requires_wholesale():
+    """Three fields, and the two containers *replace* rather than extend.
+
+    `env` is the one that shows it: `run_isolated` merges `fixture.env` over the ambient environment,
+    so a block that merged into the fixture's env could never *drop* a key -- and the key v41 has to
+    drop is the one that pins a 457.8 GiB resident bank for a path that never reads it. `requires`
+    is replaced for the same reason: it is the run's demand, and the reproducing run demands none.
+    """
+    from tests import golden_fixtures
+
+    fixture = golden_fixtures.GoldenFixture.from_json(
+        {**PAYLOAD, "env": {"KEEP": "1"}, "requires": {"dev_shm_bytes": 504658657280}}
+    )
+    reference = {
+        "reproduction": {
+            "argv": ["serve", "--backend", "v41", "--model", PAYLOAD["checkpoint"],
+                     "--tensor-parallel-size", "1"],
+            "env": {},
+            "requires": {},
+        }
+    }
+
+    resolved = golden_fixtures.reproduction_fixture(fixture, reference)
+
+    assert resolved.argv == (
+        "serve", "--backend", "v41", "--model", PAYLOAD["checkpoint"], "--tensor-parallel-size", "1",
+    )
+    assert resolved.env == {}
+    assert resolved.requires == {}
+    # `checkpoint` is what `unwritable_reason` consults, and the block is not allowed to move it.
+    assert resolved.checkpoint == PAYLOAD["checkpoint"]
+    # The fixture handed in is not mutated -- the caller still compares against it.
+    assert fixture.env == {"KEEP": "1"} and fixture.requires == {"dev_shm_bytes": 504658657280}
+
+
+def test_a_reproduction_that_drops_the_checkpoint_is_refused():
+    """`_with_host_checkpoint` moves the recorded path by exact match, so it has to *be* an item.
+
+    A command line that names the checkpoint by rewriting the recorded one -- a different case, a
+    relative path -- would survive that substitution untouched and then open whatever path the
+    recording host had. Refusing at the fixture is the difference between a skip and a wrong load.
+    """
+    from tests import golden_fixtures
+
+    fixture = golden_fixtures.GoldenFixture.from_json(PAYLOAD)
+    reference = {"reproduction": {"argv": ["serve", "--backend", "v41", "--model", "/elsewhere"]}}
+
+    with pytest.raises(ValueError, match="checkpoint"):
+        golden_fixtures.reproduction_fixture(fixture, reference)
+
+
 def _with_logits(expected_logits):
     return GoldenFixture.from_json({**PAYLOAD, "expected": {**PAYLOAD["expected"],
                                                            "logits_check": expected_logits}})

@@ -56,6 +56,27 @@
       18.550548553466797
     ]
   },
+  "reproduction": {
+    "argv": [
+      "serve",
+      "--backend",
+      "v41",
+      "--model",
+      "/mnt/data3/DeepSeek-V4.1-Flash",
+      "--tensor-parallel-size",
+      "1",
+      "--max-model-len",
+      "8192",
+      "--backend-option",
+      "prefill_chunk=4096",
+      "--backend-option",
+      "decode_graphs=false",
+      "--backend-option",
+      "threads=22"
+    ],
+    "env": {},
+    "requires": {}
+  },
   "commit": "385a18f",
   "taken_at": "2026-10-11",
   "notes": "the checkpoint's own model.py, imported unmodified and host-offloaded to fit a 24 GiB card; see scripts/record_reference_v41.py for the one deviation"
