@@ -83,6 +83,22 @@ def _resolved_notes(explicit: str | None, entry: str, golden) -> str:
     return existing.notes if existing is not None else ""
 
 
+def _resolved_path(explicit: str | None, entry: str, golden) -> str:
+    """The route to record: what the caller passed, or what the fixture already claimed.
+
+    An explicit `--path` wins. Omitted, an existing fixture's route is read back, so a re-record
+    that is only picking up a new field does not silently move the fixture to the other route --
+    which would leave it holding an answer to a different question than the oracle it is compared
+    against. Mirrors `_resolved_notes`, and for the same reason: the act of re-recording is not a
+    statement about this field. A fixture that does not exist yet has claimed nothing, so the raw
+    route is what a first record gets.
+    """
+    if explicit is not None:
+        return explicit
+    existing = golden.load_fixture(entry)
+    return existing.path if existing is not None else "raw"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--entry", required=True, choices=list(_load_module().ENTRY_POINTS))
@@ -108,6 +124,18 @@ def main(argv: list[str] | None = None) -> int:
             "free text kept beside the answer. Omitted, an existing fixture's notes are carried "
             "over rather than blanked: re-recording to pick up a new field is not a claim that the "
             "old note stopped being true, and the note is the one field here a person wrote."
+        ),
+    )
+    parser.add_argument(
+        "--path",
+        choices=list(_load_module().GOLDEN_PATHS),
+        default=None,
+        help=(
+            "how the recorded answer is produced: `raw` sends --prompt as a completion prefix, "
+            "`chat` renders it through the entry point's chat renderer first. It has to name the "
+            "route the oracle was recorded on -- record_reference_v41.py seeds the raw ids -- or "
+            "the fixture and the oracle are answers to different questions"
+            " Omitted, an existing fixture's route is carried over"
         ),
     )
     parser.add_argument("--out", type=pathlib.Path, help="defaults to tests/fixtures/golden/<entry>.json")
@@ -149,6 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         commit=_current_commit(),
         taken_at=datetime.date.today().isoformat(),
         card=golden.captured_card(),
+        path=_resolved_path(args.path, args.entry, golden),
         notes=_resolved_notes(args.notes, args.entry, golden),
     )
 

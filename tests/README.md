@@ -120,6 +120,7 @@ to reproduce it:
 | `env` | the environment variables the run needs (`POCKETLLM_CPP_BATCHED_DECODE`, `CUDA_VISIBLE_DEVICES`, …) |
 | `argv` | the command line, **as an operator types it**, minus `--prompt` |
 | `prompt` | the prompt **as text** |
+| `path` | which route `prompt` is fed through: `raw` as a completion prefix, `chat` through the checkpoint's chat template. Absent means `raw`, which is what every fixture recorded before the field drove |
 | `sampling` | greedy is `temperature: 0.0`; a fixture that samples is a fixture that fails one run in ten |
 | `requires` | a resource the run needs from this host, currently `dev_shm_bytes` |
 | `expected.prompt_tokens` | how many tokens the prompt rendered to for this checkpoint's tokenizer |
