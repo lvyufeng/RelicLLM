@@ -441,7 +441,13 @@ def reference_path(entry: str, reference_route: str = PATH_RAW) -> pathlib.Path:
     for the same words is a different sequence. The raw file keeps its unsuffixed name -- it is the
     route every record written before this distinction existed drove, and `_read_path` says the same
     thing about a record with no `path` field.
+
+    A route outside `GOLDEN_PATHS` is refused rather than interpolated into a name: the file it named
+    would not exist, the caller would read the missing file as `no oracle for this route yet`, and a
+    typo would turn a criterion into a skip.
     """
+    if reference_route not in GOLDEN_PATHS:
+        raise ValueError(f"reference route must be one of {GOLDEN_PATHS}, got {reference_route!r}")
     suffix = "" if reference_route == PATH_RAW else f"_{reference_route}"
     return REFERENCE_DIR / f"{entry}{suffix}.json"
 
@@ -453,11 +459,25 @@ def load_reference(entry: str, reference_route: str = PATH_RAW) -> dict[str, Any
     answers and must not be loadable as one. A `GoldenFixture` carries an `argv` that runs *here*;
     a reference carries what an outside implementation produced, and the two are compared, never
     conflated. See `scripts/record_reference_v41.py` for what writes it.
+
+    The record's own `path` is checked against the route it was loaded under, because the two can be
+    made to disagree: the file name is the caller's claim and the field is the recorder's, and a
+    record that ran one route while sitting at the other's name would be compared as if it answered
+    the route its name claims. A missing field is the pre-route default and reads as `raw`, the same
+    answer `_read_path` gives it everywhere else.
     """
     path = reference_path(entry, reference_route)
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    recorded = _read_path(record.get("path"))
+    if recorded != reference_route:
+        raise ValueError(
+            f"{path.name} records the {recorded!r} route but was loaded as {reference_route!r}: "
+            f"the file answers one question and the caller is asking the other, so a comparison "
+            f"against it would judge an answer by a prompt the run was never given"
+        )
+    return record
 
 
 def write_fixture(fixture: GoldenFixture) -> pathlib.Path:
