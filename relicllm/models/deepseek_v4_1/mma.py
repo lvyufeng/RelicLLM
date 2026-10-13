@@ -1,0 +1,397 @@
+"""The reference's fp8 GEMM written as arithmetic, instead of as a call to a tensor core.
+
+The reference does not compute a dot product. `inference/kernel.py`'s `fp8_gemm_kernel` is a tilelang
+kernel whose inner step is one `tl::mma_sync<e4m3, e4m3, fp32, 16, 8, 32>` per output element, and an
+`mma.sync` does not add 32 products exactly. Everything after it *is* exact -- the K loop is
+`C_local_accum[i, j] += C_local[i, j] * scale_a[i] * scale_b[j]` in fp32 and both scales are e8m0, so
+multiplying by them is a power-of-two rescale that changes no bits -- which leaves the mma's own
+32-term reduction as the only place the reference departs from a correctly rounded sum.
+
+That departure is small and it is not noise. Measured on a real `wq_a` (M=9, N=1280, K=5120, the
+checkpoint's own recorded operands and scales), the reference differs from the exact fp64 sum by a
+median 4e-5 relative, which is enough to land on the other side of the bf16 rounding boundary for
+**2.41%** of output elements. Those flips compound through the network and move the logits. They are
+why a port that computes a correctly rounded GEMM cannot reproduce the reference's tokens: the port
+was the *more accurate* implementation, and reproducing the reference means reproducing its rounding
+rather than beating it.
+
+The rule, per 32-wide K block:
+
+1. Two sequential 16-wide halves, and the accumulator starts at zero for every K block -- nothing
+   carries between blocks beyond the fp32 block sum.
+2. Each half is cut onto a grid set by that half's anchor, truncating **toward zero**:
+   ``anchor_h = max over k of (F(a_k) + F(b_k))`` with ``F(v) = max(true exponent of v, -6)``. ``F``
+   is read off the e4m3 *encoding*, which is why the floor is exactly -6: a subnormal operand
+   contributes -6, never its own -7..-9. A zero operand contributes nothing. The anchor is **per
+   output element** -- not per tile, not per row.
+3. The running sum joins the second half as a peer rather than as a container for it:
+   ``anchor = max(anchor_h, E(C_in))`` where ``E`` is ``floor(log2 |.|)``, then
+   ``C = TZ(C_in, g) + sum_k TZ(a_k b_k, g)`` with ``g = 2 ** (anchor - 13)``.
+4. A final renormalisation, ``C = TZ(C, 2 ** (E(C) - 13))`` -- about fourteen significand bits, toward
+   zero. This step moves outputs: omitting it breaks 43-170 elements of the reference's own trace.
+
+Accuracy: bit-identical to the reference kernel on 1,142,784/1,142,784 elements over 32 dense
+configurations, 382,976/382,976 on real layer-0 attention weights, and 11520/11520 end to end on the
+real `wq_a` with real e8m0 scales -- where a correctly rounded sum of the same operands reaches only
+11242/11520.
+
+**Scope.** e4m3 x e4m3 only, which is what the reference's dense and attention linears use. The MoE
+experts take an e4m3 activation against an **e2m1** weight (`expert_dtype == "fp4"`); e2m1 has a
+different exponent field, so the nominal-exponent rule above does not transfer to it and nothing here
+is claimed about that path.
+
+**Cost.** This transcribes a tensor-core instruction in elementwise torch, so it is far slower than
+the matmul it replaces and it materialises a ``[M, block, N]`` fp64 intermediate per K block. That is
+the price of bit parity on a card with no fp8 path at all, which is the point on sm_75; callers that
+want throughput and do not need to reproduce the reference's rounding should not call it.
+"""
+
+from __future__ import annotations
+
+import torch
+
+#: The reference's own block width: `kernel.py`'s `block_K = group_size = fp8_block_size = 32`.
+BLOCK = 32
+
+#: One `mma.sync` handles 16 of those 32 K values, and the kernel issues two of them per K block.
+HALF = 16
+
+#: The reduction keeps this many binary places below the anchor.
+WINDOW = 13.0
+
+#: "This product has no nominal exponent." A zero operand contributes nothing to its half's anchor,
+#: so its term is excluded rather than given the smallest exponent. The value is never used
+#: arithmetically -- only compared, in `max`/`amax`, and tested to collapse the grid to a step of one.
+_SENTINEL = -1.0e9
+
+#: `_cut` evaluates ``2 ** (ref - WINDOW)``, which underflows to zero for a sentinel. Testing against
+#: half the sentinel, rather than the sentinel, keeps the comparison exact in float64.
+_SENTINEL_GUARD = _SENTINEL / 2
+
+#: e4m3's largest finite value and the amax floor the reference clamps a block against before taking
+#: its scale -- `kernel.py`'s `fp8_max` and `fp8_amax_floor`.
+FP8_MAX = 448.0
+FP8_AMAX_FLOOR = 1e-4
+
+#: The fp64 ``[M, HALF, N]`` product block is materialised whole, so N is walked in row groups when
+#: that would be large. A multiple of :data:`BLOCK` keeps the weight scales aligned to the walk.
+_MAX_PRODUCT_ELEMENTS = 1 << 23
+
+
+def _bytes(t: torch.Tensor) -> torch.Tensor:
+    """Any 8-bit-encoded tensor as `uint8` bytes -- e4m3 codes or e8m0 scales alike.
+
+    The rule is stated on encoding fields, not on values, so every entry point here works on bytes.
+    """
+    return t if t.dtype == torch.uint8 else t.view(torch.uint8)
+
+
+def _pow2(exponent: torch.Tensor) -> torch.Tensor:
+    """``2 ** exponent`` exactly, for an integer-valued float64 exponent tensor.
+
+    **This is `torch.exp2` and nothing else.** Every other spelling was measured on the card and
+    every other spelling is wrong: ``torch.pow(2.0, e)`` is ``exp2(e * log2(2))`` and ``log2(2.0)``
+    is not bit-exact on CUDA, and ``torch.ldexp(1.0, e)`` -- which by its name and its host behaviour
+    ought to be exact -- comes back one ulp low for 16 of the 254 e4m3 codes. Both errors are around
+    1e-16 relative, which sounds harmless and is not, because a power of two here is a *grid*:
+    `_cut` divides by it and multiplies back, and a grid that is a hair below the intended power of
+    two moves the truncation boundary, so a term that should survive lands exactly on an integer and
+    is cut away instead. ``exp2`` is the hardware instruction and is exact on both devices over the
+    whole range this module can produce; the test file pins that rather than assuming it.
+    """
+    return torch.exp2(exponent.to(torch.float64))
+
+
+def _exp_of(x: torch.Tensor) -> torch.Tensor:
+    """``floor(log2 |x|)`` exactly, for a float64 tensor.
+
+    ``frexp`` rather than ``log2``: ``log2`` is correctly rounded, so ``floor`` of a value that ought
+    to be an exact integer can come out one below it, and that would silently move a grid by an
+    octave. ``x == 0`` has no exponent; callers guard on the value rather than on this.
+    """
+    _, exponent = torch.frexp(x.abs().clamp_min(torch.finfo(torch.float64).tiny))
+    return (exponent - 1).to(torch.float64)
+
+
+def nominal_exp(codes: torch.Tensor) -> torch.Tensor:
+    """``F(v) = max(true exponent of v, -6)``, read off the e4m3 encoding field.
+
+    A subnormal e4m3 code has a true exponent of -7, -8 or -9, and all three contribute -6 -- the
+    exponent the encoding field implies, not the exponent of the value. That distinction is the last
+    0.05% of elements and it only shows up on dense data: synthetic corpora never separated it, while
+    dropping the floor scores 7153/7168 wrong on a payload that is entirely subnormal.
+
+    Zero is not made special here. Callers exclude zero *products* by value, because a zero operand
+    contributes nothing rather than contributing -6.
+    """
+    field = (_bytes(codes).to(torch.int64) >> 3) & 0xF
+    return torch.where(field >= 1, field - 7, torch.full_like(field, -6)).to(torch.float64)
+
+
+def decode_e4m3(codes: torch.Tensor) -> torch.Tensor:
+    """e4m3 codes as their exact float64 values.
+
+    Decoded from the encoding by hand rather than cast: ``float8_e4m3fn`` has no dtype promotion, so
+    ``.to(torch.float64)`` is unavailable on some backends and on gathered or sliced views, and this
+    has to run on the sm_75 path where no fp8 arithmetic exists at all. Every code is exact, and
+    ``0x7F``/``0xFF`` decode to NaN rather than to the 480 that the normal formula would give them.
+    """
+    raw = _bytes(codes).to(torch.int64)
+    sign = torch.where((raw >> 7) & 1 == 1, -1.0, 1.0)
+    field = (raw >> 3) & 0xF
+    mantissa = raw & 0x7
+    # Normals are 2**(field - 7) * (1 + m/8); the field == 0 encodings are subnormals, m/8 * 2**-6.
+    # The significand has four significant bits and the scale is a power of two, so the product is
+    # exactly representable and IEEE multiplication returns it exactly.
+    significand = 1.0 + mantissa.to(torch.float64) / 8.0
+    normal = significand * _pow2((field - 7).to(torch.float64))
+    subnormal = (mantissa.to(torch.float64) / 8.0) * _pow2(torch.full_like(field, -6).to(torch.float64))
+    value = torch.where(field >= 1, normal, subnormal)
+    is_nan = (field == 0xF) & (mantissa == 0x7)
+    value = torch.where(is_nan, torch.full_like(value, float("nan")), value)
+    return sign * value
+
+
+def e8m0_exponent(scale: torch.Tensor) -> torch.Tensor:
+    """An e8m0 scale's exponent, exactly, as an int64 -- the inverse of the encoding.
+
+    Through ``frexp`` rather than ``log2``: a scale is a power of two, and ``log2`` of an exact power
+    of two can round down and give an exponent one too large, which would shift a whole block.
+    Accepts either the ``float8_e8m0fnu`` bytes or the fp32 values the port's quantizers return.
+    """
+    if scale.dtype == torch.float8_e8m0fnu:
+        return _bytes(scale).to(torch.int64) - 127
+    mantissa, exponent = torch.frexp(scale.to(torch.float64))
+    if not bool((mantissa.abs() == 0.5).all()):
+        raise ValueError("an e8m0 scale must be a power of two")
+    return (exponent - 1).to(torch.int64)
+
+
+def _cut(x: torch.Tensor, ref: torch.Tensor, off: float = WINDOW) -> torch.Tensor:
+    """Truncate ``x`` toward zero onto the grid ``2 ** (ref - off)``.
+
+    Toward zero -- replacing ``torch.trunc`` with a nearest-rounding breaks 127-501 elements of the
+    reference's own trace. The grid is a power of two, so the divide and the multiply back are exact
+    and the truncation is the only step that loses anything. ``ref`` is per element, which is the
+    whole point: the anchor is per output element, so the grid is too.
+    """
+    step = torch.where(ref < _SENTINEL_GUARD, torch.ones_like(ref), _pow2(ref - off))
+    return torch.trunc(x / step) * step
+
+
+def reduce_block(product: torch.Tensor, nominal: torch.Tensor) -> torch.Tensor:
+    """The mma's 32-term reduction, for a ``[..., HALF * 2]`` block of products.
+
+    ``product`` holds the exact products of the two operands' codes and ``nominal`` their nominal
+    exponents summed, both float64. The two halves are not symmetric: the first establishes a window
+    and the second is cut against ``max(its own anchor, the exponent of what the first half summed
+    to)``, so the running sum is a peer of the second half's products. That asymmetry is what every
+    tile-scoped model missed.
+    """
+    window = nominal[..., :HALF].amax(dim=-1)
+    total = _cut(product[..., :HALF], window.unsqueeze(-1)).sum(dim=-1)
+
+    # A sum of exactly zero has no exponent, and taking one from `tiny` would drag the second half's
+    # window down to -1022 and flatten it. Carry the sentinel instead.
+    running = torch.where(total != 0.0, _exp_of(total), torch.full_like(total, _SENTINEL))
+    window = torch.maximum(nominal[..., HALF:].amax(dim=-1), running)
+    total = _cut(total, window) + _cut(product[..., HALF:], window.unsqueeze(-1)).sum(dim=-1)
+
+    # The final renormalisation, kept separate from the cuts above: the second half's sum can carry
+    # bits past the window, and this is the step a probe cannot see unless told to look for it.
+    return torch.where(total != 0.0, _cut(total, _exp_of(total)), total)
+
+
+def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) -> torch.Tensor:
+    """The reference's fp8 GEMM for ``[M, K] x [N, K]``, accumulated in fp32 over 32-wide K blocks.
+
+    ``a_codes``/``b_codes`` are e4m3 codes, as ``float8_e4m3fn`` or as their raw bytes. Both scales
+    are per 32-wide K block and are applied the way the kernel applies them, ``(fragment * s_a) *
+    s_b`` after the reduction: ``a_scale`` is ``[M, K // block_size]``, one exponent per (row, K
+    block), and ``b_scale`` is ``[N // block_size, K // block_size]``, the 32x32 grid the checkpoint
+    stores beside a weight and the one the kernel indexes as ``scale_b[j]`` for output row ``j``.
+
+    The two operands are never dequantized. The rule is stated on codes, and running it on codes keeps
+    the per-block scales out of the exponents -- they are applied once, at the end of the block, which
+    is what the kernel does and what keeps the two sides of the comparison in the same units.
+    """
+    a_bytes, b_bytes = _bytes(a_codes), _bytes(b_codes)
+    m, k = a_bytes.shape[-2], a_bytes.shape[-1]
+    n = b_bytes.shape[0]
+    if k % block_size:
+        raise ValueError(f"K = {k} is not a multiple of the {block_size} block size")
+    blocks = k // block_size
+    if tuple(a_scale.shape) != (m, blocks):
+        raise ValueError(f"activation scales {tuple(a_scale.shape)} are not [{m}, {blocks}]")
+    if tuple(b_scale.shape) != (n // block_size, blocks):
+        raise ValueError(
+            f"weight scales {tuple(b_scale.shape)} are not [{n // block_size}, {blocks}]"
+        )
+
+    a_value, b_value = decode_e4m3(a_bytes), decode_e4m3(b_bytes)
+    a_nom, b_nom = nominal_exp(a_bytes), nominal_exp(b_bytes)
+    # The rule is stated on the codes and the scales are applied after, so the two acquire their
+    # device independently of the operands: `e8m0_exponent` reads a host tensor's bytes the same way
+    # it reads a device tensor's, and the caller's quantizers return whichever device they were
+    # given. Moving them here keeps the inner loop free of a device question.
+    device = a_value.device
+    a_exp = e8m0_exponent(a_scale).to(device)
+    b_exp = e8m0_exponent(b_scale).to(device)
+
+    group = block_size
+    if m * block_size * n > _MAX_PRODUCT_ELEMENTS:
+        group = max(block_size, (_MAX_PRODUCT_ELEMENTS // max(m * block_size, 1)) // block_size
+                    * block_size)
+
+    out = torch.zeros(m, n, dtype=torch.float32, device=device)
+    for lo in range(0, n, group):
+        hi = min(lo + group, n)
+        b_chunk, b_value_c, b_nom_c = b_bytes[lo:hi], b_value[lo:hi], b_nom[lo:hi]
+        # One weight scale per 32-row group, broadcast down its own rows before it meets the
+        # reduction's K axis -- `repeat_interleave` matches what the 32x32 grid means.
+        b_scale_c = b_exp[lo // block_size:hi // block_size]
+        for block in range(blocks):
+            at = slice(block * block_size, (block + 1) * block_size)
+            product = a_value[:, at].unsqueeze(1) * b_value_c[:, at].unsqueeze(0)
+            nominal = a_nom[:, at].unsqueeze(1) + b_nom_c[:, at].unsqueeze(0)
+            # A zero operand contributes nothing to the anchor. Counting it as -6 instead is provably
+            # unobservable -- every product is a multiple of 2**-18, and both candidate grids are
+            # finer than that lattice -- but excluding it is what the anchor was measured to do.
+            nominal = torch.where(product == 0.0, torch.full_like(nominal, _SENTINEL), nominal)
+            fragment = reduce_block(product, nominal).to(torch.float32)
+            # `_pow2` on the integer exponents, then a single downcast: `2 ** e` is exact in both
+            # formats, so the scales stay powers of two and the block sum stays a plain rescale.
+            sa = _pow2(a_exp[:, block].to(torch.float64)).to(torch.float32).unsqueeze(-1)
+            sb = _pow2(b_scale_c[:, block].to(torch.float64)).to(torch.float32)
+            out[:, lo:hi] += fragment * sa * sb.repeat_interleave(block_size)
+    return out
+
+
+#: Where a loader hangs a weight's literal e8m0 grid, for :func:`codes_from_scale` to find.
+#:
+#: An attribute on the parameter rather than a table keyed by ``id(weight)``: the scale has to travel
+#: with the tensor the modules hand to ``quantized_linear``, and an id-keyed registry is the same
+#: arrangement with an address that can be recycled by a tensor that has been freed.
+SCALE_ATTR = "_relicllm_block_scale"
+
+
+def attach_scale(weight: torch.Tensor, scale: torch.Tensor) -> None:
+    """Hang the checkpoint's own scale grid on the weight it scales. See :func:`codes_from_scale`."""
+    setattr(weight, SCALE_ATTR, scale)
+
+
+def attached_scale(weight: torch.Tensor) -> torch.Tensor | None:
+    """The grid :func:`attach_scale` put on this weight, or ``None`` for one that never had any.
+
+    ``None`` is the honest answer for a weight whose file stored no scale beside it -- a bf16 one, or
+    a tensor a caller built by hand -- and callers treat it as "no codes are recoverable here"
+    rather than as an error.
+    """
+    return getattr(weight, SCALE_ATTR, None)
+
+
+def codes_from_scale(
+    dense: torch.Tensor,
+    scale: torch.Tensor,
+    block_size: int = BLOCK,
+    *,
+    verify: bool = True,
+) -> torch.Tensor:
+    """Recover a **dense** weight's e4m3 codes from the e8m0 grid the checkpoint stored beside it.
+
+    This is the exact inverse of ``dequant_fp8_weight`` and it is what :func:`quantize_blocks` cannot
+    be. ``224 * 2**E`` and ``448 * 2**(E - 1)`` are the same number, so a tile whose largest code is
+    224 -- measured at 4.66% of the checkpoint's tiles -- has *two* power-of-two scales that re-expand
+    to exactly the same dense values. The values alone do not say which one the file used, and
+    ``quantize_blocks(verify=True)`` cannot tell the two apart, because it compares values: it
+    accepted the recovered grid and the codes disagreed with the file's on 13 of 6400 `wq_a` tiles.
+    That matters here and not in the dequantizer, because the rule reads the code's *exponent field*
+    (``nominal_exp``), and the octave the codes were written against is part of what it reads.
+
+    Handed the file's own grid there is nothing to decide: dividing by a power of two is exact in
+    every format, and the cast that follows has an exact value to land on. ``verify`` re-checks that
+    -- the cast back against the exact quotient, per row chunk -- so a weight that is *not* on this
+    grid is refused rather than quantized against a scale that belongs to a different tensor.
+
+    The loop is over 32-row chunks on purpose. A full-size reconstruction is an fp32 copy of the
+    weight plus an fp32 copy of its expanded grid, and the all-at-once version of this is what asked
+    for 1.17 GiB inside a TP4 rank that had 1.05 GiB left.
+    """
+    rows, cols = dense.shape[-2:]
+    if rows % block_size or cols % block_size:
+        raise ValueError(
+            f"a {tuple(dense.shape)} weight is not a multiple of the {block_size} grid"
+        )
+    want = (rows // block_size, cols // block_size)
+    if tuple(scale.shape) != want:
+        raise ValueError(
+            f"a {tuple(dense.shape)} weight wants a {want} scale grid and the one attached to it is "
+            f"{tuple(scale.shape)}"
+        )
+    exponent = e8m0_exponent(scale)
+    codes = torch.empty((rows, cols), dtype=torch.float8_e4m3fn, device=dense.device)
+    for lo in range(0, rows, block_size):
+        hi = min(lo + block_size, rows)
+        step = _pow2(exponent[lo // block_size].to(torch.float64)).to(torch.float32)
+        quotient = dense[lo:hi].to(torch.float32) / step.repeat_interleave(block_size)
+        row = quotient.to(torch.float8_e4m3fn)
+        if verify and not torch.equal(row.to(torch.float32), quotient):
+            raise ValueError(
+                f"the {block_size}x{block_size} block quantization of a {tuple(dense.shape)} weight "
+                f"does not round-trip against the scale grid attached to it, so that grid belongs to "
+                f"a different weight and this one's codes cannot be recovered"
+            )
+        codes[lo:hi] = row
+    return codes
+
+
+def quantize_blocks(
+    x: torch.Tensor, block_size: int = BLOCK, *, verify: bool = False
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """The reference's **weight** quantization: e8m0 scales on a square block grid.
+
+    Returns ``(codes, scale)`` with ``codes`` in ``float8_e4m3fn`` shaped like ``x`` and ``scale``
+    fp32 of shape ``[rows // block_size, cols // block_size]`` -- the layout the checkpoint stores
+    beside a weight and the one :func:`fp8_block_gemm` takes.
+
+    The reference picks the scale as the smallest power of two leaving ``max|w| / scale`` inside the
+    e4m3 range, so that ratio lands in ``(224, 448]`` by construction. For a corpus this is the
+    reference's own quantizer and a fixture builder. It is **not** a way back from a dequantized
+    weight to the codes the reference used, which is what it was written for and what it cannot do:
+    a tile maximizing at 224 admits two scales that re-expand to the same values, only one of which
+    is the file's, and the choice is visible to the reduction rule. A caller holding the checkpoint's
+    grid wants :func:`codes_from_scale`; a caller holding only the dense weight has no exact answer
+    and should not pretend otherwise.
+
+    ``verify`` re-expands the codes and raises if they do not reproduce ``x`` bit for bit. That is a
+    check on the values, so it does not and cannot catch the ambiguity above.
+    """
+    rows, cols = x.shape[-2:]
+    if rows % block_size or cols % block_size:
+        raise ValueError(f"a {tuple(x.shape)} weight is not a multiple of the {block_size} grid")
+    tiles = x.reshape(rows // block_size, block_size, cols // block_size, block_size)
+    flat = tiles.permute(0, 2, 1, 3).reshape(rows // block_size, cols // block_size, -1)
+    amax = flat.abs().amax(dim=-1).clamp_min(FP8_AMAX_FLOOR).to(torch.float64)
+    # The reference's `ceil(log2(amax / 448))`, via `frexp` rather than `log2`. `log2` of an exact
+    # power of two is not required to round to the integer itself on either device, and a scale that
+    # came out an octave high would quantize the whole tile against the wrong grid and still look
+    # plausible. `frexp` is exact, so the branch below is decided by bit inspection: a value whose
+    # mantissa is exactly one half *is* a power of two, and `ceil` must not round it up.
+    ratio = amax / FP8_MAX
+    mantissa, binary_exponent = torch.frexp(ratio)
+    at_power_of_two = mantissa.abs() == 0.5
+    exponent = torch.where(at_power_of_two, binary_exponent - 1, binary_exponent)
+    scale = _pow2(exponent.to(torch.float64))
+    codes = (flat.to(torch.float64) / scale.unsqueeze(-1)).to(torch.float8_e4m3fn)
+    codes = codes.reshape(rows // block_size, cols // block_size, block_size, block_size)
+    codes = codes.permute(0, 2, 1, 3).reshape(rows, cols)
+    if verify:
+        check = decode_e4m3(codes).to(torch.float32) * \
+            scale.repeat_interleave(block_size, dim=-1).repeat_interleave(block_size, dim=0)
+        if not torch.equal(check, x.to(torch.float32)):
+            raise ValueError(
+                f"the {block_size}x{block_size} block quantization of a {tuple(x.shape)} weight "
+                f"does not round-trip; its scales are not the reference's power-of-two grid, so the "
+                f"codes and their nominal exponents cannot be recovered from the dense weight"
+            )
+    return codes, scale.to(torch.float32)

@@ -75,6 +75,7 @@ from relicllm.models.deepseek_v4_1.attention import LINEAR_DTYPE
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
 from relicllm.models.deepseek_v4_1.kernels import dequant_fp4_weight, dequant_fp8_weight
+from relicllm.models.deepseek_v4_1 import mma
 from relicllm.models.deepseek_v4_1 import resident_bank
 from relicllm.models.deepseek_v4_1.modules import (
     Backbone,
@@ -278,6 +279,23 @@ class V41Checkpoint:
             return dequant_fp4_weight(weight, scale, block)
         return dequant_fp8_weight(weight, scale, block)
 
+    def tile_scale(self, key: str) -> torch.Tensor | None:
+        """The literal e8m0 grid stored beside a quantized weight, or `None` if it has none.
+
+        The fp8 weights of the dense and attention linears expand to values that do not say which
+        octave their codes were written against (`224 * 2**E == 448 * 2**(E-1)`), so the grid is the
+        only record of it and `mma.codes_from_scale` is the only exact way back to the codes. It is
+        tiny -- 1/1024 of the weight it scales -- and it is returned in the dtype the file stored it
+        in, because `e8m0_exponent` reads those bytes directly.
+
+        Packed fp4 is excluded: its scale is one entry per *row* rather than per square tile, and the
+        reduction rule is stated on the e4m3 exponent field, which e2m1 does not share. Nothing
+        downstream would know what to do with it, so it is not offered.
+        """
+        if not self.is_quantized(key) or self.is_packed_fp4(key):
+            return None
+        return self.packed(scale_key(key))
+
     def rows(self, key: str, rows: torch.Tensor, *, dtype: torch.dtype | None = None) -> torch.Tensor:
         """Gather scattered rows out of a matrix, from the bank or from the mapping.
 
@@ -400,6 +418,17 @@ def checkpoint_weights(
                     f"in the tree at {name}"
                 )
             parameter.copy_(value)
+            # The grid the file stored beside this weight, cut the same way and hung on the parameter
+            # it belongs to. The *dense* weight cannot say which octave its codes were written
+            # against, and the reduction rule reads the code's exponent field -- so this is not an
+            # optimization, it is the only exact record of what the reference's GEMM was handed. See
+            # `mma.codes_from_scale`; a parameter with no grid attached is a weight that never had
+            # one, and the callers treat that as "no codes are recoverable here" rather than guessing.
+            scale = checkpoint.tile_scale(key)
+            if scale is not None:
+                if plan is not None:
+                    scale = plan.local_scale(key, scale, checkpoint.block_size(key))
+                mma.attach_scale(parameter, scale)
             report.loaded.append(key)
     return report
 

@@ -38,11 +38,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from relic_core.kernels.ops import act_quant, fp4_act_quant, sparse_attn
+from relicllm.models.deepseek_v4_1 import mma
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
 from relicllm.models.deepseek_v4_1.kernels import fp4_act_quant_e4m3, quantized_linear
 from relicllm.models.deepseek_v4_1.kv_spec import kv_spec
-from relicllm.models.deepseek_v4_1.tp import indexer_row_split
+from relicllm.models.deepseek_v4_1.tp import banded_scale, indexer_row_split
 from relicllm.runtime.kv_spec import KVCacheSpec
 
 # Re-exported rather than defined here. Every node in this stack builds its own copy of the rope
@@ -867,6 +868,20 @@ class Indexer(nn.Module):
                 .reshape(tp.index_heads * self.index_head_dim, -1)
                 .contiguous()
             )
+            # The same band of the weight's scale grid, because this tensor is a fresh one and the
+            # grid the loader hung on the parameter does not come with it. The cut is
+            # `banded_scale`'s rather than a second one written here: it is the same `index_heads`
+            # cut `ShardPlan` makes, and two implementations of it would be two chances to disagree
+            # about which octave a rank's codes were written against -- a disagreement nothing
+            # downstream reads back out to notice.
+            scale = mma.attached_scale(self.wq_b.weight)
+            if scale is not None:
+                mma.attach_scale(
+                    cached,
+                    banded_scale(
+                        scale, self.n_heads_global, self.index_head_dim, tp.rank, tp.world, mma.BLOCK
+                    ),
+                )
             self._wq_b_local = cached
         return cached
 

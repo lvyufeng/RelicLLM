@@ -499,6 +499,47 @@ def test_an_fp8_weight_expands_on_the_derived_block_grid(mini) -> None:
     assert mini.stored[table].shape == (mini.stored["layers.0.engram.embed.weight"].shape[0], ENGRAM_HEAD_DIM // BLOCK)
 
 
+def test_every_quantized_parameter_carries_the_grid_the_file_stored(mini) -> None:
+    """The loader hangs the file's own scale grid on each fp8 parameter, and on nothing else.
+
+    `quantized_linear` runs the reference's reduction on *codes*, and a dense weight cannot say which
+    octave its codes were written against: `224 * 2**E` and `448 * 2**(E-1)` are the same number, and
+    4.66% of this checkpoint's tiles are at that boundary. So the grid the file stored beside the
+    weight travels with the parameter -- 1/1024 of the weight's bytes, and the only exact way back to
+    the codes. A parameter that should have one and does not runs the correctly rounded product
+    instead, which is a difference no value in the run's output announces.
+
+    The check is the strongest available: what the loader attached, run through the recovery, is the
+    byte for byte contents of the file's own weight tensor.
+    """
+    from relicllm.models.deepseek_v4_1 import mma
+
+    for name in (
+        "layers.0.attn.wq_a.weight",  # not sharded at all: replicated whole
+        "layers.0.attn.wq_b.weight",  # cut on its output axis
+        "layers.0.attn.wo_b.weight",  # cut on its input axis
+        "layers.0.attn.wo_a.weight",  # the stacked block layout, one band per o-group
+        "layers.0.ffn.shared_experts.w1.weight",
+    ):
+        assert mini.ckpt.is_quantized(name), f"{name} is not fp8 in this checkpoint"
+        parameter = mini.loaded.model.get_submodule(name.rsplit(".", 1)[0]).weight
+        grid = mma.attached_scale(parameter)
+        assert grid is not None, f"{name} was filled without its scale grid"
+        assert grid.dtype == torch.float8_e8m0fnu, (
+            f"{name} carries a {grid.dtype} grid; the file's own e8m0 bytes are what "
+            f"`e8m0_exponent` reads exactly"
+        )
+        assert torch.equal(
+            mma.codes_from_scale(parameter, grid, BLOCK), mini.stored[name]
+        ), f"{name}: the codes recovered from the parameter and its grid are not the file's"
+
+    # And the rest: a weight the file did not quantize has no grid to carry, and the emulation has to
+    # see that rather than a grid from a neighbour.
+    plain = mini.loaded.model.get_submodule("layers.0.attn.q_norm").weight
+    assert not mini.ckpt.is_quantized("layers.0.attn.q_norm.weight")
+    assert mma.attached_scale(plain) is None, "a bf16 weight was given a scale grid"
+
+
 def test_a_layer_with_a_ratio_of_one_has_no_compressor_gate(mini) -> None:
     """The release's layer 20, reproduced: `Compressor.__init__` returns before `wgate` exists.
 
