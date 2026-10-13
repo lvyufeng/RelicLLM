@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+import torch
 
 from relicllm.api import EngineArgs
 from relicllm.backends.base import RuntimeAdapter
@@ -83,7 +84,12 @@ def test_v41_keeps_its_cache_build_under_the_load_lock(monkeypatch):
 
     def load():
         events.append("load")
-        adapter._front = object()
+        # A stand-in, not `object()`: `prepare` runs `_resolve_decode_graphs` after the load, and
+        # that asks the loaded front for its attention caches by walking its buffers -- so the
+        # front here has to be the one thing `load_backbone` promises, a module. What this test
+        # is about is the lock the front is built under, and a module with no caches is enough:
+        # the walk answers "no graph" and the cache build this test asserts on runs either way.
+        adapter._front = torch.nn.Module()
 
     def cache():
         assert adapter._load_lock._is_owned()
