@@ -23,6 +23,20 @@ from __future__ import annotations
 import argparse
 import sys
 
+import torch
+
+
+def _e2m1_codes(t: torch.Tensor) -> torch.Tensor:
+    """A packed e2m1 payload as one 4-bit code per element, low nibble first.
+
+    Low-first is the order `_pack_fp4_codes` writes and the reference's decoder reads.
+    """
+    b = t.reshape(-1).view(torch.uint8).to(torch.int64)
+    out = torch.empty(b.numel() * 2, dtype=torch.int64, device=b.device)
+    out[0::2] = b & 0xF
+    out[1::2] = b >> 4
+    return out
+
 
 def report(name: str, arms: dict) -> None:
     names = [n for n in arms if arms[n] is not None]
@@ -32,6 +46,40 @@ def report(name: str, arms: dict) -> None:
     for a in range(len(names)):
         for b in range(a + 1, len(names)):
             x, y = arms[names[a]], arms[names[b]]
+            if tuple(x.shape) != tuple(y.shape):
+                print(f"  {name:<22} {names[a]:<10} vs {names[b]:<10} shapes differ: "
+                      f"{tuple(x.shape)} vs {tuple(y.shape)}")
+                continue
+            packed = getattr(torch, "float4_e2m1fn_x2", None)
+            if packed is not None and x.dtype == packed:
+                # `float4_e2m1fn_x2` packs two e2m1 values into a byte. Torch reports it as a
+                # floating dtype but implements no cast to float, so arithmetic on it -- `(x - y)`
+                # here, `x.float()` before -- trips a device-side assert, which reads as a fault in
+                # the quantizer when it is a fault in the comparison.
+                #
+                # Compare the codes, not the bytes, because a differing byte has two causes that
+                # want opposite responses. A differing *value* is a quantizer defect. A differing
+                # *sign bit on a zero* -- e2m1 spends two of its sixteen codes on +0.0 and -0.0 --
+                # is inert: both dequantize to a zero and add to a sum identically. Comparing bytes
+                # merges them, and comparing dequantized floats drops the second entirely and then
+                # reports a byte count it cannot explain (`+0.0 != -0.0` is False in IEEE).
+                xc, yc = _e2m1_codes(x), _e2m1_codes(y)
+                bad = xc != yc
+                zeros = ((xc == 0) | (xc == 8)) & ((yc == 0) | (yc == 8))
+                value_bad = bad & ~zeros
+                if not int(bad.sum()):
+                    print(f"  {name:<22} {names[a]:<10} vs {names[b]:<10} "
+                          f"identical, all {xc.numel()} e2m1 codes")
+                    continue
+                print(f"  {name:<22} {names[a]:<10} vs {names[b]:<10} "
+                      f"{int(value_bad.sum())} value differences, "
+                      f"{int((bad & zeros).sum())} sign-of-zero, of {xc.numel()} codes")
+                pairs = torch.stack((xc[value_bad], yc[value_bad])).T
+                uniq, counts = torch.unique(pairs, dim=0, return_counts=True)
+                for pair, count in sorted(zip(uniq.tolist(), counts.tolist()),
+                                          key=lambda kv: -kv[1])[:6]:
+                    print(f"      code {pair[0]:2d} vs {pair[1]:2d}  {count:8d} times")
+                continue
             x, y = x.float().reshape(-1), y.float().reshape(-1)
             rel = float((x - y).norm() / y.norm().clamp_min(1e-30))
             print(f"  {name:<22} {names[a]:<10} vs {names[b]:<10} relL2 {rel:.5e}  "
@@ -46,8 +94,6 @@ def main() -> int:
     parser.add_argument("--dim", type=int, default=4096)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
-
-    import torch
 
     import relic_core.kernels.ops as ops
 
