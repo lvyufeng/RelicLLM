@@ -40,12 +40,13 @@ experts take an e4m3 activation against an **e2m1** weight (`expert_dtype == "fp
 different exponent field, so the nominal-exponent rule above does not transfer to it and nothing here
 is claimed about that path.
 
-**Cost.** This transcribes a tensor-core instruction in elementwise torch, so it is far slower than
-the matmul it replaces, and it works in fp64 because the rule is stated on exact products. Its
-intermediates are therefore eight bytes an element and it has to tile: the peak is one
-``[rows, block, cols]`` product plus the slices it is built from, never a whole operand. That is the
-price of bit parity on a card with no fp8 path at all, which is the point on sm_75; callers that want
-throughput and do not need to reproduce the reference's rounding should not call it.
+**Cost.** This transcribes a tensor-core instruction, so it is far slower than the matmul it
+replaces: it is exact arithmetic in what should have been a tensor-core kernel. It is written in
+fp32 -- the rule's own computation is exact there, see :func:`fp8_block_gemm` -- and it still has to
+tile, because its product is one element per (output element, K of a block) and the engram's `wkv`
+is 147M codes. That is the price of bit parity on a card with no fp8 path at all, which is the point
+on sm_75; callers that want throughput and do not need to reproduce the reference's rounding should
+not call it.
 """
 
 from __future__ import annotations
@@ -75,18 +76,27 @@ _SENTINEL_GUARD = _SENTINEL / 2
 FP8_MAX = 448.0
 FP8_AMAX_FLOOR = 1e-4
 
-#: How many fp64 product elements one pass of :func:`fp8_block_gemm` may hold at once. The product is
-#: ``[rows, BLOCK, cols]`` and it is the largest live tensor in the loop, so the row tile and the
-#: column group are chosen against this. A multiple of :data:`BLOCK` keeps the weight scales aligned
-#: to the walk.
+#: How many product elements one tile of :func:`fp8_block_gemm` may hold: ``rows * cols * BLOCK`` per
+#: K block, times however many K blocks of the tile fit. The product is the largest live tensor in
+#: the loop, so the tile shape is chosen against this. The walker cuts K down to fit and prefers to
+#: keep N whole.
 #:
 #: This is a **resident-memory** limit, not a tidiness one. The serving configuration runs four ranks
 #: on one 24 GiB card with the prefix cache resident, and a first attempt at this loop that decoded
-#: its operands whole died there: the engram's `wkv` is 147M elements, an fp64 copy of it is 1.17 GiB,
-#: and the card had 0.67 GiB free. It matters most in *decode*, where one output row is the whole
-#: first dimension -- there the product is `[1, BLOCK, N]` and N is what the budget cuts -- while a
-#: long prefill cuts the row axis instead.
-_MAX_PRODUCT_ELEMENTS = 1 << 21
+#: its operands whole died there: the engram's `wkv` is 147M elements, a copy of it is 1.17 GiB in
+#: fp64 (0.59 GiB in fp32), and the card had 0.67 GiB free. It matters most in *decode*, where one
+#: output row is the whole first dimension, so a tile is a slab of N crossed with as many K blocks
+#: as fit -- while a long prefill cuts the column axis and then the row axis.
+#:
+#: The value is a knee rather than a bound, and it was measured on the acceptance shapes. Decode is
+#: nearly flat in it -- ``1 << 24`` gives 7.29 s/token against ``1 << 23``'s 7.41 and ``1 << 22``'s
+#: 9.24 -- because one output row leaves the tile bounded by N either way. Prefill is not: at M=13
+#: the same three give 22.95 s, 48.87 s and more, since a tile that holds half as many K blocks
+#: pays the per-tile overhead twice as often and a prompt is where that is visible. Both peaks are
+#: transient and neither is near the whole-operand decode the limit exists to prevent -- 442 MiB on
+#: the engram's `wkv` at ``1 << 24``, 297 MiB at ``1 << 23``, against the 1.17 GiB fp64 copy (0.59
+#: GiB fp32) that ran that configuration out of memory -- so the budget is set for the prefill.
+_MAX_PRODUCT_ELEMENTS = 1 << 24
 
 
 def _bytes(t: torch.Tensor) -> torch.Tensor:
@@ -222,6 +232,93 @@ def reduce_block(product: torch.Tensor, nominal: torch.Tensor) -> torch.Tensor:
     return torch.where(total != 0.0, _cut(total, _exp_of(total)), total)
 
 
+#: The per-operand nominal exponent of a **zero** e4m3 code. A zero operand contributes nothing to
+#: its half's anchor, which the batched walk expresses by carrying a sentinel into the pair sum --
+#: the same role :data:`_SENTINEL` plays in :func:`reduce_block`, and the reason this path keeps its
+#: exponents as int16 (a ``-1e9`` has no int16 encoding). The value is far below every live anchor --
+#: nominal exponents are integers in ``[-6, 8]``, so a live pair sums into ``[-12, 16]`` and a
+#: sentinel pair sums to at most ``-1000 + 8`` -- and far above int16's floor:
+#: :data:`_EMPTY_GUARD` is the single threshold that separates the two.
+_EMPTY_I16 = -1000
+
+#: The float threshold a half's anchor is tested against to decide whether it has one at all. Every
+#: live anchor is at least ``-12`` and every sentinel pair is at most ``-992``, so any value between
+#: the two splits them; ``-500`` is the probe's own choice and is what the randomized sweep in
+#: ``tests/test_v41_mma_reduction.py`` pins.
+_EMPTY_GUARD = -500.0
+
+
+def _decode_codes_f32(codes: torch.Tensor) -> torch.Tensor:
+    """e4m3 codes as their exact fp32 values, through the native cast -- one kernel, not nine.
+
+    This is the hot path's decoder and it is deliberately not :func:`decode_e4m3`. The hand decode
+    exists because `float8_e4m3fn` has no dtype promotion -- there is no ``.to(torch.float64)`` on it
+    -- and because the load-time path wants a decoder that reads the *encoding* rather than trusting
+    a cast on a device that may not have one. The hot path wants the opposite: the cast is a widening
+    conversion (a four-bit significand into eight bits of exponent lands exactly, in either dtype)
+    and it is one tensor op instead of twenty-eight, and ``0x7F``/``0xFF`` come out NaN exactly as
+    the hand decode makes them. Pinned code by code, on both devices, against the hand decode.
+    """
+    return _bytes(codes).view(torch.float8_e4m3fn).to(torch.float32)
+
+
+def _nominal_i16(codes: torch.Tensor) -> torch.Tensor:
+    """``F(v)`` for every code, as int16, with :data:`_EMPTY_I16` where the operand is zero.
+
+    :func:`nominal_exp`'s arithmetic -- the encoding field, the ``-6`` floor for the subnormals --
+    with the zero case decided per *operand* rather than left to the caller's product test, and in
+    the narrowest integer that holds it. A zero operand is what makes a product zero, so the sentinel
+    lands on exactly the pairs the old ``torch.where(product == 0.0, ...)`` sentinel'd; the one case
+    the two spellings classify differently is a NaN code against a zero code, where the product is
+    NaN rather than zero -- and there the NaN reaches the block sum whichever grid is chosen, so the
+    output element is NaN under both.
+    """
+    raw = _bytes(codes).to(torch.int16)
+    field = (raw >> 3) & 0xF
+    nominal = torch.clamp(field - 7, min=-6)
+    return torch.where((raw & 0x7F) != 0, nominal, torch.full_like(nominal, _EMPTY_I16))
+
+
+def _exp_of_f32(x: torch.Tensor) -> torch.Tensor:
+    """:func:`_exp_of` in fp32 -- ``frexp``, so nothing is rounded into the wrong octave.
+
+    The fp32 floor of the clamp is irrelevant to the result: every value this path takes an exponent
+    of is a nonzero multiple of a block's own grid, so it is at least ``2 ** -25`` and the clamp
+    never engages.
+    """
+    _, exponent = torch.frexp(x.abs().clamp_min(torch.finfo(torch.float32).tiny))
+    return (exponent - 1).to(torch.float32)
+
+
+def _grid_f32(ref: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """``(2 ** (ref - WINDOW), 2 ** (WINDOW - ref))``, and ``(1, 1)`` where there is no anchor.
+
+    Both directions out of one call because both are wanted: the reduction truncates ``x * inverse``
+    into whole numbers and rescales the *sum* once, which is exact and is one multiply on a
+    ``[..., cols, blocks, half]`` tensor instead of one per term. A step of one is the identity, so
+    an anchorless half -- an all-sentinel one, or one whose products were all zero -- cuts nothing,
+    which is exactly what :func:`_cut`'s sentinel branch does. Both powers are ``exp2`` of a small
+    integer float, so both are exact.
+
+    The inverse is built by ``exp2(WINDOW - ref)`` rather than by ``1 / step`` so that its exactness
+    is the same fact as the step's, and so that the sentinel, whose rescale is ``2 ** 1e9``, never
+    asks a reciprocal to evaluate an infinity.
+    """
+    step = torch.where(ref < _EMPTY_GUARD, torch.ones_like(ref), torch.exp2(ref - WINDOW))
+    inverse = torch.where(ref < _EMPTY_GUARD, torch.ones_like(ref), torch.exp2(WINDOW - ref))
+    return step, inverse
+
+
+def _cut_f32(x: torch.Tensor, ref: torch.Tensor) -> torch.Tensor:
+    """:func:`_cut` in fp32: truncate ``x`` toward zero onto ``2 ** (ref - 13)``.
+
+    Same grid, same direction, same sentinel branch as the fp64 original -- and deliberately the same
+    division rather than a reciprocal, so a reader can see it is the same operation.
+    """
+    step = torch.where(ref < _EMPTY_GUARD, torch.ones_like(ref), torch.exp2(ref - WINDOW))
+    return torch.trunc(x / step) * step
+
+
 def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) -> torch.Tensor:
     """The reference's fp8 GEMM for ``[M, K] x [N, K]``, accumulated in fp32 over 32-wide K blocks.
 
@@ -242,12 +339,40 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     does not describe the weight it was attached to and is refused there -- and an activation scale
     comes out of `block_fp8_act_quant` as ``2 ** ceil(log2(...))`` by construction.
 
-    The loop walks K blocks outermost and decodes each operand **slice per block**, never whole. Both
-    halves of that are load-bearing on a card: an fp64 copy of a weight is eight bytes an element and
-    the engram's `wkv` is 147M of them, and the three loops are ordered so that no slice is decoded
-    twice -- the column groups partition N and the row tiles partition M, so each operand element is
-    decoded exactly once however the budget happens to cut the product. See
-    :data:`_MAX_PRODUCT_ELEMENTS`.
+    **Why fp32, when the rule is stated on exact products.** The rule's own arithmetic is exact in
+    fp32, and saying why is most of what makes this function the same function as
+    :func:`reduce_block`. A product of two e4m3 codes has at most eight significant bits and lives
+    between ``2 ** -18`` and ``2 ** 18``, so it is exact in fp32 and never subnormal. The anchor
+    bounds the *cut* terms: with ``g = 2 ** (anchor - 13)`` and ``|a_k b_k| < 2 ** (anchor + 2)``,
+    every ``x / g`` is below ``2 ** 15``, and a half's sixteen of them sum to below ``2 ** 19`` --
+    whole numbers, or values whose bits are a subset of one, and therefore exact. The same bound
+    covers the second half's window, because it takes the larger of its own anchor and
+    ``E(C_in)``. So the halves' sums, the running sum's rescale onto the second window, and the final
+    renormalisation are all exact, and the only rounding in the whole reduction is the fp32
+    multiply-add of the block sums across K -- which is the one place the reference rounds too, and
+    which this function still performs one block at a time in K order.
+
+    **Cost, and why the loop is shaped this way.** The first version of this walked K blocks
+    outermost and re-derived everything inside: at the acceptance configuration one ``wq_a`` call
+    issued 107,424 tensor ops whose combined device time was 67 ms, the other 3 s being the host
+    dispatching them, and one decode step needed six minutes a rank -- the emulation-on acceptance
+    run produced no token in ninety minutes. The rule was never the expensive part; issuing tens of
+    thousands of tiny ops was. So the walk is tiled the other way: a tile holds as many K blocks as
+    the budget allows and decodes each operand once for the whole tile, and the only per-block work
+    left is the accumulation the order requires.
+
+    Tiling this way is what the exactness argument above buys. A tile-wide ``sum`` over the halves
+    may use whatever order the kernel likes, and the row/column/K partitions may fall wherever the
+    budget puts them, because those sums are exact -- whereas the fp32 accumulation order *across* K
+    blocks is not, and is preserved: the K loop is outermost and accumulates in K order.
+    ``tests/test_v41_mma_reduction.py`` pins both halves of that, the randomized sweep included.
+
+    No operand is ever decoded whole. That is the same resident-memory limit the previous version
+    observed: the serving configuration runs four ranks on one 24 GiB card with the prefix cache
+    resident and the engram's `wkv` is 147M elements, and this function's largest live tensor is the
+    product tile, bounded by :data:`_MAX_PRODUCT_ELEMENTS`. The K loop is outermost so each operand
+    element is decoded exactly once; the column groups partition N and the row tiles partition M, so
+    the budget can cut the product anywhere without decoding a slice twice.
     """
     a_bytes, b_bytes = _bytes(a_codes), _bytes(b_codes)
     m, k = a_bytes.shape[-2], a_bytes.shape[-1]
@@ -274,46 +399,87 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     a_exp = e8m0_exponent(a_scale, verify=False).to(device)
     b_exp = e8m0_exponent(b_scale, verify=False).to(device)
 
-    # How much of the product to hold at once. Rows are cut first, because tiling them costs nothing
-    # -- one output row already needs a `[1, BLOCK, N]` product, so a wide N is what has to come off
-    # the column axis instead, and both cuts are partitions of independent output elements.
+    # The tile: how many rows, columns and K blocks one pass holds. N is what comes off the column
+    # axis first, in block_size-wide groups so a group's weight scales are whole grid rows, and only
+    # when a single 32-wide slab of N does not fit does the row axis come off too -- one output row
+    # already needs a `[1, BLOCK, N]` product, so cutting rows is the cut that buys least. K is cut
+    # last and by however much is left: a K tile is what lets a decode and the per-block
+    # accumulations happen once per tile rather than once per block.
     rows, cols = m, n
-    if m * block_size * n > _MAX_PRODUCT_ELEMENTS:
-        if block_size * n <= _MAX_PRODUCT_ELEMENTS:
-            rows = max(1, _MAX_PRODUCT_ELEMENTS // (block_size * n))
+    if m * n * block_size > _MAX_PRODUCT_ELEMENTS:
+        if m * block_size * block_size <= _MAX_PRODUCT_ELEMENTS:
+            cols = max(
+                block_size,
+                (_MAX_PRODUCT_ELEMENTS // (m * block_size)) // block_size * block_size,
+            )
         else:
-            rows = 1
-            cols = (_MAX_PRODUCT_ELEMENTS // block_size) // block_size * block_size
+            cols = block_size
+            rows = max(1, _MAX_PRODUCT_ELEMENTS // (block_size * block_size))
+    # `max(1, ...)` on the divisor, so an empty operand still fails the way it always did -- a
+    # `range(0, 0, 0)` below -- rather than a division by zero here. Neither is reachable from the
+    # port's call sites; this only keeps the failure identical.
+    ktile = max(1, _MAX_PRODUCT_ELEMENTS // max(1, rows * cols * block_size))
 
     out = torch.zeros(m, n, dtype=torch.float32, device=device)
-    for block in range(blocks):
-        at = slice(block * block_size, (block + 1) * block_size)
-        # `2 ** e` is exact in both formats, so the scales stay powers of two and the block sum stays
-        # a plain rescale.
-        a_scale_block = _pow2(a_exp[:, block].to(torch.float64)).to(torch.float32)
+    for b0 in range(0, blocks, ktile):
+        b1 = min(b0 + ktile, blocks)
+        width = b1 - b0
+        at = slice(b0 * block_size, b1 * block_size)
         for lo in range(0, n, cols):
             hi = min(lo + cols, n)
+            # The weight tile is decoded once for the whole K tile and reused down every row tile.
+            # `[(N // 32), BLOCK]` reshaped to `[..., 2, HALF]` is what makes the halves contiguous:
+            # the mma takes the first 16 of the 32 K values and then the second 16.
+            b_tile = b_bytes[lo:hi, at]
+            b_dec = _decode_codes_f32(b_tile).reshape(hi - lo, width, 2, HALF)
+            b_nom = _nominal_i16(b_tile).reshape(hi - lo, width, 2, HALF)
             # One weight scale per block_size-row group of the output, repeated down its own rows
             # before it meets the reduction's K axis -- `repeat_interleave` matches what the 32x32
-            # grid means.
-            b_scale_block = _pow2(b_exp[lo // block_size:hi // block_size, block].to(torch.float64))
-            b_scale_block = b_scale_block.to(torch.float32).repeat_interleave(block_size)
-            b_block = b_bytes[lo:hi, at]
-            b_dec = decode_e4m3(b_block)
-            b_nom = nominal_exp(b_block)
+            # grid means, and `2 ** e` is exact, so the block sum stays a plain rescale.
+            sb = torch.exp2(b_exp[lo // block_size:hi // block_size, b0:b1].to(torch.float32))
+            sb = sb.repeat_interleave(block_size, dim=0)
             for m0 in range(0, m, rows):
                 m1 = min(m0 + rows, m)
-                a_block = a_bytes[m0:m1, at]
-                product = decode_e4m3(a_block).unsqueeze(1) * b_dec.unsqueeze(0)
-                nominal = nominal_exp(a_block).unsqueeze(1) + b_nom.unsqueeze(0)
-                # A zero operand contributes nothing to the anchor. Counting it as -6 instead is
-                # provably unobservable -- every product is a multiple of 2**-18, and both candidate
-                # grids are finer than that lattice -- but excluding it is what the anchor was
-                # measured to do.
-                nominal = torch.where(product == 0.0, torch.full_like(nominal, _SENTINEL), nominal)
-                fragment = reduce_block(product, nominal).to(torch.float32)
-                sa = a_scale_block[m0:m1].unsqueeze(-1)
-                out[m0:m1, lo:hi] += fragment * sa * b_scale_block
+                a_tile = a_bytes[m0:m1, at]
+                a_dec = _decode_codes_f32(a_tile).reshape(m1 - m0, width, 2, HALF)
+                a_nom = _nominal_i16(a_tile).reshape(m1 - m0, width, 2, HALF)
+                # `[rows, cols, blocks, HALF * 2]`: the product is exact, and the pair of nominal
+                # exponents is what the anchor will be read out of. The sentinel rides in the operand
+                # so that an all-zero half -- whose `amax` would otherwise be a live-looking exponent
+                # -- is recognized below as having no anchor at all.
+                product = a_dec.unsqueeze(1) * b_dec.unsqueeze(0)
+                anchor = (a_nom.unsqueeze(1) + b_nom.unsqueeze(0)).amax(dim=-1)
+
+                # The first half establishes the window, and its sum joins the second half as a peer:
+                # the second window is the larger of its own anchor and the exponent of the sum. Both
+                # grids are per output element, which is where the reduction's own asymmetry lives.
+                step0, inverse0 = _grid_f32(anchor[..., 0].to(torch.float32))
+                whole = (product[..., 0, :] * inverse0.unsqueeze(-1)).trunc_().sum(dim=-1)
+                total = whole * step0
+                # A sum of exactly zero has no exponent, and taking one from `tiny` would drag the
+                # second half's window down to -1022 and flatten it. Carry the sentinel instead.
+                running = torch.where(
+                    total != 0.0, _exp_of_f32(total), torch.full_like(total, _SENTINEL)
+                )
+                step1, inverse1 = _grid_f32(
+                    torch.maximum(anchor[..., 1].to(torch.float32), running)
+                )
+                whole = (product[..., 1, :] * inverse1.unsqueeze(-1)).trunc_().sum(dim=-1)
+                total = (whole + (total * inverse1).trunc_()) * step1
+
+                # The final renormalisation, kept separate from the cuts above: the second half's sum
+                # can carry bits past the window, and this is the step a probe cannot see unless told
+                # to look for it.
+                fragment = torch.where(total != 0.0, _cut_f32(total, _exp_of_f32(total)), total)
+                del product, a_nom
+
+                # The scales arrive here, where the kernel applies them: to the finished fragment, in
+                # fp32, as a power-of-two rescale that moves no bits. Then the K blocks accumulate in
+                # K order, one block at a time -- the only place the reduction rounds.
+                sa = torch.exp2(a_exp[m0:m1, b0:b1].to(torch.float32))
+                scaled = fragment * sa.unsqueeze(1) * sb.unsqueeze(0)
+                for i in range(width):
+                    out[m0:m1, lo:hi] += scaled[..., i]
     return out
 
 
