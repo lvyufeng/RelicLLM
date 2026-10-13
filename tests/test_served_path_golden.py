@@ -51,6 +51,7 @@ from tests.golden_fixtures import (
     GoldenFixture,
     Outcome,
     _with_host_checkpoint,
+    captured_card,
     fixture_from_reference,
     fixture_path,
     load_fixture,
@@ -260,9 +261,71 @@ def test_the_v41_tokens_agree_with_the_official_reference():
         f"  reference: {expected_tokens}\n"
         f"  this card: {list(outcome.token_ids)}\n"
         f"The reference is {reference['source']} at commit {reference.get('commit') or 'unknown'}; "
-        f"the run is {fixture.card or 'an unrecorded card'}. A divergence here is a port defect, "
-        f"not a kernel tolerance."
+        f"{_run_card_note(fixture)}. A divergence here is a port defect, not a kernel tolerance."
     )
+
+
+def _run_card_note(fixture: GoldenFixture) -> str:
+    """The card the failing run happened on, said next to the card the fixture was *recorded* on.
+
+    The two are different questions and the message used to answer only the second. `fixture.card`
+    is provenance -- it is written into the file when the answer is recorded, and it is deliberately
+    never read (see `captured_card`), so on a 4090 re-running the sm_75 fixture it still says
+    `cuda 7.5 (Turing / RTX 2080 Ti)`. Quoting it as "the run" mislabelled the host that actually
+    failed, which is the one fact a reader of the failure needs.
+
+    `captured_card()` is the live answer: it probes *this* host. It can be empty -- a CPU host, or a
+    CUDA host whose device code the build cannot read -- so both halves are spelled out rather than
+    one being assumed to stand for the other.
+    """
+    here = captured_card() or "an unrecorded card"
+    recorded = fixture.card or "an unrecorded card"
+    return (
+        f"the run is on {here} (this host), while the fixture was recorded on {recorded} -- "
+        f"provenance, not a claim about where this ran"
+    )
+
+
+def test_the_failure_names_the_host_it_ran_on_not_the_fixtures_recorded_card(monkeypatch):
+    """The message that said "the run is cuda 7.5" on a 4090 quoted the wrong field.
+
+    `fixture.card` is written once when the answer is recorded and is never consulted again, so a
+    fixture recorded on the sm_75 box keeps that label forever -- including while it is re-run
+    against its oracle on an Ada card, which is exactly what the reference leg does. The failure
+    that a reader has to act on is about *this* run, so it has to name *this* host.
+
+    Both fields are pinned here, and the two cases below are the ones that actually occur: on the
+    2080 Ti the live probe and the recorded fixture agree (so the old message was accidentally
+    right), and on the 4090 they disagree (so it was wrong). A message that kept quoting
+    `fixture.card` passes the first and fails the second, which is the whole regression.
+    """
+    fixture = GoldenFixture(
+        entry="v41",
+        checkpoint="/mnt/nope",
+        argv=(),
+        prompt="",
+        expected={},
+        card="cuda 7.5 (Turing / RTX 2080 Ti)",
+    )
+
+    # On the 4090 the live probe is Ada while the fixture records Turing: the note must say so.
+    monkeypatch.setattr(
+        f"{__name__}.captured_card", lambda **_: "cuda 8.9 (Ada / RTX 4090)"
+    )
+    on_ada = _run_card_note(fixture)
+    assert "cuda 8.9 (Ada / RTX 4090)" in on_ada, "the run's own card has to be in the message"
+    assert "cuda 7.5 (Turing / RTX 2080 Ti)" in on_ada, "the fixture's provenance stays, labelled"
+
+    # On the 2080 Ti both are Turing, and the note still separates the two questions.
+    monkeypatch.setattr(
+        f"{__name__}.captured_card", lambda **_: "cuda 7.5 (Turing / RTX 2080 Ti)"
+    )
+    on_turing = _run_card_note(fixture)
+    assert "the run is on cuda 7.5 (Turing / RTX 2080 Ti) (this host)" in on_turing
+
+    # A host the probe cannot name is spelled out, not left as an empty label.
+    monkeypatch.setattr(f"{__name__}.captured_card", lambda **_: "")
+    assert "the run is on an unrecorded card (this host)" in _run_card_note(fixture)
 
 
 def test_the_v41_chat_route_agrees_with_the_official_reference():

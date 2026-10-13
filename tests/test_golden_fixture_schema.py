@@ -94,7 +94,12 @@ def test_a_card_is_only_named_when_it_was_read_and_recognised() -> None:
     # A recognised but older card is still named -- the descriptor knows it.
     assert captured_card(platform="cuda", capability=(7, 5)) == "cuda 7.5 (Turing / RTX 2080 Ti)"
     # A capability the descriptor does not recognise: read, but not believed, so nothing is named.
+    # `(8, 6)` is the near-miss that matters -- an Ada card whose minor differs from the 4090's must
+    # not fall through to the Turing label the table happens to hold at a *different* key, and
+    # `(9, 0)` is Hopper, the neighbour on the other side. A label is a table hit or nothing.
     assert captured_card(platform="cuda", capability=(6, 1)) == ""
+    assert captured_card(platform="cuda", capability=(8, 6)) == ""
+    assert captured_card(platform="cuda", capability=(9, 0)) == ""
 
 
 def test_the_card_label_names_the_platform_it_was_read_on() -> None:
