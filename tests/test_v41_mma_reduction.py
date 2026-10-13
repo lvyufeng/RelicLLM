@@ -480,6 +480,37 @@ def test_the_gemm_follows_its_operands_device_whatever_its_scales_arrive_on() ->
         )
 
 
+def test_the_code_recovery_reads_its_grid_where_the_weight_lives() -> None:
+    """The grid is hung on the weight before the tree is promoted, and the promotion leaves it behind.
+
+    `loader.fill` attaches the file's grid to the parameter while the tree is still on the host, and
+    the runtime promotes the tree afterwards with `p.data = p.data.to(device)` -- a move a module
+    carries for parameters and buffers and for nothing else. So the grid stays on the host while the
+    weight goes to the card, which is the arrangement below: the weight is handed in on the device
+    and the grid deliberately is not. `fp8_block_gemm` moves its scales onto its operands for the
+    same reason, one step later in the same call. Nothing here can fail on a host-only machine,
+    which is why the revision that made every device-path `quantized_linear` raise passed the rest
+    of this file.
+    """
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+    rows, cols = 2 * BLOCK, 2 * BLOCK
+    grid = (torch.randint(-14, -9, (2, 2), generator=_gen(3)) + 127).to(torch.uint8)
+    grid = grid.view(torch.float8_e8m0fnu)
+    codes = _codes(3, rows * cols).reshape(rows, cols).view(torch.float8_e4m3fn)
+    dense = _expand(codes, grid)
+
+    assert torch.equal(mma.codes_from_scale(dense, grid, BLOCK), codes), (
+        "the grid does not recover the codes it was built from on the host, so this fixture says "
+        "nothing about the card"
+    )
+    moved = mma.codes_from_scale(dense.to(device), grid, BLOCK)
+    assert moved.device.type == device.type and torch.equal(moved.cpu(), codes), (
+        "the codes recovered on the card differ from the host's for the same weight and grid, so "
+        "the grid is being read where it was attached rather than where the weight lives"
+    )
+
+
 def test_the_decode_reproduces_the_encoding_it_claims_to() -> None:
     """The hand-written e4m3 decoder, against torch's own cast where torch can do one.
 

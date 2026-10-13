@@ -328,7 +328,14 @@ def codes_from_scale(
             f"a {tuple(dense.shape)} weight wants a {want} scale grid and the one attached to it is "
             f"{tuple(scale.shape)}"
         )
-    exponent = e8m0_exponent(scale)
+    # The grid is read where the weight lives, the same treatment `fp8_block_gemm` gives its scales
+    # and for the same reason. The loader hangs this grid on the parameter while the tree is still
+    # being filled, and the runtime promotes the tree afterwards (`p.data = p.data.to(device)`) -- a
+    # move a module carries for parameters and buffers and for nothing else, so the grid stays
+    # behind on the host while the weight goes to the card. Read in place, it asks the card for a
+    # host step and every `quantized_linear` on a promoted tree raises "Expected all tensors to be
+    # on the same device".
+    exponent = e8m0_exponent(scale).to(dense.device)
     codes = torch.empty((rows, cols), dtype=torch.float8_e4m3fn, device=dense.device)
     for lo in range(0, rows, block_size):
         hi = min(lo + block_size, rows)
