@@ -17,8 +17,11 @@ leaves it a multiple of `2**-18`, and the grid is finer than that lattice whenev
 below -5. So every partial sum is an exactly representable float64, every summation order gives the
 same bits, and a tolerance here would only hide a defect.
 
-Every test is CPU-safe: the rule is soft torch with no card and no kernel binding. The file skips
-when torch is absent, the same guard the V4.1 siblings use.
+Every test is CPU-safe except the pair at the end, under "Through a real capture": the rule is soft
+torch with no card and no kernel binding, but the port's default decode path records its body into a
+CUDA graph, and whether the emulated linear can be *recorded* is not a claim an eager run can make.
+The file skips when torch is absent, the same guard the V4.1 siblings use; the two capture tests skip
+without a card.
 """
 
 from __future__ import annotations
@@ -671,3 +674,172 @@ def test_the_decode_reproduces_the_encoding_it_claims_to() -> None:
     # 480 the normal branch's formula would produce for them.
     nan_codes = torch.tensor([0x7F, 0xFF], dtype=torch.uint8).view(torch.float8_e4m3fn)
     assert bool(torch.isnan(mma.decode_e4m3(nan_codes)).all())
+
+
+# --------------------------------------------------------------------------- #
+# Through a real capture
+# --------------------------------------------------------------------------- #
+
+# The only tests in this file that need a card, and there is no host fallback for either: "this body
+# can be recorded" is a claim a capture makes and an eager run cannot. Same marker as the V4.1
+# siblings.
+CUDA = pytest.mark.skipif(not torch.cuda.is_available(), reason="a capture needs a card")
+
+
+def _capture(body) -> torch.cuda.CUDAGraph:
+    """Record `body` after warming it on a side stream, in the shape `graphs._Step` records in."""
+    side = torch.cuda.Stream()
+    side.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(side):
+        for _ in range(2):
+            body()
+    torch.cuda.current_stream().wait_stream(side)
+    torch.cuda.synchronize()
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph):
+        body()
+    torch.cuda.synchronize()
+    return graph
+
+
+def _loadable_weight(device: torch.device) -> torch.Tensor:
+    """A weight in the state `loader.fill` leaves one in: the file's grid, and its recovered codes.
+
+    Built the way the sibling tests build theirs -- quantize random values onto the reference's own
+    grid, then expand the codes back out, which is exact in bf16 -- and the codes are recovered
+    through `mma.codes_from_scale` rather than handed over, in the loader's own order. Recovery is
+    one of the two calls these tests are about, so a fixture that skipped it would be testing a
+    weight no load produces.
+    """
+    dim = 2 * BLOCK
+    raw = torch.randn(dim, dim, dtype=torch.float32) * 0.1
+    codes, scale = mma.quantize_blocks(raw)
+    grid = (mma.e8m0_exponent(scale) + 127).to(torch.uint8).view(torch.float8_e8m0fnu)
+    weight = _expand(codes, grid).to(torch.bfloat16).to(device)
+
+    mma.attach_scale(weight, grid)
+    recovered = mma.codes_from_scale(weight, grid, BLOCK)
+    assert torch.equal(recovered.cpu(), codes), (
+        "the fixture's grid does not recover the codes it was built from, so this is not a weight a "
+        "load could have produced and neither test below would mean what it says"
+    )
+    mma.attach_codes(weight, recovered)
+    return weight
+
+
+@CUDA
+def test_the_emulated_linear_records_into_a_graph_and_replays_on_its_next_input() -> None:
+    """The port's own decode environment: the emulated linear has to *record*.
+
+    `decode_graphs=True` is the default serving path -- `graphs.py` records the decode step once and
+    replays it -- and a capture forbids anything in the recorded body from reading a device value back
+    to the host. `quantized_linear` broke that rule twice: `mma.codes_from_scale` on the weight it was
+    handed, and `e8m0_exponent`'s power-of-two check. Both end in a host `bool` over device data, i.e.
+    a synchronisation, and a synchronisation inside a capture does not raise where it happens -- it
+    invalidates the capture, which is how a body can record cleanly on the host and die on the card.
+
+    The sibling test above pins the weaker half of that: its booby-trapped entry points say the call
+    no longer *reaches* the recovery. That is a statement about the source, and a host run cannot make
+    the other one, because the sync it would have to catch is invisible there. Only a real capture
+    separates the fix from the bug it fixes, which is why this needs a card.
+
+    The replay is held against `mma.fp8_block_gemm` called directly on the attached codes -- bit for
+    bit, not a tolerance -- and replayed again on a second input written into the same buffer. Both
+    halves are load-bearing. A weight that arrives without its codes takes the rounded fallback, which
+    is sync-free and records perfectly, so `differs` is what tells a reader the *rule* was in the body
+    rather than nothing. And a recording holds addresses, so a body that had read its input off the
+    host would replay the first input's answer forever; the second replay is the only thing here that
+    would notice.
+    """
+    from relicllm.models.deepseek_v4_1.kernels import block_fp8_act_quant
+
+    assert _reference_reduction_enabled(), (
+        "the emulation is switched off (POCKETLLM_V41_MMA_EMULATE), so `quantized_linear` would take "
+        "the rounded path here and this test would record nothing worth recording"
+    )
+    device = torch.device("cuda")
+    width = 2 * BLOCK
+
+    torch.manual_seed(1)
+    first = torch.randn(8, width, dtype=torch.bfloat16).to(device)
+    second = torch.randn(8, width, dtype=torch.bfloat16).to(device)
+    weight = _loadable_weight(device)
+
+    # The input buffer and the output the body writes into, both allocated before the recording: a
+    # capture holds the addresses it was recorded against, so the input cannot be created inside it.
+    move = torch.empty_like(first)
+    out = torch.empty_like(first)
+
+    def body() -> None:
+        out.copy_(quantized_linear(move, weight, quantized=True))
+
+    def rule(x: torch.Tensor) -> torch.Tensor:
+        act_codes, act_scale = block_fp8_act_quant(x)
+        got = mma.fp8_block_gemm(
+            act_codes, act_scale, mma.attached_codes(weight), mma.attached_scale(weight), BLOCK
+        )
+        return got.to(x.dtype)
+
+    move.copy_(first)
+    graph = _capture(body)
+
+    graph.replay()
+    torch.cuda.synchronize()
+    assert torch.equal(out, rule(first)), (
+        f"{int((out != rule(first)).sum())} of {out.numel()} elements came out of the replay "
+        f"differently from the rule run directly on the same input"
+    )
+
+    # Nothing above can fail if the emulation quietly declined: the rounded fallback also records, also
+    # replays and also equals a call it would be compared against. The rule and the correctly rounded
+    # product do not coincide on this much data, so this is what says the recorded body ran the rule.
+    quant, quant_scale = block_fp8_act_quant(first)
+    rounded = (
+        (quant.to(torch.float32) * quant_scale.repeat_interleave(BLOCK, dim=-1))
+        @ weight.to(torch.float32).t()
+    ).to(first.dtype)
+    assert not torch.equal(out, rounded), (
+        "the replay is the correctly rounded product, so the recorded body took the fallback path "
+        "and this test is not recording the rule at all"
+    )
+
+    move.copy_(second)
+    graph.replay()
+    torch.cuda.synchronize()
+    assert torch.equal(out, rule(second)), (
+        "the replay did not follow the buffer it was recorded against, so the body's input was read "
+        "while recording rather than left to the replay"
+    )
+
+
+@CUDA
+def test_the_recovery_that_moved_to_load_time_cannot_be_recorded_at_all() -> None:
+    """The negative control: the call that moved out of the captured body is refused by a capture.
+
+    Without it, the test above says "the emulated linear records" and a reader has to take the reason
+    on faith -- that a `torch.equal` over device data is what a capture rejects, and not something
+    incidental about the recovery. Here the same call is recorded twice. With its check off it is a
+    loop of kernels and records; with the check on it does not. So the refusal is the host read, and
+    the port recovers its codes in `loader.fill` for a measured reason rather than an asserted one.
+
+    Off a capture the check is ordinary and passes, which is also here: it is what makes the refusal
+    about the recording rather than about the operands. The refusal is reported by the capture
+    machinery -- in the case `tests/test_xing4_0_decode_pos.py` documents, one step later at
+    `capture_end`, as `cudaErrorStreamCaptureInvalidated` -- and the context stays usable, which is
+    why this can share a process with the tests that do record. The two records are ordered so that
+    the refused one comes last.
+    """
+    device = torch.device("cuda")
+    weight = _loadable_weight(device)
+    grid = mma.attached_scale(weight)
+
+    assert torch.equal(
+        mma.codes_from_scale(weight, grid, BLOCK).cpu(), mma.attached_codes(weight).cpu()
+    ), "the recovery disagrees with the codes the loader would have attached, off a capture"
+
+    _capture(lambda: mma.codes_from_scale(weight, grid, BLOCK, verify=False))
+
+    with pytest.raises(RuntimeError, match="[Cc]aptur"):
+        with torch.cuda.graph(torch.cuda.CUDAGraph()):
+            mma.codes_from_scale(weight, grid, BLOCK)
+    torch.cuda.synchronize()
