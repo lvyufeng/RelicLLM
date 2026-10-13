@@ -555,6 +555,50 @@ def test_every_quantized_parameter_carries_the_grid_the_file_stored(mini) -> Non
     assert mma.attached_codes(plain) is None, "a bf16 weight was given attached codes"
 
 
+def test_filling_the_same_tree_twice_leaves_the_same_pair_attached(mini) -> None:
+    """A second `checkpoint_weights` over one module re-attaches both halves, not just the grid.
+
+    This is the realistic way a weight meets a second grid: `checkpoint_weights` walks
+    `module.named_parameters()` and `copy_`s into whatever it finds, so filling a tree that has
+    already been filled -- a reload after a bad shard, two passes under different `skip` predicates,
+    a test that calls it twice -- reaches `attach_scale` on weights that are carrying codes. The
+    codes are a property of the grid they were recovered against, so the pair has to be replaced
+    together; a stale half is a GEMM that runs on another weight's exponents and returns a plausible
+    number, which is worse than the missing half, which falls back to the rounded product and is
+    reported. The assertion is therefore that the second fill is the same load and not a degraded one.
+    """
+    from relicllm.models.deepseek_v4_1 import mma
+    from relicllm.models.deepseek_v4_1.loader import checkpoint_weights
+
+    name = "layers.0.attn.wq_a.weight"
+    parameter = mini.loaded.model.get_submodule(name.rsplit(".", 1)[0]).weight
+    first = mma.attached_codes(parameter).clone()
+
+    report = checkpoint_weights(mini.loaded.model, mini.ckpt)
+    assert report.missing == [] and report.quantized == mini.loaded.report.quantized, (
+        f"the re-fill is not the same load as the first one: {report.missing=}, "
+        f"{len(report.quantized)} quantized keys against {len(mini.loaded.report.quantized)}"
+    )
+    second = mma.attached_codes(parameter)
+    assert second is not None, (
+        "a second fill left this weight with a grid and no codes; the linear now runs the rounded "
+        "product and reports a decline, which is a silent difference at the output"
+    )
+    assert torch.equal(second, first) and torch.equal(second, mini.stored[name]), (
+        "the codes attached by the second fill are not the file's own"
+    )
+    # The grid is the half the loader writes first and the one the codes are read against, so it is
+    # checked too -- a re-fill that dropped it would leave the pair absent rather than inconsistent,
+    # which is the reported fallback and not this test's claim.
+    grid = mma.attached_scale(parameter)
+    assert grid is not None and grid.dtype == torch.float8_e8m0fnu, (
+        f"the second fill left a {None if grid is None else grid.dtype} grid on {name}"
+    )
+    assert torch.equal(mma.codes_from_scale(parameter, grid, BLOCK), mini.stored[name]), (
+        "the codes recovered from the re-filled pair are not the file's own"
+    )
+
+
 def test_a_layer_with_a_ratio_of_one_has_no_compressor_gate(mini) -> None:
     """The release's layer 20, reproduced: `Compressor.__init__` returns before `wgate` exists.
 

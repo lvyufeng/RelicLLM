@@ -306,7 +306,18 @@ def attach_scale(weight: torch.Tensor, scale: torch.Tensor) -> None:
     nothing reads it; the moment a GEMM does, it is a per-call host-to-device copy inside the decode
     body, allocating a fresh tensor each time where the recorded graph expects the one address it
     captured.
+
+    A grid replaces whatever grid was there, and codes belong to **a** grid: a weight that arrives
+    here already carrying them is one whose pair is about to be half-replaced, and the surviving half
+    is a runnable wrong answer -- the exponents the rule reads would belong to a weight this one is
+    not, and a plausible scale quantizes to plausible codes, so nothing downstream can notice. An
+    absent pair cannot fail that way: it is the correctly rounded product, reported by
+    ``quantized_linear``. So the codes go with the grid that produced them, which is why
+    ``loader.fill`` attaches the two in this order -- a re-fill drops the old codes here and attaches
+    the new ones a few lines later.
     """
+    if attached_codes(weight) is not None:
+        delattr(weight, CODES_ATTR)
     setattr(weight, SCALE_ATTR, scale.to(weight.device))
 
 
@@ -329,6 +340,9 @@ def attach_codes(weight: torch.Tensor, codes: torch.Tensor) -> None:
     calls CUDA forbids while a stream is being captured, which is what the port's default decode path
     does. So it happens exactly once, in ``loader.fill`` -- the only place a weight arrives with its
     grid -- and the hot path finds the result here.
+
+    These are that grid's codes rather than the weight's, and :func:`attach_scale` is what keeps the
+    two in step: it drops them when it replaces the grid they were recovered against.
     """
     setattr(weight, CODES_ATTR, codes)
 

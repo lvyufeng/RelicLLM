@@ -303,6 +303,49 @@ def test_the_stored_scale_is_what_recovers_the_codes() -> None:
         mma.codes_from_scale(dense, grid[:1], BLOCK)
 
 
+def test_a_replaced_grid_does_not_leave_the_grid_it_replaced_codes_behind() -> None:
+    """The two attached tensors are a pair, and `attach_scale` is what keeps them one.
+
+    `quantized_linear` runs the rule on `attached_codes` and `attached_scale` together, and the codes
+    are a property of the grid rather than of the weight -- a dense weight does not determine them,
+    which is the whole reason the file's grid is carried along at all. A second `attach_scale` over a
+    weight that already carries codes therefore leaves a state that *runs* and is wrong: the
+    exponents the rule reads belong to a weight this one is not, and no caller can tell, because a
+    plausible scale and a plausible weight quantize to plausible codes. The alternative state is the
+    one the hot path already reports -- a grid whose codes are missing -- so the pair is not a
+    convention, it is enforced.
+    """
+    torch.manual_seed(4)
+    raw = torch.randn(2 * BLOCK, 2 * BLOCK, dtype=torch.float32) * 0.1
+    codes, scale = mma.quantize_blocks(raw)
+    grid = (mma.e8m0_exponent(scale) + 127).to(torch.uint8).view(torch.float8_e8m0fnu)
+    weight = _expand(codes, grid).to(torch.bfloat16)
+
+    # The pair, as `loader.fill` leaves it.
+    mma.attach_scale(weight, grid)
+    mma.attach_codes(weight, mma.codes_from_scale(weight, grid, BLOCK))
+    assert mma.attached_codes(weight) is not None and mma.attached_scale(weight) is not None
+
+    # The same weight under a grid one octave down, which is exactly what a weight of the same shape
+    # and a neighbouring tile's grid looks like from here -- the case nothing downstream can see.
+    other = (mma.e8m0_exponent(grid) - 1 + 127).to(torch.uint8).view(torch.float8_e8m0fnu)
+    mma.attach_scale(weight, other)
+    assert mma.attached_codes(weight) is None, (
+        "attaching a second grid left the first grid's codes on the weight; the rule would read the "
+        "old exponents against the new scale and return a number neither GEMM would"
+    )
+    assert torch.equal(mma.attached_scale(weight).view(torch.uint8), other.view(torch.uint8)), (
+        "the grid that was attached is not the one that came back"
+    )
+    # And the way back is the way in: `loader.fill`'s own order, on the grid that describes this
+    # weight, comes out with the file's codes again rather than with the neighbour's.
+    mma.attach_scale(weight, grid)
+    mma.attach_codes(weight, mma.codes_from_scale(weight, grid, BLOCK))
+    assert torch.equal(mma.attached_codes(weight), codes), (
+        "the recovery after a re-attach did not come back with the file's own codes"
+    )
+
+
 def test_a_sharded_grid_is_cut_exactly_the_way_its_weight_is() -> None:
     """`ShardPlan.local_scale` cuts the grid the way `local_value` cuts the weight it scales.
 
