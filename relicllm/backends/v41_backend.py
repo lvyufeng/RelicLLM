@@ -393,6 +393,26 @@ class _Options:
         return options
 
 
+EMULATION_REFUSES_GRAPHS = (
+    "the mma reduction emulation holds ~900 MiB of driver graph memory a layer, ~35 GiB for the "
+    "40-layer pass, against the ~10 GiB this card has free once the weights are loaded -- a capture "
+    "runs out in capture_end at layer 10 and takes the rank down mid-request; set "
+    "POCKETLLM_V41_MMA_EMULATE=0 to graph the decode pass"
+)
+"""Why a run that asked for decode graphs is not getting them while the emulation is on.
+
+Measured on a 24 GiB RTX 4090 at this backend's own acceptance configuration, one variable changed
+between the two legs: the emulation's recorded body costs 897 MiB of *device* free memory a layer
+(428-458 MiB for the attention half, 342-344 MiB for the shared-expert half) and the pass dies at
+layer 10 of 40 with `cudaErrorMemoryAllocation` in `capture_end`, while `memory_allocated` and
+`memory_reserved` barely move -- the cost is the ~4-7 KiB a captured kernel node holds for as long
+as the graph lives, and the emulation is ~150 kernel nodes per 32-wide K block. With
+``POCKETLLM_V41_MMA_EMULATE=0`` the same argv records all 40 layers in 844 MiB. Nothing here is a
+tuning constant: the budget and the block size do not change the node count at decode, where the
+product is one row by one column group per block.
+"""
+
+
 class V41Backend(RuntimeAdapter):
     """Serve one DeepSeek-V4.1-Flash checkpoint, one request at a time.
 
@@ -594,6 +614,13 @@ class V41Backend(RuntimeAdapter):
         than two that have to be kept in step. A model with no `window_kv_cache` buffer at all
         answers like the host tree it is not: there is no card here to record on, and a caller that
         has to be told its front is not a V4.1 backbone is told by whatever built it.
+
+        A card is necessary for a recording and it is not sufficient: the tree also has to have room
+        to hold one, and a tree running the mma reduction emulation does not (see
+        :data:`EMULATION_REFUSES_GRAPHS` for the measurement). That refusal is second, and it is
+        second on purpose -- a host tree is refused for the placement, which is the reason that
+        holds no matter what the environment says, and a line naming `POCKETLLM_V41_MMA_EMULATE=0`
+        as the escape from a tree that could not record anyway would be advice that does not work.
         """
         if self._decode_graphs is not None:
             return
@@ -601,13 +628,20 @@ class V41Backend(RuntimeAdapter):
             self._decode_graphs = False
             return
         from relicllm.models.deepseek_v4_1.graphs import GRAPH_DEVICE_TYPE, cache_device_or_none
+        from relicllm.models.deepseek_v4_1.kernels import _reference_reduction_enabled
 
         # `LoadedBackbone` wraps the tree rather than being an `nn.Module`, and the buffers the
         # placement is read off are the tree's -- the same `getattr` `generate` and
         # `_ensure_prefix_cache` take.
         caches = cache_device_or_none(getattr(self._front, "model", self._front))
         self._decode_graphs = caches is not None and caches.type == GRAPH_DEVICE_TYPE
-        if self._decode_graphs:
+        if self._decode_graphs and _reference_reduction_enabled():
+            # A placement the driver would not survive is not a placement. `EMULATION_REFUSES_GRAPHS`
+            # is the measurement; the option above is still the ask, and this is the same answer a
+            # host tree gets -- not graphed, said once, and said even under `--progress` off.
+            self._decode_graphs = False
+            self._say(f"decode not graphed: {EMULATION_REFUSES_GRAPHS}", always=True)
+        elif self._decode_graphs:
             self._say("decode graphed a block at a time")
         elif self._options.decode_graphs:
             # The banner cannot carry this: it is printed before `load_backbone` is called, so all it
@@ -826,8 +860,15 @@ class V41Backend(RuntimeAdapter):
             f"{int(self._options.prefix_cache_head_tokens)} tokens"
         )
 
-    def _say(self, message: str) -> None:
-        if not self._options.progress:
+    def _say(self, message: str, *, always: bool = False) -> None:
+        """Print a startup or per-request line, on every rank, to stderr.
+
+        ``always`` is for the lines that are not progress: a run that asked for ``--progress`` off
+        silenced progress, not the news that its own configuration moved it onto a slower path. The
+        one caller that passes it is ``_resolve_decode_graphs``, where the line is the only place a
+        reader can learn why the decode pass they asked to graph is running eagerly.
+        """
+        if not self._options.progress and not always:
             return
         prefix = f"[rank {self._rank}] " if self._world > 1 else ""
         print(f"{prefix}{message}", file=sys.stderr, flush=True)

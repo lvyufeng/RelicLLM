@@ -252,6 +252,36 @@ def split_names() -> tuple[str, ...]:
     return tuple(name for name, _ in _SPLITS)
 
 
+def banded_scale(
+    scale: torch.Tensor,
+    bands: int,
+    band_rows: int,
+    rank: int,
+    world: int,
+    block: int,
+) -> torch.Tensor:
+    """One rank's whole bands out of a `bands`-many stacked `[band_rows, -1]` weight, as its grid.
+
+    `wo_a` and the indexer's `wq_b` are stored as one flat matrix that is really `bands` stacked
+    blocks -- `o_groups` of `o_lora_rank` rows, or `index_heads` of `index_head_dim` -- and a rank
+    owns whole blocks, so a flat band across the stacked matrix is a *different* tensor with the
+    right shape. This is that cut on the scale grid, and the caller is whoever cut the weight: the
+    loader through `ShardPlan.local_value`, and `Indexer._wq_b_for_heads` for the head band it takes
+    out of a replicated parameter. One implementation rather than two, because the two disagreeing
+    would put a rank's reduction on its neighbour's scales, and nothing downstream reads those
+    exponents back out to notice.
+    """
+    if band_rows % block:
+        raise ValueError(f"a {band_rows}-row block is not a multiple of the {block} block grid")
+    stacked = scale.view(bands, band_rows // block, -1)
+    width = bands // world
+    return (
+        stacked[rank * width : (rank + 1) * width]
+        .reshape(-1, stacked.size(-1))
+        .contiguous()
+    )
+
+
 def _tail(name: str) -> str:
     """`layers.7.attn.wq_b.weight` -> `attn.wq_b.weight`; leaves an already-bare name alone."""
     parts = name.split(".")
@@ -423,6 +453,52 @@ class ShardPlan:
                 self.index_heads * self.index_head_dim, -1
             ).contiguous()
         raise AssertionError(kind)
+
+    def local_scale(self, name: str, scale: torch.Tensor, block: int) -> torch.Tensor:
+        """Cut an e8m0 grid the way `local_value` cuts the weight it belongs to.
+
+        A grid entry per `block` x `block` tile means an axis of length `n` in the weight is
+        `n // block` here, so every cut `local_value` makes lands on a whole number of tiles -- which
+        is exactly what makes this a partition of the grid rather than a band across it. The two
+        stacked views come back for the reason they exist there: `wo_a`'s rows are `groups` blocks of
+        `o_lora_rank` and the indexer's are `index_heads` blocks of `index_head_dim`, and the grid of
+        a rank's band is not a band of the whole grid unless the view is taken first.
+
+        Kept as its own method rather than derived from `local_value` on a reshaped grid: they are
+        the same cut, and a second derivation is a second chance to disagree with the parameter the
+        loader wrote. The grid must have whole tiles along the cut axis; a width that does not divide
+        raises here rather than slicing into the middle of someone else's tile.
+        """
+        kind = self._kind(name)
+        if kind is None:
+            return scale
+        # `rows` cuts the output axis and `cols` the input one, so the grid is cut on dim 0 or dim -1
+        # and on no other axis. The length being cut is the weight's own -- the output width for one,
+        # `grid cols * block` for the other, which is the input width.
+        if kind in ("rows", "cols"):
+            total = self._rows_total(name) if kind == "rows" else scale.size(-1) * block
+            if total % self.world:
+                raise ValueError(f"a {total}-wide {name} is not a whole number of tiles per rank")
+            tiles = self._tiles(total // self.world, block)
+            band = slice(self.rank * tiles, (self.rank + 1) * tiles)
+            return (scale[band] if kind == "rows" else scale[..., band]).contiguous()
+        if kind == "grouped_rows":
+            return banded_scale(scale, self.groups_global, self.o_lora_rank, self.rank, self.world, block)
+        if kind == "index_heads":
+            return banded_scale(
+                scale, self.index_heads_global, self.index_head_dim, self.rank, self.world, block
+            )
+        raise AssertionError(kind)
+
+    @staticmethod
+    def _tiles(count: int, block: int) -> int:
+        """`count` in tiles, refusing a width that cuts into the middle of one."""
+        if count % block:
+            raise ValueError(
+                f"a {count}-wide cut is not a multiple of the {block} block grid, so this rank's "
+                f"scales are not a whole number of tiles"
+            )
+        return count // block
 
     # -- internals ------------------------------------------------------------------------------
 

@@ -499,6 +499,106 @@ def test_an_fp8_weight_expands_on_the_derived_block_grid(mini) -> None:
     assert mini.stored[table].shape == (mini.stored["layers.0.engram.embed.weight"].shape[0], ENGRAM_HEAD_DIM // BLOCK)
 
 
+def test_every_quantized_parameter_carries_the_grid_the_file_stored(mini) -> None:
+    """The loader hangs the file's own scale grid on each fp8 parameter, and on nothing else.
+
+    `quantized_linear` runs the reference's reduction on *codes*, and a dense weight cannot say which
+    octave its codes were written against: `224 * 2**E` and `448 * 2**(E-1)` are the same number, and
+    4.66% of this checkpoint's tiles are at that boundary. So the grid the file stored beside the
+    weight travels with the parameter -- 1/1024 of the weight's bytes, and the only exact way back to
+    the codes. A parameter that should have one and does not runs the correctly rounded product
+    instead, which is a difference no value in the run's output announces.
+
+    The check is the strongest available: what the loader attached, run through the recovery, is the
+    byte for byte contents of the file's own weight tensor.
+    """
+    from relicllm.models.deepseek_v4_1 import mma
+
+    for name in (
+        "layers.0.attn.wq_a.weight",  # not sharded at all: replicated whole
+        "layers.0.attn.wq_b.weight",  # cut on its output axis
+        "layers.0.attn.wo_b.weight",  # cut on its input axis
+        "layers.0.attn.wo_a.weight",  # the stacked block layout, one band per o-group
+        "layers.0.ffn.shared_experts.w1.weight",
+    ):
+        assert mini.ckpt.is_quantized(name), f"{name} is not fp8 in this checkpoint"
+        parameter = mini.loaded.model.get_submodule(name.rsplit(".", 1)[0]).weight
+        grid = mma.attached_scale(parameter)
+        assert grid is not None, f"{name} was filled without its scale grid"
+        assert grid.dtype == torch.float8_e8m0fnu, (
+            f"{name} carries a {grid.dtype} grid; the file's own e8m0 bytes are what "
+            f"`e8m0_exponent` reads exactly"
+        )
+        assert torch.equal(
+            mma.codes_from_scale(parameter, grid, BLOCK), mini.stored[name]
+        ), f"{name}: the codes recovered from the parameter and its grid are not the file's"
+        # And the recovery itself, done once here rather than per call: `quantized_linear` reads
+        # `attached_codes` and derives nothing, because the recovery's round-trip check is a device
+        # sync and the default serving path captures the decode body into a CUDA graph. A parameter
+        # that leaves `fill` with a grid and no codes is one of the two ways the emulation goes
+        # quiet -- the other is the fp4 routed experts, whose weights no grid was ever stored beside.
+        codes = mma.attached_codes(parameter)
+        assert codes is not None, f"{name} was filled without its codes; `fill` recovers them"
+        assert codes.dtype == torch.float8_e4m3fn and codes.device == parameter.device, (
+            f"{name} carries {codes.dtype} codes on {codes.device} beside a {parameter.dtype} "
+            f"weight on {parameter.device}"
+        )
+        assert torch.equal(codes, mini.stored[name]), (
+            f"{name}: the attached codes are not the file's own weight tensor"
+        )
+
+    # And the rest: a weight the file did not quantize has no grid to carry, and the emulation has to
+    # see that rather than a grid from a neighbour.
+    plain = mini.loaded.model.get_submodule("layers.0.attn.q_norm").weight
+    assert not mini.ckpt.is_quantized("layers.0.attn.q_norm.weight")
+    assert mma.attached_scale(plain) is None, "a bf16 weight was given a scale grid"
+    assert mma.attached_codes(plain) is None, "a bf16 weight was given attached codes"
+
+
+def test_filling_the_same_tree_twice_leaves_the_same_pair_attached(mini) -> None:
+    """A second `checkpoint_weights` over one module re-attaches both halves, not just the grid.
+
+    This is the realistic way a weight meets a second grid: `checkpoint_weights` walks
+    `module.named_parameters()` and `copy_`s into whatever it finds, so filling a tree that has
+    already been filled -- a reload after a bad shard, two passes under different `skip` predicates,
+    a test that calls it twice -- reaches `attach_scale` on weights that are carrying codes. The
+    codes are a property of the grid they were recovered against, so the pair has to be replaced
+    together; a stale half is a GEMM that runs on another weight's exponents and returns a plausible
+    number, which is worse than the missing half, which falls back to the rounded product and is
+    reported. The assertion is therefore that the second fill is the same load and not a degraded one.
+    """
+    from relicllm.models.deepseek_v4_1 import mma
+    from relicllm.models.deepseek_v4_1.loader import checkpoint_weights
+
+    name = "layers.0.attn.wq_a.weight"
+    parameter = mini.loaded.model.get_submodule(name.rsplit(".", 1)[0]).weight
+    first = mma.attached_codes(parameter).clone()
+
+    report = checkpoint_weights(mini.loaded.model, mini.ckpt)
+    assert report.missing == [] and report.quantized == mini.loaded.report.quantized, (
+        f"the re-fill is not the same load as the first one: {report.missing=}, "
+        f"{len(report.quantized)} quantized keys against {len(mini.loaded.report.quantized)}"
+    )
+    second = mma.attached_codes(parameter)
+    assert second is not None, (
+        "a second fill left this weight with a grid and no codes; the linear now runs the rounded "
+        "product and reports a decline, which is a silent difference at the output"
+    )
+    assert torch.equal(second, first) and torch.equal(second, mini.stored[name]), (
+        "the codes attached by the second fill are not the file's own"
+    )
+    # The grid is the half the loader writes first and the one the codes are read against, so it is
+    # checked too -- a re-fill that dropped it would leave the pair absent rather than inconsistent,
+    # which is the reported fallback and not this test's claim.
+    grid = mma.attached_scale(parameter)
+    assert grid is not None and grid.dtype == torch.float8_e8m0fnu, (
+        f"the second fill left a {None if grid is None else grid.dtype} grid on {name}"
+    )
+    assert torch.equal(mma.codes_from_scale(parameter, grid, BLOCK), mini.stored[name]), (
+        "the codes recovered from the re-filled pair are not the file's own"
+    )
+
+
 def test_a_layer_with_a_ratio_of_one_has_no_compressor_gate(mini) -> None:
     """The release's layer 20, reproduced: `Compressor.__init__` returns before `wgate` exists.
 

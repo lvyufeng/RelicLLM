@@ -9,3 +9,7 @@ dist/
 
 # The documentation site build output (mkdocs.yml -> .github/workflows/pages.yml).
 /site
+
+# The bench launcher writes this into the working directory it was started from
+# (relicllm/bench/launcher.py).
+relicllm-bench-serve.log

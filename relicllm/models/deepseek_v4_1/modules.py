@@ -161,6 +161,19 @@ def expert_forward(
     `F.linear`, which is what keeps a bf16 build bit-for-bit where it was.
     """
     dtype = x.dtype
+    # No `emulate_reduction` here, and that is the fix rather than an omission: the flag follows the
+    # switch, and which arithmetic a call gets is decided by the *weight*, not by this function. The
+    # shared expert's three matrices are dense fp8 weights, `loader.fill` hangs their recovered codes
+    # on them like any other, and `quantized_linear` emulates them. A routed expert's tensors never
+    # go through `fill` -- a store hands this function three tensors it just produced, a stack slice
+    # or a decode out of the mapping -- so they carry no codes and decline on their own. That decline
+    # is a **known difference from the reference**, not a case `mma`'s rule excludes: the checkpoint
+    # stores these weights as e2m1 and the reference repacks them to e4m3 at block 32
+    # (`inference_convert.py`'s `cast_e2m1fn_to_e4m3fn`), so the routed GEMM runs exactly the
+    # arithmetic the rule describes. Closing the gap needs that repack -- and, on the device path, a
+    # way round the fused kernel, which quantizes activations to int8 per row -- so the routed
+    # experts stay correctly rounded until that work lands, while the shared expert, which is fp8 and
+    # whose arithmetic was measured here, no longer declines along with them.
     gate = quantized_linear(x, w1, quantized=quantized, block_size=block_size).float()
     up = quantized_linear(x, w3, quantized=quantized, block_size=block_size).float()
     if swiglu_limit > 0:

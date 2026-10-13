@@ -43,6 +43,9 @@ implicit in V4-Flash's runtime.
 
 from __future__ import annotations
 
+import os
+import sys
+
 import torch
 import torch.nn.functional as F
 
@@ -57,6 +60,8 @@ from relic_core.kernels.ops import (
     soft_fp8_blockfp8_weight_dequant,
     sparse_attn,
 )
+
+from relicllm.models.deepseek_v4_1 import mma
 
 __all__ = [
     "Packed4BitWeightAlongK",
@@ -209,6 +214,26 @@ _FP8_MAX = 448.0
 _FP8_AMAX_FLOOR = 1e-4
 
 
+def _reference_reduction_enabled() -> bool:
+    """Whether :func:`quantized_linear` reproduces the reference's tensor-core reduction.
+
+    On by default, because the point of this runtime is to produce the reference's answer and the
+    reference's answer is what its tensor cores produce. The fp8 GEMM's rounding is not noise: it
+    moves 2.41% of output elements across a bf16 boundary on a real `wq_a`, and those flips compound
+    into different greedy tokens. A port that computes a correctly rounded GEMM is *more* accurate
+    and answers differently, which is a failure here rather than a curiosity.
+
+    Off is a throughput escape hatch, not a correctness mode. `relicllm.models.deepseek_v4_1.mma`
+    transcribes an `mma.sync` in elementwise torch, so it costs a large multiple of the matmul it
+    replaces -- see that module's docstring for what it is and is not. A caller who wants a fast
+    forward pass and is not comparing against the reference sets ``POCKETLLM_V41_MMA_EMULATE=0``.
+
+    The prefix is `POCKETLLM_`, like every other knob this runtime reads -- it is a contract with
+    existing launch scripts, not a module path.
+    """
+    return os.environ.get("POCKETLLM_V41_MMA_EMULATE", "1").lower() not in ("0", "false", "no")
+
+
 def block_fp8_act_quant(
     x: torch.Tensor, block_size: int = _FP8_BLOCK_SIZE
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -250,6 +275,7 @@ def quantized_linear(
     *,
     quantized: bool = False,
     block_size: int = _FP8_BLOCK_SIZE,
+    emulate_reduction: bool | None = None,
 ) -> torch.Tensor:
     """The reference's `linear()` on the soft path, with the weight already dequantized.
 
@@ -260,11 +286,45 @@ def quantized_linear(
 
     ``quantized=True`` is the reference's with-scales path. The ``weight`` handed in is the *dense*
     tensor the loader already produced, so there is no weight scale here and none is needed: an fp8
-    e4m3 or fp4 e2m1 code carries at most three mantissa bits and a block scale is a power of two,
-    so the loader's ``dequant`` is exact and ``weight`` equals the reference's ``dequant(weight,
-    scale)`` bit for bit. What is missing from the port and restored here is the *activation*: it
-    goes through :func:`block_fp8_act_quant`, and the product accumulates in fp32 and is narrowed
-    once, to ``x.dtype``.
+    e4m3 code carries at most three mantissa bits and a block scale is a power of two, so the
+    loader's ``dequant`` is exact and ``weight`` equals the reference's ``dequant(weight, scale)``
+    bit for bit. What is missing from the port and restored here is the *activation*: it goes
+    through :func:`block_fp8_act_quant`.
+
+    What that activation is then multiplied by is not a matmul. The reference's fp8 GEMM is a
+    tensor-core kernel, and an ``mma.sync`` does not add 32 products exactly -- it cuts each addend
+    onto a per-element grid, truncating toward zero, and renormalises. Measured on a real `wq_a`,
+    that moves 2.41% of output elements across a bf16 boundary. ``relicllm.models.deepseek_v4_1.mma``
+    reproduces it bit for bit, and this function runs it by default, which makes the port agree with
+    the reference rather than with a better-conditioned computation of the same operands.
+
+    The rule runs on *codes*, not on the dense weight, and a dense weight does not determine them:
+    ``224 * 2**E`` and ``448 * 2**(E-1)`` are the same number, so a tile that maximizes at 224 --
+    4.66% of this checkpoint's fp8 tiles -- has two scales that re-expand to identical values while
+    implying different exponent fields, and the reduction reads the exponent field. So the codes come
+    from the grid the file stored beside the weight, and **this function does not recover them**: it
+    reads ``mma.attached_codes``, which ``loader.fill`` hung on the parameter once, at load, and for
+    a reason that is not bookkeeping -- the recovery ends in a ``torch.equal`` over device data, i.e.
+    a synchronisation, and the default serving path (``decode_graphs=True``) captures the decode body
+    into a CUDA graph, where a sync is not merely slow but fatal to the capture. A weight with no
+    codes attached -- a bf16 one, an fp4 routed expert's dense decode, a tensor a caller built, the
+    indexer's per-head band under ``DEEPSEEK_V41_INDEXER_ROW_SPLIT`` -- has no exact codes available,
+    and this falls back to the correctly rounded matmul and says so once on stderr rather than
+    inventing a grid or recovering one here. ``POCKETLLM_V41_MMA_EMULATE=0`` skips the emulation
+    entirely; see :func:`_reference_reduction_enabled` for why it is on by default and what turning
+    it off costs.
+
+    ``emulate_reduction=None`` means "follow that switch"; pass ``False`` for a call whose weight is
+    known not to be e4m3. The routed experts are that case in practice, and **not** for the reason
+    this docstring used to give. Their reference GEMM is e4m3 on both sides: the checkpoint stores
+    them as e2m1 and ``inference_convert.py`` widens that with ``cast_e2m1fn_to_e4m3fn`` at
+    ``fp8_block_size = fp4_block_size = 32``, which is this rule's shape, so its dtype is no reason
+    to decline. What the port cannot do yet is the repack -- a routed store hands this function
+    packed e2m1 bytes or a decode of them, never a tensor ``loader.fill`` walked, so no codes are
+    attached and the call declines on its own. Emulating the routed experts is its own piece of
+    work, and on the device path it has to get past a fused kernel that quantizes activations to
+    int8 per row; until it is done the routed arithmetic is a **known difference** from the
+    reference rather than a case the rule above does not describe.
 
     The weight is upcast to fp32 explicitly even though it is already bf16, so the accumulator's
     width is a property of this function and not of what the caller happened to hand in; the upcast
@@ -273,6 +333,51 @@ def quantized_linear(
     """
     if not quantized:
         return F.linear(x, weight)
+    emulate = _reference_reduction_enabled() if emulate_reduction is None else emulate_reduction
+    if emulate:
+        # Both halves of what the rule runs on, as `loader.fill` left them on the parameter. Nothing
+        # is derived here: the recovery is a device sync and this runs inside the captured decode
+        # body. A weight without them is one whose file stored no grid, or one whose grid was refused
+        # at load because it did not describe the weight -- that refusal is reported at load, by key.
+        codes = mma.attached_codes(weight)
+        scale = mma.attached_scale(weight)
+        if codes is None or scale is None:
+            _note_declined(weight, "no e4m3 codes recovered from the file's grid are attached to it")
+        else:
+            flat = x.reshape(-1, x.shape[-1])
+            act_codes, act_scale = block_fp8_act_quant(flat, block_size)
+            out = mma.fp8_block_gemm(act_codes, act_scale, codes, scale, block_size)
+            return out.to(x.dtype).reshape(*x.shape[:-1], weight.shape[0])
     act, act_scale = block_fp8_act_quant(x, block_size)
     dequant_act = act.to(torch.float32) * act_scale.repeat_interleave(block_size, dim=-1)
     return torch.matmul(dequant_act, weight.to(torch.float32).transpose(0, 1)).to(x.dtype)
+
+
+#: Which *kinds* of weight this process has already said are running without the emulation, keyed by
+#: shape, dtype and reason. Not a boolean and not one line per call. One line for the whole process
+#: would be the wrong granularity in both directions: the routed experts decline by design (the
+#: reference runs them on an e2m1 weight, whose exponent field this rule does not describe), so that
+#: line would appear on every expert-bearing run and an fp8 attention weight that declined for a
+#: reason nobody intended would be invisible behind it -- while one line per call would be 384
+#: experts times 40 layers of noise. `POCKETLLM_V41_MMA_EMULATE=1` with no such line at all is the
+#: state that means "every fp8 linear ran the reference's reduction".
+_declined_reported: set[tuple] = set()
+
+
+def _note_declined(weight: torch.Tensor, why: str) -> None:
+    """Say, once per kind of weight, that a quantized linear is running the correctly rounded product.
+
+    Silence here would be the expensive failure mode: a run whose weights never got their codes
+    attached looks exactly like a run where the emulation changed nothing, and the two call for
+    opposite next steps.
+    """
+    key = (tuple(weight.shape), str(weight.dtype), why)
+    if key in _declined_reported:
+        return
+    _declined_reported.add(key)
+    print(
+        f"[relicllm] v41 fp8 reduction emulation is not running on a {tuple(weight.shape)} "
+        f"{weight.dtype} weight: {why}. That linear returns the correctly rounded product, which is "
+        f"not the reference's reduction.",
+        file=sys.stderr,
+    )

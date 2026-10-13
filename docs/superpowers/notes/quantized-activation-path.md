@@ -5,6 +5,32 @@ from DeepSeek's own reference, the experiment that pins it, and what the fix mus
 supersedes the diagnosis in the sm_89 plan (`2026-10-09-v41-flash-sm89.md`) that attributed the
 divergence to the card ("bf16 tensor cores on sm_89 vs fp32 SIMT on sm_75") -- that was a symptom.
 
+**Update, 2026-10-13: the reduction is a second departure, and it is now reproduced.** The
+activation half below stands as measured, but two readings of it are superseded. The reference's
+GEMM is a tilelang kernel whose inner step is an `mma.sync`, and an `mma.sync` does *not* add 32
+products exactly: per 32-wide K block each 16-wide half is cut onto a grid anchored by that output
+element's largest addend, truncating toward zero, before the fp32 add. So "accumulating in fp32"
+below is true of the *sum* and not of the addends, and "no pure-torch soft path can be made
+bit-identical to the oracle" is false -- it is, now, via `relicllm/models/deepseek_v4_1/mma.py`
+(default-on; `POCKETLLM_V41_MMA_EMULATE=0` to skip), which reproduces the reference kernel bit for
+bit on 1,142,784/1,142,784 dense elements and 11520/11520 end to end on a real `wq_a`
+(`tests/test_v41_mma_reduction.py`). Read row 3's run-to-run flip below as two causes, not one:
+cuBLAS algorithm selection in the proxy, plus this reduction, which the proxy did not model. The
+diagnosis, the primitive design, and the acceptance recommendation (token-level, not a tight logits
+tolerance) all stand.
+
+**Where the codes come from, and which linears run the rule.** The rule reads *e4m3 codes*, and a
+dense weight does not determine them (`224 * 2**E` and `448 * 2**(E-1)` are the same number, and
+4.66% of this checkpoint's fp8 tiles sit at that boundary). They are recovered from the grid the file
+stores beside the weight by `loader.fill`, once, and hung on the parameter
+(`mma.attach_codes`/`attached_codes`) -- once because the recovery ends in a `torch.equal` over the
+weight, which is a device synchronisation, and the default serving path captures its decode body into
+a CUDA graph. The hot path therefore derives nothing and reads what the loader left. Which linears
+run the rule is decided by the *weight*, not by the call site: every fp8 weight the file stored a
+grid beside emulates, the **shared** experts included -- an earlier revision had switched those off
+along with the routed ones. The routed experts still decline, and correctly: the reference runs them
+on an **e2m1** weight, whose exponent field this rule does not describe.
+
 ## The claim
 
 The port dequantizes every fp8/fp4 weight to bf16 once at load and runs a plain `F.linear` bf16

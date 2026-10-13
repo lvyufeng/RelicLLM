@@ -414,7 +414,7 @@ def test_the_decode_graph_is_on_unless_the_launch_says_otherwise(tmp_path):
     assert backend._options.decode_graphs is False
 
 
-def test_the_decode_graph_is_dropped_where_the_tree_cannot_carry_one(tmp_path):
+def test_the_decode_graph_is_dropped_where_the_tree_cannot_carry_one(tmp_path, monkeypatch):
     """The option is the ask; the answer is read off the tree that was loaded.
 
     A recording is a CUDA stream and a replay beside the attention caches, so a front with no cache
@@ -422,7 +422,12 @@ def test_the_decode_graph_is_dropped_where_the_tree_cannot_carry_one(tmp_path):
     both resolve to the eager loop, and a front whose caches are on a card resolves to the graphed
     one. The option is on throughout: what differs between the three is the placement and nothing
     else, which is the point of resolving it here rather than trusting the flag.
+
+    The emulation is off for the placement cases, so that what is being read here is still the
+    placement alone: with it on, the one front that *could* carry a recording is refused one for a
+    second reason, and that reason has its own test below.
     """
+    monkeypatch.setenv("POCKETLLM_V41_MMA_EMULATE", "0")
     caches = "layers.0.attention.window_kv_cache"
 
     # Nothing is resolved at construction: the answer is a fact about a tree, and there is no tree
@@ -444,6 +449,67 @@ def test_the_decode_graph_is_dropped_where_the_tree_cannot_carry_one(tmp_path):
     off, _ = _build(_checkpoint(tmp_path), backend_options={"decode_graphs": False})
     off._resolve_decode_graphs()
     assert off._decode_graphs is False
+
+
+def test_the_decode_graph_is_dropped_under_the_mma_reduction_emulation(tmp_path, monkeypatch, capsys):
+    """A card is necessary for a recording and not sufficient: the emulation does not fit one.
+
+    The emulation transcribes an `mma.sync` in elementwise torch, and a capture holds ~4-7 KiB of
+    driver memory for every kernel node it records -- ~150 of them a K block, so ~900 MiB a layer
+    and ~35 GiB for the 40-layer pass, against the ~10 GiB a 24 GiB card has left once the weights
+    are loaded. Measured: the capture pass dies at layer 10 of 40 in `capture_end` and takes the
+    rank with it, *after* the prompt has been forwarded and the hook handed its first token, which
+    is why this is refused here rather than discovered there. `POCKETLLM_V41_MMA_EMULATE=0` is the
+    escape and the line has to name it.
+
+    No card and no checkpoint are involved: `_build` fills both injection points, and the whole
+    decision is a string on a buffer's `.device` plus an environment variable.
+    """
+    caches = "layers.0.attention.window_kv_cache"
+    card_front = [(caches, FakeBuffer("cuda:0"))]
+
+    # The default: the emulation is on, so a front that could carry a recording is not given one.
+    monkeypatch.delenv("POCKETLLM_V41_MMA_EMULATE", raising=False)
+    emulated, _ = _build(_checkpoint(tmp_path), buffers=card_front)
+    emulated._resolve_decode_graphs()
+    assert emulated._decode_graphs is False
+    line = capsys.readouterr().err
+    assert "decode not graphed" in line
+    assert "POCKETLLM_V41_MMA_EMULATE=0" in line
+    # The measured cost, asserted so the line cannot quietly lose it and stay a line.
+    assert "900 MiB" in line and "35 GiB" in line and "capture_end" in line
+
+    # The escape the line names is the escape: the same front graphs once the emulation is off.
+    monkeypatch.setenv("POCKETLLM_V41_MMA_EMULATE", "0")
+    graphed, _ = _build(_checkpoint(tmp_path), buffers=card_front)
+    graphed._resolve_decode_graphs()
+    assert graphed._decode_graphs is True
+    assert capsys.readouterr().err.strip() == "decode graphed a block at a time"
+
+    # A host tree is refused for the placement and the line says so: naming the environment
+    # variable there would name an escape from a tree that could not record anyway.
+    monkeypatch.setenv("POCKETLLM_V41_MMA_EMULATE", "1")
+    host, _ = _build(_checkpoint(tmp_path), buffers=[(caches, FakeBuffer("cpu"))])
+    host._resolve_decode_graphs()
+    assert host._decode_graphs is False
+    assert "POCKETLLM_V41_MMA_EMULATE" not in capsys.readouterr().err
+
+    # Nothing to say to a run that did not ask for graphs, and nothing read to find that out.
+    off, _ = _build(
+        _checkpoint(tmp_path), backend_options={"decode_graphs": False}, buffers=card_front
+    )
+    off._resolve_decode_graphs()
+    assert off._decode_graphs is False
+    assert capsys.readouterr().err == ""
+
+    # `--progress off` silences progress, not the news that the run moved onto the eager path:
+    # a benchmark column that asked for graphs and silently got none is the misreading to avoid.
+    quiet, _ = _build(
+        _checkpoint(tmp_path), backend_options={"progress": False}, buffers=card_front
+    )
+    quiet._resolve_decode_graphs()
+    assert quiet._decode_graphs is False
+    assert "POCKETLLM_V41_MMA_EMULATE=0" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(
