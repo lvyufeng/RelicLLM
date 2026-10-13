@@ -164,16 +164,16 @@ def expert_forward(
     # No `emulate_reduction` here, and that is the fix rather than an omission: the flag follows the
     # switch, and which arithmetic a call gets is decided by the *weight*, not by this function. The
     # shared expert's three matrices are dense fp8 weights, `loader.fill` hangs their recovered codes
-    # on them like any other, and `quantized_linear` emulates them. A routed expert's tensors never
-    # go through `fill` -- a store hands this function three tensors it just produced, a stack slice
-    # or a decode out of the mapping -- so they carry no codes and decline on their own. That decline
-    # is a **known difference from the reference**, not a case `mma`'s rule excludes: the checkpoint
-    # stores these weights as e2m1 and the reference repacks them to e4m3 at block 32
-    # (`inference_convert.py`'s `cast_e2m1fn_to_e4m3fn`), so the routed GEMM runs exactly the
-    # arithmetic the rule describes. Closing the gap needs that repack -- and, on the device path, a
-    # way round the fused kernel, which quantizes activations to int8 per row -- so the routed
-    # experts stay correctly rounded until that work lands, while the shared expert, which is fp8 and
-    # whose arithmetic was measured here, no longer declines along with them.
+    # on them like any other, and `quantized_linear` emulates them. A routed expert's tensors do not
+    # go through `fill` -- a store hands this function three tensors it just produced -- so they
+    # emulate if and only if the store hung the two tensors the rule reads on them, in the one other
+    # place a weight enters the tree. `CheckpointRoutedExperts` does (`_expert_matrix`): the codes
+    # are the e4m3 encodings of the packed e2m1 nibbles and the grid is the file's per-row one, which
+    # is the pair the reference's own fp4 kernel builds -- it casts every e2m1 value to e4m3 in the
+    # kernel and scales by `scales_b[row, k]`. The device path does not, and there the reason is not
+    # the dtype: the fused kernel quantizes activations to int8 per row, which is not this rule's
+    # activation encoding, so it stays a **known difference from the reference** until that work
+    # lands. Everything else here declines on its own, as it should.
     gate = quantized_linear(x, w1, quantized=quantized, block_size=block_size).float()
     up = quantized_linear(x, w3, quantized=quantized, block_size=block_size).float()
     if swiglu_limit > 0:
