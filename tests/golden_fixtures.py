@@ -433,22 +433,51 @@ def load_fixtures() -> dict[str, GoldenFixture]:
     return {entry: fixture for entry in ENTRY_POINTS if (fixture := load_fixture(entry)) is not None}
 
 
-def reference_path(entry: str) -> pathlib.Path:
-    return REFERENCE_DIR / f"{entry}.json"
+def reference_path(entry: str, reference_route: str = PATH_RAW) -> pathlib.Path:
+    """Where the oracle for `entry` on `reference_route` is kept.
+
+    One file per (entry, route) pair, because the two routes are two questions: `raw` seeds the
+    prompt's ids as written and `chat` seeds the ones the checkpoint's own renderer produces, which
+    for the same words is a different sequence. The raw file keeps its unsuffixed name -- it is the
+    route every record written before this distinction existed drove, and `_read_path` says the same
+    thing about a record with no `path` field.
+
+    A route outside `GOLDEN_PATHS` is refused rather than interpolated into a name: the file it named
+    would not exist, the caller would read the missing file as `no oracle for this route yet`, and a
+    typo would turn a criterion into a skip.
+    """
+    if reference_route not in GOLDEN_PATHS:
+        raise ValueError(f"reference route must be one of {GOLDEN_PATHS}, got {reference_route!r}")
+    suffix = "" if reference_route == PATH_RAW else f"_{reference_route}"
+    return REFERENCE_DIR / f"{entry}{suffix}.json"
 
 
-def load_reference(entry: str) -> dict[str, Any] | None:
-    """The upstream reference oracle for `entry`, or `None` when none was recorded.
+def load_reference(entry: str, reference_route: str = PATH_RAW) -> dict[str, Any] | None:
+    """The upstream reference oracle for `entry` on `reference_route`, or `None` when none was recorded.
 
     A plain dict rather than a `GoldenFixture`: this is not one of this repository's served-path
     answers and must not be loadable as one. A `GoldenFixture` carries an `argv` that runs *here*;
     a reference carries what an outside implementation produced, and the two are compared, never
     conflated. See `scripts/record_reference_v41.py` for what writes it.
+
+    The record's own `path` is checked against the route it was loaded under, because the two can be
+    made to disagree: the file name is the caller's claim and the field is the recorder's, and a
+    record that ran one route while sitting at the other's name would be compared as if it answered
+    the route its name claims. A missing field is the pre-route default and reads as `raw`, the same
+    answer `_read_path` gives it everywhere else.
     """
-    path = reference_path(entry)
+    path = reference_path(entry, reference_route)
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    recorded = _read_path(record.get("path"))
+    if recorded != reference_route:
+        raise ValueError(
+            f"{path.name} records the {recorded!r} route but was loaded as {reference_route!r}: "
+            f"the file answers one question and the caller is asking the other, so a comparison "
+            f"against it would judge an answer by a prompt the run was never given"
+        )
+    return record
 
 
 def write_fixture(fixture: GoldenFixture) -> pathlib.Path:
@@ -575,18 +604,93 @@ def reproduction_fixture(fixture: GoldenFixture, reference: Mapping[str, Any]) -
     block = reference.get("reproduction")
     if not block:
         return fixture
+    argv, env, requires = _reproduction_block(block, checkpoint=fixture.checkpoint)
+    return replace(fixture, argv=argv, env=env, requires=requires)
+
+
+def fixture_from_reference(reference: Mapping[str, Any], *, entry: str) -> GoldenFixture:
+    """The port-side leg a reference describes for itself, where no served-path fixture does.
+
+    `reproduction_fixture` answers this question for a route that has both records: it takes the
+    served-path fixture's answer and swaps in the configuration the reference names. A route that has
+    an oracle but no served-path record has nothing to swap into -- the reference is the only file,
+    and it already carries everything the leg needs: the configuration (`reproduction`), the prompt,
+    the route those ids are the input of, and, in `tokens`, the answer to compare against.
+
+    What it does **not** carry is an `expected` block, and the fixture built here has none: the
+    expected answer is the reference's, and copying it into the fixture would make the leg compare
+    the oracle to itself. `sampling` is the default both recorders use -- greedy, `max_tokens` 16 --
+    because a reference that does not pin the sampler is only comparable to a greedy run.
+
+    The checkpoint is read off `argv` rather than taken as an argument: it is what
+    `_with_host_checkpoint` rewrites, and the item after `--model` is the one the engine opens. A
+    block whose argv does not name it is refused here, at the same place and for the same reason
+    `reproduction_fixture` refuses a fixture whose path has dropped out of the command line.
+    """
+    block = reference.get("reproduction")
+    if not block:
+        raise ValueError(
+            f"the {entry} reference carries no `reproduction` block, so there is no port "
+            f"configuration to run its prompt under; add one (see tests/README.md) or record a "
+            f"served-path fixture for that route"
+        )
+    argv, env, requires = _reproduction_block(block)
+    try:
+        checkpoint = argv[argv.index("--model") + 1]
+    except (ValueError, IndexError) as error:
+        raise ValueError(
+            f"the {entry} reference's `reproduction.argv` names no `--model` checkpoint as an item "
+            f"of its own, so the harness cannot move it to where this host keeps the bytes; "
+            f"got {' '.join(argv)}"
+        ) from error
+    return GoldenFixture(
+        entry=entry,
+        checkpoint=checkpoint,
+        argv=argv,
+        prompt=str(reference.get("prompt", "")),
+        expected={},
+        env=env,
+        requires=requires,
+        path=_read_path(reference.get("path")),
+        # `commit`, `taken_at` and `card` stay empty on purpose. In a served-path fixture they mean
+        # "this repository produced this answer, at this commit, on this card"; this fixture has no
+        # answer of its own -- the reference holds it -- and filling them from the *reference's*
+        # record would read as a provenance this run does not have.
+        notes=f"built from the {entry} reference's own `reproduction` block; the reference's "
+              f"`tokens` are what the run is compared against",
+    )
+
+
+def _reproduction_block(
+    block: Mapping[str, Any], *, checkpoint: str | None = None
+) -> tuple[tuple[str, ...], dict[str, str], dict[str, int]]:
+    """A reference's `reproduction` block as `(argv, env, requires)`, checked for shape.
+
+    The block is the argument rather than the reference, because what an *absent* block means differs
+    by caller and is not this function's decision: `reproduction_fixture` keeps the served-path
+    fixture's own configuration, while `fixture_from_reference` has none to keep and refuses.
+
+    `env` and `requires` come back as the block's own, and the caller **replaces** rather than
+    extends with them -- a block that named an empty environment must be able to drop a key the
+    fixture carries (for v41, `DEEPSEEK_V41_RESIDENT_EXPERTS`), which extending could not express.
+
+    When `checkpoint` is given, the command line must carry it as an item of its own:
+    `_with_host_checkpoint` moves the recorded path by exact match, and a command line it cannot
+    find the path in would silently run whichever checkpoint the recorder happened to name.
+    """
     argv = tuple(str(item) for item in block["argv"])
-    if fixture.checkpoint not in argv:
+    if not argv:
+        raise ValueError("the reference's `reproduction.argv` is empty")
+    if checkpoint is not None and checkpoint not in argv:
         raise ValueError(
             f"the v41 reference's `reproduction.argv` does not carry the fixture's checkpoint "
-            f"({fixture.checkpoint}) as an item, so it cannot be moved to where this host keeps it; "
+            f"({checkpoint}) as an item, so it cannot be moved to where this host keeps it; "
             f"got {' '.join(argv)}"
         )
-    return replace(
-        fixture,
-        argv=argv,
-        env={str(key): str(value) for key, value in (block.get("env") or {}).items()},
-        requires={str(key): int(value) for key, value in (block.get("requires") or {}).items()},
+    return (
+        argv,
+        {str(key): str(value) for key, value in (block.get("env") or {}).items()},
+        {str(key): int(value) for key, value in (block.get("requires") or {}).items()},
     )
 
 

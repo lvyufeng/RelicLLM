@@ -18,14 +18,24 @@ active slice is streamed to the card per step. That patch replaces ``MoE.forward
 ``tensor.to(device)`` moves** — the arithmetic, the clamps, the routing and the reduction order are
 the checkpoint's. A reader can confirm that by diffing the two forward bodies against ``model.py``.
 
-Why the raw prompt and not ``generate.py``
-------------------------------------------
+Two routes, two oracles
+-----------------------
 
 ``inference/generate.py`` is the checkpoint's own entry point, but it renders the prompt through the
 chat template (``encode_messages``), which for this prompt is 13 tokens — not the 9 the golden
-fixture records. The fixture feeds the **raw** token ids, so the oracle for it must too. This script
-seeds the reference ``Transformer`` with the same raw ids and reads the step-0 logits directly, which
-is the quantity ``logits_check`` records.
+fixture records. The served path has the same two routes, and they are two questions: the same words
+are a different token sequence on each, so an oracle recorded on one is no oracle for the other.
+
+Every record therefore names the route it was taken on in a ``path`` field (absent means ``raw``,
+which is what a record written before the field existed drove), and the ids follow from it:
+
+- ``--path raw`` (the default) seeds ``DEFAULT_TOKENS``, the nine raw ids;
+- ``--path chat`` seeds ``CHAT_TOKENS``, the thirteen the checkpoint's own renderer produces for the
+  same prompt, which is what a client of the served chat route sends.
+
+Either way the script seeds the reference ``Transformer`` with the ids directly and reads the step-0
+logits, which is the quantity ``logits_check`` records. ``--tokens`` overrides the list for an
+experiment; a record that used it is not reproducible from ``--path`` alone, so say so in ``notes``.
 
 Usage (on the 4090 box, where the converted TP8 checkpoint and the ``dsref`` env live)::
 
@@ -33,6 +43,11 @@ Usage (on the 4090 box, where the converted TP8 checkpoint and the ``dsref`` env
         --ckpt /path/to/DeepSeek-V4.1-Flash-TP8 \\
         --inference /path/to/DeepSeek-V4.1-Flash/inference \\
         --out tests/fixtures/reference/v41.json
+
+    python scripts/record_reference_v41.py \\
+        --ckpt /path/to/DeepSeek-V4.1-Flash-TP8 \\
+        --inference /path/to/DeepSeek-V4.1-Flash/inference \\
+        --path chat --out tests/fixtures/reference/v41_chat.json
 
 A human reads the printed tokens and step-0 top-k before the record is committed, exactly as the
 served-path recorder expects for its own answer.
@@ -59,6 +74,39 @@ DEFAULT_PROMPT = "Reply with the single line: golden fixture."
 #: ``DEFAULT_PROMPT`` under the checkpoint's tokenizer with ``add_special_tokens=False``. Pinned here
 #: rather than re-tokenized so the oracle and the fixture share one input by construction.
 DEFAULT_TOKENS = [19905, 418, 270, 4031, 2562, 28, 22471, 45117, 16]
+
+#: ``DEFAULT_PROMPT`` through the checkpoint's own chat template (``encode_messages``), which is what
+#: the served chat route sends: BOS, the assistant-header id, the nine raw ids, and the template's
+#: two end-of-turn ids. Pinned for the same reason ``DEFAULT_TOKENS`` is -- the reference is seeded
+#: with these ids and the port renders its own, so the leg that compares the two answers is only
+#: meaningful while the two agree on the question. The port's rendering and tokenization of this
+#: prompt is asserted against this list by
+#: ``tests/test_served_path_golden.py::test_the_v41_chat_route_sends_the_thirteen_ids_the_reference_was_seeded_with``
+#: -- which renders through the checkpoint's encoder and the checkpoint's tokenizer, the two steps
+#: this list came out of -- so the agreement is a test rather than a comment.
+CHAT_TOKENS = [0, 128803, *DEFAULT_TOKENS, 128804, 128822]
+
+#: The route each id list belongs to, for ``--path``. Absent ``path`` in a record means ``raw``.
+TOKENS_BY_PATH = {"raw": DEFAULT_TOKENS, "chat": CHAT_TOKENS}
+
+#: What each route adds to ``notes``, so the record explains its own question and a re-record
+#: reproduces the file. Written here rather than by hand into the record: this script owns every
+#: other field of it, and a sentence added afterwards is the one thing a refresh would silently drop.
+#: Each value opens with the period that ends ``BASE_NOTES``, which has none of its own -- that
+#: string is the raw record's, word for word, and the chat record's second sentence is this one.
+ROUTE_NOTES = {
+    "chat": ". Recorded on the chat route: the model was seeded with the thirteen ids the "
+            "checkpoint's own encode_messages renders for this prompt, which is what a client of the "
+            "served chat route sends -- not the nine raw ids the sibling v41.json was recorded on. "
+            "The two records answer two different questions and neither substitutes for the other.",
+}
+
+#: Who the answer came from, for the record's ``source``.
+SOURCE = "official DeepSeek-V4.1 reference (inference/model.py, unmodified)"
+
+#: What every record's ``notes`` opens with, before the route's own sentence.
+BASE_NOTES = ("the checkpoint's own model.py, imported unmodified and host-offloaded to fit a "
+              "24 GiB card; see scripts/record_reference_v41.py for the one deviation")
 
 #: The child run under ``torchrun`` on the recording host. A string because it must ``sys.path`` the
 #: checkpoint's own ``inference`` dir before importing ``model`` — a step that only makes sense there.
@@ -223,14 +271,16 @@ def main(argv: list[str] | None = None) -> int:
                         default=REPO_ROOT / "tests" / "fixtures" / "reference" / "v41.json")
     parser.add_argument("--world-size", type=int, default=0, help="0 = all visible cards")
     parser.add_argument("--python", default=sys.executable, help="interpreter that has tilelang")
-    parser.add_argument("--tokens", default=json.dumps(DEFAULT_TOKENS),
-                        help="raw prompt token ids, as a JSON list")
+    parser.add_argument("--path", choices=sorted(TOKENS_BY_PATH), default="raw",
+                        help="which served route the ids are the input of; picks the id list")
+    parser.add_argument("--tokens", default=None,
+                        help="prompt token ids, as a JSON list (default: the --path list)")
     parser.add_argument("--max-tokens", type=int, default=16)
     parser.add_argument("--top-k", type=int, default=8)
     parser.add_argument("--dump", type=pathlib.Path, default=pathlib.Path("/tmp/ref_logits.pt"))
     args = parser.parse_args(argv)
 
-    tokens = json.loads(args.tokens)
+    tokens = json.loads(args.tokens) if args.tokens else list(TOKENS_BY_PATH[args.path])
     world = args.world_size or _visible_cards()
     env = {
         **dict(os.environ),
@@ -243,7 +293,8 @@ def main(argv: list[str] | None = None) -> int:
         "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
     }
 
-    print(f"recording the official reference: tp={world}, {len(tokens)} raw tokens", flush=True)
+    print(f"recording the official reference: tp={world}, path={args.path}, {len(tokens)} tokens",
+          flush=True)
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as handle:
         handle.write(_CHILD_SOURCE)
         child = handle.name
@@ -265,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
     values, ids = torch.topk(dumped["logits"][0].float(), args.top_k)
     payload: dict[str, Any] = {
         "entry": "v41",
-        "source": "official DeepSeek-V4.1 reference (inference/model.py, unmodified)",
+        "source": SOURCE,
         "prompt": DEFAULT_PROMPT,
         "raw_token_ids": tokens,
         "tokens": [int(t) for t in dumped["tokens"]],
@@ -276,10 +327,10 @@ def main(argv: list[str] | None = None) -> int:
             "token_ids": [int(i) for i in ids.tolist()],
             "values": [float(v) for v in values.tolist()],
         },
+        "path": args.path,
         "commit": _git_commit(),
         "taken_at": datetime.date.today().isoformat(),
-        "notes": "the checkpoint's own model.py, imported unmodified and host-offloaded to fit a "
-                 "24 GiB card; see scripts/record_reference_v41.py for the one deviation",
+        "notes": BASE_NOTES + ROUTE_NOTES.get(args.path, ""),
     }
     # A refresh must not silently drop the configuration that makes the oracle satisfiable. This
     # script records the *model*, not a port configuration, so the `reproduction` block is added to

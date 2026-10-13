@@ -26,24 +26,37 @@ documented reason is better than either a silently cheap subset or a suite nobod
 What a mismatch means: this checkpoint, through this entry point, with these flags, no longer
 produces these tokens. That is the claim a request-lifecycle refactor has to keep, and it is the one
 claim no kernel-local test can make.
+
+The `v41_*` tests below are the other question -- not "is the port stable" but "is it *right*" -- and
+they compare against `fixtures/reference/`, which is DeepSeek's own code rather than this repository's.
+There are two of them because there are two oracles: the raw route (`v41.json`, nine prompt ids) and
+the chat route (`v41_chat.json`, the thirteen ids the checkpoint's own renderer produces for the same
+words). They are documented in `tests/README.md`; the short version is that a reference names the port
+configuration that satisfies it and the leg runs that configuration rather than the fixture's.
 """
 
 from __future__ import annotations
 
+import importlib.util
+import json
 import os
+import pathlib
 
 import pytest
 
 from tests.golden_fixtures import (
     ENTRY_POINTS,
     GOLDEN_GATE_ENV,
+    PATH_CHAT,
     GoldenFixture,
     Outcome,
     _with_host_checkpoint,
+    fixture_from_reference,
     fixture_path,
     load_fixture,
     load_reference,
     logits_check_mismatch,
+    reference_path,
     reproduction_fixture,
     run_isolated,
 )
@@ -249,4 +262,201 @@ def test_the_v41_tokens_agree_with_the_official_reference():
         f"The reference is {reference['source']} at commit {reference.get('commit') or 'unknown'}; "
         f"the run is {fixture.card or 'an unrecorded card'}. A divergence here is a port defect, "
         f"not a kernel tolerance."
+    )
+
+
+def test_the_v41_chat_route_agrees_with_the_official_reference():
+    """The second oracle: the same prompt through the served chat route, against DeepSeek's code.
+
+    The sibling test above compares the **raw** route -- the nine prompt ids as written -- against
+    `fixtures/reference/v41.json`. This one compares the **chat** route, where the port renders the
+    prompt through the checkpoint's own `encode_messages` and sends thirteen ids, against
+    `fixtures/reference/v41_chat.json`, recorded from the same unmodified `inference/model.py` seeded
+    with those thirteen. Two routes, two questions: the same words are a different token sequence on
+    each, so one oracle cannot judge the other's answer, and the served path has to be right on both.
+
+    **The leg is built from the reference, not from a served-path fixture.** There is no
+    `fixtures/golden/v41_chat.json`, and there should not be one invented to hold a second answer for
+    the same entry point: `fixture_from_reference` reads the configuration the reference names and
+    the route it was recorded on, and `sampling` is the greedy default both recorders use. What is
+    compared is the reference's own `tokens`, so nothing here compares the port to itself.
+
+    The one thing this test does *not* establish by itself is that the port and the reference were
+    shown the same thirteen ids -- it pins the prompt's *count*, because a run that took the raw
+    route would answer a different question while looking like a divergence from this one, and two
+    different thirteen-id prompts compare just as well as one. The ids themselves are the subject of
+    `test_the_v41_chat_route_sends_the_thirteen_ids_the_reference_was_seeded_with` below, which
+    renders the prompt through the checkpoint's own encoder and tokenizer.
+    """
+    reference = load_reference("v41", PATH_CHAT)
+    if reference is None:
+        pytest.skip("v41 has no recorded official reference for the chat route; see tests/README.md")
+
+    fixture = fixture_from_reference(reference, entry="v41")
+    # The route this leg runs is the record's, and the record is the thing being satisfied -- the
+    # sibling test pins the same field for the same reason. `load_reference` has already refused a
+    # file whose own `path` disagrees with the route it was loaded under, so this is the assertion
+    # that the leg built from it still drives that route.
+    assert fixture.path == PATH_CHAT, (
+        f"the v41 chat leg was built on the {fixture.path!r} route, but the record it is compared "
+        f"against answers the {PATH_CHAT!r} route"
+    )
+    expected_tokens = list(reference["tokens"])
+    outcome = _run_under(fixture, {})
+
+    assert outcome.token_ids is not None, "the run produced no token ids"
+    expected_prompt_tokens = (reference.get("logits_check") or {}).get("prompt_tokens")
+    if expected_prompt_tokens is not None and outcome.prompt_tokens is not None:
+        assert outcome.prompt_tokens == expected_prompt_tokens, (
+            f"v41 chat: the port sent {outcome.prompt_tokens} prompt tokens and the reference was "
+            f"seeded with {expected_prompt_tokens}; the two are answering different questions, so "
+            f"the token comparison below would not mean what it says"
+        )
+    assert list(outcome.token_ids) == expected_tokens, (
+        f"v41 chat: the greedy tokens diverge from the official reference.\n"
+        f"  reference: {expected_tokens}\n"
+        f"  this card: {list(outcome.token_ids)}\n"
+        f"The reference is {reference['source']} at commit {reference.get('commit') or 'unknown'}, "
+        f"seeded with the checkpoint's own chat render and run on the configuration its "
+        f"`reproduction` block names. A divergence here is a port defect, not a kernel tolerance."
+    )
+
+
+def test_the_v41_chat_route_sends_the_thirteen_ids_the_reference_was_seeded_with():
+    """The other half of the chat criterion: the ids, not their count.
+
+    `test_the_v41_chat_route_agrees_with_the_official_reference` holds the port to the reference's
+    answer and pins the prompt's *count*. A count is not a prompt: any thirteen ids pass it, and the
+    ids are the whole reason the two routes are two questions. This runs the two steps the served
+    chat route runs before it has anything to answer with -- `prepare_messages` and the checkpoint's
+    own `encode_messages`, then the checkpoint's tokenizer with `add_special_tokens=False` -- and
+    holds the result against the record's `raw_token_ids`, the sequence the oracle was actually fed.
+    A port that rendered the prompt differently, or tokenized it with a second beginning-of-sentence
+    token, would answer `[69865, 267, 45117, 1]`-shaped questions that this test is the only one to
+    attribute.
+
+    It needs the checkpoint's encoder and tokenizer but no weights and no card, so it is the cheap
+    half of the gate: same `POCKETLLM_GOLDEN` gate, seconds rather than an hour.
+    """
+    if not os.environ.get(GOLDEN_GATE_ENV):
+        pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
+    reference = load_reference("v41", PATH_CHAT)
+    if reference is None:
+        pytest.skip("v41 has no recorded official reference for the chat route; see tests/README.md")
+    recorded_ids = list(reference.get("raw_token_ids") or [])
+    assert recorded_ids, (
+        "the v41 chat reference carries no `raw_token_ids`, so the prompt it was seeded with is "
+        "not recorded and this leg has nothing to hold the renderer to"
+    )
+    fixture = _with_host_checkpoint(fixture_from_reference(reference, entry="v41"))
+    reason = fixture.unwritable_reason()
+    if reason is not None:
+        pytest.skip(reason)
+
+    from relicllm.encoding.deepseek_v4_1 import encode_messages
+    from relicllm.protocol.chat import prepare_messages
+
+    pytest.importorskip("transformers", reason="the tokenizer is a transformers tokenizer")
+    from transformers import AutoTokenizer
+
+    messages = prepare_messages(
+        {"messages": [{"role": "user", "content": str(reference.get("prompt") or "")}]}
+    )
+    text = encode_messages(fixture.checkpoint, messages)
+    tokenizer = AutoTokenizer.from_pretrained(fixture.checkpoint)
+    # The rendered prompt opens with its own beginning-of-sentence token, so the tokenizer must not
+    # add a second one -- the same call the served route makes (`v41_backend._encode_chat`).
+    ids = [int(token) for token in tokenizer(text, add_special_tokens=False)["input_ids"]]
+
+    assert ids == recorded_ids, (
+        f"v41 chat: the port renders and tokenizes this prompt to a different sequence than the "
+        f"official reference was seeded with.\n"
+        f"  reference: {recorded_ids}\n"
+        f"  this port: {ids}\n"
+        f"rendered text: {text!r}\n"
+        f"The token comparison in `test_the_v41_chat_route_agrees_with_the_official_reference` "
+        f"counts these ids and would pass on a different thirteen; this is the prompt itself."
+    )
+
+
+def test_a_reference_route_that_is_not_one_of_the_two_paths_is_refused():
+    """A route the loader does not know must not come back as `no oracle yet`.
+
+    The route picks the file, so an unrecognised one names a file nobody recorded: read as a missing
+    oracle it turns a criterion into a skip, and a skipped acceptance leg reads as a pass.
+    `_read_path` refuses an unknown `path` inside a record for the same reason -- one refusal at each
+    boundary, because the name and the field arrive from different places.
+    """
+    with pytest.raises(ValueError, match="reference route must be one of"):
+        reference_path("v41", "chatt")
+
+
+def test_a_reference_record_is_refused_when_its_route_disagrees_with_the_name_it_is_read_under(
+    tmp_path, monkeypatch
+):
+    """The file name is the caller's claim; the record's `path` is the recorder's.
+
+    They can be made to disagree -- `record_reference_v41.py --out` takes any name it is given -- and
+    a record that ran one route while sitting at the other's name would be compared as if it answered
+    the route its name claims, against a prompt the run was never given. Refused rather than
+    defaulted: the two routes are two questions with two different answers.
+    """
+    from tests import golden_fixtures
+
+    monkeypatch.setattr(golden_fixtures, "REFERENCE_DIR", tmp_path)
+    record = tmp_path / "v41_chat.json"
+    record.write_text(json.dumps({"path": "raw", "tokens": [1]}) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="records the 'raw' route"):
+        load_reference("v41", PATH_CHAT)
+
+    # The positive control: the same file, recording the route its name claims, loads. Without it
+    # this test would pass on a loader that refused every record, including the real ones.
+    record.write_text(json.dumps({"path": PATH_CHAT, "tokens": [1]}) + "\n", encoding="utf-8")
+    assert load_reference("v41", PATH_CHAT) == {"path": PATH_CHAT, "tokens": [1]}
+
+
+def _reference_recorder():
+    """`scripts/record_reference_v41.py` loaded by path.
+
+    By path rather than by `import scripts.record_reference_v41`: `scripts/` is not a package, and a
+    namespace-package import would depend on the working directory being the repository root, which
+    is not something this suite's invocation promises. The module is import-safe -- everything it
+    needs at import time is stdlib, and the reference run itself is behind `main()`.
+    """
+    path = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "record_reference_v41.py"
+    spec = importlib.util.spec_from_file_location("_record_reference_v41", path)
+    assert spec is not None and spec.loader is not None, f"{path} is not importable"
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_committed_chat_reference_carries_exactly_what_its_recorder_writes():
+    """A re-record has to reproduce the record, not quietly edit it.
+
+    Every field of `v41_chat.json` except the answer the reference run produced -- `tokens`,
+    `logits_check`, and the `commit`/`taken_at` stamp -- is derived by
+    `scripts/record_reference_v41.py`, and the `reproduction` block is carried across from the file
+    being overwritten. The derivation is checked here against the script rather than against a copy
+    of its text, so a refresh that produced a different file would be a failing test instead of a
+    diff nobody reads; the route sentence in `notes` is a field of the record for the same reason,
+    rather than a sentence somebody appended to it once and a refresh would drop.
+    """
+    reference = load_reference("v41", PATH_CHAT)
+    if reference is None:
+        pytest.skip("v41 has no recorded official reference for the chat route; see tests/README.md")
+    recorder = _reference_recorder()
+
+    assert reference["entry"] == "v41"
+    assert reference["source"] == recorder.SOURCE
+    assert reference["prompt"] == recorder.DEFAULT_PROMPT
+    assert list(reference["raw_token_ids"]) == list(recorder.CHAT_TOKENS), (
+        "the record's seeded ids are not the ones its own route seeds"
+    )
+    assert reference["path"] == PATH_CHAT
+    assert reference["notes"] == recorder.BASE_NOTES + recorder.ROUTE_NOTES[PATH_CHAT]
+    assert "reproduction" in reference, (
+        "the chat leg runs the configuration this block names; a record without one is refused by "
+        "`fixture_from_reference` and the criterion cannot run at all"
     )
