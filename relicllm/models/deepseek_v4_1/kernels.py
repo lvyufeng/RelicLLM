@@ -315,11 +315,16 @@ def quantized_linear(
     it off costs.
 
     ``emulate_reduction=None`` means "follow that switch"; pass ``False`` for a call whose weight is
-    known not to be e4m3. The routed experts are the case: the reference runs ``fp4_gemm`` on an e4m3
-    activation against an **e2m1** weight, and e2m1's exponent field is not e4m3's, so the rule above
-    does not transfer to it. ``expert_forward`` in ``modules.py`` no longer has to say so explicitly
-    -- the routed stores hand in tensors that never went through ``loader.fill`` and so carry no
-    codes -- but the fact is what that path rests on.
+    known not to be e4m3. The routed experts are that case in practice, and **not** for the reason
+    this docstring used to give. Their reference GEMM is e4m3 on both sides: the checkpoint stores
+    them as e2m1 and ``inference_convert.py`` widens that with ``cast_e2m1fn_to_e4m3fn`` at
+    ``fp8_block_size = fp4_block_size = 32``, which is this rule's shape, so its dtype is no reason
+    to decline. What the port cannot do yet is the repack -- a routed store hands this function
+    packed e2m1 bytes or a decode of them, never a tensor ``loader.fill`` walked, so no codes are
+    attached and the call declines on its own. Emulating the routed experts is its own piece of
+    work, and on the device path it has to get past a fused kernel that quantizes activations to
+    int8 per row; until it is done the routed arithmetic is a **known difference** from the
+    reference rather than a case the rule above does not describe.
 
     The weight is upcast to fp32 explicitly even though it is already bf16, so the accumulator's
     width is a property of this function and not of what the caller happened to hand in; the upcast
