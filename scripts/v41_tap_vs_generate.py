@@ -27,10 +27,12 @@ the worktree under test. `PYTHONPATH` wins over it, and `-I` would drop `PYTHONP
 measure the other tree -- a run that looks fine and reports numbers from a revision nobody chose.
 
 The artifact carries the three rows, the `diff` computed from them, and a `config` block naming the
-routed expert class that was built, the imported `relicllm` tree and its commit, and the device. The
+routed expert class that was built, the imported `relicllm` tree and its commit, the `relic_core`
+those ops resolved out of, the `DEEPSEEK_*`/`POCKETLLM_*` switches in force, and the device. The
 rows answer "is the tap the same forward" only for the configuration they came from, and this script
 pins the host path (`expert_device=None`), so the block is what keeps a later reading from
-attributing them to the device path.
+attributing them to the device path -- or to a revision whose `relic_core` and knobs were not the
+ones recorded beside them.
 """
 from __future__ import annotations
 
@@ -48,10 +50,11 @@ def main() -> int:
     parser.add_argument("--resident-engram", action="store_true")
     args = parser.parse_args()
 
+    import relic_core
     import relicllm
     from transformers import AutoTokenizer
 
-    from relicllm.bench.metadata import cuda_metadata, git_commit
+    from relicllm.bench.metadata import cuda_metadata, env_snapshot, git_commit
     from relicllm.models.deepseek_v4_1.config import load_config
     from relicllm.models.deepseek_v4_1.generate import generate
     from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, build_hasher, load_backbone
@@ -82,6 +85,7 @@ def main() -> int:
     # `expert_device=None`, the host path, so a host-vs-device difference is not in scope here -- and
     # the artifact says so itself rather than relying on anyone's memory of the command line.
     tree = Path(relicllm.__file__).resolve().parent.parent
+    core_tree = Path(relic_core.__file__).resolve().parent.parent
     run_config = {
         "expert_device": None,  # the argument `load_backbone` got; `routed` is what it built
         "routed": kinds,
@@ -90,6 +94,18 @@ def main() -> int:
         "resident_engram": bool(args.resident_engram),
         "source": str(tree),
         "revision": git_commit(str(tree)),
+        # The other half of "which code produced these rows". `relicllm` resolves its ops out of
+        # whichever `relic_core` won the import, and an editable install pointing at a scratch
+        # checkout answers a different kernel than the tree on the command line -- the same trap the
+        # `-I` note above describes, one layer down.
+        "relic_core": {
+            "source": str(core_tree),
+            "revision": git_commit(str(core_tree)),
+        },
+        # And the switches in force, because several of them move the very rows these probes record:
+        # the prefill sparse-attention knobs change step 0 and nothing else, so a step-0 reading
+        # without them is not attributable to a revision.
+        "knobs": {**env_snapshot("DEEPSEEK_"), **env_snapshot("POCKETLLM_")},
         "cuda": cuda_metadata(),
     }
     say(f"routed experts: {', '.join(kinds)} on {len(model.layers)} layers")

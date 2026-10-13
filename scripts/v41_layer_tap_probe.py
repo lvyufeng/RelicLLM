@@ -24,9 +24,12 @@ argmaxes to 1. `generate()` pins the temperature to 0.0 and is the only path who
 picks. The draw is recorded beside the argmax as `step0_sampled`, so nothing is silently dropped.
 
 The artifact also carries a `config` block -- the routed expert class that was built, the imported
-`relicllm` tree and its commit, the device, the prompt ids -- because a step-0 reading is only
-evidence about the path it ran on. This script pins `expert_device=None`, the host path the oracle's
-offloaded `MoE.forward` mirrors; the block is what makes that checkable from the file alone.
+`relicllm` tree and its commit, the `relic_core` those ops resolved out of, the
+`DEEPSEEK_*`/`POCKETLLM_*` switches in force, the device, the prompt ids -- because a step-0 reading
+is only evidence about the path it ran on, and two of those switches (the prefill
+sparse-attention pair) move step 0 and nothing else. This script pins `expert_device=None`, the host
+path the oracle's offloaded `MoE.forward` mirrors; the block is what makes that checkable from the
+file alone.
 """
 from __future__ import annotations
 
@@ -43,10 +46,11 @@ def main() -> int:
     parser.add_argument("--out", default="/tmp/port-tap.pt")
     args = parser.parse_args()
 
+    import relic_core
     import relicllm
     from transformers import AutoTokenizer
 
-    from relicllm.bench.metadata import cuda_metadata, git_commit
+    from relicllm.bench.metadata import cuda_metadata, env_snapshot, git_commit
     from relicllm.models.deepseek_v4_1.config import load_config
     from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, build_hasher, load_backbone
 
@@ -81,6 +85,7 @@ def main() -> int:
     # the one named on the command line -- its commit, and the device. Without this, a host-path run
     # reads exactly like a device-path one, which is how a label drifted once already.
     tree = Path(relicllm.__file__).resolve().parent.parent
+    core_tree = Path(relic_core.__file__).resolve().parent.parent
     run_config = {
         "expert_device": None,  # the argument `load_backbone` got; `routed` is what it built
         "routed": kinds,
@@ -88,6 +93,18 @@ def main() -> int:
         "prompt_ids": ids,
         "source": str(tree),
         "revision": git_commit(str(tree)),
+        # The other half of "which code produced these rows". `relicllm` resolves its ops out of
+        # whichever `relic_core` won the import, and an editable install pointing at a scratch
+        # checkout answers a different kernel than the tree on the command line -- the same trap the
+        # `-I` note above describes, one layer down.
+        "relic_core": {
+            "source": str(core_tree),
+            "revision": git_commit(str(core_tree)),
+        },
+        # And the switches in force, because several of them move the very row this probe records:
+        # the prefill sparse-attention knobs change step 0 and nothing else, so a step-0 reading
+        # without them is not attributable to a revision.
+        "knobs": {**env_snapshot("DEEPSEEK_"), **env_snapshot("POCKETLLM_")},
         "cuda": cuda_metadata(),
     }
     say(f"config: {run_config}")
