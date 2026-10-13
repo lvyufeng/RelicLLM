@@ -2,12 +2,20 @@
 """Compare relic-core's activation-quantization primitives against each other and the reference.
 
 The port's `quantized_linear` is pure torch and therefore arch-independent, but the V4.1 attention
-calls `fp4_act_quant` and `act_quant` straight out of `relic_core.kernels.ops`, where `_auto_impl`
-picks triton when triton is importable. Triton compiles per architecture, so an op that selects
-triton can be correct on one card and not on another from the *same* source -- which is the shape of
-a defect that makes one box agree with the reference while the other does not. This measures each
-primitive's triton and torch implementations against each other, and against the checkpoint's own
-`kernel.py` where that is importable.
+calls primitives straight out of `relic_core.kernels.ops`, where `_auto_impl` can hand the same
+source two different implementations: kind `fp8` takes triton only when the device's major is >= 8,
+while `fp4` and `hc_split` take it whenever triton imported at all -- and
+`DEEPSEEK_FORCE_TORCH_GEMM`, or a missing triton, sends every kind to torch. Triton compiles per
+architecture on top of that, so an op that selects triton can be correct on one card and not on
+another from the *same* source -- which is the shape of a defect that makes one box agree with the
+reference while the other does not.
+
+The dispatch is exactly what this script does *not* rely on: each implementation is called by
+`impl=`, so both arms are measured on both cards. Two of the rows are controls rather than suspects,
+and it is worth knowing why. `fp4_act_quant` has no `impl` parameter -- its body is pure torch, so
+it cannot differ per card at all. `act_quant` resolves kind `fp8_quant`, whose `_auto_impl` returns
+"torch" unconditionally: the triton activation quantizer exists and is measured here, but nothing
+reaches it by default, not even on the card that could compile it.
 
     PYTHONPATH=<relic-core>:<relicllm> python scripts/v41_primitive_threeway.py
     PYTHONPATH=<relic-core>:<relicllm> python scripts/v41_primitive_threeway.py \\
@@ -145,8 +153,9 @@ def main() -> int:
     report("act_quant ue8m0/32", arms)
 
     print("\nhc_split_sinkhorn (`hc_pre`'s mixing coefficients)")
-    # `hc_split` is the one V4.1 primitive whose `_auto_impl` picks triton on *both* cards, so it is
-    # the only place besides `sparse_attn` where the same source can compile to different arithmetic.
+    # `hc_split` is one of the two kinds whose `_auto_impl` picks triton on *both* cards (the other is
+    # `fp4`), so it is a place where the same source can compile to different arithmetic with no
+    # capability check standing in the way.
     hc_mult = 4
     mix_hc = (2 + hc_mult) * hc_mult
     mixes = torch.randn(args.rows, mix_hc, device=dev, dtype=torch.float32)
