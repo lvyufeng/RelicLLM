@@ -1,8 +1,11 @@
 """The quantized-activation path: the reference's `linear`, on the soft (no tensor core) path.
 
-The port's divergence from the released V4.1 reference is one thing -- the reference quantizes the
-*activation* to fp8 before a block-32 GEMM that accumulates in fp32, and the port feeds an
-unquantized bf16 activation to a plain `F.linear`. The weight half is not the difference: an fp8
+The port's divergence from the released V4.1 reference was two things, and two changes answer them.
+First the activation: the reference quantizes it to fp8 before a block-32 GEMM, and the port fed an
+unquantized bf16 activation to a plain `F.linear` -- that half is this file. Then the reduction: the
+reference's GEMM is a tensor-core kernel whose `mma` does not add its products exactly, so the
+arithmetic pinned here is the right activation summed correctly, and the emulation of the actual
+reduction lives in `tests/test_v41_mma_reduction.py`. The weight half is not a difference: an fp8
 (e4m3) or fp4 (e2m1) code carries at most three mantissa bits and a block scale is a power of two,
 so `code * 2**k` is exact in bf16 and the loader's already-dequantized weights equal the reference's
 quantized ones bit for bit. See `docs/superpowers/notes/quantized-activation-path.md`.
@@ -13,7 +16,9 @@ arithmetic rather than against a kernel, because the reference's kernel needs Ti
 core and runs on neither host this suite runs on. Three properties:
 
 * the block-32 quantized GEMM reproduces `dequant(act) @ W.T` and differs from a plain bf16
-  `F.linear` by the fp8-activation error, which is the whole of what the fix buys;
+  `F.linear` by the fp8-activation error -- the whole of what the activation fix buys, and also the
+  arithmetic a weight with no attached scale grid keeps, since the emulated reduction declines such
+  a weight rather than invent a grid for it;
 * the no-scales path is `F.linear` **exactly** -- not an approximation, the same call -- which is
   what lets `test_models_deepseek_v4_1_reference_parity.py`'s bf16 build keep the arithmetic it has;
 * the activation quantization uses the reference's `1e-4` amax floor and power-of-two rounding.
@@ -77,6 +82,13 @@ def test_quantized_linear_matches_dequant_act_times_weight() -> None:
     weight dequantization is exact in bf16, so the primitive needs no weight scale and the test
     needs no quantized weight fixture. The oracle is written out here rather than called, so a
     primitive that agreed with a helper it also defined could not pass this.
+
+    The weight also carries no attached scale grid, and that is what fixes which path runs: the
+    tensor-core emulation is on by default and recovers the weight's exact codes from the grid the
+    file stores beside it (`quantized_linear`'s docstring carries the 224-octave argument for why
+    the dense weight does not determine them), so a grid-less weight takes the *declined* path --
+    one stderr line, then the correctly rounded accumulation asserted here. This test pins that
+    fallback; the emulated rule has its own file, `tests/test_v41_mma_reduction.py`.
     """
     torch.manual_seed(0)
     m, n, k = 16, 48, 64
