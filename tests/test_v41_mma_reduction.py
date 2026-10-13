@@ -664,6 +664,94 @@ def test_the_gemm_follows_its_operands_device_whatever_its_scales_arrive_on() ->
         )
 
 
+def test_the_gemm_answers_the_same_under_every_tiling_of_its_product(monkeypatch) -> None:
+    """The chunked loop and the whole-operand one it replaced are the same arithmetic, bit for bit.
+
+    The GEMM has to tile: its operands are fp8 and its intermediates are fp64, so a whole weight
+    decoded at once is eight bytes an element, and the first version of this function did that and
+    died at the acceptance configuration -- 1.17 GiB wanted against the 0.67 GiB a rank had free.
+
+    Tiling a contraction is exactly the kind of change that is off by a rounding: the accumulator is
+    fp32 and `out +=` is not associative, so a different partition of the K blocks would move bits.
+    This test is what says the partition was chosen to leave the *order* alone -- blocks still
+    accumulate outermost, in the same order, and the row tiles and column groups are disjoint
+    partitions of independent output elements.
+    """
+    m, n, k = 3, 1024, 256
+    a_raw = _codes(31, m * k).reshape(m, k)
+    b_raw = _codes(32, n * k).reshape(n, k)
+    a_scale = mma._pow2(torch.randint(-9, 2, (m, k // BLOCK), generator=_gen(33)).to(torch.float64)).to(
+        torch.float32
+    )
+    b_scale = mma._pow2(
+        torch.randint(-9, 2, (n // BLOCK, k // BLOCK), generator=_gen(34)).to(torch.float64)
+    ).to(torch.float32)
+
+    monkeypatch.setattr(mma, "_MAX_PRODUCT_ELEMENTS", 1 << 24)  # no chunking at all
+    whole = mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+
+    for budget, what in ((1 << 15, "tiled on the row axis"), (1 << 10, "tiled on both axes")):
+        monkeypatch.setattr(mma, "_MAX_PRODUCT_ELEMENTS", budget)
+        got = mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+        assert torch.equal(got, whole), (
+            f"the answer moves when the product is {what} ({budget} elements): "
+            f"{int((got != whole).sum())} of {whole.numel()} outputs differ, so the accumulation "
+            f"order changed with the partition"
+        )
+
+
+def test_the_gemm_never_decodes_a_whole_operand(monkeypatch) -> None:
+    """The peak is the budget, not the weight: eight times the weight decodes the same size slice.
+
+    This is the property the OOM needed and the one a correctness test cannot see -- both spellings
+    return identical bits, so nothing on the host fails when the loop allocates a gigabyte. What is
+    asserted is about the *arguments*, which are observable: no call into `decode_e4m3` or
+    `nominal_exp` is ever handed more than one slice's worth of codes, and making the weight eight
+    times longer does not make that slice any bigger.
+
+    The engram's `wkv` is the weight this exists for: 147M fp8 elements, so an fp64 copy of it is
+    1.17 GiB, and at the acceptance configuration four ranks share a 24 GiB card with the prefix
+    cache resident and 0.67 GiB free.
+    """
+
+    def peak_for(n: int) -> int:
+        seen: list[int] = []
+        real_decode, real_nominal = mma.decode_e4m3, mma.nominal_exp
+
+        def counting(fn):
+            @functools.wraps(fn)
+            def wrapper(codes, *args, **kwargs):
+                seen.append(codes.numel())
+                return fn(codes, *args, **kwargs)
+
+            return wrapper
+
+        monkeypatch.setattr(mma, "decode_e4m3", counting(real_decode))
+        monkeypatch.setattr(mma, "nominal_exp", counting(real_nominal))
+        m, k = 2, 256
+        a_raw = _codes(41, m * k).reshape(m, k)
+        b_raw = _codes(42, n * k).reshape(n, k)
+        a_scale = torch.ones(m, k // BLOCK, dtype=torch.float32)
+        b_scale = torch.ones(n // BLOCK, k // BLOCK, dtype=torch.float32)
+        mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+        return max(seen)
+
+    budget = 1 << 13
+    monkeypatch.setattr(mma, "_MAX_PRODUCT_ELEMENTS", budget)
+    small, large = peak_for(1024), peak_for(8192)
+
+    assert small <= budget, (
+        f"a 1024-row operand was decoded {small} codes at a time against a {budget}-element budget, "
+        f"so the peak is not the budget"
+    )
+    assert large == small, (
+        f"an 8x longer weight raised the peak decode from {small} codes to {large}, so the loop is "
+        f"holding an operand rather than a slice of it -- which is the allocation that ran the "
+        f"acceptance configuration out of memory"
+    )
+    assert large * 8 * 4 < 8192 * 256, "the fixture is too small to be evidence"
+
+
 def test_the_code_recovery_reads_its_grid_where_the_weight_lives() -> None:
     """A weight on the card with its grid still on the host recovers its codes, rather than raising.
 

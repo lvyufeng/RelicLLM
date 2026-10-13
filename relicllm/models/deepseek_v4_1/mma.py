@@ -41,9 +41,11 @@ different exponent field, so the nominal-exponent rule above does not transfer t
 is claimed about that path.
 
 **Cost.** This transcribes a tensor-core instruction in elementwise torch, so it is far slower than
-the matmul it replaces and it materialises a ``[M, block, N]`` fp64 intermediate per K block. That is
-the price of bit parity on a card with no fp8 path at all, which is the point on sm_75; callers that
-want throughput and do not need to reproduce the reference's rounding should not call it.
+the matmul it replaces, and it works in fp64 because the rule is stated on exact products. Its
+intermediates are therefore eight bytes an element and it has to tile: the peak is one
+``[rows, block, cols]`` product plus the slices it is built from, never a whole operand. That is the
+price of bit parity on a card with no fp8 path at all, which is the point on sm_75; callers that want
+throughput and do not need to reproduce the reference's rounding should not call it.
 """
 
 from __future__ import annotations
@@ -73,9 +75,18 @@ _SENTINEL_GUARD = _SENTINEL / 2
 FP8_MAX = 448.0
 FP8_AMAX_FLOOR = 1e-4
 
-#: The fp64 ``[M, HALF, N]`` product block is materialised whole, so N is walked in row groups when
-#: that would be large. A multiple of :data:`BLOCK` keeps the weight scales aligned to the walk.
-_MAX_PRODUCT_ELEMENTS = 1 << 23
+#: How many fp64 product elements one pass of :func:`fp8_block_gemm` may hold at once. The product is
+#: ``[rows, BLOCK, cols]`` and it is the largest live tensor in the loop, so the row tile and the
+#: column group are chosen against this. A multiple of :data:`BLOCK` keeps the weight scales aligned
+#: to the walk.
+#:
+#: This is a **resident-memory** limit, not a tidiness one. The serving configuration runs four ranks
+#: on one 24 GiB card with the prefix cache resident, and a first attempt at this loop that decoded
+#: its operands whole died there: the engram's `wkv` is 147M elements, an fp64 copy of it is 1.17 GiB,
+#: and the card had 0.67 GiB free. It matters most in *decode*, where one output row is the whole
+#: first dimension -- there the product is `[1, BLOCK, N]` and N is what the budget cuts -- while a
+#: long prefill cuts the row axis instead.
+_MAX_PRODUCT_ELEMENTS = 1 << 21
 
 
 def _bytes(t: torch.Tensor) -> torch.Tensor:
@@ -230,12 +241,21 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     ``codes_from_scale``, before any codes are attached to it -- a grid that is not a power of two
     does not describe the weight it was attached to and is refused there -- and an activation scale
     comes out of `block_fp8_act_quant` as ``2 ** ceil(log2(...))`` by construction.
+
+    The loop walks K blocks outermost and decodes each operand **slice per block**, never whole. Both
+    halves of that are load-bearing on a card: an fp64 copy of a weight is eight bytes an element and
+    the engram's `wkv` is 147M of them, and the three loops are ordered so that no slice is decoded
+    twice -- the column groups partition N and the row tiles partition M, so each operand element is
+    decoded exactly once however the budget happens to cut the product. See
+    :data:`_MAX_PRODUCT_ELEMENTS`.
     """
     a_bytes, b_bytes = _bytes(a_codes), _bytes(b_codes)
     m, k = a_bytes.shape[-2], a_bytes.shape[-1]
     n = b_bytes.shape[0]
     if k % block_size:
         raise ValueError(f"K = {k} is not a multiple of the {block_size} block size")
+    if n % block_size:
+        raise ValueError(f"N = {n} is not a multiple of the {block_size} block size")
     blocks = k // block_size
     if tuple(a_scale.shape) != (m, blocks):
         raise ValueError(f"activation scales {tuple(a_scale.shape)} are not [{m}, {blocks}]")
@@ -244,44 +264,56 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
             f"weight scales {tuple(b_scale.shape)} are not [{n // block_size}, {blocks}]"
         )
 
-    a_value, b_value = decode_e4m3(a_bytes), decode_e4m3(b_bytes)
-    a_nom, b_nom = nominal_exp(a_bytes), nominal_exp(b_bytes)
     # The rule is stated on the codes and the scales are applied after, so the two acquire their
     # device independently of the operands: `e8m0_exponent` reads a host tensor's bytes the same way
     # it reads a device tensor's, and the caller's quantizers return whichever device they were
     # given. Moving them here keeps the inner loop free of a device question, and it is a device copy
     # and not a host one on the paths that matter -- a weight grid is hung on the weight's own device
     # by `attach_scale`.
-    device = a_value.device
+    device = a_bytes.device
     a_exp = e8m0_exponent(a_scale, verify=False).to(device)
     b_exp = e8m0_exponent(b_scale, verify=False).to(device)
 
-    group = block_size
+    # How much of the product to hold at once. Rows are cut first, because tiling them costs nothing
+    # -- one output row already needs a `[1, BLOCK, N]` product, so a wide N is what has to come off
+    # the column axis instead, and both cuts are partitions of independent output elements.
+    rows, cols = m, n
     if m * block_size * n > _MAX_PRODUCT_ELEMENTS:
-        group = max(block_size, (_MAX_PRODUCT_ELEMENTS // max(m * block_size, 1)) // block_size
-                    * block_size)
+        if block_size * n <= _MAX_PRODUCT_ELEMENTS:
+            rows = max(1, _MAX_PRODUCT_ELEMENTS // (block_size * n))
+        else:
+            rows = 1
+            cols = (_MAX_PRODUCT_ELEMENTS // block_size) // block_size * block_size
 
     out = torch.zeros(m, n, dtype=torch.float32, device=device)
-    for lo in range(0, n, group):
-        hi = min(lo + group, n)
-        b_value_c, b_nom_c = b_value[lo:hi], b_nom[lo:hi]
-        # One weight scale per 32-row group, broadcast down its own rows before it meets the
-        # reduction's K axis -- `repeat_interleave` matches what the 32x32 grid means.
-        b_scale_c = b_exp[lo // block_size:hi // block_size]
-        for block in range(blocks):
-            at = slice(block * block_size, (block + 1) * block_size)
-            product = a_value[:, at].unsqueeze(1) * b_value_c[:, at].unsqueeze(0)
-            nominal = a_nom[:, at].unsqueeze(1) + b_nom_c[:, at].unsqueeze(0)
-            # A zero operand contributes nothing to the anchor. Counting it as -6 instead is provably
-            # unobservable -- every product is a multiple of 2**-18, and both candidate grids are
-            # finer than that lattice -- but excluding it is what the anchor was measured to do.
-            nominal = torch.where(product == 0.0, torch.full_like(nominal, _SENTINEL), nominal)
-            fragment = reduce_block(product, nominal).to(torch.float32)
-            # `_pow2` on the integer exponents, then a single downcast: `2 ** e` is exact in both
-            # formats, so the scales stay powers of two and the block sum stays a plain rescale.
-            sa = _pow2(a_exp[:, block].to(torch.float64)).to(torch.float32).unsqueeze(-1)
-            sb = _pow2(b_scale_c[:, block].to(torch.float64)).to(torch.float32)
-            out[:, lo:hi] += fragment * sa * sb.repeat_interleave(block_size)
+    for block in range(blocks):
+        at = slice(block * block_size, (block + 1) * block_size)
+        # `2 ** e` is exact in both formats, so the scales stay powers of two and the block sum stays
+        # a plain rescale.
+        a_scale_block = _pow2(a_exp[:, block].to(torch.float64)).to(torch.float32)
+        for lo in range(0, n, cols):
+            hi = min(lo + cols, n)
+            # One weight scale per block_size-row group of the output, repeated down its own rows
+            # before it meets the reduction's K axis -- `repeat_interleave` matches what the 32x32
+            # grid means.
+            b_scale_block = _pow2(b_exp[lo // block_size:hi // block_size, block].to(torch.float64))
+            b_scale_block = b_scale_block.to(torch.float32).repeat_interleave(block_size)
+            b_block = b_bytes[lo:hi, at]
+            b_dec = decode_e4m3(b_block)
+            b_nom = nominal_exp(b_block)
+            for m0 in range(0, m, rows):
+                m1 = min(m0 + rows, m)
+                a_block = a_bytes[m0:m1, at]
+                product = decode_e4m3(a_block).unsqueeze(1) * b_dec.unsqueeze(0)
+                nominal = nominal_exp(a_block).unsqueeze(1) + b_nom.unsqueeze(0)
+                # A zero operand contributes nothing to the anchor. Counting it as -6 instead is
+                # provably unobservable -- every product is a multiple of 2**-18, and both candidate
+                # grids are finer than that lattice -- but excluding it is what the anchor was
+                # measured to do.
+                nominal = torch.where(product == 0.0, torch.full_like(nominal, _SENTINEL), nominal)
+                fragment = reduce_block(product, nominal).to(torch.float32)
+                sa = a_scale_block[m0:m1].unsqueeze(-1)
+                out[m0:m1, lo:hi] += fragment * sa * b_scale_block
     return out
 
 
