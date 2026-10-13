@@ -279,20 +279,29 @@ host RAM and their active slice is streamed in per step. That patch replaces `Mo
 `.to(device)` moves**; the arithmetic, the clamps, the routing and the reduction order are the
 checkpoint's. The two `forward` bodies are there to diff against `model.py`.
 
-The oracle seeds the **raw** prompt ids, not `inference/generate.py`'s chat-templated ones: the
-golden fixture feeds raw ids (9 tokens), the chat template renders 13, and an oracle for a prompt the
-fixture does not use is not an oracle for it. `logits_check` records the reference's step-0 top-k for
-the same reason the fixture does.
+The oracle seeds a **route's** ids, and which route is part of the record. `v41.json` is the **raw**
+route: the nine ids the prompt is written as, which is what the served-path fixture feeds. `v41_chat.json`
+is the **chat** route: the thirteen ids the checkpoint's own `encode_messages` renders for the same
+words, which is what a client of the served chat route sends. The same words are a different token
+sequence on each, so an oracle for one route is not an oracle for the other, and each record names
+its own in `path` (absent means `raw`, which is what a record written before the field existed drove).
+The file suffix follows the same split: `<entry>.json` for raw, `<entry>_<route>.json` for anything
+else. `logits_check` records the reference's step-0 top-k for the same reason the fixture does.
 
-`test_the_v41_tokens_agree_with_the_official_reference` is the leg that compares them, and it is
-gated the same way as the rest. It is the one test in the module that can fail with a **port defect**
-rather than a tolerance drift, and its message says so. To record or refresh the oracle, on a box
-holding the converted checkpoint and the reference's own env:
+Two legs compare against them, and they are gated the same way as the rest:
+`test_the_v41_tokens_agree_with_the_official_reference` (raw) and
+`test_the_v41_chat_route_agrees_with_the_official_reference` (chat). They are the only tests here
+that can fail with a **port defect** rather than a tolerance drift, and their messages say so. To
+record or refresh an oracle, on a box holding the converted checkpoint and the reference's own env:
 
 ```bash
 python scripts/record_reference_v41.py \
     --ckpt <converted TP checkpoint> --inference <checkpoint>/inference \
     --out tests/fixtures/reference/v41.json
+
+python scripts/record_reference_v41.py \
+    --ckpt <converted TP checkpoint> --inference <checkpoint>/inference \
+    --path chat --out tests/fixtures/reference/v41_chat.json
 ```
 
 A human reads the printed tokens and step-0 top-k before the record is committed, exactly as
@@ -329,3 +338,12 @@ per row; that is a different quantization by construction, and no re-recording m
 
 Because the recorder writes the whole file, it would erase a hand-added `reproduction` block on a
 refresh; it carries an existing one across for that reason.
+
+A reference whose route has **no** served-path fixture is run on the configuration its own block
+names, with `fixture_from_reference()` building the leg from the record alone: the chat route is the
+case, because `fixtures/golden/` holds one fixture per entry point and a second answer for the same
+entry point is a second question nobody recorded. The fixture that helper builds carries **no
+`expected`** -- the reference's `tokens` are what the run is compared against, and copying them into
+the fixture would make the leg compare the oracle to itself -- and no `commit`/`card` either, because
+those fields mean "this repository produced this answer, here" and this leg has produced no answer of
+its own.

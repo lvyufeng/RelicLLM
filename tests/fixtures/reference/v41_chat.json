@@ -1,0 +1,76 @@
+{
+  "entry": "v41",
+  "source": "official DeepSeek-V4.1 reference (inference/model.py, unmodified)",
+  "prompt": "Reply with the single line: golden fixture.",
+  "raw_token_ids": [
+    0,
+    128803,
+    19905,
+    418,
+    270,
+    4031,
+    2562,
+    28,
+    22471,
+    45117,
+    16,
+    128804,
+    128822
+  ],
+  "tokens": [
+    69865,
+    267,
+    45117,
+    1
+  ],
+  "logits_check": {
+    "step": 0,
+    "prompt_tokens": 13,
+    "top_k": 8,
+    "token_ids": [
+      69865,
+      73,
+      22471,
+      13898,
+      300,
+      87196,
+      28986,
+      201
+    ],
+    "values": [
+      40.98268508911133,
+      26.991897583007812,
+      26.05108642578125,
+      22.297344207763672,
+      22.206985473632812,
+      22.087108612060547,
+      21.34965705871582,
+      21.292133331298828
+    ]
+  },
+  "path": "chat",
+  "reproduction": {
+    "argv": [
+      "serve",
+      "--backend",
+      "v41",
+      "--model",
+      "/mnt/data3/DeepSeek-V4.1-Flash",
+      "--tensor-parallel-size",
+      "1",
+      "--max-model-len",
+      "8192",
+      "--backend-option",
+      "prefill_chunk=4096",
+      "--backend-option",
+      "decode_graphs=false",
+      "--backend-option",
+      "threads=22"
+    ],
+    "env": {},
+    "requires": {}
+  },
+  "commit": "be0342f",
+  "taken_at": "2026-10-13",
+  "notes": "the checkpoint's own model.py, imported unmodified and host-offloaded to fit a 24 GiB card; see scripts/record_reference_v41.py for the one deviation. Recorded on the chat route: the model was seeded with the thirteen ids the checkpoint's own encode_messages renders for this prompt, which is what a client of the served chat route sends -- not the nine raw ids the sibling v41.json was recorded on. The two records answer two different questions and neither substitutes for the other."
+}

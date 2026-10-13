@@ -26,6 +26,13 @@ documented reason is better than either a silently cheap subset or a suite nobod
 What a mismatch means: this checkpoint, through this entry point, with these flags, no longer
 produces these tokens. That is the claim a request-lifecycle refactor has to keep, and it is the one
 claim no kernel-local test can make.
+
+The `v41_*` tests below are the other question -- not "is the port stable" but "is it *right*" -- and
+they compare against `fixtures/reference/`, which is DeepSeek's own code rather than this repository's.
+There are two of them because there are two oracles: the raw route (`v41.json`, nine prompt ids) and
+the chat route (`v41_chat.json`, the thirteen ids the checkpoint's own renderer produces for the same
+words). They are documented in `tests/README.md`; the short version is that a reference names the port
+configuration that satisfies it and the leg runs that configuration rather than the fixture's.
 """
 
 from __future__ import annotations
@@ -37,9 +44,11 @@ import pytest
 from tests.golden_fixtures import (
     ENTRY_POINTS,
     GOLDEN_GATE_ENV,
+    PATH_CHAT,
     GoldenFixture,
     Outcome,
     _with_host_checkpoint,
+    fixture_from_reference,
     fixture_path,
     load_fixture,
     load_reference,
@@ -249,4 +258,51 @@ def test_the_v41_tokens_agree_with_the_official_reference():
         f"The reference is {reference['source']} at commit {reference.get('commit') or 'unknown'}; "
         f"the run is {fixture.card or 'an unrecorded card'}. A divergence here is a port defect, "
         f"not a kernel tolerance."
+    )
+
+
+def test_the_v41_chat_route_agrees_with_the_official_reference():
+    """The second oracle: the same prompt through the served chat route, against DeepSeek's code.
+
+    The sibling test above compares the **raw** route -- the nine prompt ids as written -- against
+    `fixtures/reference/v41.json`. This one compares the **chat** route, where the port renders the
+    prompt through the checkpoint's own `encode_messages` and sends thirteen ids, against
+    `fixtures/reference/v41_chat.json`, recorded from the same unmodified `inference/model.py` seeded
+    with those thirteen. Two routes, two questions: the same words are a different token sequence on
+    each, so one oracle cannot judge the other's answer, and the served path has to be right on both.
+
+    **The leg is built from the reference, not from a served-path fixture.** There is no
+    `fixtures/golden/v41_chat.json`, and there should not be one invented to hold a second answer for
+    the same entry point: `fixture_from_reference` reads the configuration the reference names and
+    the route it was recorded on, and `sampling` is the greedy default both recorders use. What is
+    compared is the reference's own `tokens`, so nothing here compares the port to itself.
+
+    The one thing this test does *not* establish by itself is that the port and the reference were
+    shown the same thirteen ids -- the ids themselves are asserted where the renderer is tested
+    (`tests/test_v41_backend.py`), and the count is asserted here, because a run that took the raw
+    route would answer a different question while looking like a divergence from this one.
+    """
+    reference = load_reference("v41", PATH_CHAT)
+    if reference is None:
+        pytest.skip("v41 has no recorded official reference for the chat route; see tests/README.md")
+
+    fixture = fixture_from_reference(reference, entry="v41")
+    expected_tokens = list(reference["tokens"])
+    outcome = _run_under(fixture, {})
+
+    assert outcome.token_ids is not None, "the run produced no token ids"
+    expected_prompt_tokens = (reference.get("logits_check") or {}).get("prompt_tokens")
+    if expected_prompt_tokens is not None and outcome.prompt_tokens is not None:
+        assert outcome.prompt_tokens == expected_prompt_tokens, (
+            f"v41 chat: the port sent {outcome.prompt_tokens} prompt tokens and the reference was "
+            f"seeded with {expected_prompt_tokens}; the two are answering different questions, so "
+            f"the token comparison below would not mean what it says"
+        )
+    assert list(outcome.token_ids) == expected_tokens, (
+        f"v41 chat: the greedy tokens diverge from the official reference.\n"
+        f"  reference: {expected_tokens}\n"
+        f"  this card: {list(outcome.token_ids)}\n"
+        f"The reference is {reference['source']} at commit {reference.get('commit') or 'unknown'}, "
+        f"seeded with the checkpoint's own chat render and run on the configuration its "
+        f"`reproduction` block names. A divergence here is a port defect, not a kernel tolerance."
     )
