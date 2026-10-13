@@ -307,24 +307,24 @@ def quantized_linear(
     a reason that is not bookkeeping -- the recovery ends in a ``torch.equal`` over device data, i.e.
     a synchronisation, and the default serving path (``decode_graphs=True``) captures the decode body
     into a CUDA graph, where a sync is not merely slow but fatal to the capture. A weight with no
-    codes attached -- a bf16 one, an fp4 routed expert's dense decode, a tensor a caller built, the
-    indexer's per-head band under ``DEEPSEEK_V41_INDEXER_ROW_SPLIT`` -- has no exact codes available,
+    codes attached -- a bf16 one, a routed expert's dense decode from a store that attached nothing, a
+    tensor a caller built, the indexer's per-head band under ``DEEPSEEK_V41_INDEXER_ROW_SPLIT`` -- has
+    no exact codes available,
     and this falls back to the correctly rounded matmul and says so once on stderr rather than
     inventing a grid or recovering one here. ``POCKETLLM_V41_MMA_EMULATE=0`` skips the emulation
     entirely; see :func:`_reference_reduction_enabled` for why it is on by default and what turning
     it off costs.
 
     ``emulate_reduction=None`` means "follow that switch"; pass ``False`` for a call whose weight is
-    known not to be e4m3. The routed experts are that case in practice, and **not** for the reason
-    this docstring used to give. Their reference GEMM is e4m3 on both sides: the checkpoint stores
-    them as e2m1 and ``inference_convert.py`` widens that with ``cast_e2m1fn_to_e4m3fn`` at
-    ``fp8_block_size = fp4_block_size = 32``, which is this rule's shape, so its dtype is no reason
-    to decline. What the port cannot do yet is the repack -- a routed store hands this function
-    packed e2m1 bytes or a decode of them, never a tensor ``loader.fill`` walked, so no codes are
-    attached and the call declines on its own. Emulating the routed experts is its own piece of
-    work, and on the device path it has to get past a fused kernel that quantizes activations to
-    int8 per row; until it is done the routed arithmetic is a **known difference** from the
-    reference rather than a case the rule above does not describe.
+    known not to be e4m3. The routed experts are **not** that case, which this docstring used to say
+    and which no longer holds: their reference GEMM mma's on e4m3 codes on both sides -- the
+    checkpoint stores the weights as e2m1 and the reference's own ``fp4_gemm_kernel`` casts each
+    value to e4m3 inside the kernel before the ``T.gemm`` -- and the host store
+    (``loader.CheckpointRoutedExperts``) hands this function a weight carrying exactly that pair, the
+    encodings of the nibbles and the file's per-row grid. What still declines is the *device* path,
+    whose fused kernel quantizes activations to int8 per row: that is a known difference from the
+    reference rather than a case the rule above does not describe, and closing it belongs to that
+    kernel, not to this call site.
 
     The weight is upcast to fp32 explicitly even though it is already bf16, so the accumulator's
     width is a property of this function and not of what the caller happened to hand in; the upcast
@@ -355,12 +355,12 @@ def quantized_linear(
 
 #: Which *kinds* of weight this process has already said are running without the emulation, keyed by
 #: shape, dtype and reason. Not a boolean and not one line per call. One line for the whole process
-#: would be the wrong granularity in both directions: the routed experts decline by design (the
-#: reference runs them on an e2m1 weight, whose exponent field this rule does not describe), so that
-#: line would appear on every expert-bearing run and an fp8 attention weight that declined for a
-#: reason nobody intended would be invisible behind it -- while one line per call would be 384
-#: experts times 40 layers of noise. `POCKETLLM_V41_MMA_EMULATE=1` with no such line at all is the
-#: state that means "every fp8 linear ran the reference's reduction".
+#: would be the wrong granularity in both directions: a store that hands over routed experts without
+#: the fp4 pair declines by design and by name, so that line would appear on every expert-bearing run
+#: and an fp8 attention weight that declined for a reason nobody intended would be invisible behind
+#: it -- while one line per call would be 384 experts times 40 layers of noise.
+#: `POCKETLLM_V41_MMA_EMULATE=1` with no such line at all is the state that means "every fp8 linear
+#: ran the reference's reduction".
 _declined_reported: set[tuple] = set()
 
 

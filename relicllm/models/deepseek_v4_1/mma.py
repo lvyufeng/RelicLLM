@@ -35,10 +35,23 @@ configurations, 382,976/382,976 on real layer-0 attention weights, and 11520/115
 real `wq_a` with real e8m0 scales -- where a correctly rounded sum of the same operands reaches only
 11242/11520.
 
-**Scope.** e4m3 x e4m3 only, which is what the reference's dense and attention linears use. The MoE
-experts take an e4m3 activation against an **e2m1** weight (`expert_dtype == "fp4"`); e2m1 has a
-different exponent field, so the nominal-exponent rule above does not transfer to it and nothing here
-is claimed about that path.
+**Scope.** e4m3 x e4m3 only, which is what the reference runs -- the MoE experts included, and not
+for the reason the earlier version of this paragraph gave. A routed expert's weight is stored e2m1
+(`expert_dtype == "fp4"`), and the reference's `fp4_gemm_kernel` **casts every e2m1 value to e4m3
+inside the kernel** before the `T.gemm` (`kernel.py`: `B_shared[i, j] = T.Cast(FP8, T.Cast(FP32,
+B_fp4_shared[i, j]))`), so the instruction the routed GEMM issues is the same e4m3 x e4m3 `mma` as
+the dense one and the rule above describes it verbatim. Every e2m1 value is exactly representable in
+e4m3, so that cast is a bijection onto sixteen codes and loses nothing:
+:data:`E2M1_TO_E4M3` is the table and :func:`e4m3_codes_from_e2m1` is what turns the checkpoint's
+packed nibbles into the codes the rule runs on. The two scale layouts then differ, and both are
+accepted by :func:`fp8_block_gemm`: a dense fp8 weight's grid is one exponent per 32x32 tile, while
+an fp4 expert's is one exponent per **output row** and K block (`fp4_gemm_kernel` indexes
+`scales_b[row, k]` directly where `fp8_gemm_kernel` indexes `scales_b[row // group_size, k]`).
+
+The other routed difference is on the *device* path only: `DeviceRoutedExperts` runs a fused
+relic-core kernel that quantizes activations to int8 per row, and a call site cannot reach around
+that. The host path -- a store handing `expert_forward` three dense tensors -- does run the
+arithmetic here, once the store attaches what the rule reads.
 
 **Cost.** This transcribes a tensor-core instruction, so it is far slower than the matmul it
 replaces: it is exact arithmetic in what should have been a tensor-core kernel. It is written in
@@ -171,6 +184,65 @@ def decode_e4m3(codes: torch.Tensor) -> torch.Tensor:
     is_nan = (field == 0xF) & (mantissa == 0x7)
     value = torch.where(is_nan, torch.full_like(value, float("nan")), value)
     return sign * value
+
+
+#: The e4m3 code that holds each e2m1 code's value, in e2m1 code order: nibble `n` is
+#: `E2M1_TO_E4M3[n]`. The low nibble of a packed byte is the even K, the high nibble the odd one,
+#: which is how the checkpoint packs a routed expert and how ``kernels.dequant_fp4_weight`` reads it.
+#:
+#: This is the table the reference's `fp4_gemm_kernel` computes, and it is a table rather than a
+#: derivation because the cast it transcribes is exact: the e2m1 magnitudes are
+#: ``{0.5, 1, 1.5, 2, 3, 4, 6}``, three significand bits at most, and e4m3 has four -- so every e2m1
+#: value has exactly one e4m3 encoding and nothing rounds. That is what makes the routed path
+#: different from the dense one: there is no octave to recover and no reason for the file's grid to
+#: take part in the derivation.
+#:
+#: Nibble 8 keeps its sign (`0x80`, a negative zero) because e2m1's top bit is its sign bit and the
+#: cast preserves it. The two zeros are the same operand in every product -- the reduction excludes a
+#: zero *product* by value -- so the choice is unobservable either way.
+E2M1_TO_E4M3 = (
+    0x00, 0x30, 0x38, 0x3C, 0x40, 0x44, 0x48, 0x4C,
+    0x80, 0xB0, 0xB8, 0xBC, 0xC0, 0xC4, 0xC8, 0xCC,
+)
+
+#: One table per device, built on first use. The lookup is a gather and so is capture-safe, but the
+#: table itself is a host tuple turned into a device tensor, and re-copying it per expert miss is a
+#: pageable H2D -- the same arrangement, and the same reason, as the fp4 quantizer's level tables in
+#: `kernels.py`.
+_TABLE_CACHE: dict[torch.device, torch.Tensor] = {}
+
+
+def _table_for(device: torch.device) -> torch.Tensor:
+    device = torch.device(device)
+    table = _TABLE_CACHE.get(device)
+    if table is None:
+        table = torch.tensor(E2M1_TO_E4M3, dtype=torch.uint8, device=device)
+        _TABLE_CACHE[device] = table
+    return table
+
+
+def e4m3_codes_from_e2m1(packed: torch.Tensor) -> torch.Tensor:
+    """The codes the reference's fp4 kernel mma's on, from a packed e2m1 weight.
+
+    ``packed`` holds two e2m1 codes per byte along the last axis, low nibble first, exactly as the
+    checkpoint stores a routed expert's matrix and as :func:`relicllm.models.deepseek_v4_1.kernels.
+    dequant_fp4_weight` reads it. The result is ``[..., 2 * packed.shape[-1]]`` of
+    ``float8_e4m3fn`` -- the shape and the values the fp4 kernel's ``B_shared`` holds -- and it is
+    what ``quantized_linear`` needs to run the reference's reduction rather than a correctly rounded
+    product.
+
+    Nothing here is recovered or verified, and neither is needed: the e2m1 code *is* the value, and
+    :data:`E2M1_TO_E4M3` is that value's only e4m3 encoding. That is a stronger position than the
+    dense path is in -- a dense fp8 weight does not determine its own codes -- and it is why a
+    routed expert needs no help from the file beyond its packed bytes. The grid beside it is still
+    used, but as the scale the kernel multiplies the reduction by (one exponent per output row and
+    32-wide K block, the fp4 layout), not as evidence about the codes.
+    """
+    raw = _bytes(packed)
+    table = _table_for(raw.device)
+    low = table[(raw & 0x0F).long()]
+    high = table[(raw >> 4).long()]
+    return torch.stack((low, high), dim=-1).flatten(-2).view(torch.float8_e4m3fn)
 
 
 def e8m0_exponent(scale: torch.Tensor, *, verify: bool = True) -> torch.Tensor:
@@ -325,8 +397,14 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     ``a_codes``/``b_codes`` are e4m3 codes, as ``float8_e4m3fn`` or as their raw bytes. Both scales
     are per 32-wide K block and are applied the way the kernel applies them, ``(fragment * s_a) *
     s_b`` after the reduction: ``a_scale`` is ``[M, K // block_size]``, one exponent per (row, K
-    block), and ``b_scale`` is ``[N // block_size, K // block_size]``, the 32x32 grid the checkpoint
-    stores beside a weight and the one the kernel indexes as ``scale_b[j]`` for output row ``j``.
+    block), and ``b_scale`` is one of the two layouts the reference's two kernels index --
+    ``[N // block_size, K // block_size]``, the 32x32 grid a dense fp8 weight is stored with, where
+    the kernel reads ``scales_b[row // group_size, k]``, or ``[N, K // block_size]``, the **per-row**
+    grid an fp4 expert is stored with, where ``fp4_gemm_kernel`` reads ``scales_b[row, k]``
+    directly. Which one this is is decided by the shape, and the two cannot be confused: they are
+    equal only if ``N == 0``. The two describe the same quantity -- the exponent output column ``j``'s
+    accumulator is multiplied by, in block ``k`` -- and a per-row grid is simply one that is free to
+    differ between the 32 rows a block grid would repeat it across.
 
     The two operands are never dequantized. The rule is stated on codes, and running it on codes keeps
     the per-block scales out of the exponents -- they are applied once, at the end of the block, which
@@ -384,10 +462,16 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     blocks = k // block_size
     if tuple(a_scale.shape) != (m, blocks):
         raise ValueError(f"activation scales {tuple(a_scale.shape)} are not [{m}, {blocks}]")
-    if tuple(b_scale.shape) != (n // block_size, blocks):
+    if tuple(b_scale.shape) not in ((n // block_size, blocks), (n, blocks)):
         raise ValueError(
-            f"weight scales {tuple(b_scale.shape)} are not [{n // block_size}, {blocks}]"
+            f"weight scales {tuple(b_scale.shape)} are neither the [{n // block_size}, {blocks}] "
+            f"block grid a dense fp8 weight is stored with nor the [{n}, {blocks}] per-row grid an "
+            f"fp4 expert is"
         )
+    # The fp4 kernel indexes its weight scales by the output row itself. Nothing about the rule
+    # changes with the layout -- the exponent is still the one output column j's accumulator is
+    # rescaled by, once per K block -- so the two are one branch and not two rules.
+    per_row = tuple(b_scale.shape) == (n, blocks)
 
     # The rule is stated on the codes and the scales are applied after, so the two acquire their
     # device independently of the operands: `e8m0_exponent` reads a host tensor's bytes the same way
@@ -435,9 +519,14 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
             b_nom = _nominal_i16(b_tile).reshape(hi - lo, width, 2, HALF)
             # One weight scale per block_size-row group of the output, repeated down its own rows
             # before it meets the reduction's K axis -- `repeat_interleave` matches what the 32x32
-            # grid means, and `2 ** e` is exact, so the block sum stays a plain rescale.
-            sb = torch.exp2(b_exp[lo // block_size:hi // block_size, b0:b1].to(torch.float32))
-            sb = sb.repeat_interleave(block_size, dim=0)
+            # grid means. A per-row grid is already that expansion: the row *is* the group, so its
+            # exponent is taken as it stands and nothing is repeated. `2 ** e` is exact either way,
+            # so the block sum stays a plain rescale.
+            if per_row:
+                sb = torch.exp2(b_exp[lo:hi, b0:b1].to(torch.float32))
+            else:
+                sb = torch.exp2(b_exp[lo // block_size:hi // block_size, b0:b1].to(torch.float32))
+                sb = sb.repeat_interleave(block_size, dim=0)
             for m0 in range(0, m, rows):
                 m1 = min(m0 + rows, m)
                 a_tile = a_bytes[m0:m1, at]

@@ -289,9 +289,12 @@ class V41Checkpoint:
         tiny -- 1/1024 of the weight it scales -- and it is returned in the dtype the file stored it
         in, because `e8m0_exponent` reads those bytes directly.
 
-        Packed fp4 is excluded: its scale is one entry per *row* rather than per square tile, and the
-        reduction rule is stated on the e4m3 exponent field, which e2m1 does not share. Nothing
-        downstream would know what to do with it, so it is not offered.
+        Packed fp4 is excluded, but not because nothing could use it -- `mma.fp8_block_gemm` takes a
+        per-row grid, and `CheckpointRoutedExperts` reads one out of the file for that reason. It is
+        excluded because *this* method exists to feed `mma.codes_from_scale`, and there is nothing
+        there for it to recover: the rule's exponents come from the e2m1 nibbles themselves
+        (`mma.e4m3_codes_from_e2m1`), which determine their e4m3 encoding exactly, where a dense fp8
+        weight does not determine its codes at all.
         """
         if not self.is_quantized(key) or self.is_packed_fp4(key):
             return None
@@ -532,21 +535,56 @@ class CheckpointRoutedExperts(RoutedExperts):
         experts its own token routed to, so recency within a layer is not informative, and the
         access pattern a real run has -- a different handful of experts every step -- makes a
         simple queue as good as anything more elaborate.
+
+        Each of the three arrives carrying what the reference's reduction reads, when the file's
+        experts are fp4 (`_expert_matrix`): the e4m3 codes its kernel casts the nibbles to, and the
+        per-row e8m0 grid it scales the reduction by. That is what lets `expert_forward`'s
+        `quantized_linear` run the routed GEMM as `mma`'s rule describes rather than as a correctly
+        rounded product -- the same seam a dense fp8 weight gets from `loader.fill`, hung in the one
+        other place a weight enters the tree.
         """
         cached = self._cache.get(expert)
         if cached is not None:
             return cached
         self.misses += 1
-        weights = tuple(
-            self.checkpoint.weight(self._key(expert, which), dtype=LINEAR_DTYPE)
-            for which in _EXPERT_PROJECTIONS
-        )
+        weights = tuple(self._expert_matrix(expert, which) for which in _EXPERT_PROJECTIONS)
         if self.cache_size > 0:
             if len(self._order) >= self.cache_size:
                 self._cache.pop(self._order.pop(0), None)
             self._cache[expert] = weights
             self._order.append(expert)
         return weights
+
+    def _expert_matrix(self, expert: int, which: str) -> torch.Tensor:
+        """One projection as a dense `LINEAR_DTYPE` matrix, with the fp4 reduction's operands hung on it.
+
+        The dense expansion stays whatever the reduction does: it is what `expert_forward` multiplies
+        on the correctly rounded path, and `quantized_linear` falls back to it the moment the codes
+        are absent -- an emulation switch that changes the answer is only trustworthy if the other
+        answer is still there.
+
+        What is added is the pair the rule runs on, and neither is recoverable from the dense weight:
+        the codes come from the packed e2m1 bytes (`mma.e4m3_codes_from_e2m1`, exact and unique per
+        value), and the grid is the file's own -- one exponent per output row and 32-wide K block,
+        the layout `fp4_gemm_kernel` indexes. The dense weight cannot stand in for either: an e2m1
+        value times its scale is a float no e4m3 grid describes, and `mma.codes_from_scale` refuses
+        exactly that.
+
+        The two are attached in `attach_scale`/`attach_codes` order, which is the loader's own order
+        and the only one that leaves no half-replaced pair behind (see `mma.attach_scale`). The
+        attribute rides on the tensor, so a cache hit returns the same object and the same pair --
+        and the derivation happens once per miss rather than once per call.
+        """
+        key = self._key(expert, which)
+        dense = self.checkpoint.weight(key, dtype=LINEAR_DTYPE)
+        if self._quantized and self.checkpoint.is_packed_fp4(key):
+            # The scale is read out of the file rather than through `tile_scale`, which declines a
+            # packed fp4 weight on purpose: that method exists to feed `codes_from_scale`, and there
+            # is nothing here for it to recover -- an e2m1 code determines its e4m3 code, so the
+            # grid's only job on this path is to be the scale.
+            mma.attach_scale(dense, self.checkpoint.packed(scale_key(key)))
+            mma.attach_codes(dense, mma.e4m3_codes_from_e2m1(self.checkpoint.packed(key)))
+        return dense
 
     def forward(self, x: torch.Tensor, weights: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
         """x: [n, dim] dense, weights/indices: [n, topk]. Returns [n, dim] fp32."""
