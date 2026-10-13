@@ -22,11 +22,17 @@ value: `Backbone.forward` ends in `sample(logits, self.temperature)` with `tempe
 argmax is what produced a reported "1999" that no configuration reproduces -- the row beside it
 argmaxes to 1. `generate()` pins the temperature to 0.0 and is the only path whose tokens are greedy
 picks. The draw is recorded beside the argmax as `step0_sampled`, so nothing is silently dropped.
+
+The artifact also carries a `config` block -- the routed expert class that was built, the imported
+`relicllm` tree and its commit, the device, the prompt ids -- because a step-0 reading is only
+evidence about the path it ran on. This script pins `expert_device=None`, the host path the oracle's
+offloaded `MoE.forward` mirrors; the block is what makes that checkable from the file alone.
 """
 from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 import torch
 
@@ -37,8 +43,10 @@ def main() -> int:
     parser.add_argument("--out", default="/tmp/port-tap.pt")
     args = parser.parse_args()
 
+    import relicllm
     from transformers import AutoTokenizer
 
+    from relicllm.bench.metadata import cuda_metadata, git_commit
     from relicllm.models.deepseek_v4_1.config import load_config
     from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, build_hasher, load_backbone
 
@@ -66,6 +74,23 @@ def main() -> int:
     model = front.model
     kinds = sorted({type(layer.ffn.routed).__name__ for layer in model.layers})
     say(f"routed experts: {', '.join(kinds)} on {len(model.layers)} layers")
+
+    # A step-0 number is only evidence about *a path*, so the artifact has to say which one ran: the
+    # routed class the model actually built (not the argument anyone remembers passing), the
+    # `relicllm` tree that got imported -- see the `-I` note above for why that is not necessarily
+    # the one named on the command line -- its commit, and the device. Without this, a host-path run
+    # reads exactly like a device-path one, which is how a label drifted once already.
+    tree = Path(relicllm.__file__).resolve().parent.parent
+    run_config = {
+        "expert_device": None,  # the argument `load_backbone` got; `routed` is what it built
+        "routed": kinds,
+        "checkpoint": str(Path(args.checkpoint).resolve()),
+        "prompt_ids": ids,
+        "source": str(tree),
+        "revision": git_commit(str(tree)),
+        "cuda": cuda_metadata(),
+    }
+    say(f"config: {run_config}")
 
     # Each Block returns `(h, ffn_pre)`; keep both, exactly as ref-tap.py does.
     taps: dict[int, tuple[torch.Tensor, torch.Tensor]] = {}
@@ -115,6 +140,7 @@ def main() -> int:
             "step0_argmax": step0_argmax,
             "step0_sampled": step0_sampled,
             "prompt_tokens": len(ids),
+            "config": run_config,
         },
         args.out,
     )

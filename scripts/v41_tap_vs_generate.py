@@ -25,11 +25,18 @@ which. Run it on the box holding the released checkpoint, with the port's env:
 `relicllm`, the installed finder points at whichever tree was `pip install -e`'d, which need not be
 the worktree under test. `PYTHONPATH` wins over it, and `-I` would drop `PYTHONPATH` and silently
 measure the other tree -- a run that looks fine and reports numbers from a revision nobody chose.
+
+The artifact carries the three rows, the `diff` computed from them, and a `config` block naming the
+routed expert class that was built, the imported `relicllm` tree and its commit, and the device. The
+rows answer "is the tap the same forward" only for the configuration they came from, and this script
+pins the host path (`expert_device=None`), so the block is what keeps a later reading from
+attributing them to the device path.
 """
 from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 import torch
 
@@ -41,8 +48,10 @@ def main() -> int:
     parser.add_argument("--resident-engram", action="store_true")
     args = parser.parse_args()
 
+    import relicllm
     from transformers import AutoTokenizer
 
+    from relicllm.bench.metadata import cuda_metadata, git_commit
     from relicllm.models.deepseek_v4_1.config import load_config
     from relicllm.models.deepseek_v4_1.generate import generate
     from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, build_hasher, load_backbone
@@ -66,6 +75,25 @@ def main() -> int:
         progress=say,
     )
     model = front.model
+    kinds = sorted({type(layer.ffn.routed).__name__ for layer in model.layers})
+
+    # Which path these three rows describe is part of the reading, not a detail of the run: the rows
+    # only settle the tap-vs-generate question *for this configuration*. This script pins
+    # `expert_device=None`, the host path, so a host-vs-device difference is not in scope here -- and
+    # the artifact says so itself rather than relying on anyone's memory of the command line.
+    tree = Path(relicllm.__file__).resolve().parent.parent
+    run_config = {
+        "expert_device": None,  # the argument `load_backbone` got; `routed` is what it built
+        "routed": kinds,
+        "checkpoint": str(Path(args.checkpoint).resolve()),
+        "prompt_ids": ids,
+        "resident_engram": bool(args.resident_engram),
+        "source": str(tree),
+        "revision": git_commit(str(tree)),
+        "cuda": cuda_metadata(),
+    }
+    say(f"routed experts: {', '.join(kinds)} on {len(model.layers)} layers")
+    say(f"config: {run_config}")
 
     taps: dict[int, tuple[torch.Tensor, torch.Tensor]] = {}
     handles = []
@@ -125,6 +153,19 @@ def main() -> int:
         top = torch.topk(row, 8)
         say(f"{name}: top={top.indices.tolist()} vals={[round(float(v), 5) for v in top.values.tolist()]}")
 
+    # The pairwise numbers, computed here rather than off to the side in a scratch cell: the answer to
+    # "are these the same forward" is the artifact's own `diff`, not a figure quoted from elsewhere.
+    bare_flat, recon_flat, gen_flat = (row.reshape(-1) for row in (bare_row, recon_row, gen_row))
+    if not (bare_flat.numel() == recon_flat.numel() == gen_flat.numel()):
+        raise SystemExit(f"rows have different lengths: {bare_row.shape} {recon_row.shape} {gen_row.shape}")
+    diff = {
+        "bare_vs_generate_ndiff": int((bare_flat != gen_flat).sum()),
+        "elements": int(bare_flat.numel()),
+        "recon_vs_bare_max_abs": float((recon_flat - bare_flat).abs().max()),
+    }
+    say(f"bare_forward vs generate_step0: {diff['bare_vs_generate_ndiff']}/{diff['elements']} elements differ")
+    say(f"tap_reconstruction vs bare_forward: max |d| {diff['recon_vs_bare_max_abs']:.6g} nats")
+
     torch.save(
         {
             "bare_forward": bare_row,
@@ -132,6 +173,8 @@ def main() -> int:
             "generate_step0": gen_row,
             "tokens": list(result.tokens),
             "prompt_tokens": len(ids),
+            "diff": diff,
+            "config": run_config,
         },
         args.out,
     )
