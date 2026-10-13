@@ -161,26 +161,26 @@ def expert_forward(
     `F.linear`, which is what keeps a bf16 build bit-for-bit where it was.
     """
     dtype = x.dtype
-    # `emulate_reduction=False`: the reference's experts are `fp4_gemm` -- an e4m3 activation against
-    # an *e2m1* weight -- and `relicllm.models.deepseek_v4_1.mma`'s reduction rule is stated on the
-    # e4m3 exponent field, which e2m1 does not share. Emulating it here would be guessing, so this
-    # path stays correctly rounded until an e2m1 rule is measured. The dense and attention linears,
-    # which are the ones whose divergence was localised, do get the emulation.
-    gate = quantized_linear(
-        x, w1, quantized=quantized, block_size=block_size, emulate_reduction=False
-    ).float()
-    up = quantized_linear(
-        x, w3, quantized=quantized, block_size=block_size, emulate_reduction=False
-    ).float()
+    # No `emulate_reduction` here, and that is the fix rather than an omission: the flag follows the
+    # switch, and which arithmetic a call gets is decided by the *weight*, not by this function. The
+    # shared expert's three matrices are dense fp8 weights, `loader.fill` hangs their recovered codes
+    # on them like any other, and `quantized_linear` emulates them. A routed expert's tensors never
+    # go through `fill` -- a store hands this function three tensors it just produced, a stack slice
+    # or a decode out of the mapping -- so they carry no codes and decline on their own, which is the
+    # right answer for them rather than a loss: the reference runs the routed experts on an **e2m1**
+    # weight, and `mma`'s rule is stated on the e4m3 exponent field, which e2m1 does not share.
+    # Emulating those would be guessing, so they stay correctly rounded until an e2m1 rule is
+    # measured -- but the shared expert, which is fp8 and whose arithmetic was measured, is no longer
+    # switched off along with them.
+    gate = quantized_linear(x, w1, quantized=quantized, block_size=block_size).float()
+    up = quantized_linear(x, w3, quantized=quantized, block_size=block_size).float()
     if swiglu_limit > 0:
         up = torch.clamp(up, min=-swiglu_limit, max=swiglu_limit)
         gate = torch.clamp(gate, max=swiglu_limit)
     out = F.silu(gate) * up
     if weights is not None:
         out = weights * out
-    return quantized_linear(
-        out.to(dtype), w2, quantized=quantized, block_size=block_size, emulate_reduction=False
-    )
+    return quantized_linear(out.to(dtype), w2, quantized=quantized, block_size=block_size)
 
 
 class RoutedExperts:

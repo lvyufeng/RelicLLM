@@ -532,12 +532,27 @@ def test_every_quantized_parameter_carries_the_grid_the_file_stored(mini) -> Non
         assert torch.equal(
             mma.codes_from_scale(parameter, grid, BLOCK), mini.stored[name]
         ), f"{name}: the codes recovered from the parameter and its grid are not the file's"
+        # And the recovery itself, done once here rather than per call: `quantized_linear` reads
+        # `attached_codes` and derives nothing, because the recovery's round-trip check is a device
+        # sync and the default serving path captures the decode body into a CUDA graph. A parameter
+        # that leaves `fill` with a grid and no codes is one of the two ways the emulation goes
+        # quiet -- the other is the fp4 routed experts, whose weights no grid was ever stored beside.
+        codes = mma.attached_codes(parameter)
+        assert codes is not None, f"{name} was filled without its codes; `fill` recovers them"
+        assert codes.dtype == torch.float8_e4m3fn and codes.device == parameter.device, (
+            f"{name} carries {codes.dtype} codes on {codes.device} beside a {parameter.dtype} "
+            f"weight on {parameter.device}"
+        )
+        assert torch.equal(codes, mini.stored[name]), (
+            f"{name}: the attached codes are not the file's own weight tensor"
+        )
 
     # And the rest: a weight the file did not quantize has no grid to carry, and the emulation has to
     # see that rather than a grid from a neighbour.
     plain = mini.loaded.model.get_submodule("layers.0.attn.q_norm").weight
     assert not mini.ckpt.is_quantized("layers.0.attn.q_norm.weight")
     assert mma.attached_scale(plain) is None, "a bf16 weight was given a scale grid"
+    assert mma.attached_codes(plain) is None, "a bf16 weight was given attached codes"
 
 
 def test_a_layer_with_a_ratio_of_one_has_no_compressor_gate(mini) -> None:

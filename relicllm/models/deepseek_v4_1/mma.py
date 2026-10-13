@@ -152,17 +152,26 @@ def decode_e4m3(codes: torch.Tensor) -> torch.Tensor:
     return sign * value
 
 
-def e8m0_exponent(scale: torch.Tensor) -> torch.Tensor:
+def e8m0_exponent(scale: torch.Tensor, *, verify: bool = True) -> torch.Tensor:
     """An e8m0 scale's exponent, exactly, as an int64 -- the inverse of the encoding.
 
     Through ``frexp`` rather than ``log2``: a scale is a power of two, and ``log2`` of an exact power
     of two can round down and give an exponent one too large, which would shift a whole block.
     Accepts either the ``float8_e8m0fnu`` bytes or the fp32 values the port's quantizers return.
+
+    The fp32 form is the one that needs checking -- a tensor that is not a power of two has no e8m0
+    exponent, and ``frexp`` will hand back a plausible-looking one anyway -- so ``verify`` is on by
+    default and the check is a host ``bool`` over a device tensor, i.e. a synchronisation. **It must
+    therefore be off on any path that runs inside a captured CUDA graph**, which is the port's
+    default decode path (``backends/v41_backend.py`` ``decode_graphs=True``) and the reason the
+    check exists at load time instead: ``loader.fill`` recovers and verifies every weight's codes
+    once, under no capture, and the hot path never re-derives them. The byte form needs no check --
+    an e8m0 byte *is* an exponent.
     """
     if scale.dtype == torch.float8_e8m0fnu:
         return _bytes(scale).to(torch.int64) - 127
     mantissa, exponent = torch.frexp(scale.to(torch.float64))
-    if not bool((mantissa.abs() == 0.5).all()):
+    if verify and not bool((mantissa.abs() == 0.5).all()):
         raise ValueError("an e8m0 scale must be a power of two")
     return (exponent - 1).to(torch.int64)
 
@@ -214,6 +223,13 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     The two operands are never dequantized. The rule is stated on codes, and running it on codes keeps
     the per-block scales out of the exponents -- they are applied once, at the end of the block, which
     is what the kernel does and what keeps the two sides of the comparison in the same units.
+
+    Both scales are read with ``e8m0_exponent(..., verify=False)``: that function's power-of-two
+    check is a host ``bool`` over device data, i.e. a synchronisation, and this runs inside the
+    captured decode body. Nothing is lost by skipping it here. A weight's grid is verified once, in
+    ``codes_from_scale``, before any codes are attached to it -- a grid that is not a power of two
+    does not describe the weight it was attached to and is refused there -- and an activation scale
+    comes out of `block_fp8_act_quant` as ``2 ** ceil(log2(...))`` by construction.
     """
     a_bytes, b_bytes = _bytes(a_codes), _bytes(b_codes)
     m, k = a_bytes.shape[-2], a_bytes.shape[-1]
@@ -233,10 +249,12 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     # The rule is stated on the codes and the scales are applied after, so the two acquire their
     # device independently of the operands: `e8m0_exponent` reads a host tensor's bytes the same way
     # it reads a device tensor's, and the caller's quantizers return whichever device they were
-    # given. Moving them here keeps the inner loop free of a device question.
+    # given. Moving them here keeps the inner loop free of a device question, and it is a device copy
+    # and not a host one on the paths that matter -- a weight grid is hung on the weight's own device
+    # by `attach_scale`.
     device = a_value.device
-    a_exp = e8m0_exponent(a_scale).to(device)
-    b_exp = e8m0_exponent(b_scale).to(device)
+    a_exp = e8m0_exponent(a_scale, verify=False).to(device)
+    b_exp = e8m0_exponent(b_scale, verify=False).to(device)
 
     group = block_size
     if m * block_size * n > _MAX_PRODUCT_ELEMENTS:
@@ -246,7 +264,7 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
     out = torch.zeros(m, n, dtype=torch.float32, device=device)
     for lo in range(0, n, group):
         hi = min(lo + group, n)
-        b_chunk, b_value_c, b_nom_c = b_bytes[lo:hi], b_value[lo:hi], b_nom[lo:hi]
+        b_value_c, b_nom_c = b_value[lo:hi], b_nom[lo:hi]
         # One weight scale per 32-row group, broadcast down its own rows before it meets the
         # reduction's K axis -- `repeat_interleave` matches what the 32x32 grid means.
         b_scale_c = b_exp[lo // block_size:hi // block_size]
@@ -274,10 +292,22 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
 #: arrangement with an address that can be recycled by a tensor that has been freed.
 SCALE_ATTR = "_relicllm_block_scale"
 
+#: Where :func:`attach_codes` hangs the codes recovered from that grid, beside it.
+CODES_ATTR = "_relicllm_block_codes"
+
 
 def attach_scale(weight: torch.Tensor, scale: torch.Tensor) -> None:
-    """Hang the checkpoint's own scale grid on the weight it scales. See :func:`codes_from_scale`."""
-    setattr(weight, SCALE_ATTR, scale)
+    """Hang the checkpoint's own scale grid on the weight it scales. See :func:`codes_from_scale`.
+
+    The grid is moved to the weight's device here, at load, rather than on every call. The loader
+    attaches it to a parameter that is already where it belongs -- `fill` copies into the parameter
+    in place, so nothing ever re-homes the weight -- but the grid arrives out of the file as a view
+    of the shard mapping, which is **host** memory. A grid left on the host costs nothing while
+    nothing reads it; the moment a GEMM does, it is a per-call host-to-device copy inside the decode
+    body, allocating a fresh tensor each time where the recorded graph expects the one address it
+    captured.
+    """
+    setattr(weight, SCALE_ATTR, scale.to(weight.device))
 
 
 def attached_scale(weight: torch.Tensor) -> torch.Tensor | None:
@@ -288,6 +318,31 @@ def attached_scale(weight: torch.Tensor) -> torch.Tensor | None:
     rather than as an error.
     """
     return getattr(weight, SCALE_ATTR, None)
+
+
+def attach_codes(weight: torch.Tensor, codes: torch.Tensor) -> None:
+    """Hang the e4m3 codes recovered from that grid on the weight, beside the grid itself.
+
+    Recovery is not something the hot path can do. :func:`codes_from_scale` ends in a per-row-chunk
+    ``torch.equal`` against the weight (a host ``bool`` over device data, i.e. a synchronisation) and
+    reads the weight in full; the read is merely expensive, and the synchronisation is one of the
+    calls CUDA forbids while a stream is being captured, which is what the port's default decode path
+    does. So it happens exactly once, in ``loader.fill`` -- the only place a weight arrives with its
+    grid -- and the hot path finds the result here.
+    """
+    setattr(weight, CODES_ATTR, codes)
+
+
+def attached_codes(weight: torch.Tensor) -> torch.Tensor | None:
+    """The codes :func:`attach_codes` put on this weight, or ``None`` for a weight without any.
+
+    ``None`` is what ``quantized_linear`` reads as "no exact codes are recoverable here, run the
+    correctly rounded GEMM instead and say so once". Two kinds of weight get it: one whose file
+    stored no grid to recover from -- a bf16 weight, an fp4 routed expert's dense decode, a tensor a
+    caller built by hand -- and one whose grid was refused because it did not describe the weight.
+    The second kind is reported by name where it happens, at load.
+    """
+    return getattr(weight, CODES_ATTR, None)
 
 
 def codes_from_scale(
@@ -313,6 +368,13 @@ def codes_from_scale(
     -- the cast back against the exact quotient, per row chunk -- so a weight that is *not* on this
     grid is refused rather than quantized against a scale that belongs to a different tensor.
 
+    **This is a load-time call, not a hot-path one.** The ``verify`` comparison is a host ``bool``
+    over device data, i.e. a synchronisation, and a sync inside the captured decode body is fatal to
+    the ``decode_graphs`` serving path. ``loader.fill`` calls it once per weight, under no capture,
+    and hangs the result on the weight with :func:`attach_codes`; the GEMM reads
+    :func:`attached_codes`. The one other caller, the indexer's row-split band, derives its grid from
+    a weight this already ran on and passes ``verify=False``, for the same reason.
+
     The loop is over 32-row chunks on purpose. A full-size reconstruction is an fp32 copy of the
     weight plus an fp32 copy of its expanded grid, and the all-at-once version of this is what asked
     for 1.17 GiB inside a TP4 rank that had 1.05 GiB left.
@@ -328,13 +390,13 @@ def codes_from_scale(
             f"a {tuple(dense.shape)} weight wants a {want} scale grid and the one attached to it is "
             f"{tuple(scale.shape)}"
         )
-    # The grid is read where the weight lives, the same treatment `fp8_block_gemm` gives its scales
-    # and for the same reason. The loader hangs this grid on the parameter while the tree is still
-    # being filled, and the runtime promotes the tree afterwards (`p.data = p.data.to(device)`) -- a
-    # move a module carries for parameters and buffers and for nothing else, so the grid stays
-    # behind on the host while the weight goes to the card. Read in place, it asks the card for a
-    # host step and every `quantized_linear` on a promoted tree raises "Expected all tensors to be
-    # on the same device".
+    # The grid is read where the *weight* lives, not where the grid does. `loader.fill` attaches the
+    # grid to a parameter that is already on its final device -- the tree is built there
+    # (`Backbone(..., device=...)`) and filled in place (`parameter.copy_(value)`) -- but the grid
+    # arrives as a view of the shard mapping, which is host memory, and `attach_scale` is the one
+    # place that moves it across. A caller holding a host grid and a device weight, as a test or a
+    # hand-built tensor may, would otherwise ask the card for a host step and get
+    # "Expected all tensors to be on the same device" out of the next GEMM.
     exponent = e8m0_exponent(scale).to(dense.device)
     codes = torch.empty((rows, cols), dtype=torch.float8_e4m3fn, device=dense.device)
     for lo in range(0, rows, block_size):

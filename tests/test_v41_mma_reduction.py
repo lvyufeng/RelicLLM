@@ -23,6 +23,7 @@ when torch is absent, the same guard the V4.1 siblings use.
 
 from __future__ import annotations
 
+import functools
 import math
 from dataclasses import replace
 
@@ -91,6 +92,18 @@ def _codes(seed: int, count: int) -> torch.Tensor:
 
 def _gen(seed: int) -> torch.Generator:
     return torch.Generator().manual_seed(seed)
+
+
+def _nominal_exp_without_the_floor(codes: torch.Tensor) -> torch.Tensor:
+    """`mma.nominal_exp` with the `-6` taken out: every field reads ``field - 7``, zeros included.
+
+    This is the mutation and not a second opinion about the rule. A subnormal code's field is 0, so
+    without the floor it reads -7 where the module reads -6 -- and the module reads -6 because that
+    is the exponent the reference's `mma` carries into the reduction for such an operand, whatever
+    the code's own value happens to be.
+    """
+    field = (mma._bytes(codes).to(torch.int64) >> 3) & 0xF
+    return (field - 7).to(torch.float64)
 
 
 def _expand(codes: torch.Tensor, scale: torch.Tensor, block: int = BLOCK) -> torch.Tensor:
@@ -338,11 +351,15 @@ def test_the_emulation_is_on_by_default_and_switches_off_cleanly(monkeypatch) ->
     different claims: `emulate_reduction=False` is what `expert_forward` passes, and the environment
     variable is what an operator reaches for without editing a call site.
 
-    A weight carries its grid as an attribute (`mma.attach_scale`), so the three ways of arriving
-    without one are checked too: no grid, a grid that belongs to a different weight, and a grid for
-    the wrong block shape. Each has to fall back to the rounded product rather than run the rule on
-    exponents the reference never had -- the failure mode that would otherwise be silent, because a
-    wrong scale still produces plausible numbers.
+    A weight carries its codes as an attribute (`mma.attach_codes`), recovered from the grid the file
+    stored beside it by `loader.fill` and not here -- the recovery ends in a device sync, and the
+    serving path captures its decode body into a CUDA graph. So the two ways of arriving without
+    codes are checked too: the codes absent (which is the routed experts' case, and a bf16 weight's,
+    and every tensor a caller built by hand), and a grid whose recovery was *refused* at load because
+    it does not describe the weight -- `test_the_stored_scale_is_what_recovers_the_codes` pins that
+    refusal where it now happens. Both have to fall back to the rounded product rather than run the
+    rule on exponents the reference never had, which is the failure mode that would otherwise be
+    silent: a wrong scale still produces plausible numbers.
     """
     torch.manual_seed(1)
     x = torch.randn(8, 64, dtype=torch.bfloat16)
@@ -356,7 +373,10 @@ def test_the_emulation_is_on_by_default_and_switches_off_cleanly(monkeypatch) ->
     codes, scale = mma.quantize_blocks(raw)
     grid = (mma.e8m0_exponent(scale) + 127).to(torch.uint8).view(torch.float8_e8m0fnu)
     weight = _expand(codes, grid).to(torch.bfloat16)
+    # Grid and codes, exactly as `loader.fill` leaves a weight: the grid as the file stored it, the
+    # codes recovered from it once. Nothing on the hot path recovers anything.
     mma.attach_scale(weight, grid)
+    mma.attach_codes(weight, mma.codes_from_scale(weight, grid, BLOCK))
 
     quant, act_scale = block_fp8_act_quant(x)
     rounded = quant.to(torch.float32) * act_scale.repeat_interleave(BLOCK, dim=-1)
@@ -390,30 +410,148 @@ def test_the_emulation_is_on_by_default_and_switches_off_cleanly(monkeypatch) ->
         f"{float((emulated.float() - rounded.float()).abs().max()):g}"
     )
 
-    # A weight whose grid never arrived is a weight whose codes cannot be recovered, and it declines
-    # instead of being quantized against a grid that is not its own.
+    # A weight carrying the grid but no codes declines, and *that it declines is the design*: the
+    # recovery is a `torch.equal` over the whole weight (a device sync) and this call can be inside a
+    # captured decode body. The grid being present is not enough for the hot path to act on; this is
+    # the test that fails the day someone moves the recovery back in here for convenience.
+    grid_only = _expand(codes, grid).to(torch.bfloat16)
+    mma.attach_scale(grid_only, grid)  # the state `loader.fill` leaves a refused weight in
+    assert torch.equal(grid_only, weight), "the fixture without codes is not the same weight"
+    assert torch.equal(
+        quantized_linear(x, grid_only, quantized=True), rounded
+    ), (
+        "a weight with a grid and no recovered codes must run the correctly rounded GEMM: "
+        "`quantized_linear` recovers nothing, and a grid is not evidence that it can"
+    )
+
+    # And a weight with nothing attached at all -- a routed expert, a bf16 tensor, anything a caller
+    # built rather than loaded.
     plain = _expand(codes, grid).to(torch.bfloat16)
-    assert torch.equal(plain, weight), "the fixture without a grid is not the same weight"
     assert torch.equal(
         quantized_linear(x, plain, quantized=True), rounded
-    ), "a weight with no attached grid should run the correctly rounded GEMM"
+    ), "a weight with no attached codes should run the correctly rounded GEMM"
 
-    # And a grid that does not describe the weight: quantizing against it would put the rule on
-    # exponents no reference ever had, so it is refused at the check rather than silently used. The
-    # grid is three octaves low, which makes the reconstruction over-range -- the refusal reads
-    # well-defined here, because a grid one octave out is *not* always detectable in the values, and
-    # the test above says why.
-    wrong = _expand(codes, grid).to(torch.bfloat16)
-    mma.attach_scale(
-        wrong, (mma.e8m0_exponent(grid) - 3 + 127).to(torch.uint8).view(torch.float8_e8m0fnu)
+
+def test_the_wired_path_runs_the_rule_on_exactly_the_codes_it_is_given(monkeypatch) -> None:
+    """`quantized_linear` with codes attached *is* `fp8_block_gemm` on those codes, bit for bit.
+
+    The seam between the loader and the module is an attribute, and an attribute can be attached and
+    never read: the failure looks like a working run whose linear is quietly the correctly rounded
+    product, which is the difference this whole module exists to remove. So the wiring is checked
+    from the outside, against the same call made directly -- the weight's values do not enter it.
+
+    The codes are handed over as the file's own, not as something re-derived from the weight, and the
+    two are not always the same: on a tile whose largest code is 224 they differ by an octave and
+    their values agree exactly, which is why `codes_from_scale` exists and why this test would notice
+    a `quantized_linear` that went back to guessing.
+
+    The second half pins the *absence* of two calls rather than their effect. Both the code recovery
+    and the power-of-two check end in a host `bool` over device data -- a synchronisation -- and the
+    port's default decode path captures the decode body into a CUDA graph, where a synchronising call
+    is an error. A test that only compares numbers cannot see that: on a host run the sync is
+    invisible, and the failure it causes appears only on a card, only with `decode_graphs=True`, and
+    at capture time, as a serving path that cannot start.
+    """
+    from relicllm.models.deepseek_v4_1.kernels import block_fp8_act_quant
+
+    torch.manual_seed(4)
+    rows, cols = 64, 2 * BLOCK
+    codes, scale = mma.quantize_blocks(torch.randn(rows, cols, dtype=torch.float32))
+    grid = (mma.e8m0_exponent(scale) + 127).to(torch.uint8).view(torch.float8_e8m0fnu)
+    weight = _expand(codes, grid).to(torch.bfloat16)
+    mma.attach_scale(weight, grid)
+    mma.attach_codes(weight, codes)
+
+    x = torch.randn(8, cols, dtype=torch.bfloat16)
+    got = quantized_linear(x, weight, quantized=True)
+
+    act, act_scale = block_fp8_act_quant(x)
+    want = mma.fp8_block_gemm(act, act_scale, codes, grid, BLOCK).to(x.dtype)
+    assert got.shape == want.shape
+    assert torch.equal(got, want), (
+        f"{int((got != want).sum())} of {got.numel()} elements differ from the rule called directly "
+        f"on the codes that were attached"
     )
-    assert torch.equal(
-        quantized_linear(x, wrong, quantized=True),
-        torch.matmul(
-            quant.to(torch.float32) * act_scale.repeat_interleave(BLOCK, dim=-1),
-            wrong.to(torch.float32).transpose(0, 1),
-        ).to(x.dtype),
-    ), "a mismatched grid should fall back to the correctly rounded GEMM, not be emulated"
+
+    # Now the same call again, with the two synchronising entry points booby-trapped: the recovery
+    # must not be reached at all, and the exponent read must not verify.
+    seen: list[bool] = []
+    real_exponent = mma.e8m0_exponent
+
+    def watched_exponent(tensor: torch.Tensor, *, verify: bool = True) -> torch.Tensor:
+        seen.append(verify)
+        return real_exponent(tensor, verify=verify)
+
+    def refuse(*args, **kwargs):
+        raise AssertionError(
+            "`quantized_linear` called `mma.codes_from_scale`: the recovery is a device sync and "
+            "must happen once, at load (`loader.fill`), not inside a forward pass"
+        )
+
+    monkeypatch.setattr(mma, "codes_from_scale", refuse)
+    monkeypatch.setattr(mma, "e8m0_exponent", watched_exponent)
+    again = quantized_linear(x, weight, quantized=True)
+
+    assert torch.equal(again, want), "the booby-trapped call returned a different GEMM"
+    assert seen, "the GEMM never read an e8m0 exponent, so this test is not watching the right calls"
+    assert not any(seen), (
+        f"{sum(seen)} of {len(seen)} exponent reads were made with `verify=True`, whose power-of-two "
+        f"check is a device synchronisation inside the captured decode body"
+    )
+
+
+def test_the_window_and_the_floor_are_the_constants_the_rule_was_measured_with(monkeypatch) -> None:
+    """Both measured constants move a GEMM on this payload, and neither is decoration.
+
+    The rule's *structure* is what a scalar transcription pins -- two halves, a per-element anchor,
+    the running sum joining the second half, the final renormalisation. Its two numbers are a
+    different kind of claim: thirteen binary places below the anchor, and a subnormal operand
+    contributing the -6 its encoding field implies rather than its own -7..-9. Both came off the
+    reference's own trace, and neither was pinned here -- with the floor dropped, or the window set
+    to 12, every other test in this file still passes, because their fixtures are either all at
+    ordinary magnitudes (nothing subnormal for the floor to move) or coarse enough that a grid one
+    octave wider cuts exactly the same terms.
+
+    This is the counter-fixture: a payload that is substantially subnormal, so the floor has
+    something to move, at magnitudes where the window has something to cut.
+    """
+    gen = _gen(29)
+    rows, out_rows, cols = 4, 32, 2 * BLOCK
+
+    def scales(shape: tuple[int, ...]) -> torch.Tensor:
+        return (
+            (torch.randint(115, 130, shape, generator=gen)).to(torch.uint8).view(torch.float8_e8m0fnu)
+        )
+
+    # Activation codes drawn from 0..31, so a quarter of them carry exponent field 0 -- subnormals,
+    # whose true exponents are -9..-6 while their field says -6 -- beside codes at ordinary sizes.
+    a_raw = torch.randint(0, 32, (rows, cols), generator=gen).to(torch.uint8)
+    b_raw = torch.randint(0, 256, (out_rows, cols), generator=gen).to(torch.uint8)
+    b_raw = torch.where((b_raw & 0x7F) == 0x7F, b_raw ^ 0x01, b_raw)
+    a_codes, b_codes = a_raw.view(torch.float8_e4m3fn), b_raw.view(torch.float8_e4m3fn)
+    a_scale, b_scale = scales((rows, cols // BLOCK)), scales((out_rows // BLOCK, cols // BLOCK))
+
+    def gemm() -> torch.Tensor:
+        return mma.fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, BLOCK)
+
+    rule = gemm()
+
+    # `_cut`'s `off` is a default argument and was bound when the function was defined, so setting
+    # `mma.WINDOW` would change nothing at all -- rebinding `_cut` is the mutation, and it is the
+    # same one a reader would make: `2 ** (anchor - 12)` instead of `2 ** (anchor - 13)`.
+    with monkeypatch.context() as narrow:
+        narrow.setattr(mma, "_cut", functools.partial(mma._cut, off=mma.WINDOW - 1))
+        assert not torch.equal(gemm(), rule), (
+            "a window one octave wider cut exactly the same terms, so this fixture cannot tell the "
+            "rule's thirteen places from twelve"
+        )
+
+    with monkeypatch.context() as floorless:
+        floorless.setattr(mma, "nominal_exp", _nominal_exp_without_the_floor)
+        assert not torch.equal(gemm(), rule), (
+            "dropping the -6 floor changed nothing on a payload whose activations are a quarter "
+            "subnormal, so this fixture cannot tell the encoding field from the value's exponent"
+        )
 
 
 def test_every_power_of_two_the_rule_builds_is_exact() -> None:
@@ -481,16 +619,16 @@ def test_the_gemm_follows_its_operands_device_whatever_its_scales_arrive_on() ->
 
 
 def test_the_code_recovery_reads_its_grid_where_the_weight_lives() -> None:
-    """The grid is hung on the weight before the tree is promoted, and the promotion leaves it behind.
+    """A weight on the card with its grid still on the host recovers its codes, rather than raising.
 
-    `loader.fill` attaches the file's grid to the parameter while the tree is still on the host, and
-    the runtime promotes the tree afterwards with `p.data = p.data.to(device)` -- a move a module
-    carries for parameters and buffers and for nothing else. So the grid stays on the host while the
-    weight goes to the card, which is the arrangement below: the weight is handed in on the device
-    and the grid deliberately is not. `fp8_block_gemm` moves its scales onto its operands for the
-    same reason, one step later in the same call. Nothing here can fail on a host-only machine,
-    which is why the revision that made every device-path `quantized_linear` raise passed the rest
-    of this file.
+    That pairing is not hypothetical. The tree is built on its device (`Backbone(..., device=...)`)
+    and filled in place (`parameter.copy_(value)`), while the grid comes out of the checkpoint file
+    as a view of the shard mapping -- host memory. `mma.attach_scale` is what moves the grid across,
+    so the loader's own path is device-and-device; but a caller that hands `codes_from_scale` a grid
+    directly, as this test does and as the indexer's row-split band does, arrives at the mixed case,
+    and a host step requested from a card tensor is a hard error at the next GEMM ("Expected all
+    tensors to be on the same device"). `fp8_block_gemm` moves its scales onto its operands for the
+    same reason, one step later in the same call.
     """
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 

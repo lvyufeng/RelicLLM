@@ -17,8 +17,8 @@ core and runs on neither host this suite runs on. Three properties:
 
 * the block-32 quantized GEMM reproduces `dequant(act) @ W.T` and differs from a plain bf16
   `F.linear` by the fp8-activation error -- the whole of what the activation fix buys, and also the
-  arithmetic a weight with no attached scale grid keeps, since the emulated reduction declines such
-  a weight rather than invent a grid for it;
+  arithmetic a weight with no attached codes keeps, since the emulated reduction declines such a
+  weight rather than invent a grid for it;
 * the no-scales path is `F.linear` **exactly** -- not an approximation, the same call -- which is
   what lets `test_models_deepseek_v4_1_reference_parity.py`'s bf16 build keep the arithmetic it has;
 * the activation quantization uses the reference's `1e-4` amax floor and power-of-two rounding.
@@ -83,12 +83,13 @@ def test_quantized_linear_matches_dequant_act_times_weight() -> None:
     needs no quantized weight fixture. The oracle is written out here rather than called, so a
     primitive that agreed with a helper it also defined could not pass this.
 
-    The weight also carries no attached scale grid, and that is what fixes which path runs: the
-    tensor-core emulation is on by default and recovers the weight's exact codes from the grid the
-    file stores beside it (`quantized_linear`'s docstring carries the 224-octave argument for why
-    the dense weight does not determine them), so a grid-less weight takes the *declined* path --
-    one stderr line, then the correctly rounded accumulation asserted here. This test pins that
-    fallback; the emulated rule has its own file, `tests/test_v41_mma_reduction.py`.
+    The weight also carries no attached codes, and that is what fixes which path runs: the
+    tensor-core emulation is on by default and runs on the e4m3 codes `loader.fill` recovered from
+    the grid the file stores beside the weight (`quantized_linear`'s docstring carries the 224-octave
+    argument for why the dense weight does not determine them), so a weight that never went through
+    the loader -- this one, built by hand here -- takes the *declined* path: one stderr line, then
+    the correctly rounded accumulation asserted here. This test pins that fallback; the emulated rule
+    has its own file, `tests/test_v41_mma_reduction.py`.
     """
     torch.manual_seed(0)
     m, n, k = 16, 48, 64

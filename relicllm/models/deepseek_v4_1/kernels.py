@@ -302,19 +302,24 @@ def quantized_linear(
     ``224 * 2**E`` and ``448 * 2**(E-1)`` are the same number, so a tile that maximizes at 224 --
     4.66% of this checkpoint's fp8 tiles -- has two scales that re-expand to identical values while
     implying different exponent fields, and the reduction reads the exponent field. So the codes come
-    from the grid the file stored beside the weight, which ``loader.fill`` attaches to the parameter
-    (``mma.attach_scale``) and this function finds with ``mma.attached_scale``. A weight with no grid
-    attached -- a bf16 one, a tensor a caller built, the indexer's per-head band under
-    ``DEEPSEEK_V41_INDEXER_ROW_SPLIT`` -- has no exact codes, and this falls back to the correctly
-    rounded matmul and says so once on stderr rather than inventing a grid. ``POCKETLLM_V41_MMA_EMULATE=0``
-    skips the emulation entirely; see :func:`_reference_reduction_enabled` for why it is on by
-    default and what turning it off costs.
+    from the grid the file stored beside the weight, and **this function does not recover them**: it
+    reads ``mma.attached_codes``, which ``loader.fill`` hung on the parameter once, at load, and for
+    a reason that is not bookkeeping -- the recovery ends in a ``torch.equal`` over device data, i.e.
+    a synchronisation, and the default serving path (``decode_graphs=True``) captures the decode body
+    into a CUDA graph, where a sync is not merely slow but fatal to the capture. A weight with no
+    codes attached -- a bf16 one, an fp4 routed expert's dense decode, a tensor a caller built, the
+    indexer's per-head band under ``DEEPSEEK_V41_INDEXER_ROW_SPLIT`` -- has no exact codes available,
+    and this falls back to the correctly rounded matmul and says so once on stderr rather than
+    inventing a grid or recovering one here. ``POCKETLLM_V41_MMA_EMULATE=0`` skips the emulation
+    entirely; see :func:`_reference_reduction_enabled` for why it is on by default and what turning
+    it off costs.
 
     ``emulate_reduction=None`` means "follow that switch"; pass ``False`` for a call whose weight is
-    not e4m3. The routed experts are the case: the reference runs ``fp4_gemm`` on an e4m3 activation
-    against an **e2m1** weight, and e2m1's exponent field is not e4m3's, so the rule above does not
-    transfer to it. :func:`expert_forward` in ``modules.py`` says so where it passes ``False``. Until
-    an e2m1 rule is measured, that path stays correctly rounded rather than wrongly emulated.
+    known not to be e4m3. The routed experts are the case: the reference runs ``fp4_gemm`` on an e4m3
+    activation against an **e2m1** weight, and e2m1's exponent field is not e4m3's, so the rule above
+    does not transfer to it. ``expert_forward`` in ``modules.py`` no longer has to say so explicitly
+    -- the routed stores hand in tensors that never went through ``loader.fill`` and so carry no
+    codes -- but the fact is what that path rests on.
 
     The weight is upcast to fp32 explicitly even though it is already bf16, so the accumulator's
     width is a property of this function and not of what the caller happened to hand in; the upcast
@@ -325,48 +330,46 @@ def quantized_linear(
         return F.linear(x, weight)
     emulate = _reference_reduction_enabled() if emulate_reduction is None else emulate_reduction
     if emulate:
+        # Both halves of what the rule runs on, as `loader.fill` left them on the parameter. Nothing
+        # is derived here: the recovery is a device sync and this runs inside the captured decode
+        # body. A weight without them is one whose file stored no grid, or one whose grid was refused
+        # at load because it did not describe the weight -- that refusal is reported at load, by key.
+        codes = mma.attached_codes(weight)
         scale = mma.attached_scale(weight)
-        if scale is None:
-            _note_declined(weight, "its file stored no scale grid beside it")
+        if codes is None or scale is None:
+            _note_declined(weight, "no e4m3 codes recovered from the file's grid are attached to it")
         else:
-            try:
-                codes = mma.codes_from_scale(weight, scale, block_size)
-            except ValueError as exc:
-                # The grid attached to this weight does not describe it -- a stale attachment, a
-                # weight someone replaced in place, a block size this grid was not built for. A
-                # correctly rounded GEMM is wrong about the reference's rounding and right about
-                # everything else; running the rule on exponents that are not the reference's would
-                # be wrong about both. Fall through rather than fail a run, but say so.
-                _note_declined(weight, str(exc))
-            else:
-                flat = x.reshape(-1, x.shape[-1])
-                act_codes, act_scale = block_fp8_act_quant(flat, block_size)
-                out = mma.fp8_block_gemm(act_codes, act_scale, codes, scale, block_size)
-                return out.to(x.dtype).reshape(*x.shape[:-1], weight.shape[0])
+            flat = x.reshape(-1, x.shape[-1])
+            act_codes, act_scale = block_fp8_act_quant(flat, block_size)
+            out = mma.fp8_block_gemm(act_codes, act_scale, codes, scale, block_size)
+            return out.to(x.dtype).reshape(*x.shape[:-1], weight.shape[0])
     act, act_scale = block_fp8_act_quant(x, block_size)
     dequant_act = act.to(torch.float32) * act_scale.repeat_interleave(block_size, dim=-1)
     return torch.matmul(dequant_act, weight.to(torch.float32).transpose(0, 1)).to(x.dtype)
 
 
-#: Whether this process has already said that a linear is not being emulated. One line per process,
-#: because the answer is a property of the run and not of the call: a hundred repetitions of it are
-#: noise, and zero would leave an operator reading a log that cannot be told from a fully emulated
-#: one. `POCKETLLM_V41_MMA_EMULATE=1` with no such line is the only state that means "every fp8
-#: linear ran the reference's reduction".
-_declined_reported = False
+#: Which *kinds* of weight this process has already said are running without the emulation, keyed by
+#: shape, dtype and reason. Not a boolean and not one line per call. One line for the whole process
+#: would be the wrong granularity in both directions: the routed experts decline by design (the
+#: reference runs them on an e2m1 weight, whose exponent field this rule does not describe), so that
+#: line would appear on every expert-bearing run and an fp8 attention weight that declined for a
+#: reason nobody intended would be invisible behind it -- while one line per call would be 384
+#: experts times 40 layers of noise. `POCKETLLM_V41_MMA_EMULATE=1` with no such line at all is the
+#: state that means "every fp8 linear ran the reference's reduction".
+_declined_reported: set[tuple] = set()
 
 
 def _note_declined(weight: torch.Tensor, why: str) -> None:
-    """Say, once, that a quantized linear is running the correctly rounded product instead.
+    """Say, once per kind of weight, that a quantized linear is running the correctly rounded product.
 
-    Silence here would be the expensive failure mode: a run whose weights never got their grids
+    Silence here would be the expensive failure mode: a run whose weights never got their codes
     attached looks exactly like a run where the emulation changed nothing, and the two call for
     opposite next steps.
     """
-    global _declined_reported
-    if _declined_reported:
+    key = (tuple(weight.shape), str(weight.dtype), why)
+    if key in _declined_reported:
         return
-    _declined_reported = True
+    _declined_reported.add(key)
     print(
         f"[relicllm] v41 fp8 reduction emulation is not running on a {tuple(weight.shape)} "
         f"{weight.dtype} weight: {why}. That linear returns the correctly rounded product, which is "

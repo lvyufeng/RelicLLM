@@ -876,11 +876,17 @@ class Indexer(nn.Module):
             # downstream reads back out to notice.
             scale = mma.attached_scale(self.wq_b.weight)
             if scale is not None:
-                mma.attach_scale(
-                    cached,
-                    banded_scale(
-                        scale, self.n_heads_global, self.index_head_dim, tp.rank, tp.world, mma.BLOCK
-                    ),
+                band = banded_scale(
+                    scale, self.n_heads_global, self.index_head_dim, tp.rank, tp.world, mma.BLOCK
+                )
+                mma.attach_scale(cached, band)
+                # And the codes the band implies, for the same reason `loader.fill` recovers the
+                # full weight's: `quantized_linear` reads them and derives nothing, because deriving
+                # means a device sync and this can run inside a captured decode body. `verify=False`
+                # because there is nothing here to verify -- `banded_scale` takes the band out of a
+                # grid the full weight was already checked against, and a cut is exact.
+                mma.attach_codes(
+                    cached, mma.codes_from_scale(cached, band, mma.BLOCK, verify=False)
                 )
             self._wq_b_local = cached
         return cached

@@ -19,6 +19,18 @@ cuBLAS algorithm selection in the proxy, plus this reduction, which the proxy di
 diagnosis, the primitive design, and the acceptance recommendation (token-level, not a tight logits
 tolerance) all stand.
 
+**Where the codes come from, and which linears run the rule.** The rule reads *e4m3 codes*, and a
+dense weight does not determine them (`224 * 2**E` and `448 * 2**(E-1)` are the same number, and
+4.66% of this checkpoint's fp8 tiles sit at that boundary). They are recovered from the grid the file
+stores beside the weight by `loader.fill`, once, and hung on the parameter
+(`mma.attach_codes`/`attached_codes`) -- once because the recovery ends in a `torch.equal` over the
+weight, which is a device synchronisation, and the default serving path captures its decode body into
+a CUDA graph. The hot path therefore derives nothing and reads what the loader left. Which linears
+run the rule is decided by the *weight*, not by the call site: every fp8 weight the file stored a
+grid beside emulates, the **shared** experts included -- an earlier revision had switched those off
+along with the routed ones. The routed experts still decline, and correctly: the reference runs them
+on an **e2m1** weight, whose exponent field this rule does not describe.
+
 ## The claim
 
 The port dequantizes every fp8/fp4 weight to bf16 once at load and runs a plain `F.linear` bf16

@@ -63,6 +63,7 @@ memory, and uninitialized memory that happens to be finite is not detectable at 
 
 from __future__ import annotations
 
+import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Iterator, Sequence
@@ -390,6 +391,12 @@ def checkpoint_weights(
 
     Raises only through the caller's own check on `missing`. Filling is to the parameter's own dtype
     and device, so `Head`, which is fp32 where the file is bf16, keeps full precision in the logits.
+
+    An fp8 weight also leaves here with two things hung on it: the scale grid the file stored beside
+    it (`mma.attach_scale`, on the weight's own device) and the e4m3 codes that grid implies
+    (`mma.attach_codes`). Both happen here because this is the only point at which the grid, the
+    weight and an *uncaptured* device are all in hand -- the recovery's round-trip check is a device
+    synchronisation, and the default serving path captures the decode body into a CUDA graph.
     """
     report = LoadReport()
     seen_group: str | None = None
@@ -426,9 +433,35 @@ def checkpoint_weights(
             # one, and the callers treat that as "no codes are recoverable here" rather than guessing.
             scale = checkpoint.tile_scale(key)
             if scale is not None:
+                block = checkpoint.block_size(key)
                 if plan is not None:
-                    scale = plan.local_scale(key, scale, checkpoint.block_size(key))
+                    scale = plan.local_scale(key, scale, block)
                 mma.attach_scale(parameter, scale)
+                # And the codes that grid implies, recovered *here* rather than per call. The
+                # recovery is a pass over the weight ending in a `torch.equal` -- a device sync --
+                # and the port's default decode path captures its body into a CUDA graph, where a
+                # sync is not allowed. This is the one moment the grid and the weight are both in
+                # hand and nothing is captured, so this is where it happens; `quantized_linear` then
+                # reads `mma.attached_codes` and touches neither the grid nor the weight to find out
+                # what codes to run on.
+                try:
+                    codes = mma.codes_from_scale(parameter.detach(), scale, block)
+                except ValueError as refused:
+                    # A grid that does not describe this weight -- the wrong tensor, the wrong cut,
+                    # a block size it was not built for. Not fatal: that one linear runs the
+                    # correctly rounded product, which is a difference in the reference's rounding
+                    # and not in anything else. But it is reported here, by name, because the
+                    # alternative is a run that is quietly 2.41% of elements away from the reference
+                    # at that site and says nothing.
+                    print(
+                        f"[relicllm] {key}: the grid the file stores beside this weight does not "
+                        f"describe it ({refused}); that linear will not emulate the reference's "
+                        f"reduction",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                else:
+                    mma.attach_codes(parameter, codes)
             report.loaded.append(key)
     return report
 
