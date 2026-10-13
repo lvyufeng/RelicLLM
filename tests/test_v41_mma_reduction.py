@@ -109,6 +109,19 @@ def _nominal_exp_without_the_floor(codes: torch.Tensor) -> torch.Tensor:
     return (field - 7).to(torch.float64)
 
 
+def _nominal_i16_without_the_floor(codes: torch.Tensor) -> torch.Tensor:
+    """The same mutation against the hot path's own decoder, sentinel and all.
+
+    `_nominal_i16` is what the batched walk reads its anchors from, so the floor has to be
+    removable *there* for the test above to mean anything: a mutation of `nominal_exp` would leave
+    the batched path untouched and the assertion would pass for the wrong reason.
+    """
+    raw = mma._bytes(codes).to(torch.int16)
+    field = (raw >> 3) & 0xF
+    nominal = field - 7
+    return torch.where((raw & 0x7F) != 0, nominal, torch.full_like(nominal, mma._EMPTY_I16))
+
+
 def _expand(codes: torch.Tensor, scale: torch.Tensor, block: int = BLOCK) -> torch.Tensor:
     """The dense weight a code grid and its scale grid describe, exactly.
 
@@ -141,6 +154,72 @@ def _block_inputs(
     nominal = mma.nominal_exp(a_raw) + mma.nominal_exp(b_raw)
     nominal = torch.where(product == 0.0, torch.full_like(nominal, mma._SENTINEL), nominal)
     return product, nominal
+
+
+def _unbatched_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) -> torch.Tensor:
+    """`mma.fp8_block_gemm` written the long way: one K block at a time, in fp64, elementwise.
+
+    This is the f0b4d16 implementation, kept here as the second opinion the hot path is checked
+    against rather than as a copy anyone should edit. It walks K blocks outermost and decodes each
+    operand slice per (block, column group) through the hand-written decoder, and it is the version
+    whose arithmetic *is* the rule -- twenty-eight tensor ops to decode a tile, `_cut` per term,
+    `reduce_block` per block. What it costs is the reason the module no longer does it: 107,424
+    tensor ops for one `wq_a` at the acceptance configuration, 3.1 s of host dispatch against 67 ms
+    of device time, and no token out of an emulation-on acceptance run in ninety minutes.
+
+    It is not a re-derivation and it is not allowed to drift: it is the old function, so a change
+    that moves the new one by a bit shows up here as a disagreement rather than as a fixture that
+    was quietly updated alongside the thing it was checking.
+    """
+    a_bytes, b_bytes = mma._bytes(a_codes), mma._bytes(b_codes)
+    m, k = a_bytes.shape[-2], a_bytes.shape[-1]
+    n = b_bytes.shape[0]
+    blocks = k // block_size
+    device = a_bytes.device
+    a_exp = mma.e8m0_exponent(a_scale, verify=False).to(device)
+    b_exp = mma.e8m0_exponent(b_scale, verify=False).to(device)
+
+    rows, cols = m, n
+    if m * block_size * n > mma._MAX_PRODUCT_ELEMENTS:
+        if block_size * n <= mma._MAX_PRODUCT_ELEMENTS:
+            rows = max(1, mma._MAX_PRODUCT_ELEMENTS // (block_size * n))
+        else:
+            rows = 1
+            cols = (mma._MAX_PRODUCT_ELEMENTS // block_size) // block_size * block_size
+
+    out = torch.zeros(m, n, dtype=torch.float32, device=device)
+    for block in range(blocks):
+        at = slice(block * block_size, (block + 1) * block_size)
+        a_scale_block = mma._pow2(a_exp[:, block].to(torch.float64)).to(torch.float32)
+        for lo in range(0, n, cols):
+            hi = min(lo + cols, n)
+            b_scale_block = mma._pow2(b_exp[lo // block_size:hi // block_size, block].to(torch.float64))
+            b_scale_block = b_scale_block.to(torch.float32).repeat_interleave(block_size)
+            b_block = b_bytes[lo:hi, at]
+            b_dec = mma.decode_e4m3(b_block)
+            b_nom = mma.nominal_exp(b_block)
+            for m0 in range(0, m, rows):
+                m1 = min(m0 + rows, m)
+                a_block = a_bytes[m0:m1, at]
+                product = mma.decode_e4m3(a_block).unsqueeze(1) * b_dec.unsqueeze(0)
+                nominal = mma.nominal_exp(a_block).unsqueeze(1) + b_nom.unsqueeze(0)
+                nominal = torch.where(
+                    product == 0.0, torch.full_like(nominal, mma._SENTINEL), nominal
+                )
+                fragment = mma.reduce_block(product, nominal).to(torch.float32)
+                sa = a_scale_block[m0:m1].unsqueeze(-1)
+                out[m0:m1, lo:hi] += fragment * sa * b_scale_block
+    return out
+
+
+def _differing(a: torch.Tensor, b: torch.Tensor) -> int:
+    """How many elements differ, counting every NaN pair as a value that *matches*.
+
+    `torch.equal` is the wrong reporter for this file: the payloads include the two NaN codes on
+    purpose, and two bit-identical NaNs compare unequal there, so a tolerance-free comparison has to
+    be spelled out to be honest about them.
+    """
+    return int((~((a == b) | (a.isnan() & b.isnan()))).sum())
 
 
 def test_the_vectorised_rule_is_a_scalar_transcription_of_the_same_rule() -> None:
@@ -582,18 +661,18 @@ def test_the_window_and_the_floor_are_the_constants_the_rule_was_measured_with(m
 
     rule = gemm()
 
-    # `_cut`'s `off` is a default argument and was bound when the function was defined, so setting
-    # `mma.WINDOW` would change nothing at all -- rebinding `_cut` is the mutation, and it is the
-    # same one a reader would make: `2 ** (anchor - 12)` instead of `2 ** (anchor - 13)`.
+    # The hot path reads the constant from `WINDOW` rather than from a default argument, so this is
+    # the mutation a reader would make: `2 ** (anchor - 12)` instead of `2 ** (anchor - 13)`. The
+    # reduction and the decode test below are checked against the same constant.
     with monkeypatch.context() as narrow:
-        narrow.setattr(mma, "_cut", functools.partial(mma._cut, off=mma.WINDOW - 1))
+        narrow.setattr(mma, "WINDOW", mma.WINDOW - 1)
         assert not torch.equal(gemm(), rule), (
             "a window one octave wider cut exactly the same terms, so this fixture cannot tell the "
             "rule's thirteen places from twelve"
         )
 
     with monkeypatch.context() as floorless:
-        floorless.setattr(mma, "nominal_exp", _nominal_exp_without_the_floor)
+        floorless.setattr(mma, "_nominal_i16", _nominal_i16_without_the_floor)
         assert not torch.equal(gemm(), rule), (
             "dropping the -6 floor changed nothing on a payload whose activations are a quarter "
             "subnormal, so this fixture cannot tell the encoding field from the value's exponent"
@@ -665,17 +744,18 @@ def test_the_gemm_follows_its_operands_device_whatever_its_scales_arrive_on() ->
 
 
 def test_the_gemm_answers_the_same_under_every_tiling_of_its_product(monkeypatch) -> None:
-    """The chunked loop and the whole-operand one it replaced are the same arithmetic, bit for bit.
+    """The batched walk and the one-block-at-a-time walk it replaced are the same arithmetic.
 
-    The GEMM has to tile: its operands are fp8 and its intermediates are fp64, so a whole weight
-    decoded at once is eight bytes an element, and the first version of this function did that and
-    died at the acceptance configuration -- 1.17 GiB wanted against the 0.67 GiB a rank had free.
+    The GEMM has to tile: its product is one element per (output element, K of a block), the engram's
+    `wkv` is 147M codes, and a whole-operand decode is what died at the acceptance configuration --
+    1.17 GiB wanted against the 0.67 GiB a rank had free.
 
     Tiling a contraction is exactly the kind of change that is off by a rounding: the accumulator is
     fp32 and `out +=` is not associative, so a different partition of the K blocks would move bits.
-    This test is what says the partition was chosen to leave the *order* alone -- blocks still
-    accumulate outermost, in the same order, and the row tiles and column groups are disjoint
-    partitions of independent output elements.
+    What the batched walk *can* rearrange freely is everything inside a block, because those sums are
+    exact (see `mma.fp8_block_gemm`), and this test is what separates the two claims: it holds the
+    batched result against the fp64 one-block-at-a-time transcription at three budgets, including
+    one with no chunking at all.
     """
     m, n, k = 3, 1024, 256
     a_raw = _codes(31, m * k).reshape(m, k)
@@ -688,16 +768,43 @@ def test_the_gemm_answers_the_same_under_every_tiling_of_its_product(monkeypatch
     ).to(torch.float32)
 
     monkeypatch.setattr(mma, "_MAX_PRODUCT_ELEMENTS", 1 << 24)  # no chunking at all
-    whole = mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+    whole = _unbatched_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
 
-    for budget, what in ((1 << 15, "tiled on the row axis"), (1 << 10, "tiled on both axes")):
+    for budget, what in (
+        (1 << 24, "untiled"),
+        (1 << 15, "tiled on the row axis"),
+        (1 << 10, "tiled on both axes"),
+    ):
         monkeypatch.setattr(mma, "_MAX_PRODUCT_ELEMENTS", budget)
         got = mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
-        assert torch.equal(got, whole), (
-            f"the answer moves when the product is {what} ({budget} elements): "
-            f"{int((got != whole).sum())} of {whole.numel()} outputs differ, so the accumulation "
-            f"order changed with the partition"
+        differing = _differing(got, whole)
+        assert differing == 0, (
+            f"the batched answer moves when the product is {what} ({budget} elements): "
+            f"{differing} of {whole.numel()} outputs differ from the one-block-at-a-time arithmetic, "
+            f"so either the accumulation order changed with the partition or the wide reduction is "
+            f"not the same reduction"
         )
+
+
+def test_an_empty_operand_fails_the_way_it_always_did() -> None:
+    """A zero-row or zero-column operand is refused, and with the same error it always raised.
+
+    Neither is reachable from the port -- `quantized_linear` only calls this with a real activation
+    -- but the batched walk added a `ktile` division that evaluates before the loop does, so an empty
+    operand changed from the old ``range(0, 0, 0)`` ``ValueError`` to a ``ZeroDivisionError`` from
+    the tiling. One ``max(1, ...)`` on that divisor keeps the failure identical, which is what this
+    pins: it is a one-line guard whose only job is that a caller who could never get here still gets
+    the same exception if it somehow does.
+    """
+    for m, n in ((0, 32), (1, 0)):
+        a_raw = (
+            _codes(52, m * 32).reshape(m, 32) if m else torch.zeros(0, 32, dtype=torch.uint8)
+        )
+        a_scale = torch.ones(m, 1, dtype=torch.float32)
+        weight = _codes(51, 32 * 32).reshape(32, 32) if n else torch.zeros(0, 32, dtype=torch.uint8)
+        grid = torch.ones(1, 1, dtype=torch.float32) if n else torch.zeros(0, 1, dtype=torch.float32)
+        with pytest.raises(ValueError):
+            mma.fp8_block_gemm(a_raw, a_scale, weight, grid, BLOCK)
 
 
 def test_the_gemm_never_decodes_a_whole_operand(monkeypatch) -> None:
@@ -705,18 +812,18 @@ def test_the_gemm_never_decodes_a_whole_operand(monkeypatch) -> None:
 
     This is the property the OOM needed and the one a correctness test cannot see -- both spellings
     return identical bits, so nothing on the host fails when the loop allocates a gigabyte. What is
-    asserted is about the *arguments*, which are observable: no call into `decode_e4m3` or
-    `nominal_exp` is ever handed more than one slice's worth of codes, and making the weight eight
-    times longer does not make that slice any bigger.
+    asserted is about the *arguments*, which are observable: neither decoder is ever handed more than
+    one tile's worth of codes, and making the weight eight times longer does not make that tile any
+    bigger.
 
-    The engram's `wkv` is the weight this exists for: 147M fp8 elements, so an fp64 copy of it is
-    1.17 GiB, and at the acceptance configuration four ranks share a 24 GiB card with the prefix
-    cache resident and 0.67 GiB free.
+    The engram's `wkv` is the weight this exists for: 147M fp8 elements, so a copy of it is 1.17 GiB
+    in fp64 (0.59 GiB in fp32 alone), and at the acceptance configuration four ranks share a 24 GiB
+    card with the prefix cache resident and 0.67 GiB free.
     """
 
     def peak_for(n: int) -> int:
         seen: list[int] = []
-        real_decode, real_nominal = mma.decode_e4m3, mma.nominal_exp
+        real_decode, real_nominal = mma._decode_codes_f32, mma._nominal_i16
 
         def counting(fn):
             @functools.wraps(fn)
@@ -726,8 +833,8 @@ def test_the_gemm_never_decodes_a_whole_operand(monkeypatch) -> None:
 
             return wrapper
 
-        monkeypatch.setattr(mma, "decode_e4m3", counting(real_decode))
-        monkeypatch.setattr(mma, "nominal_exp", counting(real_nominal))
+        monkeypatch.setattr(mma, "_decode_codes_f32", counting(real_decode))
+        monkeypatch.setattr(mma, "_nominal_i16", counting(real_nominal))
         m, k = 2, 256
         a_raw = _codes(41, m * k).reshape(m, k)
         b_raw = _codes(42, n * k).reshape(n, k)
