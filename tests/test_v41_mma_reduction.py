@@ -786,6 +786,79 @@ def test_the_gemm_answers_the_same_under_every_tiling_of_its_product(monkeypatch
         )
 
 
+def test_the_middle_k_tile_the_shipped_budget_produces_is_the_same_arithmetic(monkeypatch) -> None:
+    """The K tile is a third regime, and the two around it do not stand in for it.
+
+    `_MAX_PRODUCT_ELEMENTS` is ``1 << 24``. At the acceptance configuration -- ``wq_a``'s M=13,
+    K=5120, 160 K blocks -- that budget lands on ``ktile = 31``: the K loop runs five tiles of 31
+    blocks and a last one of the remaining 5. The test above tiles the same fixture three ways, but
+    its shape (m=3, n=1024, k=256) maps those budgets to ``ktile = 170`` clamped to the 8 blocks and
+    then to ``ktile = 1``; neither *accumulates a block into a tile whose width the budget decided*,
+    which is the regime the shipped configuration actually runs in.
+
+    The difference is not cosmetic. A tile is what makes the per-block work once per tile instead of
+    once per block, so the tile's own width enters the accumulation, and a walk that got the width
+    wrong -- dropping a partial tail tile, or summing a tile's K blocks in the wrong order -- is
+    exactly the mistake this tiling was introduced to risk. That mistake is invisible at ``ktile = 1``
+    (one block a tile is the old loop) and at ``ktile >= blocks`` (one tile is no tiling): the fixture
+    below is the smallest that lands strictly between, and the assertion on ``ktile`` is what keeps it
+    there rather than drifting onto whichever side a future budget edit lands on.
+    """
+    # A prefill-shaped contraction: the acceptance `wq_a`'s row count and column width, with K cut to
+    # 1024 so the fp64 transcription below stays inside a test's patience -- 32 K blocks against a
+    # budget that yields a 31-wide tile is the same 31-and-1 walk the real 160-block shape runs.
+    m, n, k = 13, 1280, 1024
+    budget = mma._MAX_PRODUCT_ELEMENTS  # the shipped value, not a fixture's own
+
+    a_raw = _codes(31, m * k).reshape(m, k)
+    b_raw = _codes(32, n * k).reshape(n, k)
+    a_scale = mma._pow2(
+        torch.randint(-9, 2, (m, k // BLOCK), generator=_gen(33)).to(torch.float64)
+    ).to(torch.float32)
+    b_scale = mma._pow2(
+        torch.randint(-9, 2, (n // BLOCK, k // BLOCK), generator=_gen(34)).to(torch.float64)
+    ).to(torch.float32)
+
+    # The K tile is read off the walk itself rather than re-derived from the budget: `fp8_block_gemm`
+    # hands its decoder one operand slice per (K tile, column group, row tile), so the widths of those
+    # slices *are* the tile widths, and a test that recomputed the formula would pin its own arithmetic
+    # against the loop's. Every slice it sees has to be a whole tile before the last, which is what the
+    # assertion below reads.
+    widths: list[int] = []
+    real_decode = mma._decode_codes_f32
+
+    def watched_decode(codes: torch.Tensor, *args, **kwargs) -> torch.Tensor:
+        widths.append(codes.shape[-1] // BLOCK)
+        return real_decode(codes, *args, **kwargs)
+
+    # The oracle is taken with the budget widened, so its own single-block walk does not see the tile:
+    # `fp8_block_gemm` reads the budget off the module, and the widening below moves the batched tile
+    # without touching the fp64 transcription's arithmetic -- which is the comparison this is making.
+    monkeypatch.setattr(mma, "_MAX_PRODUCT_ELEMENTS", 1 << 24)
+    whole = _unbatched_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+
+    monkeypatch.setattr(mma, "_MAX_PRODUCT_ELEMENTS", budget)
+    monkeypatch.setattr(mma, "_decode_codes_f32", watched_decode)
+    got = mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+    blocks = k // BLOCK
+    ktile = max(widths)
+    assert 1 < ktile < blocks, (
+        f"the shipped budget {budget} walked {blocks} K blocks in tiles of {sorted(set(widths))}, "
+        f"which is not the middle regime this test exists to pin -- a tile of 1 is the old loop and "
+        f"one tile of everything is no tiling; either the budget moved or the fixture's shape did"
+    )
+    assert set(widths) <= {ktile, blocks % ktile or ktile}, (
+        f"the walk's tiles are not whole tiles plus one tail: {sorted(set(widths))}"
+    )
+
+    differing = _differing(got, whole)
+    assert differing == 0, (
+        f"the batched answer moves under the shipped budget ({budget}, a {ktile}-wide K tile): "
+        f"{differing} of {whole.numel()} outputs differ from the one-block-at-a-time arithmetic, so "
+        f"the K tile is not the plain partition of the K loop it is meant to be"
+    )
+
+
 def test_an_empty_operand_fails_the_way_it_always_did() -> None:
     """A zero-row or zero-column operand is refused, and with the same error it always raised.
 
@@ -805,6 +878,97 @@ def test_an_empty_operand_fails_the_way_it_always_did() -> None:
         grid = torch.ones(1, 1, dtype=torch.float32) if n else torch.zeros(0, 1, dtype=torch.float32)
         with pytest.raises(ValueError):
             mma.fp8_block_gemm(a_raw, a_scale, weight, grid, BLOCK)
+
+
+def test_an_all_empty_half_is_cut_nothing_rather_than_flattened(monkeypatch) -> None:
+    """A half whose every activation is the empty code has no anchor, and `_EMPTY_GUARD` is what says so.
+
+    Every activation code's second half is zeroed, so every product in each half is zero and there is
+    no live exponent for the half to be cut against. `_nominal_i16` carries `_EMPTY_I16` for exactly
+    this, and the anchor that comes out of a sentinel pair -- at most `-1000 + 8` -- is nowhere near a
+    live one; `_EMPTY_GUARD` is the single threshold that separates them, and it is the one test here
+    that mutation can move without anything else noticing. Set it below the sentinel pairs (the
+    review's repro is ``-1e30``) and ``_grid_f32`` evaluates ``2 ** (anchor - 13)`` on ``-1e9``: the
+    step underflows to zero, ``x / 0`` is an infinity for any nonzero ``x`` and a NaN for a zero one,
+    and the whole output goes non-finite. So the guard is not decoration -- it is the only thing
+    keeping a zero-activation tile from dividing by a grid that does not exist.
+
+    The oracle is the same fp64 transcription the tiling tests use; it builds its sentinel from the
+    module's own constant, exactly as it always has, so it states the answer this shape is supposed
+    to give rather than a second copy of the guard.
+    """
+    rows, out_rows, cols = 3, 2 * BLOCK, 2 * BLOCK
+    a_raw = _codes(21, rows * cols).reshape(rows, cols)
+    a_raw[:, :HALF] = 0  # the first half of every row is the empty code, so every product is zero
+    b_raw = _codes(22, out_rows * cols).reshape(out_rows, cols)
+    a_scale = mma._pow2(
+        torch.randint(-9, 2, (rows, cols // BLOCK), generator=_gen(23)).to(torch.float64)
+    ).to(torch.float32)
+    b_scale = mma._pow2(
+        torch.randint(-9, 2, (out_rows // BLOCK, cols // BLOCK), generator=_gen(24)).to(torch.float64)
+    ).to(torch.float32)
+
+    whole = _unbatched_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+    assert bool(torch.isfinite(whole).all()) and bool((whole != 0.0).any()), (
+        "the fixture's second half is not live, so it does not exercise the empty half beside a "
+        "nonzero one"
+    )
+    assert _differing(mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK), whole) == 0, (
+        "the batched walk and the fp64 transcription disagree on an all-empty half"
+    )
+
+    # The guard, moved to where a sentinel pair is a live anchor: the sentinel reaches `_grid_f32`
+    # and the division by an underflowed step takes the output with it.
+    with monkeypatch.context() as unguarded:
+        unguarded.setattr(mma, "_EMPTY_GUARD", -1.0e30)
+        mutated = mma.fp8_block_gemm(a_raw, a_scale, b_raw, b_scale, BLOCK)
+        assert not bool(torch.isfinite(mutated).all()) and _differing(mutated, whole) > 0, (
+            "moving `_EMPTY_GUARD` below the sentinel left the all-empty half's answer alone, so "
+            "this fixture does not read the sentinel branch"
+        )
+
+
+def test_the_native_cast_decode_is_the_hand_decode_on_every_code_and_every_view() -> None:
+    """`_decode_codes_f32` is `decode_e4m3` in fp32, on all 256 codes and on sliced views.
+
+    The hot path decodes with the native cast and the load path decodes by hand, and the two have to
+    agree or the emulation runs on values the reference never had. The committed decode test sweeps
+    the hand decoder against torch's own cast; this one holds the *hot path* against the hand decoder,
+    which is the comparison that would catch a native path that had quietly become a different one.
+
+    All 256 encodings, because the two the normal branch's formula gets wrong -- `0x7F` and `0xFF`
+    decode to NaN, not to the 480 the formula gives -- are excluded from every *code fixture* this
+    file draws (`_codes` masks them out), so a cast that sanitized NaNs to 480 would pass everything
+    else. The four view kinds are the arrangement the port feeds it: `fp8_block_gemm` hands it a
+    `[rows, tiles, cols, BLOCK]` slice of the operand, and a decoded view is what `_bytes(...).view`
+    has to survive. A non-contiguous slice makes the `.view()` itself the operation under test.
+    """
+    raw = torch.arange(256, dtype=torch.int64).to(torch.uint8)
+    grid = raw.reshape(16, 16).contiguous().view(torch.float8_e4m3fn)
+    for what, view in (
+        ("the flat encoding space", grid.reshape(-1)),
+        ("row-sliced", grid[3:9]),
+        ("column-sliced", grid[:, 5:11]),
+        ("transposed", grid.t()),
+    ):
+        got = mma._decode_codes_f32(view)
+        want = mma.decode_e4m3(view).to(torch.float32)
+        assert got.shape == want.shape, f"{what}: the decode changed the shape"
+        assert _differing(got, want) == 0, (
+            f"the native cast disagrees with the hand decoder on {what} at "
+            f"{_differing(got, want)} of {want.numel()} codes"
+        )
+
+    # The NaN encodings, nameable rather than buried in the sweep above: they have to come out NaN
+    # rather than the 480 the normal branch's formula gives them. The hand decoder's own test makes
+    # the same claim about the same two codes, and this is the hot path's half of it -- a cast that
+    # sanitized them would already be caught above, but only if a reader believed the sweep covered
+    # them, and the fixture codes elsewhere in this file are drawn to exclude them.
+    nan_codes = torch.tensor([0x7F, 0xFF], dtype=torch.uint8).view(torch.float8_e4m3fn)
+    assert bool(torch.isnan(mma._decode_codes_f32(nan_codes)).all()), (
+        "the native cast did not make the two NaN encodings NaN, so the hot path decodes a value the "
+        "hand decode and the reference do not"
+    )
 
 
 def test_the_gemm_never_decodes_a_whole_operand(monkeypatch) -> None:
