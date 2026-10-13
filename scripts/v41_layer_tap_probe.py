@@ -91,6 +91,10 @@ def main() -> int:
         "routed": kinds,
         "checkpoint": str(Path(args.checkpoint).resolve()),
         "prompt_ids": ids,
+        # Pinned at the `load_backbone` call above rather than taken from a flag, and written down
+        # for the same reason the sibling records it: the Engram table is the other big host-resident
+        # structure, so which of the two placements ran belongs in the reading.
+        "resident_engram": False,
         "source": str(tree),
         "revision": git_commit(str(tree)),
         # The other half of "which code produced these rows". `relicllm` resolves its ops out of
@@ -105,6 +109,9 @@ def main() -> int:
         # the prefill sparse-attention knobs change step 0 and nothing else, so a step-0 reading
         # without them is not attributable to a revision.
         "knobs": {**env_snapshot("DEEPSEEK_"), **env_snapshot("POCKETLLM_")},
+        # Where the tree itself ran, which is not what `cuda_metadata` answers: that is the box's
+        # card inventory, and a host-path run on a four-card box reports four cards it never used.
+        "device": str(model.device),
         "cuda": cuda_metadata(),
     }
     say(f"config: {run_config}")

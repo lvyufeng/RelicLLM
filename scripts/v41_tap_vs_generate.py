@@ -106,6 +106,9 @@ def main() -> int:
         # the prefill sparse-attention knobs change step 0 and nothing else, so a step-0 reading
         # without them is not attributable to a revision.
         "knobs": {**env_snapshot("DEEPSEEK_"), **env_snapshot("POCKETLLM_")},
+        # Where the tree itself ran, which is not what `cuda_metadata` answers: that is the box's
+        # card inventory, and a host-path run on a four-card box reports four cards it never used.
+        "device": str(model.device),
         "cuda": cuda_metadata(),
     }
     say(f"routed experts: {', '.join(kinds)} on {len(model.layers)} layers")
