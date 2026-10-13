@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Print the ids the *port's* chat renderer feeds, so they can be diffed against the derived ones.
 
 `V41Backend._encode_chat` renders a user turn by calling the checkpoint's own `encode_messages`
@@ -22,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 
 DEFAULT_PROMPT = "Reply with the single line: golden fixture."
 
@@ -34,12 +32,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--thinking-mode", default="chat", choices=["chat", "thinking"])
     args = parser.parse_args(argv)
 
-    import relicllm
     import relic_core
-
-    from relicllm.encoding.deepseek_v4_1 import encode_messages
-
     from transformers import AutoTokenizer
+
+    import relicllm
+    from relicllm.encoding.deepseek_v4_1 import encode_messages
 
     text = encode_messages(
         args.checkpoint,

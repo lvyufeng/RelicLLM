@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Derive the ids the checkpoint's own entry point feeds a chat turn, without asking the port.
 
 The committed v41 oracle is a *raw* completion prompt; `inference/generate.py` -- the checkpoint's

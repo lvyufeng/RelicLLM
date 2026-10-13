@@ -20,18 +20,24 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
+
+#: The golden fixture this probe takes its argv from, so the two cannot drift apart.
+GOLDEN_FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "golden" / "v41.json"
 
 
 def main() -> int:
+    fixture = json.loads(GOLDEN_FIXTURE.read_text(encoding="utf-8"))
+
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--model", required=True)
     parser.add_argument("--out", default="/tmp/port_chat.pt")
     parser.add_argument("--prompt", default="Reply with the single line: golden fixture.")
     parser.add_argument("--max-tokens", type=int, default=16)
     parser.add_argument("--top-k", type=int, default=8)
-    # Everything after `--` replaces the canonical fixture's argv tail. Default is the canonical
-    # TP4 set (4x sm_89 cards); an sm_75 box that cannot hold a 4-way split passes its own, e.g.
-    # `-- --max-model-len 8192 --backend-option prefill_chunk=4096 --backend-option threads=22`.
+    # Everything after `--` replaces the fixture's argv tail. The default is the fixture's own
+    # canonical TP4 set (4x sm_89 cards); an sm_75 box that cannot hold a 4-way split passes its own,
+    # e.g. `-- --max-model-len 8192 --backend-option prefill_chunk=4096 --backend-option threads=22`.
     parser.add_argument(
         "extra",
         nargs="*",
@@ -40,7 +46,7 @@ def main() -> int:
     args = parser.parse_args()
 
     # The logits record is what the backend emits when this is set; the same knob the golden harnesses
-    # read. Set before importing so the backend picks it up.
+    # read. `_logits_check_top_k` reads it at request time, so setting it here is soon enough.
     os.environ["POCKETLLM_V41_LOGITS_CHECK"] = str(args.top_k)
     os.environ.setdefault("DEEPSEEK_V41_RESIDENT_EXPERTS", "1")
 
@@ -50,19 +56,13 @@ def main() -> int:
     from relicllm.api import SamplingParams
     from relicllm.cli import _args, build_parser
 
-    # The canonical fixture's own argv (tests/fixtures/golden/v41.json), checkpoint re-pointed.
-    argv = (
-        [
-            "serve", "--backend", "v41", "--model", args.model,
-            "--tensor-parallel-size", "4", "--max-model-len", "8192",
-            "--backend-option", "expert_pool_rows=148",
-            "--backend-option", "prefill_chunk=4096",
-            "--backend-option", "decode_graphs=true",
-            "--backend-option", "threads=22",
-        ]
-        if not args.extra
-        else ["serve", "--backend", "v41", "--model", args.model, *args.extra]
-    )
+    # The canonical fixture's own argv, read from the fixture file rather than copied so a fixture
+    # edit reaches this probe; only the checkpoint is re-pointed, at `--model`.
+    if args.extra:
+        argv = ["serve", "--backend", "v41", "--model", args.model, *args.extra]
+    else:
+        argv = list(fixture["argv"])
+        argv[argv.index("--model") + 1] = args.model
     namespace = build_parser().parse_args(argv)
 
     def say(message: str) -> None:
