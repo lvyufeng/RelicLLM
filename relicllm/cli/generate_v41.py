@@ -270,6 +270,45 @@ def resolve_prompt(prompt: str | None, prompt_file: str | None) -> str:
     return "The capital of France is" if prompt is None else prompt
 
 
+def resolve_decode_graphs(
+    requested: bool, device: torch.device | None, tree_where: str
+) -> tuple[bool, str]:
+    """Whether this run graphs its decode, and the banner note that says why.
+
+    Two refusals, in order, and both are the answer to a question the option's value alone does not
+    settle. A decode graph is captured onto a CUDA stream and replayed beside the attention caches,
+    so a tree that is not on a CUDA card has nothing to record and `DecodeGraphs` refuses it. The
+    predicate is that class's own (`graphs.GRAPH_DEVICE_TYPE`) rather than "a device was named":
+    `--device` is a free-form string that nothing validates against the host, so `--device cpu` on a
+    card host is a host tree and a torchrun launch on an Ascend host drives an npu one -- both would
+    be claimed as graphed here and refused one line into the run.
+
+    The second is the emulation, and it is the same refusal `V41Backend._resolve_decode_graphs`
+    makes: the emulated reduction carries about 900 MiB of extra driver state a layer, and a captured
+    graph keeps it for the graph's lifetime, so the capture dies in `capture_end` a few layers in.
+    This launcher resolves its own `--decode-graphs` and hands it straight to `generate`, so it never
+    reaches that method and has to make the refusal itself. The predicate is the function the backend
+    calls rather than a second reading of the environment, and the explanation is the backend's own
+    constant rather than a sentence spelled again here, so the two cannot say different things.
+
+    It is a function for the same reason `resolve_pool_rows` and `resolve_prompt` are: what the flag
+    does to the loop is everything about it a test without four cards can hold still. The emulation
+    import is inside the branch because a host tree has already refused the graph above and must not
+    pay for pulling the backend in.
+    """
+    from relicllm.models.deepseek_v4_1.graphs import GRAPH_DEVICE_TYPE
+
+    decode_graphs = bool(requested) and device is not None and device.type == GRAPH_DEVICE_TYPE
+    if not decode_graphs:
+        return False, f", decode not graphed: the tree is on {tree_where}" if requested else ""
+    from relicllm.backends.v41_backend import EMULATION_REFUSES_GRAPHS
+    from relicllm.models.deepseek_v4_1.kernels import _reference_reduction_enabled
+
+    if _reference_reduction_enabled():
+        return False, f", decode not graphed: {EMULATION_REFUSES_GRAPHS}"
+    return True, ", decode graphed a block at a time"
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="torchrun --nproc_per_node=4 -m relicllm.cli.generate_v41",
@@ -521,15 +560,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # claimed as graphed here and then refused one line into the run. One constant, so what this
     # asks for and what that class refuses cannot drift apart.
     tree_where = "the host" if device is None else str(device)
-    decode_graphs = (
-        bool(args.decode_graphs) and device is not None and device.type == GRAPH_DEVICE_TYPE
-    )
-    if decode_graphs:
-        decode_note = ", decode graphed a block at a time"
-    elif args.decode_graphs:
-        decode_note = f", decode not graphed: the tree is on {tree_where}"
-    else:
-        decode_note = ""
+    decode_graphs, decode_note = resolve_decode_graphs(args.decode_graphs, device, tree_where)
     say(
         f"network {world} rank{'s' if world > 1 else ''}, tree on {tree_where}, experts on "
         f"{'the host' if expert_device is None else f'{expert_device} x{expert_world}'}, "

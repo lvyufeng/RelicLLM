@@ -28,8 +28,15 @@ from __future__ import annotations
 import inspect
 
 import pytest
+import torch
 
-from relicllm.cli.generate_v41 import build_arg_parser, resolve_pool_rows, resolve_prompt
+from relicllm.backends.v41_backend import EMULATION_REFUSES_GRAPHS
+from relicllm.cli.generate_v41 import (
+    build_arg_parser,
+    resolve_decode_graphs,
+    resolve_pool_rows,
+    resolve_prompt,
+)
 from relicllm.models.deepseek_v4_1.loader import load_backbone
 
 # The width the default, the batched path's end-to-end number and the 512-token pool sweeps were all
@@ -141,3 +148,41 @@ def test_a_prompt_file_reaches_the_parser_under_its_own_name() -> None:
         "a parser default here would be indistinguishable from a caller's `--prompt` in "
         "`resolve_prompt`, which is what makes the two flags mutually exclusive rather than ordered"
     )
+
+
+def _card() -> torch.device:
+    return torch.device("cuda", 0)
+
+
+def test_the_emulation_refuses_the_decode_graph_here_too(monkeypatch) -> None:
+    """`generate_v41` never reaches `V41Backend._resolve_decode_graphs`, so it makes the same refusal.
+
+    The backend's guard is on the serving path; this launcher resolves `--decode-graphs` itself and
+    hands the answer straight to `generate`, so a run that asked for graphs with the emulation on
+    would attempt the capture and die in `capture_end` a few layers in -- the exact failure the
+    backend refuses. The predicate is the backend's own function and the explanation its own
+    constant, so the two refusals cannot drift into saying different things.
+    """
+    assert resolve_decode_graphs(True, _card(), "cuda:0")[0] is False, (
+        "the flag parses and the branch is skipped, which is the launcher bypassing the backend's "
+        "guard rather than applying it"
+    )
+    note = resolve_decode_graphs(True, _card(), "cuda:0")[1]
+    assert EMULATION_REFUSES_GRAPHS in note
+    # The measured cost and the escape the backend's line carries, asserted here so this route
+    # cannot lose them and still read as a refusal.
+    assert "900 MiB" in note and "POCKETLLM_V41_MMA_EMULATE=0" in note
+
+
+def test_the_escape_graphs_again_and_the_host_never_asks(monkeypatch) -> None:
+    """The three other cells, so the branch above is not the only one that can be reached."""
+    monkeypatch.setenv("POCKETLLM_V41_MMA_EMULATE", "0")
+    assert resolve_decode_graphs(True, _card(), "cuda:0") == (True, ", decode graphed a block at a time")
+    # A tree that is not on a CUDA card has no stream to capture onto; the answer is not to ask, and
+    # the note says which placement gave the answer.
+    assert resolve_decode_graphs(True, None, "the host") == (
+        False, ", decode not graphed: the tree is on the host",
+    )
+    # Not asked for is not a refusal, and the banner stays quiet rather than explaining a choice
+    # nobody made.
+    assert resolve_decode_graphs(False, _card(), "cuda:0") == (False, "")
