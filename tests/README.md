@@ -369,12 +369,13 @@ The record is the single-prompt shape with two differences. `prompts` is a list 
 `{label, prompt, prompt_tokens, max_new, tokens, step_gaps}` rather than one `prompt`/`tokens` pair,
 and each prompt carries no `expected` of its own -- as with `fixture_from_reference`, the reference's
 `tokens` *are* the answer, and copying them into a fixture would compare the oracle to itself. The
-loader `load_multi_reference()` reads `<entry>_<route>_multi.json` and validates it through
-`multi_reference_prompts()`, which raises rather than returning an empty set: a malformed criterion
-is a broken one, so it aborts collection of the module instead of silently running fewer legs.
-`test_the_multi_prompt_reference_is_committed` is the checkpoint-free guard that the file exists at
-all, and `MULTI_PROMPT_LABELS` pins the label *sequence* so a re-record that dropped or reordered a
-prompt fails rather than shrinking the gate.
+loader `load_multi_reference()` reads `<entry>_chat_multi.json` for the chat route -- and
+`<entry>_multi.json` for the raw one, the same suffix rule the single-prompt files use -- then
+validates it through `multi_reference_prompts()`, which raises rather than returning an empty set: a
+malformed criterion is a broken one, so it aborts collection of the module instead of silently
+running fewer legs. `test_the_multi_prompt_reference_is_committed` is the checkpoint-free guard that
+the file exists at all, and `MULTI_PROMPT_LABELS` pins the label *sequence* so a re-record that
+dropped or reordered a prompt fails rather than shrinking the gate.
 
 **`step_gaps` is why the record carries more than answers.** It is the reference's own top1-top2
 logit gap at *every* generated step, read from the recorder's `all_logits`. A greedy answer is only
