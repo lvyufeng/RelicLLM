@@ -15,6 +15,12 @@ between. A module that answered only the first would leave every caller to re-de
 ``torch.cuda`` at its own call site -- which is the shape of the problem this module exists to end,
 met again one level down.
 
+The Ascend half has a third question with no CUDA counterpart, asked once per process by
+:func:`configure_ascend_dispatch`: not *which* card, but *what kind of kernels* this card's ops
+should land on. ``torch_npu`` decides that itself from a SOC version string that the first-generation
+910 reports wrongly, so a launch that said nothing would quietly run every operator through the
+compiler.
+
 Three things are deliberately pure, and each is pure for a reason a test can use:
 
 * The **tables** are strings. ``platform -> device type`` and ``platform -> collective`` are the two
@@ -56,7 +62,8 @@ who asked for Ascend on a box without ``torch_npu`` gets today.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import os
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -95,6 +102,22 @@ _DEVICE_TYPE: dict[str, str] = {"cuda": "cuda", "ascend": "npu", "cpu": "cpu"}
 #: CUDA and HCCL to Ascend, and asking ``torch.distributed`` for the wrong one fails inside a
 #: collective rather than at the call that asked for it.
 _COLLECTIVE: dict[str, str] = {"cuda": "nccl", "ascend": "hccl", "cpu": "gloo"}
+
+#: The two Ascend op dispatches this runtime can ask ``torch_npu`` for, by name.
+#:
+#: ``aclnn`` is the compiled one: the op reaches a host-side entry point in one of the CANN
+#: release's own ``libopapi*.so`` files and nothing is generated at run time. ``jit`` is the other
+#: one: the op is lowered to a small graph and compiled by TBE on its first call, into a
+#: ``kernel_meta`` directory beside the process. Both are real paths through ``torch_npu`` -- which
+#: one an op takes is decided per call, in code generated from the operator yaml -- so this is a
+#: choice, and :func:`resolve_ascend_dispatch` is where it is made.
+ASCEND_DISPATCHES: tuple[str, ...] = ("aclnn", "jit")
+
+#: The environment variable that overrides :func:`resolve_ascend_dispatch`'s default.
+#:
+#: ``RELICLLM_`` and not ``POCKETLLM_``: the older prefix is a contract with launch scripts that
+#: already name it, not a namespace for anything added afterwards.
+ASCEND_DISPATCH_ENV: str = "RELICLLM_ASCEND_DISPATCH"
 
 
 @dataclass(frozen=True, slots=True)
@@ -555,6 +578,100 @@ def _accelerator_module(platform: str) -> Any | None:
     return _torch_module_for(device_type)
 
 
+def resolve_ascend_dispatch(soc_version: str, requested: str | None = None) -> str:
+    """Which op dispatch an Ascend process on ``soc_version`` should be put on.
+
+    Pure, and a separate question from "what does torch_npu do by default", because the default is
+    what this is correcting. ``torch_npu`` decides it in ``CheckJitDisableInner``: an explicit
+    ``jitCompile`` option wins, and otherwise the SOC version decides -- every SOC at or above
+    ``Ascend910B1`` gets JIT compilation *disabled* (so ops take the ``aclnn`` branch) and every SOC
+    below it gets it enabled (so ops take the ``aclop`` branch and TBE compiles them).
+
+    That rule reads the SOC *name*, and on the first-generation 910 the name is wrong. The card is a
+    910A -- PCI device id ``0xD801``, 30 cubes, and a CANN install whose ops package calls itself
+    ``Ascend-cann-910-ops`` with kernels under ``tbe/kernel/ascend910`` -- but the driver reports it
+    as ``Ascend910B``, both through ``acl.get_soc_name()`` and through
+    ``torch.npu.get_device_name(0)``, and ``torch_npu`` parses that name into a version below
+    ``Ascend910B1``. So the misread lands the card in the branch written for the older SOCs and
+    every op goes to TBE. Setting the option explicitly is what takes it back off that path, and it
+    is why this function keys on the *family* rather than on a single model number: the whole
+    ``Ascend910`` line answers ``aclnn`` here, which changes nothing on a 910B1 or later -- those
+    already default to it -- and is the difference between generated and compiled kernels on this
+    card.
+
+    ``requested`` is :data:`ASCEND_DISPATCH_ENV`'s value, and an unrecognised one is refused by name
+    rather than ignored: a typo in a launch script should not silently leave the process on the
+    dispatch the operator was trying to move it off.
+    """
+    if requested:
+        resolved = requested.strip().lower()
+        if resolved not in ASCEND_DISPATCHES:
+            raise DeviceError(
+                f"{ASCEND_DISPATCH_ENV} must be one of {', '.join(ASCEND_DISPATCHES)}, "
+                f"got {requested!r}"
+            )
+        return resolved
+    return "aclnn" if soc_version.startswith("Ascend910") else "jit"
+
+
+def _ascend_soc_version() -> str:
+    """The SOC name this card reports -- the string :func:`resolve_ascend_dispatch` reads.
+
+    ``Ascend910B`` on the 910A, which is the whole reason that function exists; the name is taken
+    from the driver, and the driver is what is wrong.
+    """
+    import torch
+    import torch_npu  # noqa: F401  the import is what registers the backend
+
+    return str(torch.npu.get_device_name(0))
+
+
+def _set_ascend_dispatch(dispatch: str) -> None:
+    """Write ``dispatch`` through to ``torch_npu``, which is the only thing that can honour it.
+
+    ``set_compile_mode`` is the public spelling of the ``jitCompile`` option and is what
+    ``CheckJitDisableInner`` reads. It may not exist in every ``torch_npu``, and asking for an
+    accelerator whose runtime cannot be configured is a refusal this plane already owns.
+    """
+    import torch_npu
+
+    setter = getattr(torch_npu.npu, "set_compile_mode", None)
+    if setter is None:
+        raise DeviceError(
+            "this torch_npu has no npu.set_compile_mode, so the Ascend op dispatch cannot be "
+            "chosen and the process would run on whatever its SOC version defaults to"
+        )
+    setter(jit_compile=dispatch == "jit")
+
+
+def configure_ascend_dispatch(
+    *,
+    platform: str | None = None,
+    env: Mapping[str, str] | None = None,
+    soc_version: Callable[[], str] | None = None,
+    setter: Callable[[str], None] | None = None,
+) -> str | None:
+    """Put this process on the Ascend op dispatch it should run on, or ``None`` if it is not Ascend.
+
+    Called from :func:`bind_device`, which is the one function every accelerator launch reaches
+    before its first operator: the launch that binds a card is the launch whose ops have to land on
+    a kernel library, and doing it there means no entry point has to remember to.
+
+    The three arguments that are not ``platform`` exist so the whole decision is reachable on a host
+    with no Ascend anything -- ``env`` is a mapping rather than ``os.environ``, ``soc_version`` is a
+    callable rather than a card, and ``setter`` is where the answer is delivered. That is the same
+    shape :func:`probe_accelerator` and :func:`canonical_device` take, and for the same reason.
+    """
+    resolved = probe_accelerator().platform if platform is None else platform
+    if resolved != "ascend":
+        return None
+    environ = os.environ if env is None else env
+    soc = _ascend_soc_version() if soc_version is None else soc_version()
+    dispatch = resolve_ascend_dispatch(soc, environ.get(ASCEND_DISPATCH_ENV))
+    (_set_ascend_dispatch if setter is None else setter)(dispatch)
+    return dispatch
+
+
 def bind_device(index: int, *, platform: str | None = None) -> None:
     """Point this thread at card ``index`` for the platform this process runs on.
 
@@ -566,11 +683,17 @@ def bind_device(index: int, *, platform: str | None = None) -> None:
     A host platform has no card to bind, so this is a no-op there rather than a refusal: the caller
     that reached here is a launch with no accelerator in it, and `EngineArgs` has already refused a
     `--device-ids` beside `--device cpu` before any of this ran.
+
+    On Ascend it also settles the op dispatch, because the binding is the last moment before the
+    first operator runs and the only one every launch passes through: see
+    :func:`configure_ascend_dispatch` for why that is a choice this build has to make rather than
+    one the runtime can be left to make.
     """
     resolved = probe_accelerator().platform if platform is None else platform
     module = _accelerator_module(resolved)
     if module is not None:
         module.set_device(int(index))
+        configure_ascend_dispatch(platform=resolved)
 
 
 def synchronize(*, platform: str | None = None) -> None:
@@ -599,6 +722,8 @@ def device_count(*, platform: str | None = None) -> int:
 
 __all__ = [
     "ACCELERATORS",
+    "ASCEND_DISPATCHES",
+    "ASCEND_DISPATCH_ENV",
     "KNOWN_CAPABILITIES",
     "PLATFORMS",
     "UNKNOWN_CAPABILITY",
@@ -608,12 +733,14 @@ __all__ = [
     "accelerator_device",
     "bind_device",
     "canonical_device",
+    "configure_ascend_dispatch",
     "device_count",
     "device_type_registered",
     "probe_accelerator",
     "probe_card_capability",
     "process_group_backend",
     "require_device",
+    "resolve_ascend_dispatch",
     "resolve_platform",
     "synchronize",
     "torch_device_type",
