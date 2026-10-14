@@ -206,9 +206,9 @@ and Engram in host memory or on disk before kernel work matters.
   host-expert and device-expert arms' residual is within 5% of each other at that step (1.02 vs 0.97
   nat), so neither arm is the more faithful one and the criterion is not moved onto the device arm.
   Swept across cards and configs, no arm walks the raw sequence: the TP1 host config, the RTX 4090's
-  device-expert arm and the RTX 2080 Ti's all pick `344` at index 2 — on current master the device
-  arms' step-2 rows put `1531` behind `344` by 0.4–0.9 nat rather than at the oracle's 0.16-nat
-  near-tie. An earlier device-arm reading that *did* pick `1531` came from a pre-#175 tree with a
+  device-expert arm and the RTX 2080 Ti's all pick `344` at index 2 — on current master the 4090's
+  device step-2 row puts `1531` at rank 5, **0.86 nat** behind `344`, rather than at the oracle's
+  0.16-nat near-tie. An earlier device-arm reading that *did* pick `1531` came from a pre-#175 tree with a
   pre-#36 relic-core, so it is not the current behaviour. The layout is a decision below the noise
   floor, not a faithful arm and an unfaithful one.
   The port's ranking of the reference's row is good, not perfect (Spearman ρ 0.80 at step 0, ~0.98
