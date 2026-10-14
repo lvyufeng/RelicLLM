@@ -59,6 +59,7 @@ from tests.golden_fixtures import (
     load_multi_reference,
     load_reference,
     logits_check_mismatch,
+    multi_reference_prompts,
     reference_path,
     reproduction_fixture,
     run_isolated,
@@ -478,11 +479,48 @@ def _multi_prompt_fixture(record, prompt: dict) -> GoldenFixture:
 
 
 def _recorded_multi_prompts():
-    """The multi-prompt record as `(record, prompt)` pairs, or an empty list when none is committed."""
+    """The multi-prompt record as `(record, prompt)` pairs, or an empty list when none is committed.
+
+    `multi_reference_prompts` is what makes a malformed record a *named* `ValueError` rather than a
+    bare `KeyError` on an unlabelled prompt. That refusal escapes collection of this module and stops
+    the whole run, which is deliberate rather than incidental: a malformed criterion is a broken one,
+    and `test_the_multi_prompt_reference_is_committed` is the checkpoint-free leg that reads it.
+    """
     record = load_multi_reference("v41", PATH_CHAT)
     if record is None:
         return []
-    return [(record, prompt) for prompt in record["prompts"]]
+    return [(record, prompt) for prompt in multi_reference_prompts(record)]
+
+
+def test_the_multi_prompt_reference_is_committed():
+    """The record is a criterion, not a scratch file: a leg with no record must not read as green.
+
+    The parametrized legs below collect from the record, so a deleted or renamed
+    `v41_chat_multi.json` leaves zero legs and one skipped guard -- and a suite of skips reads as a
+    pass, which is the failure `test_every_entry_point_has_a_fixture` exists to close for the
+    single-prompt fixtures. This is the same statement for the multi-prompt one: the file is a fact
+    about this repository, so it belongs in a test that needs no checkpoint and cannot skip.
+    """
+    assert load_multi_reference("v41", PATH_CHAT) is not None, (
+        "no multi-prompt chat reference at tests/fixtures/reference/v41_chat_multi.json. A missing "
+        "path is not a reason to leave it out: the record holds the reference's answers, and the "
+        "legs it would collect are the multi-prompt criterion. See tests/README.md"
+    )
+
+
+#: The committed set's prompts, in order. Pinned because the point of the record is the *set*: a
+#: re-record that dropped a prompt, or a merge that reordered the labels, must be a failing test
+#: rather than a criterion that silently runs on fewer questions. The count alone would miss a swap.
+MULTI_PROMPT_LABELS = (
+    "golden-control",
+    "count-1-20",
+    "arith-17x23",
+    "repeat-ready-3",
+    "explain-blue",
+    "code-sum",
+    "zh-gradient",
+    "golden-again",
+)
 
 
 def test_the_multi_prompt_reference_names_the_prompts_and_the_reference_answered_them():
@@ -490,16 +528,23 @@ def test_the_multi_prompt_reference_names_the_prompts_and_the_reference_answered
 
     This is the free half: it needs no checkpoint and no card, and it is what makes a re-record
     that dropped a prompt, reordered the labels or emptied an answer a failing test rather than a
-    smaller gate. The control the recorder repeats first and last must carry the *same* answer --
-    the record's own consistency, checked here so the run does not have to prove it.
+    smaller gate -- which is why the label *sequence* is pinned, not just its length. The control
+    the recorder repeats first and last must carry the *same* answer, checked here so the run does
+    not have to prove it.
     """
     record = load_multi_reference("v41", PATH_CHAT)
     if record is None:
         pytest.skip("v41 has no recorded multi-prompt chat reference; see tests/README.md")
 
-    prompts = record["prompts"]
-    assert len(prompts) >= 2, "a multi-prompt criterion of one prompt is the single-prompt one"
+    prompts = multi_reference_prompts(record)
     labels = [prompt["label"] for prompt in prompts]
+    assert labels == list(MULTI_PROMPT_LABELS), (
+        f"the committed criterion's prompts are {labels}, not {list(MULTI_PROMPT_LABELS)}. The "
+        f"record is a *set* of questions -- a control, a count, arithmetic, a repetition "
+        f"instruction, an open-ended question, a code expression and a Chinese prompt -- and a "
+        f"record that runs on fewer of them reads as a smaller gate, which is exactly what the "
+        f"multi-prompt leg exists to be larger than"
+    )
     assert len(set(labels)) == len(labels), f"two prompts share a label: {labels}"
     for prompt in prompts:
         assert prompt["tokens"], f"{prompt['label']} records no answer to compare against"
@@ -518,6 +563,25 @@ def test_the_multi_prompt_reference_names_the_prompts_and_the_reference_answered
         f"then {last['tokens']}. Greedy decode is deterministic, so this record is unusable"
     )
 
+    # A malformed record is refused by the loader, not read as a smaller gate. The refusal aborts
+    # collection of this module, which is deliberate: a malformed criterion is a broken one, and the
+    # guard test above is the leg that says so. These shapes are the ones a hand edit or a partial
+    # write produces, and each has to name what is wrong rather than raise a bare KeyError.
+    for broken, expected in (
+        ([], "must be an object"),
+        ({}, "must be a non-empty list"),
+        ({"prompts": []}, "must be a non-empty list"),
+        ({"prompts": "oops"}, "must be a non-empty list"),
+        ({"prompts": [{"label": "x"}]}, "is missing"),
+        ({"prompts": [{"label": "x", "prompt": "p", "prompt_tokens": 1, "max_new": 1,
+                       "tokens": [], "step_gaps": []}]}, "carries no `tokens`"),
+        # A `step_gaps` shorter than `tokens` would index out of range at the diverging step.
+        ({"prompts": [{"label": "x", "prompt": "p", "prompt_tokens": 1, "max_new": 1,
+                       "tokens": [1, 2], "step_gaps": [3.0]}]}, "step_gaps"),
+    ):
+        with pytest.raises(ValueError, match=expected):
+            multi_reference_prompts(broken)
+
 
 @pytest.mark.parametrize(
     "record,prompt",
@@ -534,16 +598,20 @@ def test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(re
     answer for that prompt.
 
     **A prompt the reference decided inside its own noise is evidence, not a demand.** The record
-    carries the reference's smallest top1-top2 logit gap over each prompt's steps; where that gap is
-    below the record's `confident_nats` the reference is choosing among near-ties of its own making,
-    and holding the port to that token asks it to reproduce one kernel's rounding rather than the
-    model's answer -- the same distinction the raw route is documented under. Those prompts call
+    carries the reference's top1-top2 logit gap at *every* step, and the leg judges the step the
+    port actually diverged at -- not the sequence's minimum. That distinction is the whole point: a
+    prompt whose answer is decided by 14 nats at step 0 and by 0.42 at a later EOS step is a
+    question the reference answered decisively where it mattered, and reading the sequence-minimum
+    would launder a wrong *first* token into a coin flip. Where the reference's gap at the diverging
+    step is below the record's `confident_nats` the reference was choosing among near-ties of its own
+    making, and holding the port to that token asks it to reproduce one kernel's rounding rather than
+    the model's answer -- the same distinction the raw route is documented under. Such a leg calls
     `pytest.xfail()` *after* the run, so a divergence is reported as an expected failure while an
     *agreement* still shows as a pass. It is the imperative call rather than the `xfail` mark
     because the leg only knows which it is once it has the run in hand, and `strict` has no meaning
-    on the call -- it is the mark, applied before the test body runs, that `strict` governs. A
-    prompt at or above the line is a real assertion, because a reference that decided by a nat or
-    more did not leave the answer to rounding.
+    on the call -- it is the mark, applied before the test body runs, that `strict` governs. A gap at
+    or above the line is a real assertion, because a reference that decided by a nat or more did not
+    leave the answer to rounding.
     """
     if not os.environ.get(GOLDEN_GATE_ENV):
         pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
@@ -563,42 +631,65 @@ def test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(re
             f"questions, so the token comparison below would not mean what it says"
         )
 
-    if list(outcome.token_ids) == expected:
+    tokens = list(outcome.token_ids)
+    if tokens == expected:
         return
 
-    confident = float(prompt["min_gap"]) >= float(record.get("confident_nats", 1.0))
+    # The step the port first disagreed with the reference, and the reference's own margin there.
+    # `step_gaps` covers every step (the loader refuses a short list), so an index beyond the
+    # reference's sequence is the port generating past the end, which the record cannot have a
+    # margin for and which is a divergence at the first such step rather than a `IndexError`.
+    diverged_at = next(
+        (index for index, (mine, theirs) in enumerate(zip(tokens, expected)) if mine != theirs),
+        min(len(tokens), len(expected)),
+    )
+    reference_gap = prompt["step_gaps"][diverged_at] if diverged_at < len(prompt["step_gaps"]) else None
+    confident = reference_gap is not None and float(reference_gap) >= float(
+        record.get("confident_nats", 1.0)
+    )
     message = (
         f"{prompt['label']}: the greedy tokens diverge from the official reference.\n"
         f"  reference: {expected}\n"
-        f"  this card: {list(outcome.token_ids)}\n"
+        f"  this card: {tokens}\n"
+        f"first divergence at step {diverged_at}, where the reference's top1-top2 gap was "
+        f"{reference_gap if reference_gap is not None else 'past the recorded sequence'}"
+        f"{'' if reference_gap is None else ' nats'}.\n"
         f"The reference is {record['source']} at commit {record.get('commit') or 'unknown'}, run on "
-        f"the configuration its `reproduction` block names. The reference answered this prompt with "
-        f"a smallest top1-top2 gap of {prompt['min_gap']} nats at step {prompt['min_gap_step']}"
+        f"the configuration its `reproduction` block names"
     )
     if confident:
         pytest.fail(
-            message + " -- at or above the record's "
-            f"{record.get('confident_nats')}-nat line, so this is a port defect, not a kernel "
-            "tolerance."
+            message + f" -- at or above the record's "
+            f"{record.get('confident_nats')}-nat line at that step, so this is a port defect, not a "
+            "kernel tolerance."
         )
     pytest.xfail(
-        message + f" -- below the record's {record.get('confident_nats')}-nat line, so the "
-        "reference is choosing inside its own noise and this leg records a measurement rather than "
-        "failing."
+        message + f" -- below the record's {record.get('confident_nats')}-nat line at that step, so "
+        "the reference was choosing inside its own noise and this leg records a measurement rather "
+        "than failing."
     )
 
 
 def test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_flip(monkeypatch):
     """The one decision the multi-prompt leg makes, pinned without a checkpoint.
 
-    The leg's whole judgement is which side of the record's `confident_nats` line a prompt's
-    reference margin falls on, and the two outcomes are a failure and an *expected* failure. A leg
-    wired the wrong way round would pass the suite by reporting every divergence as a coin flip, or
-    fail it on the one prompt the reference decided by a sixth of a nat -- so the branch is exercised
-    here against a synthetic record, in both directions, with the model run stubbed out.
+    The leg's whole judgement is whether the reference's margin *at the step the port diverged* is
+    above the record's `confident_nats` line, and the two outcomes are a failure and an *expected*
+    failure. A leg wired the wrong way round would pass the suite by reporting every divergence as a
+    coin flip, or fail it on the one prompt the reference decided by a sixth of a nat -- so the
+    branch is exercised here against a synthetic record, in both directions, with the model run
+    stubbed out.
+
+    The third case is the reason the gate reads a per-step gap rather than the sequence-minimum: a
+    prompt the reference decided by 14 nats at step 0 and by 0.42 at a later step, where the port's
+    divergence is at step 0. Judging the sequence-minimum would call that a coin flip and xfail a
+    wrong *first* token; judging the diverging step calls it what it is -- a defect -- and must fail.
 
     `run_isolated` is replaced by a fake that returns a token list the caller chooses, so this never
-    touches a checkpoint; the gate and skip scaffolding around it are the same the real leg uses.
+    touches a checkpoint; the gate and skip scaffolding around it are the same the real leg uses. The
+    checkpoint override is deleted around the call because `_with_host_checkpoint` would otherwise
+    rewrite the synthetic record's path to whatever `POCKETLLM_GOLDEN_CHECKPOINT` names -- absent on
+    a host with no bank staged -- and the leg would skip instead of exercising the branch.
     """
     record = {
         "source": "synthetic",
@@ -616,16 +707,22 @@ def test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_fl
     }
     confident = {
         "label": "decided", "prompt": "p", "prompt_tokens": 3, "max_new": 2,
-        "tokens": [1, 2], "min_gap": 5.0, "min_gap_step": 0,
+        "tokens": [1, 2], "step_gaps": [9.0, 5.0],
     }
     coin_flip = {
         "label": "coin-flip", "prompt": "p", "prompt_tokens": 3, "max_new": 2,
-        "tokens": [1, 2], "min_gap": 0.15, "min_gap_step": 1,
+        "tokens": [1, 2], "step_gaps": [9.0, 0.15],
+    }
+    # Steps 0 and 1, a decisive first step and a near-tie later: diverging at step 0 is a defect.
+    decisive_first = {
+        "label": "decisive-first", "prompt": "p", "prompt_tokens": 3, "max_new": 2,
+        "tokens": [1, 2], "step_gaps": [14.0, 0.42],
     }
 
     monkeypatch.setenv(GOLDEN_GATE_ENV, "1")
+    monkeypatch.delenv("POCKETLLM_GOLDEN_CHECKPOINT", raising=False)
 
-    # A confident prompt: the matching run passes, a diverging one fails.
+    # A confident prompt: the matching run passes, a diverging one (at step 1, a 5-nat step) fails.
     monkeypatch.setattr(
         f"{__name__}.run_isolated", lambda fixture, **_: Outcome(token_ids=[1, 2], prompt_tokens=3)
     )
@@ -634,12 +731,36 @@ def test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_fl
     monkeypatch.setattr(
         f"{__name__}.run_isolated", lambda fixture, **_: Outcome(token_ids=[1, 9], prompt_tokens=3)
     )
-    with pytest.raises(pytest.fail.Exception):
-        test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, confident)
+    # The exact type matters, and `pytest.raises(pytest.fail.Exception)` would NOT check it:
+    # `pytest.xfail.Exception` (XFailed) subclasses `pytest.fail.Exception` (Failed), so a leg wired
+    # backwards -- reporting a confident divergence as an xfail -- passes a `raises(fail.Exception)`
+    # just as well. `type(exc) is ...` is the assertion that tells the two apart.
+    _divergence_raises_exactly(
+        lambda: test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(
+            record, confident
+        ),
+        pytest.fail.Exception,
+    )
 
-    # A coin-flip prompt: the same divergence is reported as expected, not as a failure.
-    with pytest.raises(pytest.xfail.Exception):
-        test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, coin_flip)
+    # The same divergence is reported as expected when the reference's own gap at that step was a
+    # near-tie (0.15 nats at step 1).
+    _divergence_raises_exactly(
+        lambda: test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(
+            record, coin_flip
+        ),
+        pytest.xfail.Exception,
+    )
+
+    # A decisive step-0 divergence is not excused by a low-margin step later in the sequence.
+    monkeypatch.setattr(
+        f"{__name__}.run_isolated", lambda fixture, **_: Outcome(token_ids=[9, 2], prompt_tokens=3)
+    )
+    _divergence_raises_exactly(
+        lambda: test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(
+            record, decisive_first
+        ),
+        pytest.fail.Exception,
+    )
 
     # A prompt-token mismatch is a different failure and is never softened to an xfail.
     monkeypatch.setattr(
@@ -647,6 +768,27 @@ def test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_fl
     )
     with pytest.raises(AssertionError, match="answering different questions"):
         test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, coin_flip)
+
+
+def _divergence_raises_exactly(call, expected: type[BaseException]) -> None:
+    """Call a leg that must diverge and assert it raised exactly `expected`.
+
+    The exact class rather than `pytest.raises(expected)`, because the two outcomes this test
+    distinguishes are `pytest.fail.Exception` and `pytest.xfail.Exception`, and the second is a
+    subclass of the first -- the ordering `pytest.raises` cannot see. An inverted leg (a confident
+    divergence reported as a coin flip, or a coin flip failed) raises the *other* class, and only
+    `type(...) is` notices.
+    """
+    try:
+        call()
+    except BaseException as exc:  # noqa: BLE001 -- the exception's exact type is the subject
+        assert type(exc) is expected, (
+            f"the leg raised {type(exc).__name__}, not {expected.__name__}. The two outcomes are a "
+            f"failure and an expected failure, and xfail.Exception subclasses fail.Exception, so "
+            f"this is the one assertion that can tell a backwards wire from a forward one"
+        )
+        return
+    raise AssertionError(f"the leg did not raise {expected.__name__}")
 
 
 def test_a_reference_route_that_is_not_one_of_the_two_paths_is_refused():
