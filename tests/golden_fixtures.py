@@ -480,6 +480,38 @@ def load_reference(entry: str, reference_route: str = PATH_RAW) -> dict[str, Any
     return record
 
 
+def load_multi_reference(entry: str, reference_route: str = PATH_CHAT) -> dict[str, Any] | None:
+    """The multi-prompt extension of an oracle, or `None` when none was recorded.
+
+    `load_reference` reads one prompt and one answer; this reads a *set*, at the name
+    `<entry>_<route>_multi.json`. A set is a different claim about the same oracle -- eight prompts
+    through the same renderer rather than one -- and it is a set that makes a single lucky
+    high-margin question visible as luck. The record carries the same `reproduction` block the
+    single-prompt chat record does, so its legs run the same configuration: one prompt per child
+    process, because eight prompts in one process cost eight model loads and eight expert-bank pins
+    and the harness's unit is one entry point in one process (see `run_isolated`).
+
+    The route is checked the way `load_reference` checks it, and for the same reason: a record that
+    ran one route while sitting at the other's name would be compared as if it answered the route
+    its name claims.
+    """
+    if reference_route not in GOLDEN_PATHS:
+        raise ValueError(f"reference route must be one of {GOLDEN_PATHS}, got {reference_route!r}")
+    suffix = "" if reference_route == PATH_RAW else f"_{reference_route}"
+    path = REFERENCE_DIR / f"{entry}{suffix}_multi.json"
+    if not path.exists():
+        return None
+    record = json.loads(path.read_text(encoding="utf-8"))
+    recorded = _read_path(record.get("path"))
+    if recorded != reference_route:
+        raise ValueError(
+            f"{path.name} records the {recorded!r} route but was loaded as {reference_route!r}: "
+            f"the file answers one question and the caller is asking the other, so a comparison "
+            f"against it would judge an answer by a prompt the run was never given"
+        )
+    return record
+
+
 def write_fixture(fixture: GoldenFixture) -> pathlib.Path:
     path = fixture_path(fixture.entry)
     path.parent.mkdir(parents=True, exist_ok=True)

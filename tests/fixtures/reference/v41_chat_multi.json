@@ -1,0 +1,202 @@
+{
+  "entry": "v41",
+  "source": "official DeepSeek-V4.1 reference (inference/model.py, unmodified)",
+  "path": "chat",
+  "reproduction": {
+    "argv": [
+      "serve",
+      "--backend",
+      "v41",
+      "--model",
+      "/mnt/data3/DeepSeek-V4.1-Flash",
+      "--tensor-parallel-size",
+      "1",
+      "--max-model-len",
+      "8192",
+      "--backend-option",
+      "prefill_chunk=4096",
+      "--backend-option",
+      "decode_graphs=false",
+      "--backend-option",
+      "threads=22"
+    ],
+    "env": {},
+    "requires": {}
+  },
+  "commit": "be0342f",
+  "taken_at": "2026-10-14",
+  "confident_nats": 1.0,
+  "notes": "The multi-prompt extension of v41_chat.json: the same unmodified inference/model.py on the chat route, one loaded process, eight prompts -- a control repeated first and last, a 20-token count, arithmetic, a repetition instruction, an open-ended question, a code-expression question and a Chinese prompt. `prompt_tokens` is the count of the checkpoint's own encode_messages render for each prompt, the renderer the served chat route uses; `max_new` is the greedy sampler cap the recorder ran each prompt under. `min_gap` is the reference's own smallest top1-top2 logit gap over that prompt's generated steps and the step it occurs at, read from the recorder's all_logits: a prompt the reference decided by less than `confident_nats` is one it resolves inside its own noise, and matching the port there asks it to reproduce one kernel's rounding rather than the model's answer. The port is held to the prompts at or above that line.",
+  "prompts": [
+    {
+      "label": "golden-control",
+      "prompt": "Reply with the single line: golden fixture.",
+      "prompt_tokens": 13,
+      "max_new": 4,
+      "tokens": [
+        69865,
+        267,
+        45117,
+        1
+      ],
+      "min_gap": 0.423,
+      "min_gap_step": 3
+    },
+    {
+      "label": "count-1-20",
+      "prompt": "Count from 1 to 20, separating the numbers with commas.",
+      "prompt_tokens": 18,
+      "max_new": 20,
+      "tokens": [
+        19,
+        14,
+        223,
+        20,
+        14,
+        223,
+        21,
+        14,
+        223,
+        22,
+        14,
+        223,
+        23,
+        14,
+        223,
+        24,
+        14,
+        223,
+        25,
+        14
+      ],
+      "min_gap": 8.5936,
+      "min_gap_step": 2
+    },
+    {
+      "label": "arith-17x23",
+      "prompt": "What is 17 times 23? Reply with just the number.",
+      "prompt_tokens": 18,
+      "max_new": 8,
+      "tokens": [
+        23005,
+        1
+      ],
+      "min_gap": 11.8043,
+      "min_gap_step": 0
+    },
+    {
+      "label": "repeat-ready-3",
+      "prompt": "Reply with the word 'ready' exactly three times, separated by spaces.",
+      "prompt_tokens": 19,
+      "max_new": 16,
+      "tokens": [
+        3793,
+        7692,
+        7692,
+        1
+      ],
+      "min_gap": 10.0384,
+      "min_gap_step": 1
+    },
+    {
+      "label": "explain-blue",
+      "prompt": "Explain in two or three sentences why the sky appears blue during the day, using plain language.",
+      "prompt_tokens": 23,
+      "max_new": 24,
+      "tokens": [
+        31704,
+        5296,
+        7272,
+        710,
+        11273,
+        14,
+        305,
+        1082,
+        436,
+        20102,
+        1407,
+        270,
+        13801,
+        14,
+        3525,
+        14387,
+        17417,
+        270,
+        22467,
+        8295,
+        53330,
+        1949,
+        850,
+        1099
+      ],
+      "min_gap": 0.1554,
+      "min_gap_step": 12
+    },
+    {
+      "label": "code-sum",
+      "prompt": "Write a single-line Python expression that computes the sum of the numbers 3, 1, 4, 1 and 5. Reply with only the code.",
+      "prompt_tokens": 38,
+      "max_new": 16,
+      "tokens": [
+        5674,
+        10425,
+        21,
+        14,
+        223,
+        19,
+        14,
+        223,
+        22,
+        14,
+        223,
+        19,
+        14,
+        223,
+        23,
+        8123
+      ],
+      "min_gap": 2.6817,
+      "min_gap_step": 0
+    },
+    {
+      "label": "zh-gradient",
+      "prompt": "\u7528\u4e00\u53e5\u8bdd\u89e3\u91ca\u4ec0\u4e48\u662f\u68af\u5ea6\u4e0b\u964d\u3002",
+      "prompt_tokens": 11,
+      "max_new": 16,
+      "tokens": [
+        59563,
+        10778,
+        1738,
+        33376,
+        7094,
+        9053,
+        985,
+        1103,
+        40959,
+        30973,
+        11725,
+        6082,
+        303,
+        64569,
+        7590,
+        10602
+      ],
+      "min_gap": 1.6346,
+      "min_gap_step": 12
+    },
+    {
+      "label": "golden-again",
+      "prompt": "Reply with the single line: golden fixture.",
+      "prompt_tokens": 13,
+      "max_new": 4,
+      "tokens": [
+        69865,
+        267,
+        45117,
+        1
+      ],
+      "min_gap": 0.423,
+      "min_gap_step": 3
+    }
+  ]
+}

@@ -50,11 +50,13 @@ from tests.golden_fixtures import (
     PATH_CHAT,
     GoldenFixture,
     Outcome,
+    _read_path,
     _with_host_checkpoint,
     captured_card,
     fixture_from_reference,
     fixture_path,
     load_fixture,
+    load_multi_reference,
     load_reference,
     logits_check_mismatch,
     reference_path,
@@ -445,6 +447,206 @@ def test_the_v41_chat_route_sends_the_thirteen_ids_the_reference_was_seeded_with
         f"The token comparison in `test_the_v41_chat_route_agrees_with_the_official_reference` "
         f"counts these ids and would pass on a different thirteen; this is the prompt itself."
     )
+
+
+def _multi_prompt_fixture(record, prompt: dict) -> GoldenFixture:
+    """One prompt of a multi-prompt record as a `GoldenFixture` the harness can run.
+
+    The record is the *chat* route's, so the fixture is built from its `reproduction` block the way
+    `fixture_from_reference` builds the single-prompt one -- the reference's own configuration, no
+    `expected`, and no per-run provenance copied off the reference. What differs is the prompt and
+    the sampler width: the record carries eight prompts and each runs in its own child, so this
+    singles one out and pins `max_tokens` to the width the recorder ran it at rather than the
+    default sixteen (a two-token answer and a twenty-token one are not the same question).
+    """
+    block = record.get("reproduction")
+    assert block, "the multi-prompt reference carries no `reproduction` block, so there is no leg"
+    argv = tuple(str(item) for item in block["argv"])
+    checkpoint = argv[argv.index("--model") + 1]
+    return GoldenFixture(
+        entry="v41",
+        checkpoint=checkpoint,
+        argv=argv,
+        prompt=str(prompt["prompt"]),
+        expected={},
+        env=dict(block.get("env") or {}),
+        sampling={"temperature": 0.0, "max_tokens": int(prompt["max_new"])},
+        requires=dict(block.get("requires") or {}),
+        path=_read_path(record.get("path")),
+        notes=f"one prompt of the {record.get('path')} multi-prompt reference",
+    )
+
+
+def _recorded_multi_prompts():
+    """The multi-prompt record as `(record, prompt)` pairs, or an empty list when none is committed."""
+    record = load_multi_reference("v41", PATH_CHAT)
+    if record is None:
+        return []
+    return [(record, prompt) for prompt in record["prompts"]]
+
+
+def test_the_multi_prompt_reference_names_the_prompts_and_the_reference_answered_them():
+    """The record has to be a set a criterion can run, not a stub a criterion can pass.
+
+    This is the free half: it needs no checkpoint and no card, and it is what makes a re-record
+    that dropped a prompt, reordered the labels or emptied an answer a failing test rather than a
+    smaller gate. The control the recorder repeats first and last must carry the *same* answer --
+    the record's own consistency, checked here so the run does not have to prove it.
+    """
+    record = load_multi_reference("v41", PATH_CHAT)
+    if record is None:
+        pytest.skip("v41 has no recorded multi-prompt chat reference; see tests/README.md")
+
+    prompts = record["prompts"]
+    assert len(prompts) >= 2, "a multi-prompt criterion of one prompt is the single-prompt one"
+    labels = [prompt["label"] for prompt in prompts]
+    assert len(set(labels)) == len(labels), f"two prompts share a label: {labels}"
+    for prompt in prompts:
+        assert prompt["tokens"], f"{prompt['label']} records no answer to compare against"
+        assert prompt["prompt_tokens"] > 0, f"{prompt['label']} records no rendered prompt width"
+        assert prompt["max_new"] >= len(prompt["tokens"]), (
+            f"{prompt['label']} generated more tokens than its own sampler cap"
+        )
+    # The control is first and last: same words, and the record has to give them the same answer.
+    first, last = prompts[0], prompts[-1]
+    assert first["prompt"] == last["prompt"], (
+        "the first and last prompts are not the same words, so the record's repeated control is "
+        "not the control it reads as"
+    )
+    assert first["tokens"] == last["tokens"], (
+        f"the reference answered its own repeated control two different ways: {first['tokens']} "
+        f"then {last['tokens']}. Greedy decode is deterministic, so this record is unusable"
+    )
+
+
+@pytest.mark.parametrize(
+    "record,prompt",
+    _recorded_multi_prompts(),
+    ids=[prompt["label"] for _, prompt in _recorded_multi_prompts()],
+)
+def test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, prompt):
+    """The multi-prompt chat criterion, one prompt a leg.
+
+    The single-prompt chat leg above asks one four-token question, which a broken port can answer
+    by luck. This record is eight prompts -- a control, a twenty-token count, arithmetic, a
+    repetition instruction, an open-ended question, a code-expression question and a Chinese
+    sentence -- and each leg is one of them in its own child process, against the reference's own
+    answer for that prompt.
+
+    **A prompt the reference decided inside its own noise is evidence, not a demand.** The record
+    carries the reference's smallest top1-top2 logit gap over each prompt's steps; where that gap is
+    below the record's `confident_nats` the reference is choosing among near-ties of its own making,
+    and holding the port to that token asks it to reproduce one kernel's rounding rather than the
+    model's answer -- the same distinction the raw route is documented under. Those prompts call
+    `pytest.xfail()` *after* the run, so a divergence is reported as an expected failure while an
+    *agreement* still shows as a pass. It is the imperative call rather than the `xfail` mark
+    because the leg only knows which it is once it has the run in hand, and `strict` has no meaning
+    on the call -- it is the mark, applied before the test body runs, that `strict` governs. A
+    prompt at or above the line is a real assertion, because a reference that decided by a nat or
+    more did not leave the answer to rounding.
+    """
+    if not os.environ.get(GOLDEN_GATE_ENV):
+        pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
+    fixture = _with_host_checkpoint(_multi_prompt_fixture(record, prompt))
+    reason = _served_skip_reason(fixture)
+    if reason is not None:
+        pytest.skip(reason)
+
+    expected = list(prompt["tokens"])
+    outcome = run_isolated(fixture)
+
+    assert outcome.token_ids is not None, f"{prompt['label']}: the run produced no token ids"
+    if outcome.prompt_tokens is not None:
+        assert outcome.prompt_tokens == prompt["prompt_tokens"], (
+            f"{prompt['label']}: the port sent {outcome.prompt_tokens} prompt tokens and the "
+            f"reference was seeded with {prompt['prompt_tokens']}; the two are answering different "
+            f"questions, so the token comparison below would not mean what it says"
+        )
+
+    if list(outcome.token_ids) == expected:
+        return
+
+    confident = float(prompt["min_gap"]) >= float(record.get("confident_nats", 1.0))
+    message = (
+        f"{prompt['label']}: the greedy tokens diverge from the official reference.\n"
+        f"  reference: {expected}\n"
+        f"  this card: {list(outcome.token_ids)}\n"
+        f"The reference is {record['source']} at commit {record.get('commit') or 'unknown'}, run on "
+        f"the configuration its `reproduction` block names. The reference answered this prompt with "
+        f"a smallest top1-top2 gap of {prompt['min_gap']} nats at step {prompt['min_gap_step']}"
+    )
+    if confident:
+        pytest.fail(
+            message + " -- at or above the record's "
+            f"{record.get('confident_nats')}-nat line, so this is a port defect, not a kernel "
+            "tolerance."
+        )
+    pytest.xfail(
+        message + f" -- below the record's {record.get('confident_nats')}-nat line, so the "
+        "reference is choosing inside its own noise and this leg records a measurement rather than "
+        "failing."
+    )
+
+
+def test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_flip(monkeypatch):
+    """The one decision the multi-prompt leg makes, pinned without a checkpoint.
+
+    The leg's whole judgement is which side of the record's `confident_nats` line a prompt's
+    reference margin falls on, and the two outcomes are a failure and an *expected* failure. A leg
+    wired the wrong way round would pass the suite by reporting every divergence as a coin flip, or
+    fail it on the one prompt the reference decided by a sixth of a nat -- so the branch is exercised
+    here against a synthetic record, in both directions, with the model run stubbed out.
+
+    `run_isolated` is replaced by a fake that returns a token list the caller chooses, so this never
+    touches a checkpoint; the gate and skip scaffolding around it are the same the real leg uses.
+    """
+    record = {
+        "source": "synthetic",
+        "commit": "0000000",
+        "path": PATH_CHAT,
+        "confident_nats": 1.0,
+        # The checkpoint has to be a path that exists, or `_served_skip_reason` skips the leg
+        # before it reaches the branch under test. The repository root is one on every host here;
+        # no weights are opened, because `run_isolated` is stubbed out below.
+        "reproduction": {
+            "argv": ["serve", "--model", str(pathlib.Path(__file__).resolve().parents[1])],
+            "env": {},
+            "requires": {},
+        },
+    }
+    confident = {
+        "label": "decided", "prompt": "p", "prompt_tokens": 3, "max_new": 2,
+        "tokens": [1, 2], "min_gap": 5.0, "min_gap_step": 0,
+    }
+    coin_flip = {
+        "label": "coin-flip", "prompt": "p", "prompt_tokens": 3, "max_new": 2,
+        "tokens": [1, 2], "min_gap": 0.15, "min_gap_step": 1,
+    }
+
+    monkeypatch.setenv(GOLDEN_GATE_ENV, "1")
+
+    # A confident prompt: the matching run passes, a diverging one fails.
+    monkeypatch.setattr(
+        f"{__name__}.run_isolated", lambda fixture, **_: Outcome(token_ids=[1, 2], prompt_tokens=3)
+    )
+    test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, confident)
+
+    monkeypatch.setattr(
+        f"{__name__}.run_isolated", lambda fixture, **_: Outcome(token_ids=[1, 9], prompt_tokens=3)
+    )
+    with pytest.raises(pytest.fail.Exception):
+        test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, confident)
+
+    # A coin-flip prompt: the same divergence is reported as expected, not as a failure.
+    with pytest.raises(pytest.xfail.Exception):
+        test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, coin_flip)
+
+    # A prompt-token mismatch is a different failure and is never softened to an xfail.
+    monkeypatch.setattr(
+        f"{__name__}.run_isolated", lambda fixture, **_: Outcome(token_ids=[1, 2], prompt_tokens=99)
+    )
+    with pytest.raises(AssertionError, match="answering different questions"):
+        test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(record, coin_flip)
 
 
 def test_a_reference_route_that_is_not_one_of_the_two_paths_is_refused():
