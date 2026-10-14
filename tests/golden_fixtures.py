@@ -480,6 +480,103 @@ def load_reference(entry: str, reference_route: str = PATH_RAW) -> dict[str, Any
     return record
 
 
+def load_multi_reference(entry: str, reference_route: str = PATH_CHAT) -> dict[str, Any] | None:
+    """The multi-prompt extension of an oracle, or `None` when none was recorded.
+
+    `load_reference` reads one prompt and one answer; this reads a *set*, at the name
+    `<entry>_<route>_multi.json`. A set is a different claim about the same oracle -- eight prompts
+    through the same renderer rather than one -- and it is a set that makes a single lucky
+    high-margin question visible as luck. The record carries the same `reproduction` block the
+    single-prompt chat record does, so its legs run the same configuration: one prompt per child
+    process, because eight prompts in one process cost eight model loads and eight expert-bank pins
+    and the harness's unit is one entry point in one process (see `run_isolated`).
+
+    The route is checked the way `load_reference` checks it, and for the same reason: a record that
+    ran one route while sitting at the other's name would be compared as if it answered the route
+    its name claims.
+
+    The shape of `prompts` is validated here rather than trusted, and that is deliberately a
+    *raising* validation even though this function is reached from a `parametrize` decorator: a
+    record that is malformed is a broken criterion, and a module that refuses to collect says so
+    where a leg that quietly compares fewer prompts would not. `multi_reference_prompts` is the same
+    refusal `_check_logits_check` makes for a logits record.
+    """
+    if reference_route not in GOLDEN_PATHS:
+        raise ValueError(f"reference route must be one of {GOLDEN_PATHS}, got {reference_route!r}")
+    suffix = "" if reference_route == PATH_RAW else f"_{reference_route}"
+    path = REFERENCE_DIR / f"{entry}{suffix}_multi.json"
+    if not path.exists():
+        return None
+    record = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(record, dict):
+        raise ValueError(f"{path.name} is a {type(record).__name__}, not a record object")
+    recorded = _read_path(record.get("path"))
+    if recorded != reference_route:
+        raise ValueError(
+            f"{path.name} records the {recorded!r} route but was loaded as {reference_route!r}: "
+            f"the file answers one question and the caller is asking the other, so a comparison "
+            f"against it would judge an answer by a prompt the run was never given"
+        )
+    multi_reference_prompts(record)
+    return record
+
+
+#: Fields every prompt of a multi-prompt record must carry, and the accessor that raises for it.
+_MULTI_PROMPT_FIELDS = ("label", "prompt", "prompt_tokens", "max_new", "tokens", "step_gaps")
+
+
+def multi_reference_prompts(record: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """The `prompts` of a multi-prompt record as a list of well-formed entries, or a `ValueError`.
+
+    Called from `load_multi_reference`, so a malformed record names itself in the refusal. Because
+    `load_multi_reference` is reached from a `parametrize` decorator, that refusal aborts collection
+    of the module -- which is the point: a malformed criterion is not a criterion with fewer prompts,
+    it is a broken one, and `test_the_multi_prompt_reference_is_committed` in the test module says
+    so in a leg that is free of a checkpoint. The fields checked are the ones the leg reads; an
+    unknown key is left alone, because a record that carries extra provenance is not malformed.
+
+    The record itself has to be a mapping for any of that to mean anything, so a non-mapping is
+    refused here too: the caller's malformed-record test hands this function the raw broken object
+    (a list, a string, a number), and `list.get` is an `AttributeError`, not the `ValueError` the
+    test is asserting on.
+
+    `step_gaps` is checked as a list as long as `tokens`, because the leg reads the reference's
+    margin *at the step the port diverged* and a short list would silently index out of range on a
+    divergence the record did not anticipate.
+    """
+    if not isinstance(record, Mapping):
+        raise ValueError(
+            f"a multi-prompt record must be an object, got {type(record).__name__}"
+        )
+    prompts = record.get("prompts")
+    if not isinstance(prompts, list) or not prompts:
+        raise ValueError(
+            f"a multi-prompt record's `prompts` must be a non-empty list, got "
+            f"{type(prompts).__name__}; the leg compares one prompt per entry and would otherwise "
+            f"collect no legs at all"
+        )
+    for index, prompt in enumerate(prompts):
+        if not isinstance(prompt, dict):
+            raise ValueError(f"prompt {index} of the multi-prompt record is a {type(prompt).__name__}")
+        missing = [field for field in _MULTI_PROMPT_FIELDS if field not in prompt]
+        if missing:
+            raise ValueError(
+                f"prompt {index} ({prompt.get('label', 'unlabelled')!r}) of the multi-prompt record "
+                f"is missing {', '.join(missing)}"
+            )
+        if not isinstance(prompt["tokens"], list) or not prompt["tokens"]:
+            raise ValueError(
+                f"prompt {prompt['label']!r} carries no `tokens` to compare against"
+            )
+        if not isinstance(prompt["step_gaps"], list) or len(prompt["step_gaps"]) != len(prompt["tokens"]):
+            raise ValueError(
+                f"prompt {prompt['label']!r} carries {len(prompt['step_gaps']) if isinstance(prompt['step_gaps'], list) else 'no'} "
+                f"`step_gaps` for {len(prompt['tokens'])} steps; the leg reads the reference's margin "
+                f"at the step the port diverged, so a gap has to exist for every step"
+            )
+    return prompts
+
+
 def write_fixture(fixture: GoldenFixture) -> pathlib.Path:
     path = fixture_path(fixture.entry)
     path.parent.mkdir(parents=True, exist_ok=True)

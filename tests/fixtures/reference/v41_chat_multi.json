@@ -1,0 +1,292 @@
+{
+  "entry": "v41",
+  "source": "official DeepSeek-V4.1 reference (inference/model.py, unmodified)",
+  "path": "chat",
+  "reproduction": {
+    "argv": [
+      "serve",
+      "--backend",
+      "v41",
+      "--model",
+      "/mnt/data3/DeepSeek-V4.1-Flash",
+      "--tensor-parallel-size",
+      "1",
+      "--max-model-len",
+      "8192",
+      "--backend-option",
+      "prefill_chunk=4096",
+      "--backend-option",
+      "decode_graphs=false",
+      "--backend-option",
+      "threads=22"
+    ],
+    "env": {},
+    "requires": {}
+  },
+  "commit": "be0342f",
+  "taken_at": "2026-10-13",
+  "confident_nats": 1.0,
+  "notes": "The multi-prompt extension of v41_chat.json: the same unmodified inference/model.py on the chat route, one loaded process, eight prompts -- a control repeated first and last, a 20-token count, arithmetic, a repetition instruction, an open-ended question, a code-expression question and a Chinese prompt. `prompt_tokens` is the count of the checkpoint's own encode_messages render for each prompt, the renderer the served chat route uses; `max_new` is the greedy sampler cap the recorder ran each prompt under. `step_gaps` is the reference's own top1-top2 logit gap at every generated step, read from the recorder's all_logits, so the leg can ask how decisive the reference's row was at the *step the port actually diverged* rather than over the sequence as a whole. `commit`, `taken_at` and `reproduction` are inherited from the sibling single-prompt v41_chat.json: the eight-prompt answers were recorded under that same working tree and configuration, and were not re-stamped here. `confident_nats` is the line the criterion draws: where the reference's gap at the diverging step is below it the reference resolved that step inside a band comparable to this port's own run-to-run spread, so the divergence is a measurement rather than a defect; at or above it the port is held to the reference's token, because a reference that decided a step by a nat or more did not leave it to rounding.",
+  "prompts": [
+    {
+      "label": "golden-control",
+      "prompt": "Reply with the single line: golden fixture.",
+      "prompt_tokens": 13,
+      "max_new": 4,
+      "tokens": [
+        69865,
+        267,
+        45117,
+        1
+      ],
+      "step_gaps": [
+        13.9908,
+        21.2897,
+        13.2664,
+        0.423
+      ]
+    },
+    {
+      "label": "count-1-20",
+      "prompt": "Count from 1 to 20, separating the numbers with commas.",
+      "prompt_tokens": 18,
+      "max_new": 20,
+      "tokens": [
+        19,
+        14,
+        223,
+        20,
+        14,
+        223,
+        21,
+        14,
+        223,
+        22,
+        14,
+        223,
+        23,
+        14,
+        223,
+        24,
+        14,
+        223,
+        25,
+        14
+      ],
+      "step_gaps": [
+        9.4619,
+        15.0411,
+        8.5936,
+        14.6182,
+        18.0048,
+        16.6835,
+        17.0782,
+        18.7108,
+        20.08,
+        19.8996,
+        19.0388,
+        19.6562,
+        18.6376,
+        17.9675,
+        19.1567,
+        18.3819,
+        18.6416,
+        18.9199,
+        17.7851,
+        19.1592
+      ]
+    },
+    {
+      "label": "arith-17x23",
+      "prompt": "What is 17 times 23? Reply with just the number.",
+      "prompt_tokens": 18,
+      "max_new": 8,
+      "tokens": [
+        23005,
+        1
+      ],
+      "step_gaps": [
+        11.8043,
+        16.7619
+      ]
+    },
+    {
+      "label": "repeat-ready-3",
+      "prompt": "Reply with the word 'ready' exactly three times, separated by spaces.",
+      "prompt_tokens": 19,
+      "max_new": 16,
+      "tokens": [
+        3793,
+        7692,
+        7692,
+        1
+      ],
+      "step_gaps": [
+        12.0065,
+        10.0384,
+        11.7739,
+        17.4396
+      ]
+    },
+    {
+      "label": "explain-blue",
+      "prompt": "Explain in two or three sentences why the sky appears blue during the day, using plain language.",
+      "prompt_tokens": 23,
+      "max_new": 24,
+      "tokens": [
+        31704,
+        5296,
+        7272,
+        710,
+        11273,
+        14,
+        305,
+        1082,
+        436,
+        20102,
+        1407,
+        270,
+        13801,
+        14,
+        3525,
+        14387,
+        17417,
+        270,
+        22467,
+        8295,
+        53330,
+        1949,
+        850,
+        1099
+      ],
+      "step_gaps": [
+        1.6848,
+        19.0135,
+        0.8861,
+        13.0924,
+        11.8972,
+        3.4551,
+        2.1067,
+        0.1909,
+        19.922,
+        4.3795,
+        20.523,
+        8.866,
+        0.1554,
+        4.8789,
+        0.5996,
+        15.157,
+        15.7175,
+        5.8583,
+        2.7637,
+        16.7675,
+        7.1382,
+        9.936,
+        18.2123,
+        5.5195
+      ]
+    },
+    {
+      "label": "code-sum",
+      "prompt": "Write a single-line Python expression that computes the sum of the numbers 3, 1, 4, 1 and 5. Reply with only the code.",
+      "prompt_tokens": 38,
+      "max_new": 16,
+      "tokens": [
+        5674,
+        10425,
+        21,
+        14,
+        223,
+        19,
+        14,
+        223,
+        22,
+        14,
+        223,
+        19,
+        14,
+        223,
+        23,
+        8123
+      ],
+      "step_gaps": [
+        2.6817,
+        6.3813,
+        15.096,
+        16.1177,
+        5.3887,
+        15.0675,
+        17.9224,
+        17.0249,
+        16.9674,
+        16.9385,
+        17.2729,
+        17.582,
+        15.7678,
+        18.1628,
+        17.2716,
+        12.7749
+      ]
+    },
+    {
+      "label": "zh-gradient",
+      "prompt": "用一句话解释什么是梯度下降。",
+      "prompt_tokens": 11,
+      "max_new": 16,
+      "tokens": [
+        59563,
+        10778,
+        1738,
+        33376,
+        7094,
+        9053,
+        985,
+        1103,
+        40959,
+        30973,
+        11725,
+        6082,
+        303,
+        64569,
+        7590,
+        10602
+      ],
+      "step_gaps": [
+        6.8442,
+        14.4934,
+        3.9008,
+        5.1486,
+        3.7377,
+        3.1423,
+        6.7934,
+        6.6379,
+        14.1322,
+        4.9543,
+        11.4511,
+        21.5171,
+        1.6346,
+        1.7462,
+        3.6482,
+        19.3127
+      ]
+    },
+    {
+      "label": "golden-again",
+      "prompt": "Reply with the single line: golden fixture.",
+      "prompt_tokens": 13,
+      "max_new": 4,
+      "tokens": [
+        69865,
+        267,
+        45117,
+        1
+      ],
+      "step_gaps": [
+        13.9908,
+        21.2897,
+        13.2664,
+        0.423
+      ]
+    }
+  ]
+}
