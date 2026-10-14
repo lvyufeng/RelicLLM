@@ -1085,4 +1085,11 @@ def test_the_real_lm_head_matches_its_own_decode(device: str) -> None:
     )
     assert tuple(y.shape) == (1, 2)
     _assert_matches(y.cpu().numpy(), _gemm(x, reference.numpy(), device))
-    assert np.abs(reference.numpy()).max() > 1.0
+    # The fixture has to be worth comparing against, but an absmax floor is the wrong test for this
+    # tensor: `output.weight` rows are small everywhere, and the first two of them peak at 0.154
+    # with an rms of 0.0102.  A rms floor of 1e-3 is what actually separates a real row from a
+    # degenerate one here.
+    magnitude = float(np.sqrt(np.mean(reference.numpy().astype(np.float64) ** 2)))
+    assert magnitude > 1e-3, (
+        f"a slice of rms {magnitude:.3g} would let the comparison pass on magnitude alone"
+    )
