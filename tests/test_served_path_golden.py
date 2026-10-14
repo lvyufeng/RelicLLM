@@ -261,7 +261,12 @@ def test_the_v41_tokens_agree_with_the_official_reference():
         f"  reference: {expected_tokens}\n"
         f"  this card: {list(outcome.token_ids)}\n"
         f"The reference is {reference['source']} at commit {reference.get('commit') or 'unknown'}; "
-        f"{_run_card_note(fixture)}. A divergence here is a port defect, not a kernel tolerance."
+        f"{_run_card_note(fixture)}. The raw route is where the reference decides by a margin under a "
+        f"nat (index 2 by 0.16), so a divergence can be the port's arithmetic differing from the "
+        f"reference's kernels by more than that margin rather than a defect: the reference's own code "
+        f"picks this port's token at index 2 once its tilelang GEMMs are replaced. Check the margin at "
+        f"the diverging step against the port's residual before calling it a port defect; the chat "
+        f"route, decided by 14 nat, is the arm that is actually settled."
     )
 
 
