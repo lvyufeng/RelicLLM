@@ -172,7 +172,11 @@ and Engram in host memory or on disk before kernel work matters.
   reference needs `torch>=2.10.0`, `tilelang==0.1.8` and an FP4 tensor core, and this host has none of
   the three, so it is executed on an RTX 4090 instead — the four sm_75 cards compare their own tokens
   against what it produced there, which is committed as
-  `tests/fixtures/reference/v41.json` (raw route) and `v41_chat.json` (chat route). It is a record of
+  `tests/fixtures/reference/v41.json` (raw route) and `v41_chat.json` (chat route). **The chat route
+  is the one the released code actually feeds**: `inference/generate.py` renders every prompt through
+  the checkpoint's own `encode_messages`, so a client's message is always the templated sequence the
+  chat record holds — the raw record is the recorder's deliberate deviation, the nine ids the prompt
+  is written as with no role framing. It is a record of
   what the reference does, not a claim that this port matches it everywhere. The chat route's oracle
   `[69865, 267, 45117, 1]` is reproduced exactly, on an RTX 4090 and on an RTX 2080 Ti alike. The raw
   route matches the reference's first two tokens and diverges at index 2 — but that divergence is the
