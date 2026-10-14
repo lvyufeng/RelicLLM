@@ -200,6 +200,12 @@ and Engram in host memory or on disk before kernel work matters.
   Measured on a single card with one kernel revision, the
   host-expert and device-expert arms' residual is within 5% of each other at that step (1.02 vs 0.97
   nat), so neither arm is the more faithful one and the criterion is not moved onto the device arm.
+  Swept across cards and configs, no arm walks the raw sequence: the TP1 host config and the RTX
+  2080 Ti's device-expert arm both pick `344` at index 2, and only the RTX 4090's device-expert arm
+  picks the oracle's `1531` — after which *it* diverges at step 5, where the oracle's `6405` is its
+  rank 3 by 0.09 nat. Two of the three arms give `344` at index 2, and the one that matches index 2
+  fails a step later; the layout is a decision below the noise floor rather than a faithful arm and an
+  unfaithful one.
   The port's ranking of the reference's row is good, not perfect (Spearman ρ 0.80 at step 0, ~0.98
   mid-decode; ~50 of the top 64 in common), so the tokens after its
   first divergence say nothing about correctness — only that it is off a trajectory the reference
