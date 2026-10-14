@@ -354,3 +354,53 @@ entry point is a second question nobody recorded. The fixture that helper builds
 the fixture would make the leg compare the oracle to itself -- and no `commit`/`card` either, because
 those fields mean "this repository produced this answer, here" and this leg has produced no answer of
 its own.
+
+### Multi-prompt references: a *set* of answers, and what to do when the reference is unsure
+
+One prompt is a question a broken port can answer by luck. `tests/fixtures/reference/v41_chat_multi.json`
+is the reference's answers to **eight** chat-templated prompts, recorded in one loaded process
+against the same unmodified `inference/model.py`: a control the recorder repeats first and last, a
+twenty-token count, arithmetic, a repetition instruction, an open-ended question, a code expression
+and a Chinese sentence. The leg is
+`test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt`, one prompt a child
+process, collected by `_recorded_multi_prompts()`.
+
+The record is the single-prompt shape with two differences. `prompts` is a list of
+`{label, prompt, prompt_tokens, max_new, tokens, step_gaps}` rather than one `prompt`/`tokens` pair,
+and each prompt carries no `expected` of its own -- as with `fixture_from_reference`, the reference's
+`tokens` *are* the answer, and copying them into a fixture would compare the oracle to itself. The
+loader `load_multi_reference()` reads `<entry>_chat_multi.json` for the chat route -- and
+`<entry>_multi.json` for the raw one, the same suffix rule the single-prompt files use -- then
+validates it through `multi_reference_prompts()`, which raises rather than returning an empty set: a
+malformed criterion is a broken one, so it aborts collection of the module instead of silently
+running fewer legs. `test_the_multi_prompt_reference_is_committed` is the checkpoint-free guard that
+the file exists at all, and `MULTI_PROMPT_LABELS` pins the label *sequence* so a re-record that
+dropped or reordered a prompt fails rather than shrinking the gate.
+
+**`step_gaps` is why the record carries more than answers.** It is the reference's own top1-top2
+logit gap at *every* generated step, read from the recorder's `all_logits`. A greedy answer is only
+as decisive as its margin: `explain-blue` is a prompt the reference decided by **0.1554 nat** at step
+12 of 24, and on that step a port that picks a different word is being asked to reproduce one
+kernel's rounding rather than the model's answer. So the leg judges the gap **at the step the port
+actually diverged** -- not the sequence minimum, which would launder a wrong first token into a coin
+flip. At or above the record's `confident_nats` line (1.0) the reference decided by more than any
+run-to-run float spread it carries, so the divergence is a **port defect** and the leg fails; below
+it the divergence is a **measurement** and the leg calls `pytest.xfail()` *after* the run, so a
+divergence reports as an expected failure while an agreement still shows as a pass.
+
+**A disagreement about length is never a coin flip, in either direction.** When the two runs stop at
+different steps there is no reference margin that speaks to where they parted -- the reference's
+decision there was to emit nothing more, or to emit a token the other run never reached. So a port
+that stops short, or one that generates past the reference, **fails** rather than xfails; otherwise a
+port that ignores EOS would read as green. `test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_flip`
+exercises both directions of the branch, and the length cases, against a synthetic record with the
+model stubbed out, so the decision is pinned without a checkpoint.
+
+**The `confident_nats` line is only meaningful because the criterion config is bitwise stable.** The
+line draws the boundary at this port's own run-to-run spread, so it is worth knowing what that spread
+is. On the criterion (`TP1` host, `decode_graphs=false`) configuration the recorded control appears
+twice in one process, six prompts apart, with **bitwise-identical** step-0 rows -- so the spread there
+is zero, and a 1.0-nat line is conservative rather than tight. (A larger 0.4-1.5 nat in-process
+spread has been seen on the `TP4` device config with decode graphs, so the line is stated per-record
+rather than hard-coded: a criterion whose config turns out to be less stable carries its own
+`confident_nats`.)
