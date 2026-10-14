@@ -638,24 +638,30 @@ def test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(re
     if tokens == expected:
         return
 
-    # The step the port first disagreed with the reference, and the reference's own margin there.
+    # The step the port first disagreed with the reference, over the positions the two share.
     diverged_at = next(
         (index for index, (mine, theirs) in enumerate(zip(tokens, expected)) if mine != theirs),
-        min(len(tokens), len(expected)),
+        None,
     )
-    # `step_gaps` covers exactly the reference's own steps (the loader refuses a short list). An
-    # index at or past its end means the two runs disagree about *length* -- one stopped where the
-    # other kept going -- and the reference has no margin to excuse that: its decision was to emit
-    # nothing more. The near-tie excuse is only available where a margin was recorded, so an
-    # out-of-range step is a hard failure rather than a `None` that would read as a coin flip.
-    reference_gap = prompt["step_gaps"][diverged_at] if diverged_at < len(prompt["step_gaps"]) else None
+    # A disagreement about *length* is never a coin flip, in either direction. When the two runs emit
+    # a different number of tokens -- the port stopping short of the reference, or generating past it
+    # -- there is no reference margin that speaks to the step where they part: the reference's own
+    # decision there was about a token the other run never reached, or about stopping where the other
+    # kept going. So it fails, and the near-tie excuse is reserved for a same-length run that
+    # diverged at a step the reference itself decided by a fraction of a nat.
+    same_length = len(tokens) == len(expected)
+    if not same_length or diverged_at is None:
+        reference_gap = None
+    else:
+        reference_gap = prompt["step_gaps"][diverged_at]
     confident = reference_gap is None or float(reference_gap) >= float(
         record.get("confident_nats", 1.0)
     )
-    if reference_gap is None:
+    if not same_length:
         where = (
-            f"the two runs disagree at step {diverged_at} about where to stop: the reference emitted "
-            f"{len(expected)} token(s) and this card emitted {len(tokens)}"
+            f"the two runs disagree about where to stop: the reference emitted "
+            f"{len(expected)} token(s) and this card emitted {len(tokens)}, parting at step "
+            f"{min(len(tokens), len(expected))}"
         )
     else:
         where = f"first divergence at step {diverged_at}, where the reference's top1-top2 gap was {reference_gap} nats"
@@ -778,6 +784,20 @@ def test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_fl
     monkeypatch.setattr(
         f"{__name__}.run_isolated",
         lambda fixture, **_: Outcome(token_ids=[1, 2, 3, 4], prompt_tokens=3),
+    )
+    _divergence_raises_exactly(
+        lambda: test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(
+            record, coin_flip
+        ),
+        pytest.fail.Exception,
+    )
+
+    # ...and the mirror: a port that stops SHORT of the reference. The same length disagreement, in
+    # the other direction, and it must fail too -- the reference's gap at the port's stop step (0.15
+    # here) is not a margin for a token the port never reached.
+    monkeypatch.setattr(
+        f"{__name__}.run_isolated",
+        lambda fixture, **_: Outcome(token_ids=[1], prompt_tokens=3),
     )
     _divergence_raises_exactly(
         lambda: test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(
