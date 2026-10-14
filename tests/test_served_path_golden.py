@@ -611,7 +611,10 @@ def test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(re
     because the leg only knows which it is once it has the run in hand, and `strict` has no meaning
     on the call -- it is the mark, applied before the test body runs, that `strict` governs. A gap at
     or above the line is a real assertion, because a reference that decided by a nat or more did not
-    leave the answer to rounding.
+    leave the answer to rounding. **A disagreement about length is never a coin flip**: when one run
+    stops and the other keeps going there is no reference margin at the step past its end, because
+    the reference's decision was to emit nothing more -- so that leg fails rather than xfails, which
+    is what keeps a port that ignores EOS from reading as green.
     """
     if not os.environ.get(GOLDEN_GATE_ENV):
         pytest.skip(f"the served-path fixtures are opt-in: set {GOLDEN_GATE_ENV}=1 to run them.")
@@ -636,24 +639,31 @@ def test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(re
         return
 
     # The step the port first disagreed with the reference, and the reference's own margin there.
-    # `step_gaps` covers every step (the loader refuses a short list), so an index beyond the
-    # reference's sequence is the port generating past the end, which the record cannot have a
-    # margin for and which is a divergence at the first such step rather than a `IndexError`.
     diverged_at = next(
         (index for index, (mine, theirs) in enumerate(zip(tokens, expected)) if mine != theirs),
         min(len(tokens), len(expected)),
     )
+    # `step_gaps` covers exactly the reference's own steps (the loader refuses a short list). An
+    # index at or past its end means the two runs disagree about *length* -- one stopped where the
+    # other kept going -- and the reference has no margin to excuse that: its decision was to emit
+    # nothing more. The near-tie excuse is only available where a margin was recorded, so an
+    # out-of-range step is a hard failure rather than a `None` that would read as a coin flip.
     reference_gap = prompt["step_gaps"][diverged_at] if diverged_at < len(prompt["step_gaps"]) else None
-    confident = reference_gap is not None and float(reference_gap) >= float(
+    confident = reference_gap is None or float(reference_gap) >= float(
         record.get("confident_nats", 1.0)
     )
+    if reference_gap is None:
+        where = (
+            f"the two runs disagree at step {diverged_at} about where to stop: the reference emitted "
+            f"{len(expected)} token(s) and this card emitted {len(tokens)}"
+        )
+    else:
+        where = f"first divergence at step {diverged_at}, where the reference's top1-top2 gap was {reference_gap} nats"
     message = (
         f"{prompt['label']}: the greedy tokens diverge from the official reference.\n"
         f"  reference: {expected}\n"
         f"  this card: {tokens}\n"
-        f"first divergence at step {diverged_at}, where the reference's top1-top2 gap was "
-        f"{reference_gap if reference_gap is not None else 'past the recorded sequence'}"
-        f"{'' if reference_gap is None else ' nats'}.\n"
+        f"{where}.\n"
         f"The reference is {record['source']} at commit {record.get('commit') or 'unknown'}, run on "
         f"the configuration its `reproduction` block names"
     )
@@ -758,6 +768,20 @@ def test_the_multi_prompt_leg_fails_a_confident_divergence_and_records_a_coin_fl
     _divergence_raises_exactly(
         lambda: test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(
             record, decisive_first
+        ),
+        pytest.fail.Exception,
+    )
+
+    # A port that fails to stop -- the reference's tokens as a prefix, then more -- has no reference
+    # margin to excuse it, so it fails rather than xfails. `zip` finds no differing position here,
+    # which is the shape that made the sequence-minimum gate report a coin flip.
+    monkeypatch.setattr(
+        f"{__name__}.run_isolated",
+        lambda fixture, **_: Outcome(token_ids=[1, 2, 3, 4], prompt_tokens=3),
+    )
+    _divergence_raises_exactly(
+        lambda: test_the_v41_chat_route_agrees_with_the_official_reference_on_each_prompt(
+            record, coin_flip
         ),
         pytest.fail.Exception,
     )
