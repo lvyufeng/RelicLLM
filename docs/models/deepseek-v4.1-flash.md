@@ -184,7 +184,12 @@ and Engram in host memory or on disk before kernel work matters.
   on the oracle's *own* context (`[455, 1950]`, fed step by step) with its two tilelang GEMMs swapped
   for a plain torch recipe: it picks `344`, the port's token, over `1531` by **1.0–1.1 nat** — while
   the same harness with the tilelang GEMMs left in reproduces the oracle's `1531 @ +0.1618 nat` to six
-  digits. The step-2 pick is stable across runs of the soft variant — its earlier steps are not — so
+  digits. The flip does not need both families swapped: splitting the swap by role — routing each
+  `linear` call through a weight-identity map, swapping only the routed fp4 experts, or
+  only the dense fp8 linears (attention, compressor, indexer, engram, shared experts) — moves step 2
+  to the port's `344` from either side alone, at **−0.45 nat** for the experts and **−0.22 nat** for
+  the dense linears, against the control's **+0.16 nat** for the oracle's `1531`. The step-2 pick is
+  stable across runs of the soft variant — its earlier steps are not — so
   the flip is the GEMM substitution rather than run-to-run noise. The reference decides index 2 by
   **0.16 nat**; the port's centered residual on that row is **~1.0 nat**, six times the width, and
   that residual is consistent with the **1.0–1.1 nat** the tilelang kernel sits away from a clean GEMM.
