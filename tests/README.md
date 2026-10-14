@@ -291,8 +291,9 @@ else. `logits_check` records the reference's step-0 top-k for the same reason th
 Two legs compare against them, and they are gated the same way as the rest:
 `test_the_v41_tokens_agree_with_the_official_reference` (raw) and
 `test_the_v41_chat_route_agrees_with_the_official_reference` (chat). They are the tests here that
-compare the port to the *model* rather than to itself. The **chat** leg is the one that can only fail
-with a port defect: its step-0 margin is 14 nat, far above any arithmetic difference the port carries.
+compare the port to the *model* rather than to itself. The **chat** leg is the one that can fail with a
+port defect rather than a tolerance drift: its step-0 margin is 14 nat, far above any arithmetic
+difference the port carries.
 The **raw** leg is a fidelity yardstick, not a defect oracle — the reference decides its step 2 by
 0.16 nat, and the port's own residual on that row is ~1.0 nat, so a divergence there is as likely to
 be the two implementations' kernels differing as a port defect (the reference's own code picks the
