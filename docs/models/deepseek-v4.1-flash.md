@@ -123,7 +123,7 @@ python scripts/audit_dsv41_headers.py --checkpoint-dir /path/to/DeepSeek-V4.1-Fl
 | MTP / DSpark (3 draft layers, 7.39 GiB) | Present in the checkpoint, not executed |
 | Batching, continuous batching, chunked prefill | **Not implemented** — one request at a time through this adapter's own serialized session |
 | The shared `BatchScheduler` (`--enable-batching`) | **Removed** — the flag is refused by name; the scheduler library went with the retired `cpp` backend |
-| Numeric parity with the released reference | **Partial** — an oracle is recorded from the checkpoint's own code on an RTX 4090; the chat route reproduces it exactly and the raw route diverges at index 2 |
+| Numeric parity with the released reference | **Partial** — an oracle is recorded from the checkpoint's own code on an RTX 4090; the chat route reproduces it exactly on both an RTX 4090 and an RTX 2080 Ti, and the raw route is a near-tie decided below the port's residual |
 
 ## Performance
 
@@ -173,10 +173,17 @@ and Engram in host memory or on disk before kernel work matters.
   the three, so it is executed on an RTX 4090 instead — the four sm_75 cards compare their own tokens
   against what it produced there, which is committed as
   `tests/fixtures/reference/v41.json` (raw route) and `v41_chat.json` (chat route). It is a record of
-  what the reference does, not a claim that this port matches it everywhere: the chat route's oracle
-  `[69865, 267, 45117, 1]` is reproduced exactly, while the raw route matches the reference's first two
-  tokens and diverges at index 2. The generated text is still the other acceptance evidence — greedy
-  decode returns `' Paris'` and then `'.'` for `"The capital of France is"` on every path.
+  what the reference does, not a claim that this port matches it everywhere. The chat route's oracle
+  `[69865, 267, 45117, 1]` is reproduced exactly, on an RTX 4090 and on an RTX 2080 Ti alike. The raw
+  route matches the reference's first two tokens and diverges at index 2 — but that route is a
+  near-tie rather than a defect: the reference decides index 2 by **0.16 nat**, while the port's
+  centered residual on that row is **~0.83 nat**, five times the width of the decision. The port's
+  top-64 ranking correlates with the reference's at 1.000 on every step, so the tokens after its first
+  divergence say nothing about correctness — only that it is off a trajectory the reference itself
+  resolves by a margin below either implementation's noise floor. The chat route, whose step-0 margin
+  is 14 nat, is the arm that is actually decided, and it agrees. The generated text is still the other
+  acceptance evidence — greedy decode returns `' Paris'` and then `'.'` for
+  `"The capital of France is"` on every path.
 - **Engram is addressable and gathered, but not measured against the reference.** The hash front end
   reproduces both declared row counts exactly to the row and the rows are read on demand; what is open
   is the gate and value projections' parity with the reference, and the fact that gathering from the
