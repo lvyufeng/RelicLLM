@@ -177,12 +177,16 @@ and Engram in host memory or on disk before kernel work matters.
   `[69865, 267, 45117, 1]` is reproduced exactly, on an RTX 4090 and on an RTX 2080 Ti alike. The raw
   route matches the reference's first two tokens and diverges at index 2 — but that route is a
   near-tie rather than a defect: the reference decides index 2 by **0.16 nat**, while the port's
-  centered residual on that row is **~0.83 nat**, five times the width of the decision. The port's
-  top-64 ranking correlates with the reference's at 1.000 on every step, so the tokens after its first
-  divergence say nothing about correctness — only that it is off a trajectory the reference itself
-  resolves by a margin below either implementation's noise floor. The chat route, whose step-0 margin
-  is 14 nat, is the arm that is actually decided, and it agrees. The generated text is still the other
-  acceptance evidence — greedy decode returns `' Paris'` and then `'.'` for
+  centered residual on that row is **~1.0 nat**, six times the width of the decision. Measured on a
+  single card with one kernel revision, the host-expert and device-expert arms' residual is within 5%
+  of each other at that step (1.02 vs 0.97 nat) — so the device arm's occasional agreement at index 2
+  is that decision landing on the oracle's side, not a more faithful computation, and it is why the
+  criterion is not moved onto it. The port's ranking of the reference's row is good, not perfect
+  (Spearman ρ 0.80 at step 0, ~0.98 mid-decode; ~50 of the top 64 in common), so the tokens after its
+  first divergence say nothing about correctness — only that it is off a trajectory the reference
+  itself resolves by a margin below either implementation's noise floor. The chat route, whose step-0
+  margin is 14 nat, is the arm that is actually decided, and it agrees. The generated text is still
+  the other acceptance evidence — greedy decode returns `' Paris'` and then `'.'` for
   `"The capital of France is"` on every path.
 - **Engram is addressable and gathered, but not measured against the reference.** The hash front end
   reproduces both declared row counts exactly to the row and the rows are read on demand; what is open
