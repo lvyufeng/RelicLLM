@@ -123,7 +123,7 @@ python scripts/audit_dsv41_headers.py --checkpoint-dir /path/to/DeepSeek-V4.1-Fl
 | MTP / DSpark (3 draft layers, 7.39 GiB) | Present in the checkpoint, not executed |
 | Batching, continuous batching, chunked prefill | **Not implemented** — one request at a time through this adapter's own serialized session |
 | The shared `BatchScheduler` (`--enable-batching`) | **Removed** — the flag is refused by name; the scheduler library went with the retired `cpp` backend |
-| Numeric parity with the released reference | **Partial** — an oracle is recorded from the checkpoint's own code on an RTX 4090; the chat route reproduces it exactly on both an RTX 4090 and an RTX 2080 Ti, and the raw route is a near-tie decided below the port's residual |
+| Numeric parity with the released reference | **Exact on the route the released code feeds** — an oracle is recorded from the checkpoint's own code on an RTX 4090; the chat route, which `inference/generate.py` always sends, reproduces it on both an RTX 4090 and an RTX 2080 Ti. The raw route (the recorder's deviation) diverges at a step the reference itself decides below either implementation's residual, so it is a fidelity yardstick rather than a parity claim |
 
 ## Performance
 
@@ -179,8 +179,12 @@ and Engram in host memory or on disk before kernel work matters.
   is written as with no role framing. It is a record of
   what the reference does, not a claim that this port matches it everywhere. The chat route's oracle
   `[69865, 267, 45117, 1]` is reproduced exactly, on an RTX 4090 and on an RTX 2080 Ti alike. The raw
-  route matches the reference's first two tokens and diverges at index 2 — but that divergence is the
-  reference's own kernel rounding, not a defect of this port. Re-run the reference's unmodified code
+  route matches the reference's first two tokens and diverges at index 2. That divergence is the
+  reference's own kernel rounding, not a defect of this port, and it is why the raw leg is documented
+  as a **fidelity yardstick rather than a parity claim**: the reference decides its step 2 by a margin
+  smaller than the arithmetic difference between its own kernels and a clean GEMM, so asking the port
+  to reproduce that token asks it to reproduce one kernel's rounding — a stricter demand than the
+  reference makes of itself. Re-run the reference's unmodified code
   on the oracle's *own* context (`[455, 1950]`, fed step by step) with its two tilelang GEMMs swapped
   for a plain torch recipe: it picks `344`, the port's token, over `1531` by **1.0–1.1 nat** — while
   the same harness with the tilelang GEMMs left in reproduces the oracle's `1531 @ +0.1618 nat` to six
