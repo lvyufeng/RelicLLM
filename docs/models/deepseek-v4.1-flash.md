@@ -211,6 +211,14 @@ and Engram in host memory or on disk before kernel work matters.
   0.16-nat near-tie. An earlier device-arm reading that *did* pick `1531` came from a pre-#175 tree with a
   pre-#36 relic-core, so it is not the current behaviour. The layout is a decision below the noise
   floor, not a faithful arm and an unfaithful one.
+  The raw route's first token is also set by the reference-reduction emulation, which the port ships
+  **on** (`POCKETLLM_V41_MMA_EMULATE` defaults to `1`). At the sm_75 criterion config the emulation and
+  the routing change together decide the raw step 0: with the emulation off the leg emits
+  `[455, 1950, 344, 260, …]` and with it on the same leg emits `[1]` (EOS) where the reference gives
+  `455, 1950, 1531, …`. The emulation is a real arithmetic change on this route, and the port's own
+  margin between `455` and EOS at the raw step 0 is sub-nat, so the change is large enough to move the
+  argmax. On the **chat** route the emulation is the no-op its 14-nat step-0 margin implies: the port
+  reproduces all four reference tokens with the emulation on or off, on both cards.
   The port's ranking of the reference's row is good, not perfect (Spearman ρ 0.80 at step 0, ~0.98
   mid-decode; ~50 of the top 64 in common), so the tokens after its
   first divergence say nothing about correctness — only that it is off a trajectory the reference
