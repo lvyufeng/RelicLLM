@@ -197,6 +197,11 @@ and Engram in host memory or on disk before kernel work matters.
   decides index 2 by
   **0.16 nat**; the port's centered residual on that row is **~1.0 nat**, six times the width, and
   that residual is consistent with the **1.0–1.1 nat** the tilelang kernel sits away from a clean GEMM.
+  A per-layer tap localizes where it starts: the embedding and the first pre-mix are **bitwise
+  identical** to the reference, block 0's **attention** is the first non-bitwise stage (5.4e-3 rms),
+  block 0's feed-forward follows (2.2e-3), and the hidden drifts smoothly from 7.3e-4 after block 0 to
+  2.33 by block 39 with attention above the feed-forward at every layer — inherent accumulation order,
+  with no exact prefix to trim.
   Measured on a single card with one kernel revision, the
   host-expert and device-expert arms' residual is within 5% of each other at that step (1.02 vs 0.97
   nat), so neither arm is the more faithful one and the criterion is not moved onto the device arm.
