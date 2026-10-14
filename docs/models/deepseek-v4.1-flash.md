@@ -175,14 +175,20 @@ and Engram in host memory or on disk before kernel work matters.
   `tests/fixtures/reference/v41.json` (raw route) and `v41_chat.json` (chat route). It is a record of
   what the reference does, not a claim that this port matches it everywhere. The chat route's oracle
   `[69865, 267, 45117, 1]` is reproduced exactly, on an RTX 4090 and on an RTX 2080 Ti alike. The raw
-  route matches the reference's first two tokens and diverges at index 2 — but that route is a
-  near-tie rather than a defect: the reference decides index 2 by **0.16 nat**, while the port's
-  centered residual on that row is **~1.0 nat**, six times the width of the decision. Measured on a
-  single card with one kernel revision, the host-expert and device-expert arms' residual is within 5%
-  of each other at that step (1.02 vs 0.97 nat) — so the device arm's occasional agreement at index 2
-  is that decision landing on the oracle's side, not a more faithful computation, and it is why the
-  criterion is not moved onto it. The port's ranking of the reference's row is good, not perfect
-  (Spearman ρ 0.80 at step 0, ~0.98 mid-decode; ~50 of the top 64 in common), so the tokens after its
+  route matches the reference's first two tokens and diverges at index 2 — but that divergence is the
+  reference's own kernel rounding, not a defect of this port. Re-run the reference's unmodified code
+  on the oracle's *own* context (`[455, 1950]`, fed step by step) with its two tilelang GEMMs swapped
+  for a plain torch recipe: it picks `344`, the port's token, over `1531` by **1.0–1.1 nat** — while
+  the same harness with the tilelang GEMMs left in reproduces the oracle's `1531 @ +0.1618 nat` to six
+  digits. The step-2 pick is stable across runs of the soft variant — its earlier steps are not — so
+  the flip is the GEMM substitution rather than run-to-run noise. The reference decides index 2 by
+  **0.16 nat**; the port's centered residual on that row is **~1.0 nat**, six times the width, and
+  that residual is consistent with the **1.0–1.1 nat** the tilelang kernel sits away from a clean GEMM.
+  Measured on a single card with one kernel revision, the
+  host-expert and device-expert arms' residual is within 5% of each other at that step (1.02 vs 0.97
+  nat), so neither arm is the more faithful one and the criterion is not moved onto the device arm.
+  The port's ranking of the reference's row is good, not perfect (Spearman ρ 0.80 at step 0, ~0.98
+  mid-decode; ~50 of the top 64 in common), so the tokens after its
   first divergence say nothing about correctness — only that it is off a trajectory the reference
   itself resolves by a margin below either implementation's noise floor. The chat route, whose step-0
   margin is 14 nat, is the arm that is actually decided, and it agrees. The generated text is still
