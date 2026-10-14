@@ -6,6 +6,29 @@ from relicllm.loader.gguf.quantized_tensor import QuantizedGGUFTensor
 from relicllm.runtime.ops import load_ops
 
 
+def _register_the_provider_this_host_needs() -> None:
+    """Point `runtime/ops` at the Ascend provider when this host is an Ascend one.
+
+    The module that reaches for the bindings is the module that teaches the seam where they are, and
+    it does so only on the platform that needs it: on a CUDA box `load_ops()` keeps handing back
+    `relic_core`'s extension and asking for `"ascend"` keeps answering `None`.
+
+    The provider itself is `relicllm/components/gguf/ascend_ops.py`. It is here rather than in the
+    device plane because it decodes GGUF blocks and that plane may not name a container format -- see
+    that module's docstring, and `docs/architecture/package_layers.md`. Registering it from here is
+    what makes these five bindings resolve on a 910; everywhere else this function does nothing.
+    """
+    from relicllm.runtime.device import probe_accelerator
+
+    if probe_accelerator().platform == "ascend":
+        from relicllm.components.gguf import ascend_ops
+
+        ascend_ops.register()
+
+
+_register_the_provider_this_host_needs()
+
+
 class QuantizedGGUFLinear:
     """CUDA linear over raw GGUF quantized matrix blocks."""
 
