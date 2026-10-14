@@ -123,7 +123,7 @@ python scripts/audit_dsv41_headers.py --checkpoint-dir /path/to/DeepSeek-V4.1-Fl
 | MTP / DSpark (3 draft layers, 7.39 GiB) | Present in the checkpoint, not executed |
 | Batching, continuous batching, chunked prefill | **Not implemented** — one request at a time through this adapter's own serialized session |
 | The shared `BatchScheduler` (`--enable-batching`) | **Removed** — the flag is refused by name; the scheduler library went with the retired `cpp` backend |
-| Numeric parity with the released reference | **Exact on the route the released code feeds** — an oracle is recorded from the checkpoint's own code on an RTX 4090; the chat route, which `inference/generate.py` always sends, reproduces it on both an RTX 4090 and an RTX 2080 Ti. The raw route (the recorder's deviation) diverges at a step the reference itself decides below either implementation's residual, so it is a fidelity yardstick rather than a parity claim |
+| Numeric parity with the released reference | **Exact on the chat route; the raw leg is a yardstick** — an oracle is recorded from the checkpoint's own code on an RTX 4090; the chat route, which `inference/generate.py` always sends, reproduces its four tokens exactly on both an RTX 4090 and an RTX 2080 Ti. The raw route (the recorder's deviation) diverges at a step the reference itself decides below either implementation's residual, so it measures fidelity rather than claiming parity |
 
 ## Performance
 
