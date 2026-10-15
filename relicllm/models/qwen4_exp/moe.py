@@ -25,6 +25,10 @@ from typing import Protocol
 
 import torch
 
+# The module and not the name: one H2D stream a device is a property of the link rather than of a
+# bank, so this is the same stream a per-device arena stages on, and `movement.copy_stream` is the
+# one place a test or a probe replaces it.
+from relicllm.components.moe import movement
 from relicllm.models.qwen4_exp.layers import swiglu_expert
 from relicllm.models.qwen4_exp.quant import FP8Tensor
 from relicllm.runtime.ops import load_ops
@@ -214,7 +218,6 @@ class HostExpertMoE:
         self.prefetch_enabled = os.environ.get("POCKETLLM_QWEN4_MOE_PREFETCH", "1").lower() in {
             "1", "true", "yes"
         }
-        self._copy_stream: torch.cuda.Stream | None = None
         self._cuda_ext = None
         self.grouped_enabled = os.environ.get("POCKETLLM_QWEN4_MOE_GROUPED", "0").lower() in {
             "1", "true", "yes"
@@ -367,14 +370,13 @@ class HostExpertMoE:
         # Keep the local shard's expert-id layout intact.  This replaces many
         # small H2D copies with two contiguous layer copies; zero-route experts
         # are represented by empty segments and never contribute to the output.
-        if self._copy_stream is None:
-            self._copy_stream = torch.cuda.Stream(device=self.device)
+        stream = movement.copy_stream(self.device)
         current = torch.cuda.current_stream(self.device)
-        with torch.cuda.stream(self._copy_stream):
+        with torch.cuda.stream(stream):
             gate_up = self._stage_weight(gate_up_cpu, self.device, self.dtype)
             down = self._stage_weight(down_cpu, self.device, self.dtype)
             ready = torch.cuda.Event()
-            ready.record(self._copy_stream)
+            ready.record(stream)
         current.wait_event(ready)
         self._record_stream(gate_up, current)
         self._record_stream(down, current)
@@ -391,17 +393,28 @@ class HostExpertMoE:
         )
 
     def _prefetch(self, layer_idx: int, expert_ids: list[int]):
-        """Stage one layer's active experts on a copy stream in expert-id order.
+        """Stage one layer's active experts on the copy stream in expert-id order.
 
         FP8 entries are cached as code/scale pairs; dequantization is performed
         after the copy-stream event and immediately before their GEMM in the
         dispatch loop.  This preserves the FP8 residency advantage.
+
+        The stream is the movement layer's (`components.moe.movement.copy_stream`),
+        the same one a per-device arena stages on, and not one of this class's:
+        one H2D stream a device is a property of the link and not of a bank.
+
+        The ordering is one edge and not the arena path's two.  A staged expert
+        lands in freshly allocated device tensors that an LRU holds until it
+        evicts them, so a copy overwrites nothing a kernel may still be reading
+        and only the compute stream has to be made to wait: on this stream's
+        event for a miss, and on nothing for a hit.  The `record_stream` in
+        `_record_stream` is what keeps the allocator from handing the block
+        back before the compute stream is done reading it.
         """
-        if self._copy_stream is None:
-            self._copy_stream = torch.cuda.Stream(device=self.device)
+        stream = movement.copy_stream(self.device)
         current = torch.cuda.current_stream(self.device)
         pending: list[_PendingExpert] = []
-        with torch.cuda.stream(self._copy_stream):
+        with torch.cuda.stream(stream):
             for expert_id in expert_ids:
                 key = (layer_idx, expert_id)
                 hit = self._cache_get(key)
@@ -412,7 +425,7 @@ class HostExpertMoE:
                 gate_up = self._stage_weight(gate_up_cpu, self.device, self.dtype)
                 down = self._stage_weight(down_cpu, self.device, self.dtype)
                 event = torch.cuda.Event()
-                event.record(self._copy_stream)
+                event.record(stream)
                 pending.append(_PendingExpert(gate_up, down, event))
                 self.stage_bytes += self._weight_nbytes(gate_up) + self._weight_nbytes(down)
                 self.stage_calls += 1

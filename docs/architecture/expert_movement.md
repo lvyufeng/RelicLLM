@@ -147,12 +147,19 @@ One runtime at a time, in this order, each step behaviour-preserving:
 | --- | --- | --- |
 | 1 | `deepseek_v4_1` | the decode and prefill-8k entries in `tests/fixtures/perf/baseline.json`, plus `tests/test_models_deepseek_v4_1_expert_deal.py` |
 | 2 | `mimo_v2` | the mimo entries in the same baseline, plus `tests/test_models_mimo_v2_device_experts.py` |
-| 3 | `qwen4_exp` | offline unit tests only — the runtime has no baseline entry, because its real-checkpoint tests skip where the checkpoint is absent |
+| 3 | `qwen4_exp` | `tests/test_qwen4_exp_moe_staging.py`, and offline unit tests only: the runtime has no baseline entry, because its real-checkpoint tests skip where the checkpoint is absent |
 
 v41 goes first for the reason the review gave: it is the largest of the three, it is the chosen
 adaptation target, and a change there has something to be compared against. The counters keep their
 names at every step, so a re-run diffs against the recorded numbers rather than against a new
 vocabulary, and `scripts/check_perf_baseline.py --update` is what records the new ones.
+
+Step three moves less than the other two, and the reason is the first row of the table above:
+`qwen4_exp` has no arena. It stages whole device tensors into a cache that an LRU evicts, so a staged
+expert is a new block rather than a row something else will overwrite, and the only part of the path
+it has in common is the copy stream and the event that puts the compute stream behind it. The cache
+is the residency policy, and by the rule above it stays where it is — a step that replaced it with a
+rotating ring would be moving the plan into the component.
 
 ## What this page does not license
 
