@@ -891,7 +891,8 @@ def test_a_row_names_the_arena_row_of_every_route_it_was_dealt() -> None:
     two halves the batched path runs for a whole batch -- the resolution that must move nothing and
     the staging that must happen exactly once a row.
     """
-    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts, ResidentSet
+    from relicllm.components.moe.residency import ResidentSet
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
 
     world, topk, hot_rows = 4, 6, 3
     # Sorted: 10(slot1), 20(slot3), 30(slot0), 40(slot5), 50(slot4), 60(slot2), dealt round-robin
@@ -1065,13 +1066,15 @@ def test_the_stage_copies_nothing_and_the_upload_reads_the_bank(monkeypatch) -> 
     are the same loop. A contiguous block is covered by the empty-set case above; what this covers is
     that a row that is *not* the miss's index still receives the right bytes.
 
-    Called on a stub, and the stub is the two stream calls and nothing else: `_stage`, `_upload`,
-    `_key` and `scale_key` are the shipped ones, and the three CUDA entry points `_upload` uses are
-    replaced with no-ops so this runs with no card in the machine.
+    Called on a stub, and the stub is one `StagingRing` with hand-made events and nothing else:
+    `_stage` and `_upload` are the shipped ones and the ring is the shipped ring, with only the
+    CUDA entry points it names -- `movement.copy_stream`, `torch.cuda.device`, `.stream` and
+    `.current_stream` -- replaced so this runs with no card in the machine.
     """
     import contextlib
 
-    from relicllm.models.deepseek_v4_1 import device_experts
+    from relicllm.components.moe import movement
+    from relicllm.components.moe.movement import StagingRing
     from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
     from relicllm.models.deepseek_v4_1.loader import scale_key
 
@@ -1102,7 +1105,7 @@ def test_the_stage_copies_nothing_and_the_upload_reads_the_bank(monkeypatch) -> 
             self.waited.append(other)
 
     class Event:
-        """The one thing `_upload` leaves behind for `_take_buffer`: that the copies were issued."""
+        """The one thing `stage` leaves behind for `take`: that the copies were issued."""
 
         def __init__(self) -> None:
             self.recorded = 0
@@ -1110,9 +1113,13 @@ def test_the_stage_copies_nothing_and_the_upload_reads_the_bank(monkeypatch) -> 
         def record(self, stream: object) -> None:
             self.recorded += 1
 
+        def synchronize(self) -> None:
+            """Never reached here -- one `stage` means no slot is reused within the test."""
+            raise AssertionError("the ring waited on a slot a row that moved nothing had taken")
+
     opened: dict[object, Stream] = {}
     monkeypatch.setattr(
-        device_experts, "_copy_stream", lambda device: opened.setdefault(device, Stream())
+        movement, "copy_stream", lambda device: opened.setdefault(device, Stream())
     )
     monkeypatch.setattr(torch.cuda, "device", lambda device: contextlib.nullcontext())
     monkeypatch.setattr(torch.cuda, "stream", lambda stream: contextlib.nullcontext())
@@ -1125,8 +1132,7 @@ def test_the_stage_copies_nothing_and_the_upload_reads_the_bank(monkeypatch) -> 
         layer_id=layer_id,
         devices=[torch.device("cpu")],
         _carried={},
-        _uploaded=[{}],
-        _events=events,
+        _ring=StagingRing(slots=2, devices=[torch.device("cpu")], events=events),
         expert_rows=0,
         _on_device=arena,
         checkpoint=bank,
@@ -1300,7 +1306,8 @@ def test_a_batched_pass_resolves_the_whole_batch_before_it_stages_any_of_it() ->
     Counted on a stub whose resolve, chunk and stage are the real ones and whose issue and drain are
     recorded instead of run, since the point is the order of the calls and not what is on the cards.
     """
-    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts, ResidentSet
+    from relicllm.components.moe.residency import ResidentSet
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
 
     world, topk, layer_id = 4, 6, 7
 
