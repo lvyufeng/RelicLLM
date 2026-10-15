@@ -13,3 +13,7 @@ dist/
 # The bench launcher writes this into the working directory it was started from
 # (relicllm/bench/launcher.py).
 relicllm-bench-serve.log
+
+# Coordination scratch: relay artifacts and per-box run records pulled off the remote boxes.
+# Never committed -- these are working copies, not the records the tree publishes.
+.coord/
