@@ -16,10 +16,19 @@ claim about every box in it. The card and host figures below were read with `nvi
 | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |
 | Eight-way V100 | 8 × V100-PCIE-16GB | 128 GiB | 315 GiB | 158 GiB | `sm_70` | 56 | 3 |
 | Eight-way RTX 3090 | 8 × RTX 3090 | 192 GiB | 755 GiB | 378 GiB | `sm_86` | 96 | 1 |
+| Eight-way RTX 4090 | 8 × RTX 4090 | 192 GiB | 2015 GiB | 1008 GiB | `sm_89` | 192 | 3 |
 | Eight-way Ascend, 32 GiB | 8 × 32 GiB | 256 GiB | 755 GiB | 378 GiB | 910A / 910B / 910PremiumA | 192 | 12 |
 | Eight-way Ascend, 64 GiB | 8 × 910B3 | 512 GiB | 1006 GiB | 504 GiB | 910B3 | 192 | 2 |
 
-Two facts about the table are easy to miss. The `/dev/shm` column is **half of RAM on all four
+The RTX 4090 class is not new — it predates the rest of this table and carries the `sm_89` bring-up
+already — but it belongs in it, because it is the only eight-card class whose compute the current
+fatbin covers. It is also the one with a host to match: 2015 GiB of RAM is three times the next class
+down. Two of its three boxes answered at read time and one did not, so the row is two boxes' worth of
+figures; one of those two has the 491.5 GB V4.1 expert bank staged and cold in `/dev/shm` right now,
+which is a smaller fact than it looks and is why the bank arithmetic below can be read against a real
+mount instead of an estimate.
+
+Two facts about the table are easy to miss. The `/dev/shm` column is **half of RAM on all five
 classes**, because that is the kernel's default `tmpfs` size rather than anything about these boxes;
 `mount -o remount,size=` moves it, and the cost of moving it is the RAM the host no longer has for
 itself. And the classes differ by more than a factor of three in cores, which is the resource that
@@ -43,6 +52,7 @@ for the workspace and the allocator — is the arithmetic:
 | --- | ---: | ---: | ---: |
 | Eight-way V100 | 128 | 108.8 | ~110 B |
 | Eight-way RTX 3090 | 192 | 163.2 | ~160 B |
+| Eight-way RTX 4090 | 192 | 163.2 | ~160 B |
 | Eight-way Ascend, 32 GiB | 256 | 217.6 | ~215 B |
 | Eight-way Ascend, 64 GiB | 512 | 435.2 | ~435 B |
 
@@ -79,6 +89,7 @@ host rather than the cards:
 | --- | ---: | ---: |
 | Eight-way V100 | 158 GiB | ~300 B — MiMo's 149.81 GiB is right at the edge |
 | Eight-way RTX 3090 | 378 GiB | ~750 B |
+| Eight-way RTX 4090 | 1008 GiB | ~2000 B |
 | Eight-way Ascend, 32 GiB | 378 GiB | ~750 B |
 | Eight-way Ascend, 64 GiB | 504 GiB | ~1000 B |
 
@@ -97,10 +108,11 @@ of cards. An eight-card box is not a licence to run an eight-card model; it is a
 
 **DeepSeek-V4.1-Flash stays on the list at 552 B.** It is the checkpoint this runtime was extracted
 from, the only 262,144-token path that has been served end to end, and the run behind the roadmap's
-decode diagnosis. Its bank fits exactly the eight-way 64 GiB Ascend class at the default mount, and
-the 755 GiB classes once `/dev/shm` is remounted above 468 GiB and the host keeps ~290 GiB for itself.
-An exception written down by name costs one line; moving the line to 552 B would let everything under
-it through, which is the opposite of what the line is for.
+decode diagnosis. Its 457.78 GiB bank fits the eight-way 64 GiB Ascend class at the default mount,
+the RTX 4090 class with 550 GiB to spare, and the 755 GiB classes once `/dev/shm` is remounted above
+468 GiB and the host keeps ~290 GiB for itself. An exception written down by name costs one line;
+moving the line to 552 B would let everything under it through, which is the opposite of what the
+line is for.
 
 ## Active parameters are a third column
 
@@ -124,7 +136,9 @@ Three gates sit outside them, and each one has stopped a candidate that cleared 
 - **Gencode.** The fatbin carries `7.5;8.9` SASS, so the V100 class's `sm_70` and the 3090 class's
   `sm_86` are both outside it. The
   [C2Net roster](openi_c2net_roster_and_targets.md) already tracks the `sm_70` gap and the
-  `__CUDA_ARCH__ >= 750` guards that compile Volta out of some kernels.
+  `__CUDA_ARCH__ >= 750` guards that compile Volta out of some kernels. The third entry is the RTX
+  4090 class's card, which is why that class is the one in this table that runs today's kernels
+  unchanged and the other two CUDA classes are waiting on a rebuild.
 - **The Ascend port.** The Ascend classes have CANN but no `torch_npu` installed, and the Ascend side
   of this tree is still the [device plane](device_plane.md)'s decision surface rather than a set of
   operators. Both Ascend classes are blocked on a port, not on arithmetic.
