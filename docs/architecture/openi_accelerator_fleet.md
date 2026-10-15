@@ -33,8 +33,8 @@ the card-hour against a points balance, in six-minute blocks.
 
 ## The two we start with
 
-Both are 32 GiB cards and both are old, which is the positioning: a model that has to be split
-across cards on a modern part should fit one of these whole.
+Both are 32 GiB cards and both are old, which is [the positioning](positioning.md): a model that has
+to be split across cards on a modern part should fit one of these whole.
 
 | Target | Compute source | `spec_id` | Cards | Card memory | Host | Price (点/卡时) |
 |---|---|---:|---:|---:|---:|---:|

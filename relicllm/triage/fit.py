@@ -14,16 +14,22 @@ pass routes to ``CANDIDATE`` and never to a tier.
 
 **The host memory is a precondition, not a rounding term.** Ruling: a model whose routed experts and
 gather tables live in host RAM is *placed*. But an offload plan needs somewhere to put the bank, and
-the bank is often larger than the cards -- DeepSeek-V4.1 is 464.5 GiB offloadable against 88 GiB of
-card, so if the host cannot hold it the excess comes back onto the cards and changes the card count.
-Nothing here assumes 1007 GiB: ``HardwareProfile.host_memory_gib`` defaults to 0, which is read as
-*unsaid*, and an unsaid host turns the offload into a note rather than a silent assumption.
+the bank is often larger than the cards -- DeepSeek-V4.1 is 464.5 GiB offloadable against 256 GiB of
+card on the positioning box, so if the host cannot hold it the excess comes back onto the cards and
+changes the card count. Nothing here assumes 1007 GiB: ``HardwareProfile.host_memory_gib`` defaults
+to 0, which is read as *unsaid*, and an unsaid host turns the offload into a note rather than a
+silent assumption.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from relicllm.components.moe.boxes import (
+    POSITIONING_BOX_NAME,
+    POSITIONING_GPU_COUNT,
+    POSITIONING_GPU_MEMORY_GIB,
+)
 from relicllm.components.moe.placement import (
     ContextBatchCurve,
     HardwareProfile,
@@ -95,18 +101,19 @@ class FitResult:
 
 def hardware_profile_for(
     *,
-    gpu_count: int = 4,
-    gpu_memory_gib: float = 22.0,
+    gpu_count: int = POSITIONING_GPU_COUNT,
+    gpu_memory_gib: float = POSITIONING_GPU_MEMORY_GIB,
     host_memory_gib: float = 0.0,
-    name: str = "consumer-gpu-box",
+    name: str = POSITIONING_BOX_NAME,
 ) -> HardwareProfile:
-    """The box, with the card capacity the recorded runs actually used.
+    """The box a fit is priced against when the caller names none.
 
-    ``22.0`` GiB and not ``22528 / 1024 = 22.0``: the cards report 22,528 MiB, and the whole recorded
-    roster -- every threshold this package's gate 3 uses -- was measured against the amount of that
-    a process can allocate after the driver takes its share. Using the raw MiB figure here would move
-    every fit by about 0.4 GiB in the optimistic direction and quietly re-place Xing4, whose margin
-    is smaller than that.
+    That is the *positioning* box -- the eight 32 GiB cards a model has to fit -- and not the box
+    this checkout runs on, because this is the question "does our hardware hold this" and gate 0 is
+    the only gate that can answer it definitively. `components.moe.boxes` states both boxes and why
+    the card count is eight when the rental catalog stops at four; ``DEV_BOX`` in
+    `components.moe.placement` is the other one, one import away, for reproducing a number that was
+    measured here.
     """
     return HardwareProfile(
         gpu_count=gpu_count, gpu_memory_gib=gpu_memory_gib, host_memory_gib=host_memory_gib, name=name

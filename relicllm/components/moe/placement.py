@@ -2,13 +2,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from relicllm.components.moe.boxes import (
+    DEV_BOX_GPU_COUNT,
+    DEV_BOX_MEMORY_GIB,
+    DEV_BOX_NAME,
+    POSITIONING_BOX_NAME,
+    POSITIONING_GPU_COUNT,
+    POSITIONING_GPU_MEMORY_GIB,
+)
 from relicllm.components.moe.spec import PlacementDecision
 
 
 @dataclass(frozen=True)
 class HardwareProfile:
-    gpu_count: int = 4
-    gpu_memory_gib: float = 22.0
+    """One box's card side, and the host memory it can lend to an offload bank.
+
+    The defaults are the *positioning* box -- the eight 32 GiB cards a model has to fit -- and not
+    the box this checkout happens to run on. `components.moe.boxes` says why the two differ and
+    which callers want which; :data:`DEV_BOX` is the other one, named rather than implied.
+    """
+
+    gpu_count: int = POSITIONING_GPU_COUNT
+    gpu_memory_gib: float = POSITIONING_GPU_MEMORY_GIB
 
     host_memory_gib: float = 0.0
     """RAM the host can actually lend to an offload bank. ``0`` means *unsaid*, not *none*.
@@ -21,7 +36,7 @@ class HardwareProfile:
     note that says so rather than a guess wearing a default's clothes.
     """
 
-    name: str = "consumer-gpu-box"
+    name: str = POSITIONING_BOX_NAME
 
     @property
     def total_gpu_bytes(self) -> int:
@@ -38,6 +53,18 @@ class HardwareProfile:
     @property
     def knows_host_memory(self) -> bool:
         return self.host_memory_gib > 0
+
+
+#: The box a model has to fit, as a profile rather than as the field defaults above, for callers
+#: that want to name it.
+POSITIONING_BOX = HardwareProfile()
+
+#: The box the recorded runs were taken on. Host memory is left unsaid here too: the 22 GiB and the
+#: four cards are what the runs were measured on, and how much RAM that machine had is not a fact
+#: any threshold in this tree depends on.
+DEV_BOX = HardwareProfile(
+    gpu_count=DEV_BOX_GPU_COUNT, gpu_memory_gib=DEV_BOX_MEMORY_GIB, name=DEV_BOX_NAME
+)
 
 
 def estimate_even_shard(total_bytes: int, gpu_count: int) -> int:
