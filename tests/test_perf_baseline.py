@@ -37,6 +37,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CHECKER = REPO_ROOT / "scripts" / "check_perf_baseline.py"
 BASELINE = REPO_ROOT / "tests" / "fixtures" / "perf" / "baseline.json"
 SM75_RECORD = REPO_ROOT / "tests" / "fixtures" / "perf" / "v41_decode_graph_on.json"
+SM89_RECORD = REPO_ROOT / "tests" / "fixtures" / "perf" / "v41_decode_graph_on_sm89.json"
 
 #: The device names the two boxes report, as ``relicllm bench serve`` spells them in ``cuda.devices``.
 CARD_SM75 = "NVIDIA GeForce RTX 2080 Ti"
@@ -368,22 +369,50 @@ def test_an_sm_75_record_still_compares_against_the_committed_baseline(capsys) -
     """The card the baseline records is the card its numbers came from, so nothing changed here.
 
     ``v41_decode_graph_on.json`` is a 4x RTX 2080 Ti record, measured on the box the baseline was
-    measured on: every ``v41`` key it produces is a key the baseline holds, and the gate exits 0 with
-    no regression line. The runtimes this record does not cover are reported as not measured, which is
-    not a failure -- the same answer the file gave before the card was in the key.
+    measured on: every ``v41`` key the baseline holds *for that card* is a key this record produces,
+    and the gate exits 0 with no regression line. The runtimes this record does not cover are reported
+    as not measured, which is not a failure -- the same answer the file gave before the card was in
+    the key.
     """
     record = json.loads(SM75_RECORD.read_text(encoding="utf-8"))
     baseline = json.loads(BASELINE.read_text(encoding="utf-8"))
     observed = checker.observations(record)
 
     assert checker._card_of(record) == CARD_SM75
-    v41_keys = {key for key in baseline["metrics"] if key.startswith("v41@")}
+    token = f"v41@{CARD_SM75}"
+    v41_keys = {key for key in baseline["metrics"] if checker._token_of_key(key) == token}
     assert v41_keys and v41_keys <= set(observed)
 
     assert checker.main(["--observed", str(SM75_RECORD), "--baseline", str(BASELINE)]) == 0
     out = capsys.readouterr().out
     assert "REGRESSIONS" not in out
     assert "skipped" not in out
+
+
+def test_the_committed_baseline_holds_both_cards(capsys) -> None:
+    """One file, two cards: the 4090 numbers sit beside the 2080 Ti ones and neither answers for the other.
+
+    This is the deliverable the card in the key exists for. Each of the two committed records is
+    diffed against its own card's keys, unchanged, and neither is reported as skipped -- a skip would
+    be the gate saying it could not tell the two boxes apart.
+    """
+    baseline = json.loads(BASELINE.read_text(encoding="utf-8"))
+    tokens = {checker._token_of_key(key) for key in baseline["metrics"]}
+    assert f"v41@{CARD_SM75}" in tokens
+    assert f"v41@{CARD_SM89}" in tokens
+    assert set(baseline["runs"]) == tokens
+
+    sm89 = checker.observations(json.loads(SM89_RECORD.read_text(encoding="utf-8")))
+    sm89_keys = {key for key in baseline["metrics"] if checker._token_of_key(key) == f"v41@{CARD_SM89}"}
+    assert sm89_keys and sm89_keys <= set(sm89)
+    # The 4090 record answers none of the 2080 Ti keys, which is what keeps the two apart.
+    assert sm89_keys.isdisjoint({key for key in baseline["metrics"] if CARD_SM75 in key})
+
+    for record in (SM75_RECORD, SM89_RECORD):
+        assert checker.main(["--observed", str(record), "--baseline", str(BASELINE)]) == 0
+        out = capsys.readouterr().out
+        assert "REGRESSIONS" not in out
+        assert "skipped" not in out
 
 def test_a_baseline_of_zero_is_reported_rather_than_divided_by() -> None:
     """A zero is a claim the server served nothing, and a ratio off it is not a comparison."""
