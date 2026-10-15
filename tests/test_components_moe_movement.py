@@ -74,6 +74,53 @@ def _copies(pairs: int) -> list[list[tuple[torch.Tensor, torch.Tensor]]]:
     ]
 
 
+def test_a_caller_that_names_its_slot_rotates_the_ring_once_a_row(monkeypatch) -> None:
+    """`stage(copies, slot)`: the take is the caller's, and a row costs one rotation and not two.
+
+    Both of the banks in this tree take a slot before they stage -- one to name its destination rows
+    out of the slot's band, one to park a row's ids under the slot -- so `stage` and `take` are
+    called by the same row one after the other. If the staging call took a slot of its own the row
+    would rotate twice, and at the shipped two slots the *next* row's take would then hand out the
+    slot this row had just filled and wait on the DMA it had just issued: the copy would be awaited
+    the instant it was issued, which is the failure that reads as a mystery stall in a class wall and
+    shows up in no counter at all.
+
+    So the pair is pinned here: the copies land in the slot named and not another, the rotation
+    advanced exactly once, and over three rows a slot's second use waits on the row in between.
+    """
+    ring, events, _ = _harness(monkeypatch, slots=2, cards=1)
+
+    buffer = ring.take()
+    assert buffer == 0 and ring._next == 1
+    assert ring.stage(_copies(2), buffer) == 2, "the return is still the pairs moved"
+    assert ring._next == 1, (
+        "the staging call advanced the rotation after the caller had already taken a slot, so this "
+        "row rotated twice and the next one is handed the slot it just filled"
+    )
+    assert ring._in_flight[0] == [True, False], (
+        "the copies were flagged in flight on a slot the caller never named"
+    )
+    assert [event.recorded for event in events[0]] == [1, 0], (
+        "the slot's event was recorded out of the slot the copies went into, so `take` will wait "
+        "on one slot's DMA while the other's rows are the ones that moved"
+    )
+
+    # Three rows taken-then-staged, which is the shipped row loop. The rotation visits 0, 1, 0 and
+    # the third row reuses slot 0, one whole working row after the copy into it -- so each slot's
+    # second use is the first that waits, and no row waits on its own copy.
+    ring, events, _ = _harness(monkeypatch, slots=2, cards=1)
+    for _ in range(3):
+        ring.stage(_copies(1), ring.take())
+    assert ring._next == 1, (
+        "three rows left the rotation at 1 (three takes modulo two) -- anywhere else is a second "
+        "take inside a row"
+    )
+    assert [event.recorded for event in events[0]] == [2, 1], "the slots were not filled round-robin"
+    assert [event.waits for event in events[0]] == [1, 0], (
+        "slot 0 was reused by the third row with no wait on the copy the first row issued through it"
+    )
+
+
 def test_a_row_that_moves_nothing_neither_takes_a_slot_nor_waits(monkeypatch) -> None:
     """`stage`'s guard, which is the one property of the ring a hit rate can turn into a loss.
 

@@ -995,7 +995,11 @@ class DeviceRoutedExperts(RoutedExperts):
                             self.checkpoint.packed(key).view(torch.uint8),
                         )
                     )
-        self._ring.stage(copies)
+        # Into the slot `_take_buffer` handed out, and not into a second one: taking and staging are
+        # one rotation between them, and a staging call that took its own would rotate the ring
+        # twice a row -- at two slots, into the slot the previous row had just filled, waiting on the
+        # DMA it had just issued.
+        self._ring.stage(copies, buffer)
 
     def _row_scratch(self, x_row: torch.Tensor) -> dict:
         """The per-row buffers, built on the first row and reused for every one after it.

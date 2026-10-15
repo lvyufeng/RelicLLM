@@ -218,7 +218,7 @@ class StagingRing:
                 self._in_flight[card][slot] = False
         return slot
 
-    def stage(self, copies: Sequence[Sequence[Copy]]) -> int:
+    def stage(self, copies: Sequence[Sequence[Copy]], slot: int | None = None) -> int:
         """One row's staging: take a slot, order it behind compute, copy, record the slot's event.
 
         `copies` is per card a list of `(destination row, source)` pairs, in the order the model's
@@ -226,6 +226,16 @@ class StagingRing:
         call, and the six tensors of one expert are six pairs. Nothing here knows which expert a
         pair came from, and that is the seam: the model names the bytes, this decides when they may
         move.
+
+        **`slot` is for a caller that took the slot itself.** A caller has work to do with the slot
+        before the copies can be built -- it names the destination rows out of the slot's band, or it
+        parks the row's ids under the slot and the stage that fills them has to be handed the same
+        one back -- and such a caller calls `take` and passes what it got here. Taking and staging
+        are then one rotation between them, which is what they are: one `take` a row is the whole of
+        what the rotation is advanced by, and a caller that took a slot and then let `stage` take a
+        second would rotate twice a row and, at two slots, stage into exactly the slot the previous
+        row had filled -- waiting on the DMA it had just issued. A caller with no use for the slot
+        leaves it `None` and the take happens here.
 
         **A row with nothing to move returns before `take`, and that is a guarantee rather than an
         early exit for its own sake.** `take` hands out the next slot and waits on the DMA that last
@@ -248,7 +258,8 @@ class StagingRing:
         """
         if not any(copies):
             return 0
-        slot = self.take()
+        if slot is None:
+            slot = self.take()
         moved = 0
         for card, pairs in enumerate(copies):
             if not pairs:

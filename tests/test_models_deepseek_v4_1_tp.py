@@ -1190,6 +1190,120 @@ def test_the_stage_copies_nothing_and_the_upload_reads_the_bank(monkeypatch) -> 
         one._upload(0, misses)
 
 
+def test_a_moving_row_takes_one_slot_and_stages_into_that_one(monkeypatch) -> None:
+    """`_stage_misses` rotates the ring once a row, into the slot it took and not a second one.
+
+    The row loop takes a slot in `_take_buffer` -- the wait that bounds how far the host runs ahead
+    is in it -- and the staging call that follows has to fill *that* slot. A staging call that took a
+    slot of its own would rotate twice a row, and at the shipped two slots the next row's take then
+    hands out precisely the slot this row just filled: the copy is awaited the instant it is issued,
+    with no whole row's uploading between them. That is invisible in every counter the class keeps
+    and it is not a shape error, so it is pinned on the host, driving the real `_stage_misses`,
+    `_stage` and `_upload` with a ring whose events count what is asked of them.
+
+    Three rows of one miss each, so the arithmetic is stated as the number it is: three takes leave
+    the rotation at `3 % 2 == 1`, the two slots are filled twice and once, and slot 0's second use is
+    the first and only wait -- one whole working row after the copy the first row put through it. A
+    second take inside the row would leave the rotation at 0, fill slot 1 three times and wait on
+    nothing, and both of the last two assertions are what would fail.
+    """
+    import contextlib
+
+    from relicllm.components.moe import movement
+    from relicllm.components.moe.movement import StagingRing
+    from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
+    from relicllm.models.deepseek_v4_1.loader import scale_key
+
+    kinds = (("w1", "q"), ("w1", "s"), ("w2", "q"), ("w2", "s"), ("w3", "q"), ("w3", "s"))
+    rows, width, layer_id = 8, 8, 7
+
+    class Bank:
+        """`Checkpoint.packed`, asked once a (projection, kind) a miss and recording every key."""
+
+        def __init__(self) -> None:
+            self.asked: list[str] = []
+
+        def packed(self, key: str) -> torch.Tensor:
+            self.asked.append(key)
+            return torch.full((1, width), len(self.asked), dtype=torch.uint8)
+
+    class Stream:
+        """The copy stream, seen only through `stage`: order the copies behind compute."""
+
+        def wait_stream(self, other: object) -> None:
+            pass
+
+    class Event:
+        """A slot's event, and here it is reached: three rows over two slots reuse one."""
+
+        def __init__(self) -> None:
+            self.recorded = 0
+            self.waits = 0
+
+        def record(self, stream: object) -> None:
+            self.recorded += 1
+
+        def synchronize(self) -> None:
+            self.waits += 1
+
+    monkeypatch.setattr(movement, "copy_stream", lambda device: Stream())
+    monkeypatch.setattr(torch.cuda, "device", lambda device: contextlib.nullcontext())
+    monkeypatch.setattr(torch.cuda, "stream", lambda stream: contextlib.nullcontext())
+    monkeypatch.setattr(torch.cuda, "current_stream", lambda device: "compute")
+
+    bank = Bank()
+    arena = [{kind: torch.zeros((rows, width), dtype=torch.uint8) for kind in kinds}]
+    events = [[Event(), Event()]]
+    takes: list[int] = []
+    one = SimpleNamespace(
+        layer_id=layer_id,
+        devices=[torch.device("cpu")],
+        _carried={},
+        _ring=StagingRing(slots=2, devices=[torch.device("cpu")], events=events),
+        expert_rows=0,
+        rows=0,
+        drawn_rows=0,
+        _on_device=arena,
+        checkpoint=bank,
+    )
+    one._key = lambda expert, which: DeviceRoutedExperts._key(one, expert, which)
+    one._scale_key = scale_key
+    # The slot the row takes, recorded so the assertion can name it, and the shipped `_take_buffer`
+    # behind it -- the wait is real and it is the point of the test, so it is not stubbed away.
+    one._take_buffer = lambda: (
+        takes.append(one._ring._next),
+        DeviceRoutedExperts._take_buffer(one),
+    )[1]
+    one._stage = lambda buffer, ids, misses: DeviceRoutedExperts._stage(one, buffer, ids, misses)
+    one._upload = lambda buffer, misses: DeviceRoutedExperts._upload(one, buffer, misses)
+    one._stage_misses = lambda ids, misses: DeviceRoutedExperts._stage_misses(one, ids, misses)
+
+    # Three rows, each dealing one miss into an arena row of its own: one `take` and one staging call
+    # a row, which is the whole of what the rotation is decided by.
+    for row in range(3):
+        one._stage_misses([10], [[(0, 0, 2 + row)]])
+
+    assert one.rows == 3 and one.expert_rows == 3, "the rows or the misses were not all counted"
+    assert takes == [0, 1, 0], (
+        "the row loop did not hand out slots round-robin, so each row took what it should have"
+    )
+    assert one._ring._next == 1, (
+        "three rows left the rotation anywhere but 3 % 2 == 1, which is a second take inside the "
+        "row and a row staging into the slot the previous row had just filled"
+    )
+    assert [event.recorded for event in events[0]] == [2, 1], (
+        "the slots were not filled in the order they were taken, so a slot's event does not describe "
+        "the copy that is actually in it"
+    )
+    assert [event.waits for event in events[0]] == [1, 0], (
+        "the third row did not wait on the copy the first row put through slot 0, so it overwrote "
+        "bytes a DMA was still reading -- or it waited on a copy it had itself just issued"
+    )
+    assert len(bank.asked) == 3 * len(kinds), (
+        "the three misses did not each move their six tensors, so the rows did not all stage"
+    )
+
+
 def test_a_chunk_is_cut_where_a_later_row_would_re_draw_an_arena_row() -> None:
     """`DeviceRoutedExperts._chunk_bounds`' rule -- the one thing the batched path can be wrong by.
 
