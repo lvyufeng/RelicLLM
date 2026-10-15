@@ -112,9 +112,11 @@ BINDINGS: tuple[str, ...] = (
 )
 
 
-#: Platform -> the callable that produces its operator module. Empty, and that is the current state
-#: of Ascend support rather than an oversight: this is the seam a provider arrives through, and the
-#: provider itself is a later piece of work.
+#: Platform -> the callable that produces its operator module. Empty at import, and it stays empty
+#: for CUDA and for the host: both of those are answered by :func:`load_ops` itself rather than by a
+#: registration, and this dictionary is only what a caller *adds*. Ascend's provider arrives that
+#: way and from above -- ``components/gguf/ascend_ops.py``, registered by the module that reaches
+#: for the GGUF bindings -- because it decodes a container format and this plane may name none.
 _PROVIDERS: dict[str, Callable[[], Any]] = {}
 
 
@@ -178,6 +180,13 @@ def load_ops(platform: str | None = None) -> Any | None:
     * ``None`` otherwise, which is not a failure but the answer the probing call sites were written
       for. See the module docstring: a forward pass that falls back to eager arithmetic is correct,
       just slower, and that is what a platform with no provider gets.
+
+    **Ascend arrives through the first answer rather than a branch here**, and the reason is the
+    layer this module sits in. Its provider decodes GGUF raw blocks, so it reads the block layout out
+    of ``relicllm.loader.gguf`` -- and the device plane may name no container format, which
+    ``tests/test_package_boundaries.py`` enforces and ``docs/architecture/package_layers.md``
+    states. It is registered from ``components/gguf``, on the platform that needs it, so a CUDA box
+    neither pulls that module nor ``torch_npu`` into its import graph.
 
     A ``None`` return is indistinguishable from "the extension failed to load", for the reason
     ``cuda_loader`` documents -- it swallows every failure into the same ``None``, and this module
