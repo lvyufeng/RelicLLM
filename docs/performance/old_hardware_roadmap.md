@@ -73,14 +73,18 @@ to ask. ~70 `bench_*` / `probe_*` / `profile_*` scripts each answer a different 
   deliverable, not an omission here.
 - **P0.2 a performance regression gate — landed.** `scripts/check_perf_baseline.py`, threshold-based
   against P0.1's JSON, `skip` rather than `fail` for a runtime the baseline does not cover — the same
-  shape `scripts/check_test_baseline.py` already uses. The unit is a `runtime/scenario/metric` key and
-  the comparison is a ratio against a threshold (15% to start, argued from the spread of the two v41
-  records in `tests/fixtures/perf/`), because a metric is a number and every good number moves a
-  little every run. Both directions are reported: a metric is a regression only if it moved the way
+  shape `scripts/check_test_baseline.py` already uses. The unit is a `runtime[@card]/scenario/metric`
+  key and the comparison is a ratio against a threshold (15% to start, argued from the spread of the
+  two v41 records in `tests/fixtures/perf/`), because a metric is a number and every good number
+  moves a little every run. The card is the device name the record's `cuda` block reports; a latency
+  is a property of the box as much as of the code, so an 8x RTX 4090 reading and a 4x RTX 2080 Ti
+  reading are keys of their own rather than one key that reports the second as a 2.6x regression
+  against the first. Both directions are reported: a metric is a regression only if it moved the way
   *that* metric does not want, so a larger `output_throughput` is not one and a larger `e2el` is.
-  `--observed` is repeatable, which the baseline needs because a run has one runtime in it.
+  `--observed` is repeatable, which the baseline needs because a run has one runtime and one card in
+  it.
   `tests/fixtures/perf/baseline.json` is the committed baseline, and its `runs` block records the
-  **launch shape** each runtime's numbers were measured at — this set does not share one width
+  **launch shape** each runtime's and card's numbers were measured at — this set does not share one width
   (`xing4` serves a single card a process at a time; the rest run TP4 here), and `tpot.median` is one
   key at either width, so a value without its width is not a measurement of anything.
 - **P0.3 fix MiMo's prefill/decode seam — landed.** The `_drain` Xing4.0 already had is now at MiMo's
