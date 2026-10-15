@@ -5,10 +5,11 @@ a modern part would have to split it across cards, and the two targets it starts
 32 GiB cards -- an **Ascend 910A** and a **Tesla V100**, rented by the card-hour
 ([the fleet](openi_accelerator_fleet.md), [the C2Net roster](openi_c2net_roster_and_targets.md)).
 
-What that means for a *checkpoint* was living in conversation rather than in the tree: two size lines
-that nothing in this repository stated, next to a capacity calculation whose defaults priced a
-different machine than the one the project targets. This page writes down both the lines and the two
-boxes they are priced against.
+That positioning was living in conversation rather than in the tree: two size lines that nothing in
+this repository stated, and a capacity calculation whose defaults priced a different machine than the
+one the project targets. [The eight-card fleet](eight_card_fleet_and_size_lines.md) derives the lines
+from the boxes and the roster's own measurements; this page is the code side of the same pair -- what
+the gate reads instead of a line, and the two boxes a fit is priced against.
 
 ## The two size lines
 
@@ -18,28 +19,18 @@ The positioning states itself as two coarse lines, one for each shape of checkpo
 - **Dense to about 200 B parameters.**
 
 They are a statement about which *new* models are worth adapting, and not about what the runtime
-supports. The two are not the same shape of limit.
+supports. They are also not the same shape of limit: the **dense** line spends the card budget,
+because every weight is on a card on every step, while the **MoE** line spends the host budget behind
+a bank, because the routed experts are staged rather than held. [The fleet
+page](eight_card_fleet_and_size_lines.md) has both derivations, the eight-card classes, and the card
+counts each line lands on.
 
-**The dense line is a card-memory limit, and it is the box's number.** A dense model has no part that
-can live in host memory, so the whole checkpoint has to be resident, and at the eight-card box below
-that is `8 x 32 GiB x 0.85 = 217.6 GiB` of usable card. 200 B parameters at one byte a parameter is
-186.26 GiB, which fits with ~4 GiB a card left for a cache and workspace; 200 B at two bytes is
-372.5 GiB and fits nothing this project rents. So "dense to 200 B" is a way of saying *eight-bit
-weights or smaller, and no bigger than the box*. Half the cards -- the four-card spec the rental
-catalog actually offers -- would put the line at 100 B, which is the arithmetic reason the card count
-matters more than it looks.
-
-**The MoE line is a host-memory limit.** An MoE keeps its non-expert part on the cards and stages the
-routed experts from RAM, so what bounds the size is the bank's reachability, not the cards: a
-500 B-parameter MoE at the sparsity of the models here is tens of GiB resident, and hundreds of GiB
-of host bank behind it. DeepSeek-V4.1-Flash is the worked example, and it is also why the line is a
-rule of thumb rather than a gate -- its backbone is **552 B parameters, above the line**, and it is
-the model this repository adapts. Its own page's breakdown is what a parameter count cannot see:
-475.24 GiB of checkpoint, 268.95 GiB of it routed experts and 189.13 GiB of it Engram tables,
-**16.79 GiB retained** on the cards
+What matters here is that neither line is where fit gets decided. DeepSeek-V4.1-Flash is the clearest
+case, and it is the model this repository adapts: its backbone is **552 B parameters**, above the MoE
+line, while its checkpoint is 475.24 GiB with **16.79 GiB of it on the cards**
 ([the design record](deepseek_v4_1_flash_design.md), [the model guide](../models/deepseek-v4.1-flash.md)).
-457.8 GiB of that bank is pinned host memory when the experts are held resident, which is the budget
-that decides whether it runs rather than the 552.
+A rule stated in total parameters cannot see the difference between those two figures, which is why
+the line is a rule of thumb and the gate below is the check.
 
 ## What is actually on the gate
 
