@@ -267,6 +267,57 @@ def test_the_plan_refuses_a_split_that_is_not_a_partition(trees) -> None:
         ShardPlan.build(awkward, 0, WORLD)
 
 
+def test_the_released_geometry_is_a_partition_eight_ways() -> None:
+    """TP8 is the widest split the released checkpoint admits, and this is what says so.
+
+    The eight-card box has 192 GiB and the plan asks whether it can serve V4.1 at TP8, so the
+    question a reader needs answered before any eight-rank run is whether `build` accepts it at all
+    -- and the interesting case is deliberately *not* the arithmetic of 64/8. `o_groups` is 8, so
+    `groups // world` is **1**: a rank owns exactly one head-group block of `wo_a`, which is the
+    boundary `local_value`'s `grouped_rows` branch reshapes and bands. One group is the smallest
+    non-empty block that branch can produce, and a split that produced zero would be a rank owning
+    nothing while still holding a parameter. So this asserts the three dividing counts *and* the
+    edge the divisions do not reach.
+
+    The geometry is the released checkpoint's own (`config.json`'s `text_config`), written as
+    literals rather than read from disk because the claim is about the geometry and not about a
+    file: a checkpoint edited to other numbers would make this test about *that* file, and what it
+    needs to be about is whether a world of eight is a partition of the one that shipped.
+    """
+    cfg = SimpleNamespace(
+        n_heads=64,
+        o_groups=8,
+        index_n_heads=32,
+        moe_inter_dim=2304,
+        head_dim=512,
+        o_lora_rank=1024,
+        index_head_dim=128,
+    )
+    plan = ShardPlan.build(cfg, rank=0, world=8)
+
+    # the three counts that have to divide, and the one that has to come out non-zero. `moe_inter_dim`
+    # stays the *global* 2304 here -- the plan divides it where it cuts the shared expert, not on the
+    # way in, so reading a 288 here would be reading a rank's share off a field that holds the whole.
+    assert (plan.heads, plan.groups, plan.index_heads, plan.moe_inter_dim) == (8, 1, 4, 2304)
+    # the globals are the released numbers and not a rank's share of them: the indexer's score is
+    # scaled over all 32 heads, so a sharded indexer reading its own 4 would scale by 2x, silently,
+    # on every index-source layer
+    assert (plan.heads_global, plan.groups_global, plan.index_heads_global) == (64, 8, 32)
+
+    # the edge: one o-group a rank is a whole `wo_a` block, and the file's tensor bands into eight
+    # of them with nothing left over. `local_shape` is the shape the loader will fill.
+    groups_row = 8 * cfg.o_lora_rank
+    inner = cfg.n_heads * cfg.head_dim // cfg.o_groups
+    assert plan.local_shape("attn.wo_a.weight", (groups_row, inner)) == (
+        cfg.o_lora_rank,
+        inner,
+    )
+    stacked = torch.arange(groups_row * inner).view(cfg.o_groups, cfg.o_lora_rank, inner)
+    for rank in range(8):
+        band = ShardPlan.build(cfg, rank=rank, world=8).local_value("attn.wo_a.weight", stacked.view(groups_row, inner))
+        assert torch.equal(band, stacked[rank].contiguous()), f"rank {rank} took the wrong o-group"
+
+
 # -- the cut itself -------------------------------------------------------------------------------
 
 
