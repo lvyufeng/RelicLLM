@@ -31,6 +31,18 @@ grid beside emulates, the **shared** experts included -- an earlier revision had
 along with the routed ones. The routed experts still decline, and correctly: the reference runs them
 on an **e2m1** weight, whose exponent field this rule does not describe.
 
+**Correction, 2026-10-15: that last sentence was wrong, and PR #175 is what made it wrong.** The
+reference does *not* mma on e2m1 for a routed expert. Its `fp4_gemm_kernel`
+(`inference/kernel.py`) widens every nibble inside the kernel -- `B_shared[i, j] = T.Cast(FP8,
+T.Cast(FP32, B_fp4_shared[i, j]))` -- and the `T.gemm` that follows takes e4m3 on both operands, so
+the instruction a routed expert issues is the *same* `e4m3 x e4m3` mma as a dense one and this note's
+rule describes it verbatim. e2m1 widens into e4m3 exactly (sixteen codes, no rounding), so nothing
+is lost in the cast. PR #175 therefore **turned the routed experts on**: the host store
+(`CheckpointRoutedExperts._expert_matrix`) attaches `mma.e4m3_codes_from_e2m1(...)` beside each
+expert matrix, and `expert_forward` runs the rule on it. The only fp4 deviation left is on the
+**device** path, where the fused relic-core kernel quantizes the *activation* to int8 with one scale
+a row -- an encoding the rule does not describe and a call site cannot reach around.
+
 ## The claim
 
 The port dequantizes every fp8/fp4 weight to bf16 once at load and runs a plain `F.linear` bf16
