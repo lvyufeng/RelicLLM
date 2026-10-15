@@ -14,6 +14,11 @@ live call rather than from a docs page.
 
 ## What an account can open
 
+This page is the **rentable** half of the fleet. The machines the project runs on directly are
+eight-card boxes with their own budgets, and
+[the eight-card fleet](eight_card_fleet_and_size_lines.md) covers those and the two size lines a
+checkpoint has to clear before it is worth downloading.
+
 Two facts about the response are easy to miss and both bound the work.
 
 **`card_count` belongs to the spec, not to the card.** The same `ASCEND910` is offered as a one-,

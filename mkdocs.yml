@@ -186,6 +186,7 @@ nav:
       - Joining a machine, and joining a family: architecture/joining_a_machine_or_a_family.md
       - The OpenI accelerator fleet: architecture/openi_accelerator_fleet.md
       - The OpenI C2Net roster, and the first two targets: architecture/openi_c2net_roster_and_targets.md
+      - The eight-card fleet, and the two size lines: architecture/eight_card_fleet_and_size_lines.md
       - The package layers: architecture/package_layers.md
       - The native surface decision: architecture/native_surface_decision.md
       - One scheduler, many models: architecture/one_scheduler_many_models.md
