@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import torch.distributed as dist
 from torch.autograd.profiler import record_function
 
+from relicllm.components.moe import movement
 from relicllm.components.moe.cpu_backend import CPURoutedExpertsBackend, start_in_process_cpu_moe_server
 from relicllm.components.moe.gpu_prefill_backend import GPUPrefillMoEBackend
 from relic_core.kernels.ops import act_quant, fp4_act_quant, fp8_gemm, fp4_gemm, sparse_attn, hc_split_sinkhorn, Packed4BitWeightAlongK, _quantize_int8_weight_torch, soft_bf16_weight_gemm_int8, soft_bf16_weight_gemm_int8_pair_cuda_ext, _SHARED_EXPERT_PAIR_INT8_CUDA, _dequant_fp4_weight_torch, soft_fp8_blockfp8_weight_dequant, q8_0_weight_gemm
@@ -32,17 +33,6 @@ fp4_block_size = 32
 default_dtype = torch.bfloat16
 scale_fmt = None
 scale_dtype = torch.float32
-_GGUF_GPU_PREFILL_COPY_STREAMS: dict[int, torch.cuda.Stream] = {}
-
-
-def _get_gguf_gpu_prefill_copy_stream(device: torch.device) -> torch.cuda.Stream:
-    dev_index = int(device.index if device.index is not None else torch.cuda.current_device())
-    stream = _GGUF_GPU_PREFILL_COPY_STREAMS.get(dev_index)
-    if stream is None:
-        with torch.cuda.device(device):
-            stream = torch.cuda.Stream(device=device)
-        _GGUF_GPU_PREFILL_COPY_STREAMS[dev_index] = stream
-    return stream
 
 
 class _GGUFGpuExpertLRU:
@@ -1942,7 +1932,9 @@ class Expert(nn.Module):
             return False
         if device.type != "cuda":
             return False
-        copy_stream = _get_gguf_gpu_prefill_copy_stream(device)
+        # The movement layer's per-device H2D stream, not one this module keeps: expert staging is
+        # one concept and `components.moe.movement` is where its ordering rule is written down.
+        copy_stream = movement.copy_stream(device)
         prepared = False
         for name in (self._gguf_raw_backing.w1_name, self._gguf_raw_backing.w3_name, self._gguf_raw_backing.w2_name):
             key = self._gguf_cuda_key(name, device)
@@ -2866,7 +2858,7 @@ class MoE(nn.Module):
             )
             self._gguf_layer_stage_host_cache = host_cache
         (w1_host, w1_type, w1_in_dim), (w3_host, w3_type, w3_in_dim), (w2_host, w2_type, w2_in_dim) = host_cache
-        copy_stream = _get_gguf_gpu_prefill_copy_stream(device) if async_copy else torch.cuda.current_stream(device)
+        copy_stream = movement.copy_stream(device) if async_copy else torch.cuda.current_stream(device)
         current_stream = torch.cuda.current_stream(device)
         if async_copy and os.getenv("DEEPSEEK_GGUF_PREFILL_COPY_WAIT_CURRENT", "1").lower() not in {"0", "false", "no"}:
             copy_stream.wait_stream(current_stream)

@@ -5,6 +5,7 @@ from typing import Optional
 
 import torch
 
+from relicllm.components.moe import movement
 from relicllm.runtime.ops import load_ops
 
 
@@ -108,7 +109,6 @@ class GPUPrefillMoEBackend:
     _pinned_workspaces = {}
     _pinned_workspace_events = {}
     _pinned_workspace_next = {}
-    _copy_streams = {}
     _pinned_stage_enabled = os.getenv("DEEPSEEK_GPU_PREFILL_MOE_PINNED_STAGE", "1").lower() in {"1", "true", "yes"}
     _pinned_buffer_count = max(1, int(os.getenv("DEEPSEEK_GPU_PREFILL_MOE_PINNED_BUFFERS", "2")))
     _dense_stage_threshold = float(os.getenv("DEEPSEEK_GPU_PREFILL_MOE_DENSE_STAGE_THRESHOLD", "0.75"))
@@ -184,16 +184,6 @@ class GPUPrefillMoEBackend:
             _old_key, old_backend = self._cache_lru.popitem(last=False)
             if old_backend is not self:
                 old_backend.release_cache()
-
-    @classmethod
-    def _get_copy_stream(cls, device: torch.device) -> torch.cuda.Stream:
-        dev_index = cls._device_index(device)
-        stream = cls._copy_streams.get(dev_index)
-        if stream is None:
-            with torch.cuda.device(device):
-                stream = torch.cuda.Stream(device=device)
-            cls._copy_streams[dev_index] = stream
-        return stream
 
     @classmethod
     def _workspace_key(cls, device: torch.device, n_local_experts: int, packed) -> tuple:
@@ -317,7 +307,10 @@ class GPUPrefillMoEBackend:
             t_prepare = time.perf_counter() if self.profile_enabled else 0.0
             t_pin = t_prepare
             current_stream = torch.cuda.current_stream(device)
-            copy_stream = self._get_copy_stream(device) if async_copy else current_stream
+            # The movement layer's per-device H2D stream. This backend kept its own
+            # `dict[int, torch.cuda.Stream]` for the same purpose, which is that registry a second
+            # time: a test that replaced `movement.copy_stream` did not reach this path.
+            copy_stream = movement.copy_stream(device) if async_copy else current_stream
             if async_copy:
                 copy_stream.wait_stream(current_stream)
             event = torch.cuda.Event()
@@ -404,7 +397,7 @@ class GPUPrefillMoEBackend:
             t_alloc = time.perf_counter() if self.profile_enabled else 0.0
             t_pin = t_alloc  # no per-expert memcpy in this path
             current_stream = torch.cuda.current_stream(device)
-            copy_stream = self._get_copy_stream(device) if async_copy else current_stream
+            copy_stream = movement.copy_stream(device) if async_copy else current_stream
             if async_copy:
                 copy_stream.wait_stream(current_stream)
             event = torch.cuda.Event()
@@ -451,7 +444,7 @@ class GPUPrefillMoEBackend:
                 pinned_ws[5][local_id].copy_(e_w3s)
         t_pin = time.perf_counter() if self.profile_enabled else 0.0
         current_stream = torch.cuda.current_stream(device)
-        copy_stream = self._get_copy_stream(device) if async_copy else current_stream
+        copy_stream = movement.copy_stream(device) if async_copy else current_stream
         if async_copy:
             copy_stream.wait_stream(current_stream)
         event = torch.cuda.Event()
