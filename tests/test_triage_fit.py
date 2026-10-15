@@ -4,13 +4,15 @@ Every case is arithmetic over numbers chosen here, so this runs on any machine a
 *decisions* rather than the roster. The roster's own answers live in a separate fixture and need
 checkpoints; these are the rules that would go wrong silently if somebody "simplified" the solver.
 
-The three that matter:
+The four that matter:
 
 * a **replicated** KV cache gets no help from another card, so a model whose cache alone exceeds one
   card does not fit at any count -- the definitive failure the static gate is allowed to give;
 * the **context and batch are one budget**, so a curve exists and a single pair does not describe it;
 * **host memory is a precondition**, so a bank larger than RAM spills back onto the cards and moves
-  the card count rather than being noted and forgotten.
+  the card count rather than being noted and forgotten;
+* the **default profile is the positioning box**, not this checkout's cards, because a fit priced
+  against the machine the code is running on is an answer to a question nobody asked.
 """
 
 from __future__ import annotations
@@ -27,6 +29,36 @@ from relicllm.components.moe.placement import (
 from relicllm.triage.fit import hardware_profile_for
 
 GIB = 1024 ** 3
+
+
+def test_the_default_profile_is_the_positioning_box_and_not_this_checkout() -> None:
+    """The one thing a default can get wrong silently: which machine it is pricing.
+
+    A fit is a decision about the hardware the project targets -- eight 32 GiB cards, because both
+    starting targets are 32 GiB and the account's own 910A machine has eight of them. The box the
+    recorded thresholds were measured on is a different box and is named rather than implied, so a
+    caller that wants to reproduce a measured number says ``DEV_BOX`` instead of inheriting it.
+    """
+    from relicllm.components.moe.boxes import (
+        DEV_BOX_MEMORY_GIB,
+        DEV_BOX_NAME,
+        POSITIONING_BOX_NAME,
+    )
+    from relicllm.components.moe.placement import DEV_BOX, POSITIONING_BOX
+
+    default = hardware_profile_for()
+
+    assert default.gpu_count == 8
+    assert default.gpu_memory_gib == pytest.approx(32.0)
+    assert default.name == POSITIONING_BOX_NAME
+    assert HardwareProfile() == POSITIONING_BOX == default
+    assert usable_per_card(default, reserve_fraction=0.15) == pytest.approx(27.2 * GIB, rel=1e-4)
+
+    assert DEV_BOX.gpu_count == 4
+    assert DEV_BOX.gpu_memory_gib == pytest.approx(DEV_BOX_MEMORY_GIB)
+    assert DEV_BOX.name == DEV_BOX_NAME
+    # An unstated host memory is unstated on both boxes: neither one knows how much RAM it has.
+    assert not DEV_BOX.knows_host_memory and not POSITIONING_BOX.knows_host_memory
 
 
 def test_usable_per_card_tracks_the_reserve_it_was_given() -> None:

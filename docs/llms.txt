@@ -87,6 +87,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [The OpenI accelerator fleet](https://lvyufeng.github.io/RelicLLM/architecture/openi_accelerator_fleet/)
 - [The OpenI C2Net roster, and the first two targets](https://lvyufeng.github.io/RelicLLM/architecture/openi_c2net_roster_and_targets/)
 - [The eight-card fleet, and the two size lines](https://lvyufeng.github.io/RelicLLM/architecture/eight_card_fleet_and_size_lines/)
+- [The positioning, and the box a fit is priced against](https://lvyufeng.github.io/RelicLLM/architecture/positioning/)
 - [The package layers](https://lvyufeng.github.io/RelicLLM/architecture/package_layers/)
 - [The native surface decision](https://lvyufeng.github.io/RelicLLM/architecture/native_surface_decision/)
 - [One scheduler, many models](https://lvyufeng.github.io/RelicLLM/architecture/one_scheduler_many_models/)

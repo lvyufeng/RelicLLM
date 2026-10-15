@@ -171,7 +171,9 @@ def test_the_text_report_prints_the_reserve_it_used(tmp_path: Path) -> None:
     checkpoint = write_checkpoint(tmp_path / "ckpt")
 
     text = assess(
-        str(checkpoint), hardware=hardware_profile_for(host_memory_gib=64.0), reserve_fraction=0.10
+        str(checkpoint),
+        hardware=hardware_profile_for(gpu_count=4, gpu_memory_gib=22.0, host_memory_gib=64.0),
+        reserve_fraction=0.10,
     ).format_text()
 
     # Both the fraction and the GiB it leaves, because the fraction alone is a prefix of 0.15 and
