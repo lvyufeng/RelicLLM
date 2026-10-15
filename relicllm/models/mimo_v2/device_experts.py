@@ -35,11 +35,20 @@ rows the copies are still writing. Neither wait is optional and neither is impli
 by anything else: they are on different streams, so nothing but these two orders
 them.
 
-A slot is only reused once its own kernel has been drained, which is what the
-per-slot event records and what `_take_slots` waits on. Without that wait the next
-layer's copies could start writing a row a kernel launched two calls ago is still
-reading, and the two are on the copy stream and the compute stream respectively, so
-the wait on the compute stream inside the staging pass is what covers it.
+A slot is only reused once the kernel that read it has been issued and the copies
+that overwrite it are ordered behind it -- and it is the *streams* that provide
+that ordering, and not a wait on the host. The per-slot event is what the kernel
+waits on for the copies it reads, and the wait on the compute stream inside the
+staging pass is what puts the next layer's copies behind the kernel two calls
+back that read the same slot. So `_take_slots` rotates without waiting: a host
+that waited there would be waiting for a kernel a whole layer behind, on a path
+whose whole problem is that the host is in it, and `drain` is where a caller that
+genuinely needs the kernels to have happened says so.
+
+The rotation and its per-slot events are `relicllm.components.moe.movement.StagingRing`'s,
+shared with the DeepSeek-V4.1 bank, and the arena is the same layer's
+`allocate_arena`. What is mimo's is the deal, the residency policy and the
+kernel; see `docs/architecture/expert_movement.md` for that seam.
 
 One rank's share, and not the world's
 -------------------------------------
@@ -80,6 +89,7 @@ from typing import Protocol, Sequence
 
 import torch
 
+from relicllm.components.moe.movement import Copy, StagingRing, allocate_arena, copy_stream
 from relicllm.models.mimo_v2.ep import deal_rule, owned_experts, owned_positions, rows_per_card
 from relicllm.runtime.ops import load_ops
 
@@ -409,8 +419,19 @@ class MimoV2DeviceExperts:
         self._arena, self._arenas, self._staging_base = self._allocate()
         with torch.cuda.device(self.device):
             self._events = [torch.cuda.Event() for _ in range(self.slots)]
-            self._copy_events = [torch.cuda.Event() for _ in range(self.slots)]
-            self._copy_stream = torch.cuda.Stream(device=self.device)
+        # The rotating staging slots: `StagingRing` owns the rotation and the event a slot's DMA is
+        # recorded on, and `_copy_events` is that list -- the kernel waits on it in `forward` and
+        # `stage` records it, so it is one event a slot and not a second set beside the ring's.
+        #
+        # `throttle=False` is this bank's own decision and it is the only thing it asks of the ring
+        # that v41 does not: a slot is reused two *layers* after its copy was issued rather than two
+        # rows after, and this host is already a layer behind because `forward` reads the routing
+        # back off the card each call. Reuse is ordered by the streams either way -- `stage` puts
+        # the copies behind the compute stream, which is where the kernel that read the slot was
+        # launched -- so what the flag drops is a second handbrake on a host that is already
+        # throttled. `StagingRing.take`'s docstring has the argument in full.
+        self._ring = StagingRing(slots=self.slots, devices=[self.device], throttle=False)
+        self._copy_events = self._ring.events[0]
         self._pending: list[bool] = [False] * self.slots
         # The draw's bookkeeping, staged through a pinned pair rather than built on the card.
         # `mine` is a list of positions on the host and the kernel wants them as a device tensor;
@@ -427,7 +448,6 @@ class MimoV2DeviceExperts:
             # and has to be built per call, so it has a pinned source of its own either way.
             self._row_host = torch.zeros(self.top_k, dtype=torch.int64, pin_memory=True)
             self._row_device = torch.zeros(self.top_k, dtype=torch.int64, device=self.device)
-        self._next = 0
         # Counters, because "how much did the bank save" is a question about the copies and
         # not about the wall clock: `staged_experts` is the draws that cost an H2D.
         self.staged_experts = 0
@@ -488,33 +508,26 @@ class MimoV2DeviceExperts:
     ) -> tuple[dict[tuple[str, str], torch.Tensor], list[dict], list[int]]:
         """The arena, as `(the allocation, the per-slot views, each slot's first row)`.
 
-        Without a resident set this is one tensor a slot, which is what it always was. With one,
-        the resident region has to be a *single* allocation shared by the slots -- the kernel reads
-        one tensor and a row is an index into its first axis -- so the allocation is one tensor of
-        `resident_layers * resident_rows + slots * arena_rows` rows and the slots are row ranges
+        The allocation itself is `components.moe.movement.allocate_arena`, the same one-call-a-key
+        `uint8` block the DeepSeek-V4.1 bank builds. What this decides is the geometry the seam is
+        handed: without a resident set it is one block a slot, which is what it always was, and with
+        one the resident region has to be a *single* allocation shared by the slots -- the kernel
+        reads one tensor and a row is an index into its first axis -- so the allocation is one block
+        of `resident_layers * resident_rows + slots * arena_rows` rows and the slots are row ranges
         of it. The rows a slot owns start after the resident region, which is what `_staging_base`
         carries into `_stage` and `forward`.
         """
         resident = self.resident_rows * self.resident_layers
-        with torch.cuda.device(self.device):
-            if not resident:
-                arenas = [
-                    {
-                        key: torch.empty(
-                            (self.arena_rows,) + shape, dtype=torch.uint8, device=self.device
-                        )
-                        for key, shape in self._shapes().items()
-                    }
-                    for _ in range(self.slots)
-                ]
-                return arenas[0], arenas, [0] * self.slots
-            rows = resident + self.slots * self.arena_rows
-            arena = {
-                key: torch.empty((rows,) + shape, dtype=torch.uint8, device=self.device)
-                for key, shape in self._shapes().items()
-            }
-            base = [resident + slot * self.arena_rows for slot in range(self.slots)]
-            return arena, [arena] * self.slots, base
+        shapes = self._shapes()
+        if not resident:
+            arenas = [
+                allocate_arena(self.device, self.arena_rows, shapes) for _ in range(self.slots)
+            ]
+            return arenas[0], arenas, [0] * self.slots
+        rows = resident + self.slots * self.arena_rows
+        arena = allocate_arena(self.device, rows, shapes)
+        base = [resident + slot * self.arena_rows for slot in range(self.slots)]
+        return arena, [arena] * self.slots, base
 
     @property
     def arena_bytes(self) -> int:
@@ -533,24 +546,27 @@ class MimoV2DeviceExperts:
     def _take_slots(self, count: int) -> int:
         """The next slot, with the overwrite ordered behind the kernel that still reads it.
 
-        Rotating rather than searching is what keeps the copies and the kernels apart: with
-        two slots and one call in flight, `_next` names the slot the *previous* call used, so
-        the copy that overwrites it is ordered behind a kernel that is a full layer behind.
+        The rotation and its per-slot events are `StagingRing`'s, shared with the DeepSeek-V4.1
+        bank: what is left here is the name this class's callers and probes use and the capacity
+        check, which is about this arena's width and not about the ring.
 
-        **Ordered by the copy stream and not by the host.** The overwrite is safe because
-        `_stage` makes the copy stream wait on the compute stream's tail, which at that moment
-        already holds the kernel that read the slot two layers ago -- so the host does not have
-        to wait for anything, and a host that waits is a host that has stopped issuing. That
-        matters here more than it looks: this arena is one of forty-seven in a layer loop, so
-        the wait this dropped was one a layer and forty-seven a token, on a path whose whole
-        problem is that the host is in it. `drain` is where a caller that genuinely needs the
-        kernels to have happened says so.
+        Rotating rather than searching is what keeps the copies and the kernels apart: with two
+        slots and one call in flight, the slot handed out is the one the *previous* call used, so
+        the copy that overwrites it is ordered behind a kernel a full layer behind.
+
+        **Ordered by the copy stream and not by the host, which is why the ring is built with its
+        throttle off.** The overwrite is safe because `_stage` makes the copy stream wait on the
+        compute stream's tail, which at that moment already holds the kernel that read the slot two
+        layers ago -- so the host does not have to wait for anything, and a host that waits is a
+        host that has stopped issuing. That matters here more than it looks: this arena is one of
+        forty-seven in a layer loop, so the wait this drops is one a layer and forty-seven a token,
+        on a path whose whole problem is that the host is in it -- and this host is already a layer
+        behind, because `forward` reads the routing back off the card each call. `drain` is where a
+        caller that genuinely needs the kernels to have happened says so.
         """
         if count > self.arena_rows:
             raise ValueError(f"a call needs {count} arena rows and the arena holds {self.arena_rows}")
-        slot = self._next
-        self._next = (self._next + 1) % self.slots
-        return slot
+        return self._ring.take()
 
     def _stage(
         self,
@@ -559,7 +575,12 @@ class MimoV2DeviceExperts:
         experts: Sequence[int],
         rows: Sequence[int] | None = None,
     ) -> None:
-        """Copy `layer_id`'s `experts` into the slot's arena rows, on the copy stream.
+        """Copy `layer_id`'s `experts` into the slot's arena rows, through the movement layer.
+
+        The copies themselves -- the stream they are issued on, the wait that orders them behind
+        compute, the event the kernel then waits on -- are `StagingRing.stage`'s, shared with the
+        DeepSeek-V4.1 bank. What is built here is the plan the seam is handed: which destination
+        row a drawn expert reads, and which six ranges of the source go into it.
 
         Ordered behind the compute stream because the rows are the previous call's inputs
         **and** ahead of it because the kernel about to read them is on the other stream.
@@ -575,20 +596,20 @@ class MimoV2DeviceExperts:
         or a resident row, when the expert is one the layer already holds and the copy is
         what an eviction into it costs. Without a resident set the two are the same list and
         the rows are the slot's own.
+
+        `slot` is the one `_take_slots` handed out, and it is handed to `stage` rather than taken
+        again there: the ring rotates once a call, and a staging call that took a slot of its own
+        would rotate twice and land the next call on the slot this one had just filled.
         """
         arena = self._arenas[slot]
         base = self._staging_base[slot]
-        with torch.cuda.device(self.device):
-            self._copy_stream.wait_stream(torch.cuda.current_stream(self.device))
-            with torch.cuda.stream(self._copy_stream):
-                for index, expert in enumerate(experts):
-                    row = base + index if rows is None else rows[index]
-                    views = self.source.expert_views(layer_id, int(expert))
-                    for (proj, kind), target in arena.items():
-                        target[row].copy_(
-                            views[(proj, kind)].view(torch.uint8), non_blocking=True
-                        )
-                self._copy_events[slot].record(self._copy_stream)
+        copies: list[list[Copy]] = [[]]
+        for index, expert in enumerate(experts):
+            row = base + index if rows is None else rows[index]
+            views = self.source.expert_views(layer_id, int(expert))
+            for key, target in arena.items():
+                copies[0].append((target[row], views[key].view(torch.uint8)))
+        self._ring.stage(copies, slot)
         self.staged_experts += len(experts)
         self.staged_bytes += len(experts) * self.expert_bytes
 
@@ -691,10 +712,17 @@ class MimoV2DeviceExperts:
             # Nothing to copy, and the kernel still has to wait on this slot's event -- but the
             # event it would wait on is the one a *previous* call recorded for the same slot, and
             # that copy is long done. Recording a fresh one on the copy stream makes the wait an
-            # edge on an empty stream instead of a stale edge on a real one.
+            # edge on an empty stream instead of a stale edge on a real one. The stream named is the
+            # ring's own pair of `copy_stream` calls rather than a handle of this module's, because
+            # one device's H2D stream is one stream and a second here would be a second link that
+            # `_stage` never ordered anything against.
             with torch.cuda.device(self.device):
-                self._copy_events[slot].record(self._copy_stream)
+                self._copy_events[slot].record(copy_stream(self.device))
         arena = self._arenas[slot]
+        # The wait stays a per-slot edge rather than `StagingRing.order_kernel`'s stream-wide one,
+        # because the kernel reads this slot's rows and nothing else: the event names exactly the
+        # copies it reads, where the ring's wait would name the whole copy stream and every slot's
+        # copies issued on it.
         compute = torch.cuda.current_stream(self.device)
         compute.wait_event(self._copy_events[slot])
         self._picked_host[: len(mine)] = torch.tensor(mine, dtype=torch.int64)

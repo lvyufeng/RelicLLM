@@ -262,19 +262,16 @@ Not yet, then:
 from __future__ import annotations
 
 import os
-from collections import OrderedDict
 from typing import Sequence
 
 import torch
 
+from relicllm.components.moe.movement import Copy, StagingRing, allocate_arena
+from relicllm.components.moe.residency import ResidentSet
 from relicllm.models.deepseek_v4_1.modules import RoutedExperts
 from relicllm.runtime.ops import load_ops
 
 __all__ = ["DeviceRoutedExperts", "device_experts_available"]
-
-# Reused across instances and across layers: a `torch.cuda.Stream` is a per-process resource, and a
-# 40-layer backbone would otherwise create 160 of them for the four cards to share four at a time.
-_COPY_STREAMS: dict[int, torch.cuda.Stream] = {}
 
 # The three projections, in the order the checkpoint names them. `loader.py` has the same tuple for
 # the host path; the two are the same list of what an expert is made of.
@@ -359,194 +356,19 @@ def device_experts_available() -> bool:
     return extension is not None and hasattr(extension, "moe_single_token_fp4_forward")
 
 
-def _copy_stream(device: torch.device) -> torch.cuda.Stream:
-    """The one H2D stream for `device`, created on first use and never freed."""
-    index = device.index if device.index is not None else torch.cuda.current_device()
-    stream = _COPY_STREAMS.get(index)
-    if stream is None:
-        with torch.cuda.device(index):
-            stream = torch.cuda.Stream(device=index)
-        _COPY_STREAMS[index] = stream
-    return stream
-
-
-def _allocate_arena(
-    device: torch.device, rows: int, shapes: dict[tuple[str, str], tuple[int, ...]]
-) -> dict[tuple[str, str], torch.Tensor]:
-    """One card's arena: the rows a row stages into, then the rows the layer keeps."""
-    with torch.cuda.device(device):
-        return {
-            (which, kind): torch.empty(
-                (rows,) + shapes[(which, kind)], dtype=torch.uint8, device=device
-            )
-            for which in PROJECTIONS
-            for kind in KINDS
-        }
-
-
-class ResidentSet:
-    """The arena and the staging block every layer's resident experts share, one of each a card.
-
-    A resident set is worth having only at a size forty of them do not fit. At 64 slots a card it is
-    1.2 GiB of device memory and as much again of page-locked host memory, so a layer holding its own
-    would be 47 GiB of a 22 GiB card and 48 GiB of unswappable RAM. One set, refilled by whichever
-    layer is running, is safe because the layers run one at a time and each `forward` drains every
-    kernel it issued before it returns -- and because the device arena holds no state between layers,
-    only bytes.
-
-    The two halves are the same size and for the same reason. `_fill` copies out of the checkpoint
-    into `pinned` and then DMA-copies `pinned` into `arena`, so the host block is not an
-    implementation detail of the transfer: at `hot_rows` slots it is as much memory as the card's
-    copy, and sharing one without the other would halve the saving.
-
-    `events` is one a card for the fill's own DMA, and it is here rather than in the layer for the
-    same reason: the next layer's host write into `pinned` has to be behind the previous layer's read
-    of it, and with forty layers sharing one block that guarantee cannot live in forty instances.
-    """
-
-    def __init__(
-        self,
-        *,
-        hot_rows: int,
-        pool_rows: int = 0,
-        rows_per_card: int,
-        ranks: Sequence[int],
-        devices: Sequence[torch.device],
-        shapes: dict[tuple[str, str], tuple[int, ...]],
-    ) -> None:
-        self.hot_rows = int(hot_rows)
-        self.pool_rows = max(0, int(pool_rows))
-        self.rows_per_card = int(rows_per_card)
-        self.arena_rows = self.rows_per_card + self.hot_rows + self.pool_rows
-        self.ranks = list(ranks)
-        self.devices = list(devices)
-        self._shapes = shapes
-        self.arena: list[dict[tuple[str, str], torch.Tensor]] = [
-            _allocate_arena(device, self.arena_rows, self._shapes) for device in self.devices
-        ]
-        self.events: list[torch.cuda.Event] = []
-        for device in self.devices:
-            with torch.cuda.device(device):
-                self.events.append(torch.cuda.Event())
-        # Built on the first fill and not here: a decode-only run never fills, and this many rows of
-        # page-locked memory is not something to allocate for a set that will always be empty.
-        self._pinned: dict[tuple[str, str], torch.Tensor] | None = None
-        # The pool: which arena row a card keeps each expert in. The key is `(layer, expert)` and not
-        # the expert id alone, and that is not a detail -- see `pool_row`, which is where the reason
-        # is written down and where getting it wrong cost a whole sweep. It is on the set rather than
-        # on the layer because the *arena* has to be one a card: an arena wide enough to hold a
-        # layer's working set cannot be forty of them, so the map that says which arena row is whose
-        # lives beside the rows it describes. `pool_free` is the rows never used yet and `pool_lru`
-        # the ones in use, oldest first; a key is evicted only when both are empty. `pool_rows=0` is
-        # the off state and the configuration every number above this was taken on.
-        self.pool_map: list[dict[tuple[int, int], int]] = [{} for _ in self.ranks]
-        self.pool_lru: list[OrderedDict[tuple[int, int], None]] = [
-            OrderedDict() for _ in self.ranks
-        ]
-        self.pool_free: list[list[int]] = [
-            list(range(self.rows_per_card + self.hot_rows, self.arena_rows))
-            for _ in self.ranks
-        ]
-        # Counted, like the class's own counters: how many rows the pool took off the staging path
-        # is what says whether it is doing anything, and `pool_evicted` is what says whether
-        # `pool_rows` was the binding constraint rather than a size.
-        self.pool_staged = 0
-        self.pool_evicted = 0
-
-    def pool_row(self, card: int, key: tuple[int, int]) -> tuple[int, bool] | None:
-        """`(arena row, needs staging)` for `key` on `card`, or `None` when the pool is off.
-
-        `None` is the off state, and a caller that gets it is on the path this class had before the
-        pool existed -- the row's own miss rows, staged and never kept. `True` means the row has just
-        been assigned and holds nothing yet, so the caller stages into it; `False` means it already
-        holds this key's bytes and the draw costs no H2D at all.
-
-        **`key` is `(layer, expert)`, and the layer half is load-bearing.** An expert id is not an
-        identity: the weights live at `layers.{layer}.ffn.experts.{expert}.{which}.weight`, so layer
-        5's expert 7 and layer 6's expert 7 are different tensors that happen to share a number. A
-        pool keyed on the id alone answers a layer 6 draw with layer 5's bytes -- silently, since the
-        rows are the right shape and the bytes are a real expert's -- and it does so *more* often the
-        wider the pool is. That is what the first version of this did, and a 512-token sweep caught
-        it only because the probe keeps the logits: every pooled run at every width moved the top 32
-        by 4.7 to 6.8 of a max logit of 29.15, and the four runs at two widths agreed with each other
-        to the digit, which is what a wrong answer looks like when nothing about it is random. It is
-        worth stating as a rule rather than as an anecdote: a cache keyed on a number that is only
-        unique within a scope must be keyed on the scope too.
-
-        The row is stable for as long as the key is in the pool: a second draw of the same key later
-        in the layer reads the row this returns, and nothing invalidates it but an eviction. That is
-        the whole difference between this and `_fill` -- a fill row means "resident *this layer*" and
-        is rewritten by the next layer's fill, while a pool row holds its bytes until the pool gives
-        the row to somebody else, and a key evicted and re-drawn pays the staging again.
-
-        **Eviction is safe at any size, and it is worth saying why rather than guarding it.** A row
-        handed out to a different key is overwritten by an H2D that `_upload` puts behind that
-        card's compute stream, and `_issue` puts the next kernel behind the copy -- so the overwrite
-        cannot be read by a kernel that was launched before it, however recently the evicted key was
-        drawn. The arena the row lives in is what the ordering already protects; the pool changes
-        which row a key is in and not when a byte is allowed to move. What a too-small pool costs is
-        therefore only the fills it throws away, which is a hit rate and not a correctness property,
-        and `pool_evicted` is the counter that says so. Note what this argument does *not* cover: it
-        is about the bytes in a row and not about which bytes belong there, which is the other half
-        of the problem and the reason the key carries a layer.
-        """
-        if not self.pool_rows:
-            return None
-        row = self.pool_map[card].get(key)
-        if row is not None:
-            self.pool_lru[card].move_to_end(key)
-            return row, False
-        if self.pool_free[card]:
-            row = self.pool_free[card].pop()
-        else:
-            victim, _ = self.pool_lru[card].popitem(last=False)
-            row = self.pool_map[card].pop(victim)
-            self.pool_evicted += 1
-        self.pool_map[card][key] = row
-        self.pool_lru[card][key] = None
-        self.pool_staged += 1
-        return row, True
-
-    @property
-    def pinned(self) -> dict[tuple[str, str], torch.Tensor]:
-        """The page-locked block the fill stages through, one card's worth laid end to end."""
-        if self._pinned is None:
-            self._pinned = {
-                (which, kind): torch.empty(
-                    (len(self.ranks) * self.hot_rows,) + self._shapes[(which, kind)],
-                    dtype=torch.uint8,
-                    pin_memory=True,
-                )
-                for which in PROJECTIONS
-                for kind in KINDS
-            }
-        return self._pinned
-
-    @property
-    def arena_bytes(self) -> int:
-        """Packed fp4 bytes one card's arena occupies on the device."""
-        return self.arena_rows * sum(shape[0] * shape[1] for shape in self._shapes.values())
-
-    @property
-    def pinned_bytes(self) -> int:
-        """Page-locked host bytes the fill stages through, zero until the first fill asks."""
-        if self._pinned is None:
-            return 0
-        return len(self.ranks) * self.hot_rows * sum(
-            shape[0] * shape[1] for shape in self._shapes.values()
-        )
-
-
 class DeviceRoutedExperts(RoutedExperts):
     """One layer's routed experts held as fixed `rows_per_card`-row arenas, one per card driven.
 
     Not an `nn.Module`, for the same reason `CheckpointRoutedExperts` is not: the experts are not
     part of the tree, and a module would put them in `state_dict()` and in `parameters()`.
 
-    The class owns exactly the state a step needs and nothing it allocates: the pinned and device
-    arenas, the copy streams, one event per pinned buffer so a buffer is not overwritten while the
-    DMA that reads it is still in flight, one event per card for the result copy back, and the
-    per-row scratch. Nothing on either side of PCIe is allocated per card or per row.
+    The class owns exactly the state a step needs and nothing it allocates: the device arena a layer
+    keeps of its own when no set is shared with it, one event per card for the fill's staging and one
+    for the result copy back, and the per-row scratch. The staging path itself -- the copy streams,
+    the rotating slots and the two waits that order them -- lives in
+    `relicllm.components.moe.movement`, and the arena and the page-locked block a fill stages through
+    in `relicllm.components.moe.residency`. Nothing on either side of PCIe is allocated per card or
+    per row.
 
     `ranks` is which of the `world` dealt shares this process owns, and it is what makes the class
     usable one-card-per-process as well as one-process-for-every-card. See the module docstring for
@@ -762,15 +584,11 @@ class DeviceRoutedExperts(RoutedExperts):
         else:
             self._on_device = list(residents.arena)
 
-        # `None` means "no copy in flight from this buffer", which is the state a fresh buffer is in.
-        # The events themselves are allocated here and reused: one per card per buffer, 8 for the
-        # four-card case, rather than one per copy per row, which would be 320 a token.
-        self._events: list[list[torch.cuda.Event]] = []
-        for device in self.devices:
-            with torch.cuda.device(device):
-                self._events.append([torch.cuda.Event() for _ in range(self._buffers)])
-        self._uploaded: list[list[bool]] = [[False] * self._buffers for _ in self.ranks]
-        self._next_buffer = 0
+        # The staging ring: `pinned_buffers` rotating slots a card, one event a slot, allocated here
+        # and reused -- 8 events for the four-card case rather than one per copy per row, which would
+        # be 320 a token. One ring a layer and not one a set, because a slot's guarantee is about the
+        # work between two waits and every layer drains everything it issued before it returns.
+        self._ring = StagingRing(slots=self._buffers, devices=self.devices)
         # The row's ids, parked by `_stage` for the `_upload` that follows it on the same buffer.
         # `misses` names each miss by route slot, and a route slot only means something beside the
         # ids it indexes; they are the row's and belong to `_resolve_row`, so they cannot be
@@ -812,7 +630,7 @@ class DeviceRoutedExperts(RoutedExperts):
 
     def _allocate(self, device: torch.device) -> dict[tuple[str, str], torch.Tensor]:
         """One card's arena, on the `hot_rows=0` path where there is no set to share."""
-        return _allocate_arena(device, self.arena_rows, self._shapes)
+        return allocate_arena(device, self.arena_rows, self._shapes)
 
     @property
     def residents(self) -> ResidentSet | None:
@@ -1075,58 +893,29 @@ class DeviceRoutedExperts(RoutedExperts):
                         pinned[(which, kind)][self._hot_row(card, row)].copy_(
                             self.checkpoint.packed(key).view(torch.uint8)
                         )
-            device = self.devices[card]
-            stream = _copy_stream(device)
             rows = slice(card * self.hot_rows, card * self.hot_rows + len(ids))
-            with torch.cuda.device(device):
-                # Behind this card's own compute stream, which is where the previous layer's kernels
-                # were: the fill rewrites arena rows those kernels read, and the two are on different
-                # streams so nothing else would order them.
-                stream.wait_stream(torch.cuda.current_stream(device))
-                with torch.cuda.stream(stream):
-                    for key, destination in self._on_device[card].items():
-                        destination[: len(ids)].copy_(pinned[key][rows], non_blocking=True)
-                    self._hot_events[card].record(stream)
+            # A contiguous block of rows in one transfer a tensor, and behind this card's own compute
+            # stream -- which is where the previous layer's kernels were, and the fill rewrites arena
+            # rows those kernels read. The event it records is the set's and not this instance's: what
+            # it orders is the next layer's host write into `pinned`, and forty layers share the block.
+            self._ring.load(
+                card,
+                [
+                    (destination[: len(ids)], pinned[key][rows])
+                    for key, destination in self._on_device[card].items()
+                ],
+                self._hot_events[card],
+            )
             self.filled_rows += len(ids)
 
     def _take_buffer(self) -> int:
-        """The next buffer slot to upload through, after the DMA that last used it has finished.
+        """The next staging slot, after the DMA that last filled it has drained.
 
-        The wait below used to have a host buffer for its subject: the pinned arena's slot was about
-        to be overwritten by the next row's staging, and the DMA reading it was still in flight. There
-        is no host buffer any more (`_stage`), so what is left is the slot's event alone, and the
-        arena rows a copy writes are ordered by the streams themselves -- the copy stream waits on the
-        compute stream in `_upload` and the compute stream waits on the copy stream before its kernel
-        in `_issue`, so a row's bytes are ordered against the kernel that reads them without the host
-        being involved at all.
-
-        What the wait still does is bound how far the host runs ahead of the cards. What it costs is
-        measured, and it is the largest single item in a prefill: with the copies gone from `_stage`,
-        a 512-token leg's rank-0 class wall is 13.40 s and **7.57 s of it -- 56.5%, 1.58 ms a call
-        over 4807 calls -- is this one `synchronize`**. That is the block and not a lever. The same
-        wait on the chunked path -- a 4096-token chunk in the 32768..65536 range, the ranks that stage
-        the most rows -- is **1.79 ms a call, 15.8 s of a 36.01 s chunk, and 96% of the waits are
-        unsatisfied**, and an A/B that skips it entirely, 5.5 ms of waits against 63.28 s over the
-        same calls, moves the chunk by **-0.35 s inside a 3.31 s chunk-to-chunk spread** (0.9903x,
-        `/tmp/take_buffer_abab.log`). The host is the producer and this is its throttle: with two
-        buffers there is nowhere to run ahead to, so removing the block moves the block and not the
-        chunk. "Removing it is the next candidate" is therefore the one claim here that a measurement
-        has retired. Note also that a phase tap cannot see this row at all -- its own preamble calls
-        `torch.cuda.synchronize()`, which satisfies the event before it is asked about, which is why
-        the chunk profile's `routed.buffer` row reads 15 us a call where this paragraph reads 1.58 ms.
-
-        "A whole upload" and not "two rows", which is the distinction `_stage_misses` pays for: the
-        rotation is advanced by the callers that upload, not by every row, so that the guarantee is
-        about the work between two waits and not about the row count between them. A row that uploads
-        nothing neither takes a slot nor waits on one.
+        The wait, the rotation that decides which slot that is, and the recorded cost of both are
+        `StagingRing.take`'s -- this name stays because it is the row loop's own entry point and the
+        one a test replaces to drive the rotation with no card in the machine.
         """
-        slot = self._next_buffer
-        self._next_buffer = (self._next_buffer + 1) % self._buffers
-        for card in range(len(self.ranks)):
-            if self._uploaded[card][slot]:
-                self._events[card][slot].synchronize()
-                self._uploaded[card][slot] = False
-        return slot
+        return self._ring.take()
 
     def _stage(self, buffer: int, ids: Sequence[int], misses: list[list[tuple[int, int, int]]]) -> None:
         """Bookkeeping for one row's misses: the counters, and the ids `_upload` needs to name them.
@@ -1159,16 +948,15 @@ class DeviceRoutedExperts(RoutedExperts):
             self.expert_rows += len(members)
 
     def _upload(self, buffer: int, misses: list[list[tuple[int, int, int]]]) -> None:
-        """One asynchronous copy stream per card, each reading the pinned bank, each recording an event.
+        """One `Copy` a (projection, kind) a miss, each read out of the bank where it lies.
 
         Four links at once is the whole point of the split: measured, one card takes 10.47 GiB/s and
         four take 38.56 GiB/s aggregate, so the same bytes cost 430 ms staged to one card and 117 ms
         staged to four. Out of the registered bank the same measurement is **10.85 GiB/s** isolated
-        and 10.19-10.57 in situ on four ranks, which is the rate this loop runs at.
-
-        A card's copy is also ordered behind that card's own compute stream, which is where its
-        previous kernel was launched: without that the copy could refill an arena a kernel is still
-        reading, and the two are on different streams so nothing else would order them.
+        and 10.19-10.57 in situ on four ranks, which is the rate this loop runs at. The loop here is
+        the *assembly* of the copies and nothing else: `StagingRing.stage` takes the slot, puts each
+        card's copies behind that card's own compute stream -- where its previous kernel was launched
+        -- and records the slot's event, and `order_kernel` is what puts the next kernel behind them.
 
         What crosses is the miss rows and not the arena, so a row the resident set or the pool covers
         entirely costs no H2D at all. Each miss is one `packed` tensor a projection a kind -- six
@@ -1185,6 +973,7 @@ class DeviceRoutedExperts(RoutedExperts):
         same one the pool already paid.
         """
         ids = self._carried.pop(buffer, None)
+        copies: list[list[Copy]] = [[] for _ in self.devices]
         for card, members in enumerate(misses):
             if not members:
                 continue
@@ -1193,24 +982,24 @@ class DeviceRoutedExperts(RoutedExperts):
                     f"layer {self.layer_id} is uploading misses to buffer {buffer} that no staging "
                     f"call claimed; `_stage` and `_upload` are a pair"
                 )
-            device = self.devices[card]
-            stream = _copy_stream(device)
-            with torch.cuda.device(device):
-                stream.wait_stream(torch.cuda.current_stream(device))
-                with torch.cuda.stream(stream):
-                    for _, slot, arena_row in members:
-                        destination = slice(arena_row, arena_row + 1)
-                        expert = ids[slot]
-                        for (which, kind), target in self._on_device[card].items():
-                            weight = self._key(expert, which)
-                            key = weight if kind == "q" else self._scale_key(weight)
-                            # F8_E8M0 has no CPU `copy_` from a pyloaded view, and the kernel reads
-                            # both halves as bytes, so both travel as `uint8`.
-                            target[destination].copy_(
-                                self.checkpoint.packed(key).view(torch.uint8), non_blocking=True
-                            )
-                    self._events[card][buffer].record(stream)
-            self._uploaded[card][buffer] = True
+            for _, slot, arena_row in members:
+                expert = ids[slot]
+                for (which, kind), target in self._on_device[card].items():
+                    weight = self._key(expert, which)
+                    key = weight if kind == "q" else self._scale_key(weight)
+                    # F8_E8M0 has no CPU `copy_` from a pyloaded view, and the kernel reads both
+                    # halves as bytes, so both travel as `uint8`.
+                    copies[card].append(
+                        (
+                            target[arena_row : arena_row + 1],
+                            self.checkpoint.packed(key).view(torch.uint8),
+                        )
+                    )
+        # Into the slot `_take_buffer` handed out, and not into a second one: taking and staging are
+        # one rotation between them, and a staging call that took its own would rotate the ring
+        # twice a row -- at two slots, into the slot the previous row had just filled, waiting on the
+        # DMA it had just issued.
+        self._ring.stage(copies, buffer)
 
     def _row_scratch(self, x_row: torch.Tensor) -> dict:
         """The per-row buffers, built on the first row and reused for every one after it.
@@ -1338,7 +1127,7 @@ class DeviceRoutedExperts(RoutedExperts):
             device = self.devices[card]
             # Order the compute behind its own copy stream and no one else's: a card's kernel reads
             # only its own arena, so four independent chains is what the hardware is.
-            torch.cuda.current_stream(device).wait_stream(_copy_stream(device))
+            self._ring.order_kernel(card)
             with torch.cuda.device(device):
                 scratch["x_device"][card].copy_(source, non_blocking=True)
                 scratch["w_device"][card].narrow(0, 0, k).copy_(
@@ -1575,7 +1364,7 @@ class DeviceRoutedExperts(RoutedExperts):
                 starts.append(starts[-1] + len(by_row[arena_row]))
             # Order this chunk's kernel behind its own card's copies, which is where the arena rows
             # `_upload` just wrote are: the kernel reads them, and the two are on different streams.
-            torch.cuda.current_stream(device).wait_stream(_copy_stream(device))
+            self._ring.order_kernel(card)
             with torch.cuda.device(device):
                 # A pinned host source goes straight across and asynchronously, which is the copy
                 # this path exists to keep off the host's critical path. Only the multi-card case --
@@ -1844,22 +1633,14 @@ class DeviceRoutedExperts(RoutedExperts):
         *not* free is against the kernel that reads the arena, and that is `_issue`'s wait and
         `_upload`'s, not this.
 
-        **A row with nothing to move returns before `_take_buffer`, and that is not an early exit for
-        its own sake.** `_take_buffer` hands out the next slot *and waits on the DMA that last uploaded
-        through it*, so the two-buffer pipeline's guarantee -- the slot being uploaded has had a whole
-        row's uploading since its copy was issued -- only holds if every row that takes a slot also
-        does work with it. A pool answers most of a prefill's rows without moving anything (86.3% on
-        the 512-token leg), and against that hit rate the rotation advances through rows that move
-        nothing and lands on the slot the previous *working* row uploaded immediately, with no upload
-        in between to cover the copy. Measured on that leg: 6.89 s of a 30.35 s class wall in this one
-        wait, against the ~2.5 s of DMA it covers. It also explains why the decode step recorded
-        0.00 s here -- a decode row misses by construction, so it was the one configuration where the
-        wait always had a row's upload in front of it.
-
-        Rotating only on rows that move restores the guarantee by construction rather than by luck:
-        consecutive working rows take consecutive slots, so a slot's copy is issued one working row
-        before it is waited on, whatever the pool's hit rate is. Rows that move nothing leave the
-        rotation where it is, which is what makes that true.
+        **A row with nothing to move returns before `_take_buffer`, and what that protects is the
+        rotation.** A slot's reuse guarantee -- that a whole row's upload has been issued since the
+        copy it is about to overwrite -- only holds if every row that takes a slot also does work with
+        it, and a pool answers most of a prefill's rows without moving anything. `StagingRing.stage`
+        is where that guarantee is written down and where its cost is recorded; this early return is
+        the same rule read from the caller's side, so a hit costs one counter increment and nothing
+        else. `self.rows` counts every row, the ones that moved nothing included: it is the
+        denominator `expert_rows` and `drawn_rows` are read over, not a count of work.
         """
         self.rows += 1
         if not any(misses):
