@@ -59,9 +59,13 @@ for the workspace and the allocator — is the arithmetic:
 A **mixture of experts** is different, and this is the correction that moved this page. At TP8 the
 resident part is the attention stack, the embeddings, the norms and the shared experts; the routed
 experts and the gather tables live in a host bank. DeepSeek-V4.1-Flash's 475.24 GiB checkpoint is
-457.78 GiB of bank, so **17.5 GiB is resident** — under 3 GiB a card over eight ranks, before the KV
-cache. Above a handful of cards the card count stops being the binding constraint for a MoE at all,
-and the ceiling lands on the host.
+457.78 GiB of bank plus **16.79 GiB of tree** — 2.1 GiB a card over eight ranks, before the KV cache.
+The two do not add up to the file total: the rest is 8.30 GiB of `mtp` draft layers and vision tower
+that the loader never asks for, so subtracting the bank from the checkpoint overstates the card side
+by exactly those bytes. And 16.79 is what the process *holds* rather than what it reads, because
+everything quantized is dequantized at load — 9.16 GiB of files behind it
+([the census](../performance/deepseek_v4_1_flash_host_run.md)). Above a handful of cards the card
+count stops being the binding constraint for a MoE at all, and the ceiling lands on the host.
 
 Eight ranks is a configuration, not a code change. `ShardPlan.build(cfg, rank, 8)` accepts the
 released geometry, `o_groups` is 8 and `groups / world` is 1, which is what
