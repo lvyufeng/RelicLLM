@@ -92,6 +92,15 @@ the paged allocator needs is no longer missing. A declaration that reported one 
 wrong by one of the two callers — and the fit test's verification story from 2026-10-02 is a *marginal*
 number, so the round-trip through this declaration has to reproduce it.
 
+**A compressed page is a latent's width, not a position's.** `MLASpec.page_size_bytes` lays out
+`block_size // compress_ratio` latents of `head_dim` values each, because the ratio pools positions
+into one latent of the layer's own width — which is what both DeepSeek runtimes register for it
+(`zeros(max_seq_len // ratio, head_dim)`). The method's first reader found it dividing by the ratio a
+second time through `values_per_token`, which made a compressed page `1/compress_ratio` of what the
+runtimes allocate; it had no reader until the block table arrived, and
+[that page](kv_block_table.md#the-latent-width-this-found) is where the correction and its evidence
+are recorded.
+
 ## What a publisher looks like
 
 One module per served architecture, `relicllm/models/<arch>/kv_spec.py`, exporting
@@ -149,8 +158,9 @@ host can read `page_size_bytes` and `layer_ids` without importing a model, and t
 `name`/`layer_ids` are the block table's rows. It is also the prerequisite for #14's prefix-cache and
 chunked-prefill restore being one implementation rather than four.
 
-**Does not.** This is the declaration, not the consumer — no paged allocation and no block table
-land here. It is also not a new allocator: `MimoV2KVCache` and `KVLatentCache` carry
+**Does not.** This is the declaration, not the consumer — it states what a position costs and not
+which physical page holds it, which is [the KV block table](kv_block_table.md), a second module for
+the same reason this one is a module at all. It is also not a new allocator: `MimoV2KVCache` and `KVLatentCache` carry
 `append`/`view`/`reset` semantics the runtimes depend on, so the declaration is passed *into* those
 constructors, which stop deriving their KV dimensions themselves. vLLM and SGLang each re-allocate
 from their spec with a generic kernel-side writer; this tree has no such writer, and inventing one is
@@ -180,6 +190,9 @@ declaration that disagrees with the config and asserting the buffer follows the 
 
 ## Not decided here
 
-The block size a paged allocator will use, and whether the block table lands before or after the
-prefix-cache ports it would make cheaper. Those are #33/#34's, and this declaration is the value they
-read.
+**The block size is 16**, settled in [the block table](kv_block_table.md) rather than here: it is a
+property of the pool and not of a cache, so it had to wait for the pool to exist, and 16 is the value
+that leaves every row of the roster with a page boundary on a block boundary. Still open are the
+writer that fills a page — relic-core's, since it is a kernel — and whether the block table lands
+before or after the prefix-cache ports it would make cheaper. Those are #33/#34's, and this
+declaration is the value they read.

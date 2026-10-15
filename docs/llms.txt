@@ -94,6 +94,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [One scheduler, lifted](https://lvyufeng.github.io/RelicLLM/architecture/scheduler_2026_10/)
 - [The KV declaration](https://lvyufeng.github.io/RelicLLM/architecture/kv_declaration/)
 - [The expert movement layer](https://lvyufeng.github.io/RelicLLM/architecture/expert_movement/)
+- [The KV block table](https://lvyufeng.github.io/RelicLLM/architecture/kv_block_table/)
 
 ## Migration
 
