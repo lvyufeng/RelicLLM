@@ -1,8 +1,9 @@
 """Where the sm_89 (RTX 4090) decode step goes, with the MMA emulation priced against a plain GEMM.
 
-Read-only; touches no checkpoint and no model. It times the two things the plan's Cell 4 asks about
--- the emulated reduction itself, and the cost of the host expert path's fp4 expansion -- at shapes
-taken from the real layer, so that a full step's wall clock can be *attributed* rather than guessed.
+Read-only; touches no checkpoint and no model. It prices the emulation's own reduction -- the cost the
+plan's Cell 4 asks about -- at a shape taken from the real layer, so that a full step's wall clock can
+be *attributed* rather than guessed. The `per_row` cases exercise the fp4 expert scale *layout*; the
+probe does not time fp4 weight expansion.
 
 Run with the relic-core checkout and the RelicLLM tree on `PYTHONPATH`:
 
@@ -44,8 +45,8 @@ from relicllm.models.deepseek_v4_1.kernels import block_fp8_act_quant  # noqa: E
 
 # The released geometry of the one shape the emulation is priced on: `wq_a` is F8_E4M3 `[1280, 5120]`
 # with an F8_E8M0 `[40, 160]` scale (docs/architecture/deepseek_v4_1_flash_design.md:130). `dim` is
-# 5120, not the 7168 of some other family -- the grid `[40, 160]` is what fixes K, and it is the call
-# the sm_75 page's own decomposition names as the one the first version issued 107,424 ops for.
+# 5120, not the 7168 of some other family -- the grid `[40, 160]` is what fixes K, and this is the
+# call `mma.py`'s cost note names as the one the first version issued 107,424 ops for.
 N, K = 1280, 5120  # q_lora_rank x dim
 BLOCK = 32
 
