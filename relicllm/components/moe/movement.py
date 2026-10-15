@@ -160,6 +160,13 @@ class StagingRing:
     Neither is implied by anything else: the two are on different streams, so nothing but these two
     edges orders them. `take`'s own wait is a third thing with a different job -- it bounds how far
     the host runs ahead of the card -- and it is the subject of `take`'s docstring.
+
+    **`throttle` is that third wait, and it is the caller's to want.** It defaults to `True`, which
+    is the ring `deepseek_v4_1` drives: a slot a row, two rows of work between a slot's copy and the
+    `take` that waits on it, and a host producer that would otherwise issue the whole pass ahead of
+    the card. A caller whose host is already held back by something of its own can build the ring
+    with `throttle=False` and get the same rotation, the same guards and the same events without the
+    wait -- which is what `mimo_v2` does, and its `_take_slots` says why.
     """
 
     def __init__(
@@ -168,9 +175,11 @@ class StagingRing:
         slots: int,
         devices: Sequence[torch.device],
         events: Sequence[Sequence[torch.cuda.Event]] | None = None,
+        throttle: bool = True,
     ) -> None:
         self.slots = max(1, int(slots))
         self.devices = list(devices)
+        self.throttle = bool(throttle)
         if events is None:
             events = [
                 [torch.cuda.Event() for _ in range(self.slots)] for _ in self.devices
@@ -209,9 +218,22 @@ class StagingRing:
         with two slots there is nowhere to run ahead to, so removing the block moves the block and
         not the chunk. A phase tap cannot see this wait at all -- its own preamble calls
         `torch.cuda.synchronize()`, which satisfies the event before it is asked about.
+
+        **A caller that does not want the throttle asks for a ring without it**, and `mimo_v2` is
+        that caller. Its slots are a *layer's* and not a row's -- one `forward` a layer against
+        `deepseek_v4_1`'s one a row -- so a slot comes back to `take` two layers after its copy was
+        issued rather than two rows after, and by then the DMA is long done. What settles it is that
+        its host is already a layer behind: `forward` reads the routing back off the card each call,
+        and the ring's wait would be a second handbrake on the same host. So it builds the ring with
+        `throttle=False` and this wait is not made. The rotation, the guard and the events are the
+        ones above and nothing about them changes; `stage` raises `_in_flight` where it always did
+        and this method lowers it where it always did, and with the throttle off the flag is raised
+        and left raised, because nothing asks.
         """
         slot = self._next
         self._next = (self._next + 1) % self.slots
+        if not self.throttle:
+            return slot
         for card in range(len(self.devices)):
             if self._in_flight[card][slot]:
                 self.events[card][slot].synchronize()

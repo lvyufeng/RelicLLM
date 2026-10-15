@@ -254,6 +254,144 @@ def test_the_source_is_asked_for_each_drawn_expert_exactly_once():
     assert experts.staged_bytes == TOP_K * experts.expert_bytes
 
 
+def test_mimo_takes_its_slot_without_waiting_and_stages_into_it(monkeypatch) -> None:
+    """This bank drives `StagingRing` with the throttle off, and fills the slot it was handed.
+
+    Both halves are the ones the extraction had to preserve, and neither shows up in a counter.
+    A slot here is a *layer's*, so it comes back to `take` two layers after its copy was issued,
+    and the ring's wait would be a second handbrake on a host that `forward` already parks on a
+    device read every call -- so the ring is built with `throttle=False` and `synchronize` is
+    never asked of a slot's event. The overwrite is still ordered, by the two stream edges inside
+    `stage`, which is why dropping the host wait is not dropping the ordering.
+
+    And the slot is taken by the caller and handed down, because the destination rows come out of
+    it: a staging call that took a slot of its own would rotate twice a call, and at the shipped
+    two slots the next call then lands on the slot this one had just filled.
+
+    The two phases run the same three draws over the same two slots and differ only in the flag,
+    so the zero in the first phase is a measurement of the flag and not of an absence of a wait to
+    make: with the throttle on, the third draw reuses a slot whose copy is in flight and the event
+    is asked. Three draws into two slots is also where the drift would show: one `take` a draw
+    leaves the rotation at `3 % 2 == 1`, and a second take inside the draw leaves it at 0.
+    """
+    import contextlib
+    from types import SimpleNamespace
+
+    from relicllm.components.moe import movement
+    from relicllm.components.moe.movement import StagingRing
+
+    layer, keys, experts = 5, (("gate_proj", "weight"),), (10, 20, 30)
+    width = 4
+
+    class Stream:
+        """The copy stream, seen only through `stage`: order the copies behind compute."""
+
+        def wait_stream(self, other: object) -> None:
+            pass
+
+    class Event:
+        """A slot's event: `record` says a copy was issued through it, `synchronize` a wait."""
+
+        def __init__(self) -> None:
+            self.recorded = 0
+            self.waits = 0
+
+        def record(self, stream: object) -> None:
+            self.recorded += 1
+
+        def synchronize(self) -> None:
+            self.waits += 1
+
+    monkeypatch.setattr(movement, "copy_stream", lambda device: Stream())
+    monkeypatch.setattr(torch.cuda, "device", lambda device: contextlib.nullcontext())
+    monkeypatch.setattr(torch.cuda, "stream", lambda stream: contextlib.nullcontext())
+    monkeypatch.setattr(torch.cuda, "current_stream", lambda device: "compute")
+
+    def run(throttle: bool):
+        """Three draws of one expert each over two slots, through the shipped `_stage`."""
+        asked: list[tuple[int, int]] = []
+
+        class Source:
+            """The mapped checkpoint, one expert's views filled with the expert's own id."""
+
+            def expert_views(
+                self, layer_id: int, expert: int
+            ) -> dict[tuple[str, str], torch.Tensor]:
+                asked.append((layer_id, expert))
+                return {
+                    key: torch.full((width,), expert, dtype=torch.uint8) for key in keys
+                }
+
+        arena = [
+            {key: torch.zeros((1, width), dtype=torch.uint8) for key in keys} for _ in range(2)
+        ]
+        events = [[Event(), Event()]]
+        takes: list[int] = []
+        one = SimpleNamespace(
+            device=torch.device("cpu"),
+            slots=2,
+            arena_rows=1,
+            source=Source(),
+            expert_bytes=width,
+            staged_experts=0,
+            staged_bytes=0,
+            _arenas=arena,
+            _staging_base=[0, 0],
+            _ring=StagingRing(
+                slots=2, devices=[torch.device("cpu")], events=events, throttle=throttle
+            ),
+        )
+        # The slot the caller takes is recorded so the assertion can name it, and the shipped
+        # `_take_slots` and `_stage` are what run behind it -- the rotation under test is theirs.
+        one._take_slots = lambda count: (
+            takes.append(one._ring._next),
+            MimoV2DeviceExperts._take_slots(one, count),
+        )[1]
+        one._stage = lambda slot, layer_id, drawn: MimoV2DeviceExperts._stage(
+            one, slot, layer_id, drawn
+        )
+
+        for expert in experts:
+            one._stage(one._take_slots(1), layer, [expert])
+        return one, asked, arena, events, takes
+
+    one, asked, arena, events, takes = run(throttle=False)
+    assert takes == [0, 1, 0], "the caller did not hand out slots round-robin, one a draw"
+    assert one._ring._next == 1, (
+        "three draws left the rotation anywhere but 3 % 2 == 1, which is a second take inside the "
+        "draw and a draw staging into the slot the previous draw had just filled"
+    )
+    assert [event.waits for event in events[0]] == [0, 0], (
+        "the bank's ring waited on a slot's event, so the throttle the extraction turned off for "
+        "this path is back on -- a layer's worth of host per slot, on the one path whose problem "
+        "is that the host is in it"
+    )
+    assert [event.recorded for event in events[0]] == [2, 1], (
+        "the slots were not filled in the order they were taken, so a slot's event does not "
+        "describe the copy that is actually in it"
+    )
+    assert [int(arena[0][key][0].tolist()[0]) for key in keys] == [experts[2]] * len(keys), (
+        "the third draw did not stage into slot 0, so its expert is not where the kernel that "
+        "follows is handed its row"
+    )
+    assert [int(arena[1][key][0].tolist()[0]) for key in keys] == [experts[1]] * len(keys), (
+        "the second draw staged into a slot other than the one it took"
+    )
+    assert asked == [(layer, expert) for expert in experts], (
+        "the source was asked for an expert twice, or for one the draws did not name: the staging "
+        "plan is one expert's six tensors a draw"
+    )
+    assert one.staged_experts == len(experts)
+    assert one.staged_bytes == len(experts) * one.expert_bytes
+
+    _, _, _, waited, _ = run(throttle=True)
+    assert [event.waits for event in waited[0]] == [1, 0], (
+        "the ring's wait is not the flag's: with the throttle on, the third draw's reuse of slot 0 "
+        "has to be waited on, and the phases above measure nothing gated on an event that is never "
+        "asked about"
+    )
+
+
 # ---------------------------------------------------------------------------
 # The resident set
 #
