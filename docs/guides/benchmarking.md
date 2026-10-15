@@ -84,39 +84,44 @@ different questions and neither replaces the other; a number that claims to be
 Some configurations are correct but slow enough that a standard scenario cannot finish: the V4.1
 criterion config (TP1, experts on the host, `POCKETLLM_V41_MMA_EMULATE` at its default) runs roughly
 half a kilosecond per token on a card where the fused path runs in a second. `--scenario decode` is
-128-in/128-out and carries a 1200 s per-request default, so it dies partway and there is no median.
+128-in/128-out and the client's per-request timeout defaults to 1200 s (`bench/client.py:852`), so it
+dies partway and there is no median.
 
 **A killed run has no number.** Do not quote the partial row. Instead measure the path at a
 generation length it can reach, and split what the number is made of:
 
 ```bash
-# 1. Start the slow server yourself and leave it up.
+# 1. Start the slow server yourself, in its own shell, and leave it running. `relicllm serve` has no
+#    --keep-server and prints no URL, so name the address explicitly and keep the shell alive.
+#    A cold host-expert preload can outlast the supervisor's rank-ready wait (default 300 s,
+#    --tensor-parallel-startup-timeout); raise it if startup is the slow part.
 relicllm serve --backend v41 --model /path/to/ckpt --tensor-parallel-size 1 \
-    --backend-option threads=22 --keep-server
-# (note the base_url it prints; the default 1800 s ready wait may be too short for a cold
-#  host-expert preload -- raise the supervisor's rank wait with
-#  --tensor-parallel-startup-timeout and bench's with --ready-timeout.)
+    --backend-option threads=22 --host 127.0.0.1 --port 8123
 
-# 2. Measure it at TG1, streaming, with the request timeout raised well past one step.
-relicllm bench serve --base-url http://127.0.0.1:<port> \
+# 2. In another shell, measure it at TG1, streaming, with the request timeout raised well past one
+#    step. --base-url means bench launches nothing and its own --ready-timeout does not apply.
+relicllm bench serve --base-url http://127.0.0.1:8123 \
     --scenario decode --random-output-len 1 --num-prompts 1 --num-warmups 0 \
     --timeout 21600 --json-out /tmp/slow_tg1.json
 ```
 
-Two things about that invocation matter:
+Three things about that invocation matter:
 
 - **`--random-output-len`, not `--max-tokens`**, is the generation-length knob
   (`bench/client.py:857`); `--num-prompts 1` keeps it single-request.
-- **Stream.** `--no-stream` sets TTFT = E2EL to the whole round trip and emits no per-token boundary,
-  so ITL and TPOT are undefined and prefill cannot be told from the one decode step
-  (`bench/client.py:367-381`). Streaming recovers a real TTFT, which is the prefill/each-step split
-  the measurement exists to produce. The per-step cost of one token-boundary read is nothing against
-  a step measured in hundreds of seconds.
+- **Stream** (the default). `--no-stream` sets TTFT = E2EL to the whole round trip and emits no
+  per-token boundary, so prefill cannot be told from the one decode step
+  (`bench/client.py:367-381`). Streaming recovers a real TTFT — the prefill half of the split — for
+  the cost of one token-boundary read per step.
+- **Do not read a TPOT off a TG1 run.** The client only computes TPOT when a response carries more
+  than one output token (`bench/client.py:508-511`), so at `--random-output-len 1` it reports `0.0`.
+  What a TG1 run yields is TTFT and one ITL; the one-step cost is `E2EL − TTFT`, computed by hand, or
+  a TG4 run under the same config gives a genuine TPOT at four times the wall time.
 
-**Report it as `TPOT(TG1) = ... s, n=1`** and never as a rate carried to another generation length —
-`docs/performance/index.md` is explicit that a decode figure does not transfer across generation
-lengths, and a TG1 step is not a TG128 step. The TTFT this run yields is the only honest prefill
-number the config has.
+**Report the result as `TTFT = ... s` and one step `= ... s, n=1`** and never as a rate carried to
+another generation length — `docs/performance/index.md` is explicit that a decode figure does not
+transfer across generation lengths, and a step at TG1 is not a TG128 step. The TTFT this run yields
+is the only honest prefill number the config has.
 
 ## Comparison rules
 
