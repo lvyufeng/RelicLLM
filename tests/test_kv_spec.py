@@ -117,15 +117,18 @@ def test_mla_stores_no_value_and_divides_by_the_compress_ratio() -> None:
 
     assert absorbed.values_per_token == 576, "an absorbed latent is stored whole, no head axis"
     assert compressed.values_per_token == 512 // 4
-    # A page of four tokens is one latent, and latents are not doubled: there is no value tensor.
-    assert compressed.page_size_bytes(4) == 1 * (512 // 4) * 2
+    # A page of four tokens is one latent of the layer's whole width: four positions of the marginal
+    # reading above, and not doubled -- there is no value tensor, and the latent is not narrowed to
+    # `head_dim // ratio` either (the runtimes allocate `max_seq_len // ratio` rows of `head_dim`).
+    assert compressed.page_size_bytes(4) == 1 * 512 * 2
+    assert compressed.page_size_bytes(4) == 4 * compressed.values_per_token * 2
 
 
 def test_a_compressed_page_holds_at_least_one_latent() -> None:
     """A block smaller than the ratio still holds the partial group the compressor is filling."""
     spec = MLASpec(name="compress", layer_ids=(0,), dtype="bfloat16", head_dim=512, compress_ratio=128)
 
-    assert spec.page_size_bytes(1) == 1 * (512 // 128) * 2
+    assert spec.page_size_bytes(1) == 1 * 512 * 2
 
 
 def test_a_state_has_no_token_axis() -> None:
@@ -156,6 +159,28 @@ def test_every_dtype_the_table_names_has_a_torch_spelling() -> None:
 def test_an_unknown_dtype_is_refused_rather_than_defaulted() -> None:
     with pytest.raises(ValueError):
         dtype_size("float7")
+
+
+def test_an_allocated_page_covers_the_marginal_cost_of_the_positions_it_holds() -> None:
+    """The two costs have to agree, because one is the other divided by a position count.
+
+    A growing cache's block holds the positions it was bought for, so what it *occupies* can never be
+    less than what those positions *cost*; the two are equal whenever the block size is a multiple of
+    the compress ratio, and larger only because a block holds a whole pooled group at least (and
+    because a ring is padded up to its block). This is the arithmetic a paged allocator lays out from,
+    and a compressed page that divided by the ratio twice while the marginal reading divided once
+    would fail it for every layer whose ratio is above one -- which is most of V4 and V4.1.
+    """
+    block_size = 16
+    for architecture in PUBLISHERS:
+        model = next(m for m in _fixture_models() if m["architecture"] == architecture)
+        for spec in _publisher(model["architecture"]).kv_spec(model["config"]):
+            allocated = spec.allocated_bytes(block_size)
+            marginal = block_size * spec.bytes_per_token_whole_model()
+            assert allocated >= marginal, (
+                f"{model['name']}'s {spec.name} holds {allocated} bytes for {block_size} positions "
+                f"and those positions cost {marginal}"
+            )
 
 
 # --------------------------------------------------------------------------------------------

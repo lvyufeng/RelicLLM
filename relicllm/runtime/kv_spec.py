@@ -387,8 +387,10 @@ class MLASpec(AttentionSpec):
     Two readers, one formula. An absorbed cache (Xing4.0-29B-A4B) stores
     ``kv_lora_rank + qk_rope_head_dim`` values per token with no head axis and no value tensor, so it
     is a spec with ``head_dim`` set to that width and ``compress_ratio`` left at 1. A compressed cache
-    (DeepSeek-V4 and V4.1) stores ``head_dim // compress_ratio`` values, because ``compress_ratio``
-    consecutive tokens pool into one latent. ``head_dim // compress_ratio`` answers both.
+    (DeepSeek-V4 and V4.1) stores ``head_dim // compress_ratio`` values *a token*, because
+    ``compress_ratio`` consecutive tokens pool into one ``head_dim``-wide latent -- so the marginal
+    reading is ``head_dim / ratio`` a token and a block of ``block_size`` positions holds
+    ``block_size // ratio`` of those latents. ``head_dim // compress_ratio`` answers both.
 
     The value is **not** doubled the way a GQA pair is: there is one latent, and the value is
     ``latent @ v_b`` -- recovered after the attention weights, never stored. That is the whole
@@ -414,10 +416,19 @@ class MLASpec(AttentionSpec):
         Flooring at one is not a rounding convenience: a block smaller than the compression ratio
         still has to hold the partial group that is filling up, and the compressor keeps exactly that
         in ``kv_state``. Reporting zero would let a block table under-allocate the layer.
+
+        A latent is ``head_dim`` values wide, not ``head_dim // compress_ratio``. The ratio pools
+        ``ratio`` positions into one latent of the layer's own width, which is what the two runtimes
+        allocate -- ``deepseek_v4/runtime.py:1146`` and ``deepseek_v4_1/attention.py:1417`` both
+        register ``zeros(max_seq_len // ratio, head_dim)`` -- so a block holds
+        ``block_size // ratio`` latents of ``head_dim`` values. :attr:`values_per_token` is the same
+        fact read marginally (``head_dim / ratio`` values a token); dividing by the ratio a second
+        time here would make a block cost a *position's* values instead of a *latent's* width, and a
+        paged allocator laying blocks out from this method would overrun every compressed page.
         """
         ratio = int(self.compress_ratio) or 1
         latents = max(1, int(block_size) // ratio)
-        return latents * self.values_per_token * dtype_size(self.dtype)
+        return latents * int(self.head_dim) * dtype_size(self.dtype)
 
 
 @dataclass(frozen=True)
