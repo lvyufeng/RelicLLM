@@ -530,6 +530,84 @@ def test_synchronize_is_a_no_op_on_a_host_platform() -> None:
     plane.synchronize(platform="cpu")
 
 
+# ------------------------------------------------------------- the Ascend op dispatch
+
+
+def test_the_dispatch_default_is_aclnn_for_the_whole_910_line() -> None:
+    """Which is the correction, and the reason the rule is a family rather than a model number.
+
+    The 910A reports itself as `Ascend910B` -- the driver's name, through both `acl.get_soc_name()`
+    and `torch.npu.get_device_name(0)` -- and `torch_npu` compares that name against `Ascend910B1`
+    to decide whether to disable JIT compilation. It parses below it, so the card lands on the
+    branch written for the older SOCs and every operator goes to TBE. Naming the family is what
+    takes it back off: every `Ascend910` answers `aclnn`, which is already the default for `910B1`
+    and later and is the only compiled path this card has.
+    """
+    for soc in ("Ascend910A", "Ascend910B", "Ascend910B1", "Ascend910B4", "Ascend910_9391"):
+        assert plane.resolve_ascend_dispatch(soc) == "aclnn", soc
+
+
+def test_a_soc_outside_the_910_line_keeps_the_dispatch_torch_npu_chose() -> None:
+    """`jit` is not a preference, it is what the runtime already does there.
+
+    The 310P line has no `aclnn` coverage for most operators, so a process on one that was switched
+    to `aclnn` would fail at the first operator rather than run slower. This is the arm that says
+    the rule knows where it does *not* apply.
+    """
+    assert plane.resolve_ascend_dispatch("Ascend310P3") == "jit"
+
+
+def test_the_dispatch_override_wins_over_the_soc_and_a_typo_is_refused() -> None:
+    """`RELICLLM_ASCEND_DISPATCH` is the way back, in both directions.
+
+    Refused by name rather than ignored: a launch script that misspelled the value would otherwise
+    leave the process on exactly the dispatch the operator was trying to move it off, which is the
+    failure that reads as "the setting did nothing".
+    """
+    assert plane.resolve_ascend_dispatch("Ascend910B", "jit") == "jit"
+    assert plane.resolve_ascend_dispatch("Ascend310P3", "aclnn") == "aclnn"
+    assert plane.resolve_ascend_dispatch("Ascend910B", "  ACLNN  ") == "aclnn"
+    with pytest.raises(plane.DeviceError, match=plane.ASCEND_DISPATCH_ENV):
+        plane.resolve_ascend_dispatch("Ascend910B", "aclop")
+
+
+def test_configuring_the_dispatch_delivers_it_and_stays_off_every_other_platform() -> None:
+    """The whole decision, reachable on this box: the card is a callable and the answer a list.
+
+    `cpu` and `cuda` return `None` without calling the setter at all, which is the property that
+    matters for `bind_device` -- every CUDA launch in this suite passes through it, and reaching for
+    `torch_npu` there would be the import this module exists to keep out of that path.
+    """
+    delivered: list[str] = []
+    setter = delivered.append
+    for platform in ("cpu", "cuda"):
+        assert plane.configure_ascend_dispatch(platform=platform, setter=setter) is None
+    assert delivered == []
+    assert (
+        plane.configure_ascend_dispatch(
+            platform="ascend", env={}, soc_version=lambda: "Ascend910B", setter=setter
+        )
+        == "aclnn"
+    )
+    assert delivered == ["aclnn"]
+
+
+def test_the_dispatch_env_var_reaches_the_setter_through_the_same_call() -> None:
+    """One call reads the variable, decides and delivers -- so the override cannot be honoured in
+    one place and dropped in another."""
+    delivered: list[str] = []
+    assert (
+        plane.configure_ascend_dispatch(
+            platform="ascend",
+            env={plane.ASCEND_DISPATCH_ENV: "jit"},
+            soc_version=lambda: "Ascend910B",
+            setter=delivered.append,
+        )
+        == "jit"
+    )
+    assert delivered == ["jit"]
+
+
 # ------------------------------------------------ the two entry points that bind and join
 
 
