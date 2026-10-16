@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import time
 from contextlib import nullcontext
 from dataclasses import dataclass
@@ -62,14 +63,89 @@ def _parse_cpu_list(spec: str) -> list[int]:
     return cpus
 
 
+def _pci_ids_from_smi() -> list[str]:
+    """CUDA-index-ordered PCI ids, or [] when nvidia-smi cannot be asked.
+
+    The id is normalised to sysfs' ``domain:bus:device.function`` form: nvidia-smi
+    prints the domain as 8 hex digits and upper-case, sysfs uses 4 and lower.
+    """
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=pci.bus_id", "--format=csv,noheader"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if out.returncode != 0:
+        return []
+    ids = []
+    for line in out.stdout.splitlines():
+        value = line.strip()
+        if not value:
+            continue
+        parts = value.lower().split(":")
+        if len(parts) == 3:
+            domain, bus, slot = parts
+            ids.append(f"{int(domain, 16):04x}:{bus}:{slot}")
+    return ids
+
+
+def _pci_ids_from_sysfs() -> list[str]:
+    """CUDA-index-ordered PCI ids read from sysfs, or [] if it cannot be read.
+
+    Only the NVIDIA display/3D functions are considered, in the sorted order sysfs
+    lists them -- which is the order the CUDA runtime enumerates them on a box with
+    no CUDA_VISIBLE_DEVICES reordering.
+    """
+    try:
+        entries = sorted(os.listdir("/sys/bus/pci/devices"))
+    except OSError:
+        return []
+    ids = []
+    for entry in entries:
+        try:
+            with open(f"/sys/bus/pci/devices/{entry}/vendor") as f:
+                if f.read().strip() != "0x10de":
+                    continue
+            with open(f"/sys/bus/pci/devices/{entry}/class") as f:
+                if not f.read().strip().startswith("0x03"):
+                    continue
+        except OSError:
+            continue
+        ids.append(entry)
+    return ids
+
+
+def _pci_id(device: torch.device) -> str | None:
+    """This device's PCI id as ``domain:bus:device.function``.
+
+    Read from the torch device properties where the build exposes them, which
+    landed after torch 2.6; otherwise resolved to CUDA index order through
+    nvidia-smi and then sysfs. Returns None when none of the three is available,
+    which the caller treats as "no NUMA information" rather than an error.
+    """
+    properties = torch.cuda.get_device_properties(device)
+    domain = getattr(properties, "pci_domain_id", None)
+    bus = getattr(properties, "pci_bus_id", None)
+    slot = getattr(properties, "pci_device_id", None)
+    if domain is not None and bus is not None and slot is not None:
+        return f"{domain:04x}:{bus:02x}:{slot:02x}.0"
+
+    index = device.index if device.index is not None else torch.cuda.current_device()
+    candidates = _pci_ids_from_smi() or _pci_ids_from_sysfs()
+    if index >= len(candidates):
+        return None
+    return candidates[index]
+
+
 def _cuda_numa_node(device: torch.device) -> int | None:
     if device.type != "cuda":
         return None
-    properties = torch.cuda.get_device_properties(device)
-    pci_id = (
-        f"{properties.pci_domain_id:04x}:{properties.pci_bus_id:02x}:"
-        f"{properties.pci_device_id:02x}.0"
-    )
+    pci_id = _pci_id(device)
+    if pci_id is None:
+        return None
     try:
         with open(f"/sys/bus/pci/devices/{pci_id}/numa_node") as f:
             node = int(f.read())

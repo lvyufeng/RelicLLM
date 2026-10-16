@@ -310,6 +310,55 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             reads_prefix_cache=False,
         )
 
+    def _host_expert_moe(self) -> Any:
+        """This run's ``HostExpertMoE``, or None where there is no host bank.
+
+        ``moe`` belongs to the decoder layer, and the model holds those in ``layers``
+        (``models/qwen4_exp/model.py``), so the counters are one level below where a
+        model-level lookup would find them. ``ShardedMoE`` wraps the bank when the
+        world size is above one, so the wrapper is unwrapped here too. Every layer
+        shares one bank, so the first layer that has one answers for the run.
+        """
+        candidates: list[Any] = []
+        model = self._model
+        if model is not None:
+            direct = getattr(model, "moe", None)
+            if direct is not None:
+                candidates.append(direct)
+            for layer in getattr(model, "layers", ()) or ():
+                layer_moe = getattr(layer, "moe", None)
+                if layer_moe is not None:
+                    candidates.append(layer_moe)
+                    break
+        for candidate in candidates:
+            inner = getattr(candidate, "inner", candidate)
+            if inner is not None and hasattr(inner, "stage_bytes"):
+                return inner
+        return None
+
+    def _expert_stage_metrics(self) -> dict[str, float]:
+        """The routed-expert staging counters, or nothing when this run has no host bank.
+
+        These are the numbers that say whether the experts are *resident* or merely *cached*: a
+        deployment that sizes ``--expert-cache`` to hold every expert it owns stops staging after the
+        first pass over the set, and one that does not keeps paying the PCIe cost every step. Without
+        them on ``/metrics`` a decode rate cannot be told apart from a bigger LRU -- which is the
+        whole question this runtime's decode is asked to answer.
+
+        They live on ``HostExpertMoE``, one level below the ``ShardedMoE`` wrapper the model holds, so
+        both are unwrapped here rather than made public on the wrapper for a scrape's sake.
+        """
+        inner = self._host_expert_moe()
+        if inner is None:
+            return {}
+        return {
+            # `_total` is the server's convention for a counter; the rest are gauges.
+            "qwen4_exp_expert_stage_bytes_total": float(inner.stage_bytes),
+            "qwen4_exp_expert_stage_calls_total": float(inner.stage_calls),
+            "qwen4_exp_expert_cache_hits_total": float(inner.cache_hits),
+            "qwen4_exp_expert_cache_capacity": float(getattr(inner, "cache_capacity", 0) or 0),
+        }
+
     def metrics(self) -> dict[str, float]:
         """What one engine holds between requests, for ``/metrics``.
 
