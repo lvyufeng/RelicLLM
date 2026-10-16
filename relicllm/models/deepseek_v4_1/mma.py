@@ -334,6 +334,39 @@ def _decode_codes_f32(codes: torch.Tensor) -> torch.Tensor:
     return _bytes(codes).view(torch.float8_e4m3fn).to(torch.float32)
 
 
+#: The nominal exponent of every possible byte, one table per device: ``F(v)`` is a function of the
+#: e4m3 *encoding* alone, so its whole domain is 256 values. Built once and gathered, for the same
+#: reason the fp4 code table above is: the arithmetic it replaces runs per element, and a decode
+#: calls this on the weight tile and the activation tile of every K tile.
+_NOMINAL_CACHE: dict[torch.device, torch.Tensor] = {}
+
+
+def _nominal_table(device: torch.device) -> torch.Tensor:
+    """``F(v)`` for all 256 byte values, as int16 -- the table :func:`_nominal_i16` gathers.
+
+    It is the *same* arithmetic the function used to run per element, over the whole domain instead,
+    so the two agree by construction rather than by a second derivation: the exponent field, the
+    ``-6`` floor for the subnormals, and :data:`_EMPTY_I16` where the operand is zero.
+
+    Built on ``device`` rather than on the host and moved, which is :func:`_table_for`'s arrangement
+    and for its reason: the table is gathered inside a decode body that may be captured, and a
+    pageable H2D inside a recording is the thing the cache exists to keep out.
+    """
+    raw = torch.arange(256, dtype=torch.int16, device=device)
+    field = (raw >> 3) & 0xF
+    nominal = torch.clamp(field - 7, min=-6)
+    return torch.where((raw & 0x7F) != 0, nominal, torch.full_like(nominal, _EMPTY_I16))
+
+
+def _nominal_table_for(device: torch.device) -> torch.Tensor:
+    device = torch.device(device)
+    table = _NOMINAL_CACHE.get(device)
+    if table is None:
+        table = _nominal_table(device)
+        _NOMINAL_CACHE[device] = table
+    return table
+
+
 def _nominal_i16(codes: torch.Tensor) -> torch.Tensor:
     """``F(v)`` for every code, as int16, with :data:`_EMPTY_I16` where the operand is zero.
 
@@ -344,11 +377,16 @@ def _nominal_i16(codes: torch.Tensor) -> torch.Tensor:
     the two spellings classify differently is a NaN code against a zero code, where the product is
     NaN rather than zero -- and there the NaN reaches the block sum whichever grid is chosen, so the
     output element is NaN under both.
+
+    A gather on :func:`_nominal_table` rather than the arithmetic, because the arithmetic is six
+    elementwise passes over the whole tile -- each dispatching, and each allocating -- where this is
+    a cast and an index. Measured on a decode GEMM's weight tile (`[1280, 5120]`) under
+    `torch.profiler`, the arithmetic is 40 ATen entries and this is 8. The index is cast to int64
+    explicitly: `torch` will not take an int16 index, and a uint8 one is read as a **bool mask**, so
+    the obvious no-cast spelling is silently the wrong function.
     """
-    raw = _bytes(codes).to(torch.int16)
-    field = (raw >> 3) & 0xF
-    nominal = torch.clamp(field - 7, min=-6)
-    return torch.where((raw & 0x7F) != 0, nominal, torch.full_like(nominal, _EMPTY_I16))
+    raw = _bytes(codes)
+    return _nominal_table_for(raw.device)[raw.to(torch.int64)]
 
 
 def _exp_of_f32(x: torch.Tensor) -> torch.Tensor:
@@ -567,8 +605,17 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
                 # K order, one block at a time -- the only place the reduction rounds.
                 sa = torch.exp2(a_exp[m0:m1, b0:b1].to(torch.float32))
                 scaled = fragment * sa.unsqueeze(1) * sb.unsqueeze(0)
+                # The output tile is hoisted out of the K loop and the accumulation is an in-place
+                # `add_` on that view, not `out[...] += ...`. The two are the same arithmetic -- the
+                # same K blocks in the same K order -- but a subscripted augmented assignment is
+                # `__getitem__`, `__iadd__` *and* `__setitem__`, and the write-back is a second
+                # kernel per block: measured on a decode GEMM at `wq_a`'s geometry, `out[..] += x`
+                # costs one `add_` **and** one `copy_` per K block, and this form costs the `add_`
+                # alone. That is 160 launches of the tile's 641, and the launches are what bounds both
+                # the eager step and a graph recording (`EMULATION_REFUSES_GRAPHS`).
+                out_tile = out[m0:m1, lo:hi]
                 for i in range(width):
-                    out[m0:m1, lo:hi] += scaled[..., i]
+                    out_tile.add_(scaled[..., i])
     return out
 
 
