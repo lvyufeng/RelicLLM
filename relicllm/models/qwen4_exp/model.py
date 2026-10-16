@@ -315,13 +315,15 @@ class Qwen4ExpModel:
     def __init__(
         self,
         config: Qwen4ExpTextConfig,
-        layers: list[Qwen4ExpDecoderLayer],
+        layers: list[Qwen4ExpDecoderLayer | None],
         *,
         embed_tokens,
-        lm_head: torch.Tensor,
-        final_mixer: GatedResidual,
+        lm_head: torch.Tensor | None,
+        final_mixer: GatedResidual | None,
         device: torch.device,
         dtype: torch.dtype,
+        pp_size: int = 1,
+        pp_rank: int = 0,
         profiler=None,
     ) -> None:
         self.config = config
@@ -332,16 +334,34 @@ class Qwen4ExpModel:
         self.device = device
         self.dtype = dtype
         self.profiler = profiler
+        #: ``layers`` is full length with ``None`` at the slots this stage does not own, so an entry
+        #: index is always the absolute layer id. Under ``pp_size == 1`` nothing is ``None``.
+        self.pp_size = pp_size
+        self.pp_rank = pp_rank
+        self.owns_embedding = embed_tokens is not None
+        self.owns_head = lm_head is not None
         self.rope = MRoPE(config, device)
         self._cos: torch.Tensor | None = None
         self._sin: torch.Tensor | None = None
 
+    @property
+    def local_layers(self) -> list[Qwen4ExpDecoderLayer]:
+        """The layers this rank actually holds, in order, with the placeholders dropped."""
+        return [layer for layer in self.layers if layer is not None]
+
     def make_cache(self, batch_size: int, max_seq_len: int) -> Qwen4ExpCache:
+        # One slot per absolute layer id, `None` where this stage owns no layer -- the same
+        # convention as `self.layers`, so `cache.layers[idx]` stays valid for the id it is asked for.
         cache = Qwen4ExpCache(
-            layers=[layer.make_cache(batch_size, max_seq_len, self.device, self.dtype) for layer in self.layers]
+            layers=[
+                layer.make_cache(batch_size, max_seq_len, self.device, self.dtype)
+                if layer is not None
+                else None
+                for layer in self.layers
+            ]
         )
         for layer in self.layers:
-            if layer.ple is not None:
+            if layer is not None and layer.ple is not None:
                 layer.ple.reset_cache()
         cache.ple_token_history = torch.full(
             (batch_size, self.config.ngram_size - 1),
@@ -366,9 +386,132 @@ class Qwen4ExpModel:
         cache: Qwen4ExpCache | None = None,
         past_len: int = 0,
         last_token_only: bool = False,
+    ) -> torch.Tensor | None:
+        """Run this rank's layers.
+
+        Under pipeline parallelism this is one stage of a chain: the first stage embeds, each stage
+        runs its own layers and hands the hidden state to the next, and only the last stage returns
+        logits -- every other stage returns ``None``. That ``None`` is the contract the caller reads
+        to know it should not gather or argmax. ``pp_size == 1`` keeps the old single-stage path.
+
+        The token ids travel with the hidden state, not just once at the front: every stage's PLE
+        layers need the running token history, and on the decode path each step's ids are produced by
+        the *last* stage's argmax, so a stage that did not receive them would build a history that
+        silently diverges from the one that produced the token.
+        """
+        prof_scope = self.profiler.scope if self.profiler else lambda x: _noop_context()
+
+        if self.pp_size > 1:
+            return self._forward_stage(
+                input_ids, cache=cache, past_len=past_len, last_token_only=last_token_only
+            )
+        return self._forward_all(
+            input_ids, cache=cache, past_len=past_len, last_token_only=last_token_only
+        )
+
+    # -- pipeline stage helpers -------------------------------------------------
+
+    def _activation_shape(self, batch_size: int, seq_len: int) -> tuple[int, int, int]:
+        # `[batch, seq, hc_count * hidden]`, the layout the layers themselves take: each unpacks it
+        # with `unflatten(-1, (hc_count, hidden))` rather than being handed the two axes separately.
+        return (batch_size, seq_len, self.config.hc_hidden_size)
+
+    def _send_activation(self, hidden: torch.Tensor, input_ids: torch.Tensor, dst: int) -> None:
+        import torch.distributed as dist
+
+        dist.send(hidden.contiguous(), dst=dst)
+        # The ids ride the same hop so every stage's token history is the sequence that actually
+        # ran, not one it reconstructed. Moved to this rank's device first: the prompt ids arrive on
+        # the host, and NCCL cannot send a CPU tensor.
+        dist.send(input_ids.to(device=self.device, dtype=torch.long).contiguous(), dst=dst)
+
+    def _recv_activation(
+        self, input_ids: torch.Tensor, src: int
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        import torch.distributed as dist
+
+        # `input_ids` is the same tensor the sender's `forward` was called with, so its leading two
+        # axes are the activation's batch and sequence. Read them with `shape[:2]` rather than an
+        # unpack so a caller that hands in something with a trailing axis cannot confuse this.
+        batch_size, seq_len = input_ids.shape[:2]
+        hidden = torch.empty(
+            self._activation_shape(batch_size, seq_len), device=self.device, dtype=self.dtype
+        )
+        ids = torch.empty((batch_size, seq_len), device=self.device, dtype=torch.long)
+        dist.recv(hidden, src=src)
+        dist.recv(ids, src=src)
+        return hidden, ids
+
+    def _forward_stage(
+        self,
+        input_ids: torch.Tensor,
+        *,
+        cache: Qwen4ExpCache | None,
+        past_len: int,
+        last_token_only: bool,
+    ) -> torch.Tensor | None:
+        prof_scope = self.profiler.scope if self.profiler else lambda x: _noop_context()
+
+        if self.pp_rank == 0:
+            hidden = self.embed_tokens(input_ids).to(self.dtype)
+            hidden = hidden.repeat(1, 1, self.config.hc_count)
+            ids = input_ids
+        else:
+            hidden, ids = self._recv_activation(input_ids, self.pp_rank - 1)
+
+        hidden = self._forward_layers(hidden, ids, cache=cache, past_len=past_len, prof_scope=prof_scope)
+
+        if self.pp_rank + 1 < self.pp_size:
+            self._send_activation(hidden, ids, self.pp_rank + 1)
+            return None
+
+        if last_token_only:
+            hidden = hidden[:, -1:]
+        with prof_scope("final_mixer"):
+            hidden = self.final_mixer(hidden)
+        with prof_scope("lm_head"):
+            return F.linear(hidden, self.lm_head)
+
+    def _forward_all(
+        self,
+        input_ids: torch.Tensor,
+        *,
+        cache: Qwen4ExpCache | None,
+        past_len: int,
+        last_token_only: bool,
     ) -> torch.Tensor:
         prof_scope = self.profiler.scope if self.profiler else lambda x: _noop_context()
 
+        with prof_scope("embed"):
+            hidden = self.embed_tokens(input_ids).to(self.dtype)
+            hidden = hidden.repeat(1, 1, self.config.hc_count)
+
+        hidden = self._forward_layers(
+            hidden, input_ids, cache=cache, past_len=past_len, prof_scope=prof_scope
+        )
+
+        if last_token_only:
+            hidden = hidden[:, -1:]
+        with prof_scope("final_mixer"):
+            hidden = self.final_mixer(hidden)
+        with prof_scope("lm_head"):
+            return F.linear(hidden, self.lm_head)
+
+    def _forward_layers(
+        self,
+        hidden: torch.Tensor,
+        input_ids: torch.Tensor,
+        *,
+        cache: Qwen4ExpCache | None,
+        past_len: int,
+        prof_scope,
+    ) -> torch.Tensor:
+        """The shared middle: rope, PLE history, this rank's layers, cache bookkeeping.
+
+        ``idx`` is the absolute layer id in both branches, which is the whole reason ``self.layers``
+        keeps its ``None`` placeholders: it is what indexes each layer's KV slot and its entry in the
+        host expert cache, so a compacted list would silently renumber them.
+        """
         batch_size, seq_len = input_ids.shape
         total_len = past_len + seq_len
 
@@ -376,7 +519,7 @@ class Qwen4ExpModel:
             cos, sin = self._rope_cache(total_len, batch_size)
 
         token_history = None
-        if any(layer.ple is not None for layer in self.layers):
+        if any(layer is not None and layer.ple is not None for layer in self.layers):
             with prof_scope("token_history"):
                 # Token ids and the n-gram hash live on the CPU (the PLE table is
                 # host-resident), so keep the history there too.
@@ -391,11 +534,9 @@ class Qwen4ExpModel:
                     )
                     token_history = torch.cat([pad, ids_cpu], dim=1)
 
-        with prof_scope("embed"):
-            hidden = self.embed_tokens(input_ids).to(self.dtype)
-            hidden = hidden.repeat(1, 1, self.config.hc_count)
-
         for idx, layer in enumerate(self.layers):
+            if layer is None:
+                continue
             hidden = layer(
                 hidden,
                 cos=cos,
@@ -411,11 +552,4 @@ class Qwen4ExpModel:
             cache.length = total_len
             if token_history is not None:
                 cache.ple_token_history = token_history[:, -(self.config.ngram_size - 1) :].clone()
-
-        if last_token_only:
-            hidden = hidden[:, -1:]
-        with prof_scope("final_mixer"):
-            hidden = self.final_mixer(hidden)
-
-        with prof_scope("lm_head"):
-            return F.linear(hidden, self.lm_head)
+        return hidden

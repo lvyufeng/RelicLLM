@@ -367,6 +367,7 @@ class Qwen4ExpCheckpoint:
         num_experts: int | None = None,
         rank: int = 0,
         world_size: int = 1,
+        layer_range: tuple[int, int] | None = None,
         pin: bool = True,
         progress: bool = False,
         barrier=None,
@@ -398,7 +399,11 @@ class Qwen4ExpCheckpoint:
             world_size=world_size,
             pin_memory=pin,
         )
-        for layer_idx in range(num_layers):
+        # Only this stage's layers under pipeline parallelism. Without it a rank would preload an
+        # expert set for layers it never runs -- at PP16 that is the whole 112 GiB of host RAM per
+        # rank instead of its 7 GiB share, which is the difference between fitting and not.
+        start, end = layer_range if layer_range is not None else (0, num_layers)
+        for layer_idx in range(start, min(end, num_layers)):
             if self.fp8 is not None:
                 self._preload_layer_fp8(
                     shard,
@@ -577,14 +582,25 @@ class HostNGramTable:
 
 
 class HostEmbedding:
-    """Token embedding gathered on the host, moved to device per step."""
+    """Token embedding gathered on the host, moved to device per step.
 
-    def __init__(self, weight: torch.Tensor, *, device: torch.device, dtype: torch.dtype) -> None:
+    ``weight`` is ``None`` on a pipeline stage that does not own the embedding; calling it there is a
+    programming error rather than a shape problem, so it says so instead of raising a ``TypeError``
+    several frames later.
+    """
+
+    def __init__(
+        self, weight: torch.Tensor | None, *, device: torch.device, dtype: torch.dtype
+    ) -> None:
         self.weight = weight
         self.device = device
         self.dtype = dtype
 
     def __call__(self, token_ids: torch.Tensor) -> torch.Tensor:
+        if self.weight is None:
+            raise RuntimeError(
+                "this pipeline stage does not own the token embedding; only the first stage embeds"
+            )
         flat = token_ids.reshape(-1).to("cpu", dtype=torch.long)
         rows = self.weight.index_select(0, flat)
         return rows.to(self.device, dtype=self.dtype).reshape(*token_ids.shape, self.weight.shape[1])

@@ -31,7 +31,7 @@ from dataclasses import dataclass
 
 import torch
 
-from relicllm.models.qwen4_exp.builder import build_heterogeneous
+from relicllm.models.qwen4_exp.builder import build_heterogeneous, layer_range_for
 from relicllm.models.qwen4_exp.config import Qwen4ExpConfig
 from relicllm.models.qwen4_exp.model import Qwen4ExpModel
 from relicllm.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
@@ -44,6 +44,45 @@ class TPContext:
     world_size: int
     device: torch.device
     initialized: bool
+    #: Pipeline-parallel layout. ``pp_size == 1`` is every configuration this runtime had before
+    #: pipeline support, so the default reproduces the old behaviour exactly.
+    #:
+    #: The two dimensions are deliberately kept apart, because ``world_size`` alone cannot express
+    #: both: it is the *process group* size (TP x PP), which is what a collective must use, while
+    #: every sharding rule in this model -- expert round-robin, head slicing, the vocab-sharded head,
+    #: the per-layer all-reduce -- is a *TP* rule and must read ``tp_world_size``. Under a pure-PP
+    #: launch ``world_size`` is 16 and ``tp_world_size`` is 1: the difference between a correct
+    #: forward and 16 ranks each summing a sixteenth of the wrong thing.
+    pp_size: int = 1
+    pp_rank: int = 0
+    #: Set by ``load_model`` once the config is read, so ``layer_range`` resolves for callers that
+    #: hold the context before the model exists (the preload, the log line).
+    num_layers: int = 0
+
+    @property
+    def tp_world_size(self) -> int:
+        """Ranks the tensor-parallel sharding rules divide by.
+
+        Under pipeline parallelism the stages own disjoint layers and nothing within a layer is
+        split, so this is 1 even though the process group spans both machines.
+        """
+        return 1 if self.pp_size > 1 else self.world_size
+
+    @property
+    def tp_rank(self) -> int:
+        return 0 if self.pp_size > 1 else self.rank
+
+    @property
+    def layer_range(self) -> tuple[int, int]:
+        """The ``[start, end)`` slice of layers this pipeline stage owns.
+
+        Contiguous and balanced, the same split ``deepseek_v4``'s layer-PP policy uses: the first
+        ``n_layers % pp_size`` stages take one extra layer. Contiguity is what keeps each stage's
+        expert preload a sequential read of the checkpoint rather than a scatter.
+        """
+        if self.pp_size <= 1:
+            return (0, self.num_layers or (1 << 30))
+        return layer_range_for(self.num_layers, self.pp_size, self.pp_rank)
 
 
 def _env_enabled(name: str, default: str = "0") -> bool:
@@ -265,13 +304,28 @@ def _configure_cpu_affinity(ctx: TPContext) -> list[int] | None:
 
 
 def init_distributed() -> TPContext:
-    """Join the torchrun-provided process group, or fall back to single-rank."""
+    """Join the torchrun-provided process group, or fall back to single-rank.
+
+    The pipeline layout is read from ``PIPELINE_PARALLEL_SIZE`` when it is set. It is not derived
+    from ``WORLD_SIZE``, because the two mean different things and the group has to be joined before
+    either can be resolved: ``WORLD_SIZE`` is the group, and a run may put all of it into pipeline
+    stages *or* into tensor sharding. Leaving the variable unset is exactly the old behaviour --
+    ``pp_size = 1`` -- so a torchrun without it is a pure-TP launch.
+    """
     import torch.distributed as dist
 
     rank = int(os.environ.get("RANK", "0"))
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     local_rank = int(os.environ.get("LOCAL_RANK", str(rank)))
     accelerator = probe_accelerator()
+
+    pp_size = int(os.environ.get("PIPELINE_PARALLEL_SIZE", "1") or "1")
+    pp_rank = int(os.environ.get("PIPELINE_PARALLEL_RANK", str(rank)) or str(rank))
+    if pp_size > world_size:
+        raise ValueError(
+            f"PIPELINE_PARALLEL_SIZE={pp_size} exceeds WORLD_SIZE={world_size}: the stages are a "
+            "partition of the process group, so there cannot be more of them than there are ranks"
+        )
 
     if world_size > 1:
         if not dist.is_initialized():
@@ -284,6 +338,8 @@ def init_distributed() -> TPContext:
             world_size,
             torch.device(accelerator.torch_device_type, local_rank),
             True,
+            pp_size=pp_size,
+            pp_rank=pp_rank,
         )
 
     # Single rank, and the only branch here that keeps a host fallback: with no group to join a
@@ -298,8 +354,14 @@ def init_distributed() -> TPContext:
 
 
 def make_all_reduce(ctx: TPContext):
-    """Sum a row-parallel block output across ranks. None when world_size == 1."""
-    if ctx.world_size == 1:
+    """Sum a row-parallel block output across ranks. None when nothing is sharded.
+
+    Keyed on ``tp_world_size`` and not ``world_size``: a row-parallel block exists because a layer's
+    columns were split across ranks, and under pipeline parallelism no layer is split -- the stages
+    own *different* layers -- so there is nothing to sum. Reducing over the process group there would
+    sum across stages that hold unrelated activations.
+    """
+    if ctx.tp_world_size == 1:
         return None
     import torch.distributed as dist
 
@@ -313,13 +375,45 @@ def make_all_reduce(ctx: TPContext):
     return all_reduce
 
 
+def next_token_from_logits(last_logits: torch.Tensor | None, ctx: TPContext, *, batch_size: int = 1) -> torch.Tensor:
+    """The greedy next token, agreed across every rank.
+
+    ``last_logits`` are the last position's logits, shape ``[batch, vocab]``, or ``None`` on a
+    pipeline stage that did not produce any (every stage but the last). Under ``pp_size == 1`` this
+    is the plain gather-then-argmax the loop always did. Under pipeline parallelism the last stage
+    takes the argmax and broadcasts it, because every stage needs the token to feed its own layers on
+    the next step.
+
+    The broadcast source is the last stage, not rank 0, and deliberately so: the token is a fact
+    about the head and the head lives there. Rank 0's broadcast stays the cancel/EOS flag, so the two
+    facts keep their two owners.
+    """
+    if ctx.pp_size <= 1:
+        return gather_logits(last_logits, ctx).argmax(-1, keepdim=True)
+
+    import torch.distributed as dist
+
+    if ctx.pp_rank == ctx.pp_size - 1:
+        token = last_logits.argmax(-1, keepdim=True).to(torch.long)
+    else:
+        token = torch.zeros((batch_size, 1), dtype=torch.long, device=ctx.device)
+    dist.broadcast(token, src=ctx.pp_size - 1)
+    return token
+
+
 def gather_logits(logits: torch.Tensor, ctx: TPContext) -> torch.Tensor:
-    """Concatenate the vocab-sharded lm_head outputs into full logits."""
-    if ctx.world_size == 1:
+    """Concatenate the vocab-sharded lm_head outputs into full logits.
+
+    Keyed on ``tp_world_size`` for the same reason as ``make_all_reduce``: the vocab is column-sharded
+    only when the head itself is split. Under pipeline parallelism exactly one stage owns the
+    (unsplit) head, so its logits are already the full vocabulary and gathering would concatenate 16
+    copies of it.
+    """
+    if ctx.tp_world_size == 1:
         return logits
     import torch.distributed as dist
 
-    parts = [torch.empty_like(logits) for _ in range(ctx.world_size)]
+    parts = [torch.empty_like(logits) for _ in range(ctx.tp_world_size)]
     dist.all_gather(parts, logits.contiguous())
     return torch.cat(parts, dim=-1)
 
@@ -336,6 +430,7 @@ def load_model(
 ) -> tuple[Qwen4ExpModel, Qwen4ExpConfig]:
     _configure_cpu_affinity(ctx)
     config = Qwen4ExpConfig.from_pretrained(model_dir)
+    ctx.num_layers = config.text_config.num_hidden_layers
     checkpoint = Qwen4ExpCheckpoint(model_dir, store=MmapSafetensors(model_dir))
     if host_expert_memory:
         # Pull this rank's routed experts off the disk-backed mapping and into
@@ -344,21 +439,29 @@ def load_model(
 
         distributed = ctx.world_size > 1 and dist.is_initialized()
         started = time.perf_counter()
+        # Under pipeline parallelism a rank owns its stage's layers and nothing within them is
+        # split, so it preloads every expert of those layers: `world_size=1` here is the expert
+        # placement, which is a TP rule and therefore 1 when the stages own disjoint layers.
+        # `layer_range` is what keeps that from being the whole 112 GiB per rank.
         shard = checkpoint.preload_experts(
             config.text_config.num_hidden_layers,
             num_experts=config.text_config.num_experts,
-            rank=ctx.rank,
-            world_size=ctx.world_size,
+            rank=ctx.tp_rank,
+            world_size=ctx.tp_world_size,
+            layer_range=ctx.layer_range if ctx.pp_size > 1 else None,
             pin=pin_experts,
             progress=ctx.rank == 0 and os.environ.get("QWEN4EXP_PRELOAD_PROGRESS") == "1",
             barrier=dist.barrier if distributed else None,
         )
         elapsed = time.perf_counter() - started
+        start, end = ctx.layer_range
         print(
             f"[qwen4exp] rank {ctx.rank}: {shard.num_local_experts} experts/layer "
             f"x {shard.stats()['layers']} layers resident, "
             f"{shard.resident_bytes / (1 << 30):.2f} GiB "
-            f"({'pinned' if shard.pinned else 'pageable'}) in {elapsed:.1f}s",
+            f"({'pinned' if shard.pinned else 'pageable'}) in {elapsed:.1f}s"
+            + (f" (pipeline stage {ctx.pp_rank}/{ctx.pp_size}, layers {start}:{end})"
+               if ctx.pp_size > 1 else ""),
             flush=True,
         )
         if distributed:
@@ -368,10 +471,12 @@ def load_model(
         checkpoint,
         device=ctx.device,
         dtype=dtype,
-        rank=ctx.rank,
-        world_size=ctx.world_size,
+        rank=ctx.tp_rank,
+        world_size=ctx.tp_world_size,
         all_reduce=make_all_reduce(ctx),
         expert_cache_capacity=expert_cache_capacity,
+        pp_size=ctx.pp_size,
+        pp_rank=ctx.pp_rank,
         profiler=profiler,
     )
     return model, config
@@ -447,12 +552,14 @@ def generate(
         torch.cuda.synchronize()
     prefill_s = time.perf_counter() - t0
 
-    logits = gather_logits(logits[:, -1], ctx)
+    # Under TP the head is vocab-sharded, so the last position's logits are gathered into the full
+    # vocabulary here; under PP exactly one stage has them and no gather applies.
+    logits = gather_logits(logits[:, -1], ctx) if ctx.pp_size <= 1 and logits is not None else logits
     produced: list[int] = []
     stopped = "length"
     t1 = time.perf_counter()
     t_first = None
-    next_id = logits.argmax(-1, keepdim=True)
+    next_id = next_token_from_logits(logits, ctx, batch_size=input_ids.shape[0])
     with torch.inference_mode(), prof_scope("decode"):
         for _ in range(max_new_tokens):
             if on_step is not None and on_step():
@@ -477,7 +584,13 @@ def generate(
                 local_eos[0] = True
             step = model.forward(next_id.to(ctx.device), cache=cache, past_len=past)
             past += 1
-            next_id = gather_logits(step[:, -1], ctx).argmax(-1, keepdim=True)
+            # Under PP only the last stage produced logits; every other stage got `None` back and
+            # only needs the token the last stage is about to broadcast.
+            if ctx.pp_size <= 1:
+                last = gather_logits(step[:, -1], ctx)
+            else:
+                last = step[:, -1] if step is not None else None
+            next_id = next_token_from_logits(last, ctx, batch_size=input_ids.shape[0])
     if ctx.device.type == "cuda":
         torch.cuda.synchronize()
     decode_s = time.perf_counter() - t1
@@ -553,8 +666,10 @@ def run_tp4(
         mem = torch.cuda.memory_allocated(ctx.device) / 2**30 if ctx.device.type == "cuda" else 0.0
         print(f"[rank{ctx.rank}] loaded in {load_s:.1f}s, {mem:.2f} GiB on device", flush=True)
 
-    # All layers share one MoE backend instance; reach it through layer 0.
-    moe_backend = getattr(model.layers[0], "moe", None)
+    # All layers share one MoE backend instance; reach it through the first layer this rank holds.
+    # Not `layers[0]`: under pipeline parallelism only the first stage owns layer 0, so every other
+    # rank would read `None` here.
+    moe_backend = getattr(model.local_layers[0], "moe", None) if model.local_layers else None
     moe_backend = getattr(moe_backend, "inner", moe_backend)  # unwrap ShardedMoE
     moe_phase_profile = enable_profile and os.environ.get("POCKETLLM_QWEN4_MOE_PHASE_PROFILE") == "1"
     if moe_phase_profile and hasattr(moe_backend, "phase_stats"):

@@ -112,6 +112,22 @@ def _ple_weights(getter, layer_idx: int, *, prefix: str = LM) -> dict[str, torch
     return {_strip_weight(s): getter(f"{base}.{s}") for s in _PLE_SUFFIXES}
 
 
+def layer_range_for(n_layers: int, pp_size: int, pp_rank: int) -> tuple[int, int]:
+    """The ``[start, end)`` layer slice one pipeline stage owns.
+
+    Balanced and contiguous: stage ``i`` takes layers ``[i*n//p, (i+1)*n//p)``, so the first
+    ``n % p`` stages carry one extra layer. Contiguous rather than strided because each stage
+    preloads its experts as one sequential read of the checkpoint, and because a stage's layers are
+    the unit the PLE tables and the KV caches are grouped by.
+
+    It lives here, in the module that actually lays the layers out, so the checkpoint preload and
+    the model build cannot disagree about which layers a stage owns.
+    """
+    if pp_size <= 1:
+        return 0, n_layers
+    return (pp_rank * n_layers) // pp_size, ((pp_rank + 1) * n_layers) // pp_size
+
+
 def _final_mixer(getter, config: Qwen4ExpTextConfig, *, prefix: str = LM) -> GatedResidual:
     base = f"{prefix}.hyper_connection_mixer"
     return GatedResidual(
@@ -224,6 +240,8 @@ def build_heterogeneous(
     all_reduce=None,
     expert_cache_capacity: int = 0,
     prefix: str = LM,
+    pp_size: int = 1,
+    pp_rank: int = 0,
     profiler=None,
 ) -> Qwen4ExpModel:
     """TP-sharded dense weights on GPU, routed experts + PLE table in host RAM.
@@ -236,6 +254,12 @@ def build_heterogeneous(
       * Shared expert and hyper-connections: replicated (they are tiny).
       * Routed experts: round-robin by expert id across ranks.
       * lm_head: column-sharded, gathered by the caller.
+
+    ``pp_size > 1`` splits the *layers* across ranks instead: this rank builds only
+    ``[layer_start, layer_end)`` and every sharding rule above collapses to one rank
+    (``world_size`` is then the TP width, which the caller passes as 1). The embed stays
+    on the first stage and the final mixer plus lm_head on the last, so those two stages
+    are the only ones that pay for them.
     """
     device = torch.device(device)
     store = checkpoint.store
@@ -294,8 +318,18 @@ def build_heterogeneous(
     )
     moe = ShardedMoE(inner_moe, rank, world_size) if world_size > 1 else inner_moe
 
-    layers: list[Qwen4ExpDecoderLayer] = []
+    # Under pipeline parallelism this rank builds only its own stage's layers and leaves a `None`
+    # placeholder for every other. The list stays full length on purpose: `layer_idx` is the
+    # absolute id a layer keys its KV cache, PLE table and expert cache by, so a short list indexed
+    # 0..2 would be a *second*, relative numbering and a mis-index would land on another layer's
+    # cache silently.
+    layer_start, layer_end = layer_range_for(config.num_hidden_layers, pp_size, pp_rank)
+
+    layers: list[Qwen4ExpDecoderLayer | None] = []
     for layer_idx in range(config.num_hidden_layers):
+        if not (layer_start <= layer_idx < layer_end):
+            layers.append(None)
+            continue
         base = f"{prefix}.layers.{layer_idx}"
         weights: dict[str, torch.Tensor] = {}
 
@@ -420,18 +454,37 @@ def build_heterogeneous(
 
     # 1.18 GiB each: embedding stays in host RAM (gathered per step), lm_head is
     # column-sharded so each rank holds 300 MiB.
-    embed_weight = store.view(f"{prefix}.embed_tokens.weight")
-    lm_head_full = store.view("lm_head.weight")
-    vocab_per_rank = lm_head_full.shape[0] // world_size
-    lm_head = lm_head_full[rank * vocab_per_rank : (rank + 1) * vocab_per_rank].to(device, dtype=dtype)
+    #
+    # Under pipeline parallelism only the boundary stages need them: the first owns the embedding
+    # (it is the only stage that sees token ids) and the last owns the head and the final mixer that
+    # feeds it. Building them everywhere would put a 1.18 GiB lm_head on 15 stages that cannot use
+    # it. The head is *not* vocab-sharded on that path: `world_size` is the TP width there, and
+    # under PP the head belongs to one stage undivided.
+    owns_embedding = pp_size <= 1 or pp_rank == 0
+    owns_head = pp_size <= 1 or pp_rank == pp_size - 1
+    embed_weight = store.view(f"{prefix}.embed_tokens.weight") if owns_embedding else None
+    lm_head = None
+    final_mixer = None
+    if owns_head:
+        lm_head_full = store.view("lm_head.weight")
+        if pp_size > 1:
+            lm_head = lm_head_full.to(device, dtype=dtype)
+        else:
+            vocab_per_rank = lm_head_full.shape[0] // world_size
+            lm_head = lm_head_full[rank * vocab_per_rank : (rank + 1) * vocab_per_rank].to(
+                device, dtype=dtype
+            )
+        final_mixer = _final_mixer(dense, config, prefix=prefix)
 
     return Qwen4ExpModel(
         config,
         layers,
-        embed_tokens=HostEmbedding(embed_weight, device=device, dtype=dtype),
+        embed_tokens=HostEmbedding(embed_weight, device=device, dtype=dtype) if owns_embedding else None,
         lm_head=lm_head,
-        final_mixer=_final_mixer(dense, config, prefix=prefix),
+        final_mixer=final_mixer,
         device=device,
         dtype=dtype,
+        pp_size=pp_size,
+        pp_rank=pp_rank,
         profiler=profiler,
     )
