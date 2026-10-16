@@ -381,6 +381,11 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         # The prompt and the budget are what the workers reproduce, so rank 0 broadcasts them before
         # it enters the collective the workers must be inside.
         self._dispatch(request, prompt_ids, budget)
+        # `local_eos` is the loop's own end-of-sequence finding, handed back to this rank's
+        # predicate so it rides the broadcast `_step_sync` already performs instead of ending the
+        # loop on one rank. See `generate`'s `local_eos` paragraph: acting on it locally is what
+        # produced the 600-second NCCL broadcast timeout on both the V100 and the 4090 boxes.
+        local_eos = [False]
         tokens, stats = generate(
             self._model,
             self._ctx,
@@ -389,7 +394,11 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             chunk_size=self._options.prefill_chunk,
             eos_token_ids=tuple(sorted(self._eos_tokens())),
             on_token=on_token,
-            on_step=self._step_sync(request.request_id, stop),
+            on_step=self._step_sync(
+                request.request_id,
+                None if stop is None else (lambda: stop() or local_eos[0]),
+            ),
+            local_eos=local_eos,
         )
         return _Generation.from_stats(tokens, stats)
 
@@ -402,6 +411,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         from relicllm.models.qwen4_exp.runtime import generate
 
         prompt_ids = [int(token) for token in payload["prompt_ids"]]
+        # The worker carries the flag too, so both sides of the broadcast are asking the same
+        # question on every step. It decides nothing here -- this rank's answer is discarded -- it
+        # only has to reach the collective in step with rank 0.
+        local_eos = [False]
         generate(
             self._model,
             self._ctx,
@@ -409,7 +422,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             max_new_tokens=int(payload["max_new_tokens"]),
             chunk_size=self._options.prefill_chunk,
             eos_token_ids=tuple(sorted(self._eos_tokens())),
-            on_step=self._step_sync(str(payload["request_id"])),
+            on_step=self._step_sync(
+                str(payload["request_id"]), lambda: local_eos[0]
+            ),
+            local_eos=local_eos,
         )
 
 
