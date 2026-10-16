@@ -150,22 +150,53 @@ Three readings, and each one matters:
   emulated GEMMs an attention layer has (the package has 11 `quantized_linear` call sites, not all
   live). So the refusal's number and this measurement are the same quantity, taken two ways.
 
-**The conclusion for the plan is negative and it is the useful part:** a 40-layer emulated decode body
-is ~8.5 captures a layer × 40 layers × 106 MiB ≈ **36 GiB**, against the ~10 GiB a 24 GiB card has
+**The conclusion for the plan is negative and it is the useful part:** the tree's own measured figure is
+~897 MiB a layer, so a 40-layer emulated decode body is ~35 GiB against the ~10 GiB a 24 GiB card has
 left once the 13.4 GiB of weights are loaded. A 23% cut does not change that verdict. Fitting the body
-needs about **3–4× more**, i.e. ≤ ~33 MiB a capture at this shape — so the remaining work is not "a
-few more percent of plumbing", and the honest options are:
+needs roughly **3–4× more**, i.e. ≤ ~33 MiB a capture at this shape — so the remaining work is not "a
+few more percent of plumbing". (The per-layer 897 MiB and this per-GEMM 106 MiB are the same quantity
+taken two ways — 897/106 is the several GEMMs a layer declares — but the per-*step* total is not simply
+that product, because the layer's several GEMMs are not all `wq_a`-shaped; the wall-clock below is what
+bounds that inference.)
 
-1. a node count an order of magnitude smaller than the elementwise transcription can reach (which
-   points at the emulation moving onto the device as a real kernel, in `relic-core`, rather than
-   staying a sequence of torch ops), or
-2. capturing only part of the body — a graph per layer leaves the same total, so this would have to be
-   a much smaller unit — or
-3. accepting the eager path on sm_89 and attacking the eager dispatch instead, which the CPU census
-   and this script both now make measurable.
+## What the emulation costs in wall-clock, and the proof that it is dispatch
 
-Option 3 is the one the current evidence supports: the emulation is correct and the eager step's cost
-is now countable, while a full-body graph needs a change of kind rather than of degree.
+Same box, same tree, `torch.cuda` timing with the shape varied one axis at a time:
+
+| shape (M, N, K) | emulated | a plain bf16 `F.linear`, same shape | ratio |
+| --- | ---: | ---: | ---: |
+| 1, 1280, 5120 | 18.8 ms | 0.123 ms | 152× |
+| 1, 1280, 2560 | 12.8 ms | 0.120 ms | 107× |
+| 1, 1280, 640 | 8.8 ms | 0.115 ms | 76× |
+| 1, 5120, 1280 | 10.0 ms | 0.113 ms | 89× |
+| **1, 128, 5120** | **18.1 ms** | 0.113 ms | 160× |
+| 9, 1280, 5120 | 36.5 ms | 0.142 ms | 257× |
+
+**The fifth row is the finding.** Cutting N from 1280 to 128 — a tenfold smaller output, a tenth of the
+arithmetic and a tenth of the bytes — moves the time from 18.8 ms to 18.1 ms. The cost is a function of
+K alone (about 5.5 ms fixed plus ~0.07 ms a K block), which is what a per-launch cost looks like and
+what an arithmetic or bandwidth cost cannot. **The emulation is dispatch, all the way down**, which is
+the same statement the CPU census makes with a different instrument, and it is why the lever is the
+node count and not a faster kernel.
+
+It also says what a decode step's inventory has to be: at 1089 ms a step on this box, the emulated calls
+must sum to roughly 58 `wq_a`-equivalents — not the several-hundred a naive "every layer's every linear"
+would give. Which scalars that decomposes into is not measurable without the checkpoint loaded, and it
+is the open question this note leaves rather than guesses.
+
+## What this leaves, honestly
+
+The graph route is not closed by a further op trim of the same kind. Three ways forward, in the order
+the evidence supports:
+
+1. **Accept the eager path on sm_89 and attack the eager dispatch.** The emulation is correct and its
+   cost is now countable two ways (the CPU census and this script), so the eager step is a target that
+   can be scored. This is the only option with no unknown in it.
+2. **A node count an order of magnitude smaller.** Which means the emulation stops being a sequence of
+   torch ops and becomes a real kernel in `relic-core` — a change of kind, not of degree, and the one
+   that would make the graph fit.
+3. **A smaller capture unit.** A graph a layer leaves the same total, so this has to be smaller still,
+   and the sub-linear fixed cost (~5.5 ms a capture) argues against many small graphs.
 
 ## Reproducing
 
@@ -180,4 +211,5 @@ cd <checkout>; python scripts/v41_graph_memory.py --m 1 --n 1280 --k 5120 --repe
 
 Both were run against two revisions the same way: `git worktree add <dir> <rev>`, copy the script in,
 and run it from that worktree — an installed `relicllm` would measure whichever tree is on `sys.path`
-rather than the one under test.
+rather than the one under test. The wall-clock table above is an ad-hoc timing of the same call and is
+not committed as a script (it needs the card and a plain `F.linear` baseline to compare against).
