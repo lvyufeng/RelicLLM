@@ -310,12 +310,40 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             reads_prefix_cache=False,
         )
 
+    def _expert_stage_metrics(self) -> dict[str, float]:
+        """The routed-expert staging counters, or nothing when this run has no host bank.
+
+        These are the numbers that say whether the experts are *resident* or merely *cached*: a
+        deployment that sizes ``--expert-cache`` to hold every expert it owns stops staging after the
+        first pass over the set, and one that does not keeps paying the PCIe cost every step. Without
+        them on ``/metrics`` a decode rate cannot be told apart from a bigger LRU -- which is the
+        whole question this runtime's decode is asked to answer.
+
+        They live on ``HostExpertMoE``, one level below the ``ShardedMoE`` wrapper the model holds, so
+        both are unwrapped here rather than made public on the wrapper for a scrape's sake.
+        """
+        moe = getattr(self._model, "moe", None)
+        inner = getattr(moe, "inner", moe)
+        if inner is None or not hasattr(inner, "stage_bytes"):
+            return {}
+        return {
+            # `_total` is the server's convention for a counter; the rest are gauges.
+            "qwen4_exp_expert_stage_bytes_total": float(inner.stage_bytes),
+            "qwen4_exp_expert_stage_calls_total": float(inner.stage_calls),
+            "qwen4_exp_expert_cache_hits_total": float(inner.cache_hits),
+            "qwen4_exp_expert_cache_capacity": float(getattr(inner, "cache_capacity", 0) or 0),
+        }
+
     def metrics(self) -> dict[str, float]:
         """What one engine holds between requests, for ``/metrics``.
 
         The card's own numbers, which no request owns a share of. ``gpu_memory_allocated`` is what the
         loader left resident -- the dense shard and the caches -- and is the quantity a deployment
         reads against its card size when deciding how wide a context it can afford.
+
+        The expert staging counters come beside it because residency is the other half of that
+        decision: ``qwen4_exp_device_bytes`` says what is on the card and
+        ``qwen4_exp_expert_stage_bytes_total`` says what is still crossing the bus to get there.
         """
         if self._model is None or self._device is None:
             return {}
@@ -331,6 +359,7 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             #: string is where that is said to a caller.
             "qwen4_exp_context_positions": float(self._max_seq_len),
             "qwen4_exp_world": float(self._world),
+            **self._expert_stage_metrics(),
         }
 
     def _kv_capacity(self) -> KVCapacity:
