@@ -119,13 +119,65 @@ The two directions the measurement points at, in order:
 2. **Then revisit the graph.** `EMULATION_REFUSES_GRAPHS` records ~897 MiB of driver graph memory a
    layer at the current node count against ~10 GiB free. If (1) cuts the nodes by the factor the
    census suggests, the recording becomes a memory question again rather than a refusal — and that is
-   answerable by measurement on the box.
+   answerable by measurement on the box. **It has now been measured, and the answer is that the
+   op-count cut is real but roughly three times short. See below.**
 
-## Reproducing the census
+## What a capture actually costs, measured on a 4090
+
+`scripts/v41_graph_memory.py` captures the emulated GEMM into real `CUDAGraph`s and reads
+`torch.cuda.mem_get_info` around each one, because the cost is *driver* graph memory: the allocator's
+own counters barely move and torch's graph pool stays under 20 MiB, so `memory_allocated` cannot see
+it. Measured on ts-133 (8× RTX 4090, torch 2.9.1+cu128, one card), `M = 1`, `N = 1280`:
+
+| Tree | K blocks | first capture | marginal | 
+| --- | ---: | ---: | ---: |
+| `a0abe9a` (master) | 160 | 164 MiB | — |
+| this branch | 160 | 126 MiB | **106 MiB** |
+| this branch | 80 | 88 MiB | 68 MiB |
+| this branch | 40 | 66 MiB | 44 MiB |
+| this branch | 20 | 44 MiB | 22 MiB |
+
+Three readings, and each one matters:
+
+- **The two optimizations cut the driver cost by 23%, 164 → 126 MiB a capture.** The op count fell
+  36% and the memory fell 23%, so the two are related but not the same quantity — a node is not one
+  `aten::` entry, and the copies and allocations the census counted are cheaper per node than a
+  compute kernel.
+- **The cost is sub-linear in K, and it is a node cost.** 20 → 160 K blocks is 8× the blocks and only
+  2.8× the memory (22 → 106 MiB marginal), so a fixed per-graph component dominates at small shapes.
+  Extrapolating upward, the marginal cost is roughly 0.6–0.7 MiB a K block at the acceptance shape.
+- **The recorded ~897 MiB a layer reconciles with this.** 897 / 106 ≈ 8.5, which is the number of
+  emulated GEMMs an attention layer has (the package has 11 `quantized_linear` call sites, not all
+  live). So the refusal's number and this measurement are the same quantity, taken two ways.
+
+**The conclusion for the plan is negative and it is the useful part:** a 40-layer emulated decode body
+is ~8.5 captures a layer × 40 layers × 106 MiB ≈ **36 GiB**, against the ~10 GiB a 24 GiB card has
+left once the 13.4 GiB of weights are loaded. A 23% cut does not change that verdict. Fitting the body
+needs about **3–4× more**, i.e. ≤ ~33 MiB a capture at this shape — so the remaining work is not "a
+few more percent of plumbing", and the honest options are:
+
+1. a node count an order of magnitude smaller than the elementwise transcription can reach (which
+   points at the emulation moving onto the device as a real kernel, in `relic-core`, rather than
+   staying a sequence of torch ops), or
+2. capturing only part of the body — a graph per layer leaves the same total, so this would have to be
+   a much smaller unit — or
+3. accepting the eager path on sm_89 and attacking the eager dispatch instead, which the CPU census
+   and this script both now make measurable.
+
+Option 3 is the one the current evidence supports: the emulation is correct and the eager step's cost
+is now countable, while a full-body graph needs a change of kind rather than of degree.
+
+## Reproducing
 
 ```bash
-python scripts/v41_emulation_cost.py          # the table above
-python scripts/v41_emulation_cost.py --json   # to diff two revisions
+# operator census: no card, no relic_core (mma.py imports torch alone)
+python scripts/v41_emulation_cost.py
+python scripts/v41_emulation_cost.py --json     # to diff two revisions
+
+# driver graph memory: needs the card, and reads the tree it sits in
+cd <checkout>; python scripts/v41_graph_memory.py --m 1 --n 1280 --k 5120 --repeats 40
 ```
 
-It needs no card and no `relic_core`: `mma.py` imports torch alone.
+Both were run against two revisions the same way: `git worktree add <dir> <rev>`, copy the script in,
+and run it from that worktree — an installed `relicllm` would measure whichever tree is on `sys.path`
+rather than the one under test.
