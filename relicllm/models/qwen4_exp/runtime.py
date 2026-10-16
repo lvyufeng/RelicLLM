@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import time
 from contextlib import nullcontext
 from dataclasses import dataclass
@@ -62,14 +63,89 @@ def _parse_cpu_list(spec: str) -> list[int]:
     return cpus
 
 
+def _pci_ids_from_smi() -> list[str]:
+    """CUDA-index-ordered PCI ids, or [] when nvidia-smi cannot be asked.
+
+    The id is normalised to sysfs' ``domain:bus:device.function`` form: nvidia-smi
+    prints the domain as 8 hex digits and upper-case, sysfs uses 4 and lower.
+    """
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=pci.bus_id", "--format=csv,noheader"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if out.returncode != 0:
+        return []
+    ids = []
+    for line in out.stdout.splitlines():
+        value = line.strip()
+        if not value:
+            continue
+        parts = value.lower().split(":")
+        if len(parts) == 3:
+            domain, bus, slot = parts
+            ids.append(f"{int(domain, 16):04x}:{bus}:{slot}")
+    return ids
+
+
+def _pci_ids_from_sysfs() -> list[str]:
+    """CUDA-index-ordered PCI ids read from sysfs, or [] if it cannot be read.
+
+    Only the NVIDIA display/3D functions are considered, in the sorted order sysfs
+    lists them -- which is the order the CUDA runtime enumerates them on a box with
+    no CUDA_VISIBLE_DEVICES reordering.
+    """
+    try:
+        entries = sorted(os.listdir("/sys/bus/pci/devices"))
+    except OSError:
+        return []
+    ids = []
+    for entry in entries:
+        try:
+            with open(f"/sys/bus/pci/devices/{entry}/vendor") as f:
+                if f.read().strip() != "0x10de":
+                    continue
+            with open(f"/sys/bus/pci/devices/{entry}/class") as f:
+                if not f.read().strip().startswith("0x03"):
+                    continue
+        except OSError:
+            continue
+        ids.append(entry)
+    return ids
+
+
+def _pci_id(device: torch.device) -> str | None:
+    """This device's PCI id as ``domain:bus:device.function``.
+
+    Read from the torch device properties where the build exposes them, which
+    landed after torch 2.6; otherwise resolved to CUDA index order through
+    nvidia-smi and then sysfs. Returns None when none of the three is available,
+    which the caller treats as "no NUMA information" rather than an error.
+    """
+    properties = torch.cuda.get_device_properties(device)
+    domain = getattr(properties, "pci_domain_id", None)
+    bus = getattr(properties, "pci_bus_id", None)
+    slot = getattr(properties, "pci_device_id", None)
+    if domain is not None and bus is not None and slot is not None:
+        return f"{domain:04x}:{bus:02x}:{slot:02x}.0"
+
+    index = device.index if device.index is not None else torch.cuda.current_device()
+    candidates = _pci_ids_from_smi() or _pci_ids_from_sysfs()
+    if index >= len(candidates):
+        return None
+    return candidates[index]
+
+
 def _cuda_numa_node(device: torch.device) -> int | None:
     if device.type != "cuda":
         return None
-    properties = torch.cuda.get_device_properties(device)
-    pci_id = (
-        f"{properties.pci_domain_id:04x}:{properties.pci_bus_id:02x}:"
-        f"{properties.pci_device_id:02x}.0"
-    )
+    pci_id = _pci_id(device)
+    if pci_id is None:
+        return None
     try:
         with open(f"/sys/bus/pci/devices/{pci_id}/numa_node") as f:
             node = int(f.read())
@@ -132,6 +208,41 @@ def _cpu_affinity_for_device(
     return sorted(cpu for siblings in selected for cpu in siblings)
 
 
+def _bound_thread_pools(cpus: list[int], *, rank: int) -> None:
+    """Cap the process's thread pools at the CPUs it was just bound to.
+
+    Binding affinity and sizing a thread pool are two different facts, and this runtime used to
+    establish only the first. `sched_setaffinity` says which CPUs the process *may* run on; it does
+    not say how many threads to start, and `torch` sizes its intra-op pool from the cores the *host*
+    reports -- 192 on the box this was found on. So each rank spawned ~168 threads and then had all
+    of them contend for the 12 CPUs the affinity call had left it, eight ranks at once. The measured
+    symptom is a load average above 600 during the expert preload, a machine that stops answering
+    ssh, and a startup that takes an order of magnitude longer than the same work on a slower host.
+
+    `v41` and `deepseek_v4` both cap their pools (`torch.set_num_threads`, `OMP_NUM_THREADS`); this
+    runtime was the one that did not. The count is the affinity set's size, which is the allocation
+    the rest of this function already computed.
+
+    `OMP_NUM_THREADS` is set as well as the torch API because the preload's work is `torch.cat` and
+    pinning, which reach OpenMP through the same pool: the env var is what a library that reads it
+    at first use will honour, and the API call is what torch's own dispatcher honours now.
+    `torch.set_num_interop_threads` is called defensively -- it may only be set before any parallel
+    work has started, so a later call raises and that is not worth failing a load over.
+    """
+    threads = max(1, len(cpus))
+    for name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ.setdefault(name, str(threads))
+    try:
+        import torch
+
+        torch.set_num_threads(threads)
+        torch.set_num_interop_threads(threads)
+    except (ImportError, RuntimeError) as exc:  # pragma: no cover - defensive
+        print(f"[qwen4exp] rank {rank}: thread pools left at their default ({exc})", flush=True)
+        return
+    print(f"[qwen4exp] rank {rank}: thread pools capped at {threads}", flush=True)
+
+
 def _configure_cpu_affinity(ctx: TPContext) -> list[int] | None:
     if not _env_enabled("POCKETLLM_QWEN4_CPU_AFFINITY", "1") or ctx.device.type != "cuda":
         return None
@@ -149,6 +260,7 @@ def _configure_cpu_affinity(ctx: TPContext) -> list[int] | None:
         f"{cpu_spec} ({len(cpus)} logical CPUs)",
         flush=True,
     )
+    _bound_thread_pools(cpus, rank=ctx.rank)
     return cpus
 
 
@@ -275,6 +387,7 @@ def generate(
     eos_token_ids: tuple[int, ...] = (),
     on_token=None,
     on_step=None,
+    local_eos: list[bool] | None = None,
 ) -> tuple[list[int], dict[str, float]]:
     """Greedy decode with chunked prefill.
 
@@ -291,6 +404,21 @@ def generate(
     collective -- see `Qwen4ExpBackend._loop`, which broadcasts rank 0's decision --
     and that is why it is a callback here rather than a local `self._is_cancelled`
     read.  `stopped` in the returned stats names what ended the loop.
+
+    **`local_eos` is what keeps the *end-of-sequence* exit inside that same
+    collective.** Without it this loop broke out on EOS on its own, and that is not a
+    local decision: the token is each rank's own `argmax`, so any step where the
+    ranks disagree -- a near-tie in the gathered logits is enough -- let one rank
+    leave while its peers walked into the next `on_step` and sat in its broadcast.
+    The measured result was `WorkNCCL(OpType=BROADCAST, NumelIn=1, NumelOut=1,
+    Timeout(ms)=600000) ran for 600018 ms` and `taking the entire process down`,
+    on 8xV100 and on 8xRTX 4090 alike; it is not a slow request, it is a hung one.
+
+    With `local_eos` given, EOS sets that flag instead of breaking.  The caller's
+    predicate -- the one it already hands `on_step` -- reads it, so the answer is
+    agreed on the same broadcast the cancel check rides, and every rank leaves
+    together.  A caller that passes nothing keeps the old local behaviour, which is
+    correct at world size 1 and is what the CLI entry point uses.
 
     Timing is drained, not wall-clocked at the seam: both `torch.cuda.synchronize()`
     calls are load-bearing (`docs/guides/benchmarking.md`), because a forward is
@@ -328,7 +456,10 @@ def generate(
     with torch.inference_mode(), prof_scope("decode"):
         for _ in range(max_new_tokens):
             if on_step is not None and on_step():
-                stopped = "cancel"
+                # The predicate is the collective, so it is the thing that decided. `local_eos`
+                # separates the two reasons it can say stop, and it is read only after the flag
+                # came back agreed.
+                stopped = "eos" if (local_eos is not None and local_eos[0]) else "cancel"
                 break
             token = int(next_id.item())
             produced.append(token)
@@ -337,8 +468,13 @@ def generate(
             if on_token is not None and ctx.rank == 0:
                 on_token(token)
             if token in eos_token_ids:
-                stopped = "eos"
-                break
+                if local_eos is None:
+                    stopped = "eos"
+                    break
+                # Recorded, not acted on: the caller's predicate reads this on the next step and
+                # the broadcast is what ends the loop, so no rank leaves on its own. See the
+                # `local_eos` paragraph in the docstring for what acting on it locally cost.
+                local_eos[0] = True
             step = model.forward(next_id.to(ctx.device), cache=cache, past_len=past)
             past += 1
             next_id = gather_logits(step[:, -1], ctx).argmax(-1, keepdim=True)
