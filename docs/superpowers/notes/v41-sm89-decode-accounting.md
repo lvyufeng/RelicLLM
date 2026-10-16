@@ -198,6 +198,42 @@ the evidence supports:
 3. **A smaller capture unit.** A graph a layer leaves the same total, so this has to be smaller still,
    and the sub-linear fixed cost (~5.5 ms a capture) argues against many small graphs.
 
+## Served A/B on ts-133, and a number that does not reproduce
+
+The two trees were served on ts-133 with **the recorded argv verbatim** (`--backend v41 --model <ckpt>
+--tensor-parallel-size 4 --max-model-len 8192 --backend-option expert_pool_rows=288
+--backend-option prefill_chunk=4096 --backend-option decode_graphs=true --backend-option threads=22`),
+one after the other, against the same staged 457.8 GiB bank in `/dev/shm`. Both runs print the same
+residency lines (`experts on cuda:0 x4, context 8192, 288 pooled rows a card, prefill 4096 tokens a
+forward`) and both take the emulated, un-graphed path — the refusal banner is in both logs. Decode rate
+was read from the server's own `generation_tokens_total` over a fixed wall-clock window with one
+request in flight:
+
+| tree | decode rate | per token |
+| --- | ---: | ---: |
+| `a0abe9a` (master) | 0.100 tok/s | **10.0 s** |
+| this branch | 0.133 tok/s | **7.5 s** |
+
+That is the same direction and roughly the same size as the per-GEMM microbenchmark above (26.8 ms
+master against 18.8 ms here, ~30%), so the two instruments agree: **the two commits are a real speedup
+on the served path, about a quarter off the step.**
+
+**Neither run reproduces PR #204's `tpot.median` of 1.0891 s — both are 7–9× slower, on the same box
+with the same argv and the same configuration lines in the log.** That is a second, independent reason
+the like-for-like matrix has to be re-taken rather than quoted, and it is recorded here rather than
+explained: the candidates (host load, the state of the bank, a difference in the run the figure was
+taken from that is not in its record) are not separable from what was measured. What can be said is
+that `1.0891 s` is not a number this configuration produces today.
+
+Two limits on the reading, stated because they matter:
+
+- The rate is a **steady-state estimate from live token counters**, not the bench's `tpot.median`: at
+  ~10 s/token the recorded scenario is ~2 hours a leg, so the full run was not carried to completion.
+  The comparison is between two windows of the same shape, which is what makes it usable.
+- The microbenchmark's two columns were taken on different cards (`cuda:0` for this branch before the
+  server started, `cuda:4` for master while it ran). Both were idle, and the served A/B is the
+  independent confirmation, but a future pass should pin one card for both.
+
 ## Reproducing
 
 ```bash
