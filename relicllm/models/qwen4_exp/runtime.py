@@ -387,6 +387,7 @@ def generate(
     eos_token_ids: tuple[int, ...] = (),
     on_token=None,
     on_step=None,
+    local_eos: list[bool] | None = None,
 ) -> tuple[list[int], dict[str, float]]:
     """Greedy decode with chunked prefill.
 
@@ -403,6 +404,21 @@ def generate(
     collective -- see `Qwen4ExpBackend._loop`, which broadcasts rank 0's decision --
     and that is why it is a callback here rather than a local `self._is_cancelled`
     read.  `stopped` in the returned stats names what ended the loop.
+
+    **`local_eos` is what keeps the *end-of-sequence* exit inside that same
+    collective.** Without it this loop broke out on EOS on its own, and that is not a
+    local decision: the token is each rank's own `argmax`, so any step where the
+    ranks disagree -- a near-tie in the gathered logits is enough -- let one rank
+    leave while its peers walked into the next `on_step` and sat in its broadcast.
+    The measured result was `WorkNCCL(OpType=BROADCAST, NumelIn=1, NumelOut=1,
+    Timeout(ms)=600000) ran for 600018 ms` and `taking the entire process down`,
+    on 8xV100 and on 8xRTX 4090 alike; it is not a slow request, it is a hung one.
+
+    With `local_eos` given, EOS sets that flag instead of breaking.  The caller's
+    predicate -- the one it already hands `on_step` -- reads it, so the answer is
+    agreed on the same broadcast the cancel check rides, and every rank leaves
+    together.  A caller that passes nothing keeps the old local behaviour, which is
+    correct at world size 1 and is what the CLI entry point uses.
 
     Timing is drained, not wall-clocked at the seam: both `torch.cuda.synchronize()`
     calls are load-bearing (`docs/guides/benchmarking.md`), because a forward is
@@ -440,7 +456,10 @@ def generate(
     with torch.inference_mode(), prof_scope("decode"):
         for _ in range(max_new_tokens):
             if on_step is not None and on_step():
-                stopped = "cancel"
+                # The predicate is the collective, so it is the thing that decided. `local_eos`
+                # separates the two reasons it can say stop, and it is read only after the flag
+                # came back agreed.
+                stopped = "eos" if (local_eos is not None and local_eos[0]) else "cancel"
                 break
             token = int(next_id.item())
             produced.append(token)
@@ -449,8 +468,13 @@ def generate(
             if on_token is not None and ctx.rank == 0:
                 on_token(token)
             if token in eos_token_ids:
-                stopped = "eos"
-                break
+                if local_eos is None:
+                    stopped = "eos"
+                    break
+                # Recorded, not acted on: the caller's predicate reads this on the next step and
+                # the broadcast is what ends the loop, so no rank leaves on its own. See the
+                # `local_eos` paragraph in the docstring for what acting on it locally cost.
+                local_eos[0] = True
             step = model.forward(next_id.to(ctx.device), cache=cache, past_len=past)
             past += 1
             next_id = gather_logits(step[:, -1], ctx).argmax(-1, keepdim=True)
