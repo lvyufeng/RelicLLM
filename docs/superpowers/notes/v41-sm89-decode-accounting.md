@@ -224,12 +224,19 @@ difference explains it: `7caa151` (#175, which turns the routed experts onto the
 linears; the argv matches flag for flag; and both served runs print the same residency lines
 (`experts on cuda:0 x4, context 8192, 288 pooled rows a card, prefill 4096 tokens a forward`).
 
-**The mistake is in what was measured, not in what was run.** `generation_tokens_total` was read while
-`requests_total` was 1 — i.e. during the **warmup** request, the first one after startup. That request
-pays for exactly the things a cold server has not yet done: populating the 288 pooled expert rows from
-the host bank, the lazy kernel and module init, and an empty prefix cache. The recorded scenario sets
-`num_warmups: 1` precisely to keep that out of the measurement; reading the counter inside it measures
-the one request the scenario exists to discard.
+**The mistake is in what was measured, and the correction is only partial.** `generation_tokens_total`
+was read while `requests_total` was 1 — i.e. during the **warmup** request, the first one after startup.
+That request pays for exactly the things a cold server has not yet done: populating the 288 pooled expert
+rows from the host bank, the lazy kernel and module init, and an empty prefix cache. The recorded
+scenario sets `num_warmups: 1` precisely to keep that out of the measurement; reading the counter inside
+it measures the one request the scenario exists to discard.
+
+**But that only accounts for one of the two readings.** The `a0abe9a` window was taken with
+`requests_total 2` and `requests_active 1` — past the warmup, on a measured request — and it was still
+0.100 tok/s. So the warmup explains the shape of the mistake without explaining the magnitude, and the
+remaining 7× is **not** explained by anything this note can show. What follows is therefore narrower than
+a cause: the served rate was not a valid steady-state measurement, the instrument for one is a completed
+`relicllm bench` scenario, and until that runs nothing here should be quoted about served sm_89 decode.
 
 So the served A/B is withdrawn. What stands from the box work is the **per-GEMM microbenchmark**, which
 is a controlled comparison — warm, single call, same shape, measured object, no server in the loop:
