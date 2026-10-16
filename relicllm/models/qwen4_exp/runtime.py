@@ -132,6 +132,41 @@ def _cpu_affinity_for_device(
     return sorted(cpu for siblings in selected for cpu in siblings)
 
 
+def _bound_thread_pools(cpus: list[int], *, rank: int) -> None:
+    """Cap the process's thread pools at the CPUs it was just bound to.
+
+    Binding affinity and sizing a thread pool are two different facts, and this runtime used to
+    establish only the first. `sched_setaffinity` says which CPUs the process *may* run on; it does
+    not say how many threads to start, and `torch` sizes its intra-op pool from the cores the *host*
+    reports -- 192 on the box this was found on. So each rank spawned ~168 threads and then had all
+    of them contend for the 12 CPUs the affinity call had left it, eight ranks at once. The measured
+    symptom is a load average above 600 during the expert preload, a machine that stops answering
+    ssh, and a startup that takes an order of magnitude longer than the same work on a slower host.
+
+    `v41` and `deepseek_v4` both cap their pools (`torch.set_num_threads`, `OMP_NUM_THREADS`); this
+    runtime was the one that did not. The count is the affinity set's size, which is the allocation
+    the rest of this function already computed.
+
+    `OMP_NUM_THREADS` is set as well as the torch API because the preload's work is `torch.cat` and
+    pinning, which reach OpenMP through the same pool: the env var is what a library that reads it
+    at first use will honour, and the API call is what torch's own dispatcher honours now.
+    `torch.set_num_interop_threads` is called defensively -- it may only be set before any parallel
+    work has started, so a later call raises and that is not worth failing a load over.
+    """
+    threads = max(1, len(cpus))
+    for name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ.setdefault(name, str(threads))
+    try:
+        import torch
+
+        torch.set_num_threads(threads)
+        torch.set_num_interop_threads(threads)
+    except (ImportError, RuntimeError) as exc:  # pragma: no cover - defensive
+        print(f"[qwen4exp] rank {rank}: thread pools left at their default ({exc})", flush=True)
+        return
+    print(f"[qwen4exp] rank {rank}: thread pools capped at {threads}", flush=True)
+
+
 def _configure_cpu_affinity(ctx: TPContext) -> list[int] | None:
     if not _env_enabled("POCKETLLM_QWEN4_CPU_AFFINITY", "1") or ctx.device.type != "cuda":
         return None
@@ -149,6 +184,7 @@ def _configure_cpu_affinity(ctx: TPContext) -> list[int] | None:
         f"{cpu_spec} ({len(cpus)} logical CPUs)",
         flush=True,
     )
+    _bound_thread_pools(cpus, rank=ctx.rank)
     return cpus
 
 
