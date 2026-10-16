@@ -179,10 +179,13 @@ what an arithmetic or bandwidth cost cannot. **The emulation is dispatch, all th
 the same statement the CPU census makes with a different instrument, and it is why the lever is the
 node count and not a faster kernel.
 
-It also says what a decode step's inventory has to be: at 1089 ms a step on this box, the emulated calls
-must sum to roughly 58 `wq_a`-equivalents — not the several-hundred a naive "every layer's every linear"
-would give. Which scalars that decomposes into is not measurable without the checkpoint loaded, and it
-is the open question this note leaves rather than guesses.
+A cross-check falls out of the two numbers, and it is worth stating even though the served measurement
+below had to be withdrawn: **the recorded 1089 ms a step is about 58 `wq_a`-equivalents at 18.8 ms
+each**, not the several hundred a naive "every layer's every linear" would give. So either the model's
+per-step inventory is far smaller than its linear count suggests — most of those GEMMs are much
+smaller than `wq_a` — or the recorded figure was taken under conditions this note has not identified.
+Which of the two it is cannot be settled without a completed served scenario, and that is the open
+question this note leaves rather than guesses.
 
 ## What this leaves, honestly
 
@@ -198,41 +201,49 @@ the evidence supports:
 3. **A smaller capture unit.** A graph a layer leaves the same total, so this has to be smaller still,
    and the sub-linear fixed cost (~5.5 ms a capture) argues against many small graphs.
 
-## Served A/B on ts-133, and a number that does not reproduce
+## The served A/B was wrong, and the cross-check that shows it
 
-The two trees were served on ts-133 with **the recorded argv verbatim** (`--backend v41 --model <ckpt>
---tensor-parallel-size 4 --max-model-len 8192 --backend-option expert_pool_rows=288
---backend-option prefill_chunk=4096 --backend-option decode_graphs=true --backend-option threads=22`),
-one after the other, against the same staged 457.8 GiB bank in `/dev/shm`. Both runs print the same
-residency lines (`experts on cuda:0 x4, context 8192, 288 pooled rows a card, prefill 4096 tokens a
-forward`) and both take the emulated, un-graphed path — the refusal banner is in both logs. Decode rate
-was read from the server's own `generation_tokens_total` over a fixed wall-clock window with one
-request in flight:
+A served A/B was run on this box and its numbers are **void**. It is written down because the way it was
+caught is the reusable part.
 
-| tree | decode rate | per token |
+What was done: both trees served on ts-133 with the recorded argv verbatim, against the same staged
+457.8 GiB bank, with the decode rate read off the server's own `generation_tokens_total` over a fixed
+window. That produced 0.133 tok/s here and 0.100 tok/s for `a0abe9a` — 7.5 s and 10.0 s a token.
+
+**That cannot be right, and this tree's own records say so:**
+
+| reading | cards | decode rate |
 | --- | ---: | ---: |
-| `a0abe9a` (master) | 0.100 tok/s | **10.0 s** |
-| this branch | 0.133 tok/s | **7.5 s** |
+| `tests/fixtures/perf/v41_decode_graph_on.json` (TPOT median 0.3704 s) | 4× RTX 2080 Ti | **2.70 tok/s** |
+| sm_89 baseline, PR #204 (TPOT median 1.0891 s) | 8× RTX 4090 | **0.92 tok/s** |
+| this run, `a0abe9a` and this branch | 8× RTX 4090 | 0.10 / 0.13 tok/s |
 
-That is the same direction and roughly the same size as the per-GEMM microbenchmark above (26.8 ms
-master against 18.8 ms here, ~30%), so the two instruments agree: **the two commits are a real speedup
-on the served path, about a quarter off the step.**
+An eight-card 4090 running **20× slower than four 2080 Ti** is not a card result, and no coverage
+difference explains it: `7caa151` (#175, which turns the routed experts onto the mma rule) is an
+**ancestor** of the recorded baseline's own `git_commit` (`1c9a9ecc`), so both runs emulate the same
+linears; the argv matches flag for flag; and both served runs print the same residency lines
+(`experts on cuda:0 x4, context 8192, 288 pooled rows a card, prefill 4096 tokens a forward`).
 
-**Neither run reproduces PR #204's `tpot.median` of 1.0891 s — both are 7–9× slower, on the same box
-with the same argv and the same configuration lines in the log.** That is a second, independent reason
-the like-for-like matrix has to be re-taken rather than quoted, and it is recorded here rather than
-explained: the candidates (host load, the state of the bank, a difference in the run the figure was
-taken from that is not in its record) are not separable from what was measured. What can be said is
-that `1.0891 s` is not a number this configuration produces today.
+**The mistake is in what was measured, not in what was run.** `generation_tokens_total` was read while
+`requests_total` was 1 — i.e. during the **warmup** request, the first one after startup. That request
+pays for exactly the things a cold server has not yet done: populating the 288 pooled expert rows from
+the host bank, the lazy kernel and module init, and an empty prefix cache. The recorded scenario sets
+`num_warmups: 1` precisely to keep that out of the measurement; reading the counter inside it measures
+the one request the scenario exists to discard.
 
-Two limits on the reading, stated because they matter:
+So the served A/B is withdrawn. What stands from the box work is the **per-GEMM microbenchmark**, which
+is a controlled comparison — warm, single call, same shape, measured object, no server in the loop:
 
-- The rate is a **steady-state estimate from live token counters**, not the bench's `tpot.median`: at
-  ~10 s/token the recorded scenario is ~2 hours a leg, so the full run was not carried to completion.
-  The comparison is between two windows of the same shape, which is what makes it usable.
-- The microbenchmark's two columns were taken on different cards (`cuda:0` for this branch before the
-  server started, `cuda:4` for master while it ran). Both were idle, and the served A/B is the
-  independent confirmation, but a future pass should pin one card for both.
+| shape | `a0abe9a` | this branch |
+| --- | ---: | ---: |
+| M=1 N=1280 K=5120 | 26.8 ms | **18.8 ms** |
+| M=1 N=1280 K=640 | 11.4 ms | **8.8 ms** |
+| M=9 N=1280 K=5120 | 47.9 ms | **36.5 ms** |
+
+The lesson is cheap to state and was expensive to learn: a rate read off live counters is only a
+measurement of the configuration you think it is if the run is in the state you think it is in. A
+completed `relicllm bench` scenario — which reports `tpot.median` over the measured requests and
+discards the warmups — is the instrument for this, and it is what objective (4) actually asks for.
 
 ## Reproducing
 
