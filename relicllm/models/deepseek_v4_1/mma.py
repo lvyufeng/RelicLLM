@@ -567,8 +567,17 @@ def fp8_block_gemm(a_codes, a_scale, b_codes, b_scale, block_size: int = BLOCK) 
                 # K order, one block at a time -- the only place the reduction rounds.
                 sa = torch.exp2(a_exp[m0:m1, b0:b1].to(torch.float32))
                 scaled = fragment * sa.unsqueeze(1) * sb.unsqueeze(0)
+                # The output tile is hoisted out of the K loop and the accumulation is an in-place
+                # `add_` on that view, not `out[...] += ...`. The two are the same arithmetic -- the
+                # same K blocks in the same K order -- but a subscripted augmented assignment is
+                # `__getitem__`, `__iadd__` *and* `__setitem__`, and the write-back is a second
+                # kernel per block: measured on a decode GEMM at `wq_a`'s geometry, `out[..] += x`
+                # costs one `add_` **and** one `copy_` per K block, and this form costs the `add_`
+                # alone. That is 160 launches of the tile's 641, and the launches are what bounds both
+                # the eager step and a graph recording (`EMULATION_REFUSES_GRAPHS`).
+                out_tile = out[m0:m1, lo:hi]
                 for i in range(width):
-                    out[m0:m1, lo:hi] += scaled[..., i]
+                    out_tile.add_(scaled[..., i])
     return out
 
 
