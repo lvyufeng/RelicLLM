@@ -79,9 +79,21 @@ class TPContext:
         Contiguous and balanced, the same split ``deepseek_v4``'s layer-PP policy uses: the first
         ``n_layers % pp_size`` stages take one extra layer. Contiguity is what keeps each stage's
         expert preload a sequential read of the checkpoint rather than a scatter.
+
+        Raises rather than guessing when ``num_layers`` has not been set yet. It is set by
+        ``load_model`` from the checkpoint's config, so any caller reading this before then has no
+        layer count to divide and would get a silently wrong answer -- ``(0, 0)`` under PP, which
+        reads as "this stage owns no layers" and is exactly the kind of empty work that looks like a
+        slow run rather than a bug. Failing loudly here cost one misread log line; failing silently
+        would have cost a wasted bring-up.
         """
+        if not self.num_layers:
+            raise RuntimeError(
+                "TPContext.layer_range was read before load_model set num_layers; the layer count "
+                "comes from the checkpoint's config and is not known at init_distributed() time"
+            )
         if self.pp_size <= 1:
-            return (0, self.num_layers or (1 << 30))
+            return (0, self.num_layers)
         return layer_range_for(self.num_layers, self.pp_size, self.pp_rank)
 
 
