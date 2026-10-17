@@ -21,6 +21,7 @@ exception from the request rather than as a hang.
 from __future__ import annotations
 
 import pathlib
+import socket
 import sys
 import threading
 
@@ -146,143 +147,186 @@ def test_no_callback_stays_no_callback():
 
 
 # -------------------------------------------------------------------------------------------
-# the loop, under a real two-rank process group
+# the loop, on two real ranks
 # -------------------------------------------------------------------------------------------
 
 
-def _run_two_ranks(body, *, timeout: float = 30.0) -> list:
-    """Run `body(rank, world)` on two threads under a gloo group, and fail if it does not finish.
+def _run_ranks(mode: str, world: int = 2, timeout: float = 120.0) -> list[dict]:
+    """Run this file once per rank as a subprocess under one gloo group, and collect the results.
 
-    The point of the group is the broadcast in the step predicate: with it, a rank that leaves the
-    loop early leaves the other in `dist.broadcast` forever. Without it this test would pass on the
-    broken code, because there would be nothing to block in.
+    A rank is a **process**, not a thread. `init_process_group` binds the process to a single group
+    and a second call in the same interpreter is not a second rank -- the threads version of this
+    test hung in `TCPStore` rather than exercising anything. So each rank is re-executed as
+    `python <this file> --rank N --world W --mode M`, writes one JSON line to stdout, and the
+    parent asserts on what came back.
 
-    `body` is called on both threads and its exception, if any, is re-raised here.
+    The group is what makes the test mean something: the step predicate is a real `dist.broadcast`
+    of rank 0's decision, exactly the shape `ShardedWorkerMixin._step_sync` gives this runtime at
+    TP>1. A rank 0 that leaves the loop early never broadcasts again and the others block in it, so
+    the parent's timeout is the failure the fix removes.
+
+    Every subprocess is killed on the way out, including on failure, so a hung rank cannot leak
+    into the rest of the suite.
     """
-    import torch.distributed as dist
+    import json
+    import subprocess
 
-    store = dist.TCPStore("127.0.0.1", 0, 2, True, timeout=timeout)
-    port = store.port
-    results: list = [None, None]
-    errors: list[BaseException | None] = [None, None]
-    barrier = threading.Barrier(2)
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
 
-    def worker(rank: int) -> None:
-        try:
-            dist.init_process_group(
-                backend="gloo",
-                init_method=f"tcp://127.0.0.1:{port}",
-                rank=rank,
-                world_size=2,
+    procs = []
+    for rank in range(world):
+        procs.append(
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    str(pathlib.Path(__file__).resolve()),
+                    "--rank", str(rank),
+                    "--world", str(world),
+                    "--mode", mode,
+                    "--port", str(port),
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
             )
-            barrier.wait(timeout=timeout)
-            results[rank] = body(rank, 2)
-        except BaseException as exc:  # noqa: BLE001 - reported through `errors`
-            errors[rank] = exc
-        finally:
-            if dist.is_initialized():
-                dist.destroy_process_group()
+        )
 
-    threads = [threading.Thread(target=worker, args=(rank,)) for rank in range(2)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join(timeout)
+    results: list[dict] = []
+    try:
+        for rank, proc in enumerate(procs):
+            try:
+                out, err = proc.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                raise AssertionError(
+                    f"rank {rank} never finished: its peers are blocked in a collective the "
+                    f"departed rank will not enter (this is the hang the fix removes). "
+                    f"stderr tail: {(proc.stderr.read() or '')[-600:]}"
+                ) from None
+            assert proc.returncode == 0, f"rank {rank} exited {proc.returncode}: {err[-800:]}"
+            # The result line is the last JSON object on stdout; anything the runtime prints goes
+            # before it and is ignored rather than parsed.
+            line = [ln for ln in out.splitlines() if ln.startswith("{")][-1]
+            results.append(json.loads(line))
+    finally:
+        for proc in procs:
+            if proc.poll() is None:
+                proc.kill()
+                proc.wait(timeout=10)
 
-    assert not any(thread.is_alive() for thread in threads), (
-        "a rank never left the loop: the peers are blocked in a collective the departed rank "
-        "will not enter (this is the hang the fix removes)"
-    )
-
-    for error in errors:
-        if error is not None:
-            raise error
     return results
 
 
-def _ctx_for(rank: int, world: int):
-    return runtime.TPContext(rank, world, torch.device("cpu"), True)
+def _rank_body(rank: int, world: int, mode: str, port: int) -> dict:
+    """One rank's share of the loop, run in its own process.
+
+    `mode` picks the scenario: `raise` is the regression (rank 0's callback throws), `healthy` is
+    the control that must still agree when nothing throws.
+    """
+    import torch.distributed as dist
+
+    dist.init_process_group(
+        backend="gloo",
+        init_method=f"tcp://127.0.0.1:{port}",
+        rank=rank,
+        world_size=world,
+    )
+
+    backend = _backend_without_loading()
+    backend._rank = rank
+    backend._world = world
+    backend._distributed = True
+
+    flag = torch.zeros(1, dtype=torch.int32, device="cpu")
+
+    def on_step() -> bool:
+        # Rank 0's local decision, broadcast: the one collective the loop has per step, and the
+        # same seam `_step_sync` provides. A rank that left without taking part strands its peers.
+        if rank == 0:
+            flag.fill_(1 if backend._callback_failure else 0)
+        dist.broadcast(flag, src=0)
+        return bool(int(flag.item()))
+
+    if mode == "raise":
+
+        def boom(token: int) -> None:
+            raise RuntimeError("streamer failed")
+
+        user_callback = boom if rank == 0 else None
+    else:
+        user_callback = (lambda token: None) if rank == 0 else None
+
+    produced, stats = runtime.generate(
+        _ScriptedModel([3, 4, 5, 6, 7, 8]),
+        runtime.TPContext(rank, world, torch.device("cpu"), True),
+        torch.tensor([[1, 2]], dtype=torch.long),
+        max_new_tokens=8,
+        chunk_size=8,
+        eos_token_ids=(),
+        on_token=backend._rank0_callback(user_callback, "req-tp"),
+        on_step=on_step,
+        local_eos=[False],
+    )
+
+    dist.destroy_process_group()
+    return {
+        "rank": rank,
+        "produced": list(produced),
+        "stopped": stats["stopped"],
+        "failure": [str(e) for e in backend._callback_failure],
+    }
 
 
 def test_a_raising_rank0_callback_does_not_strand_the_other_ranks():
     """The regression: rank 0's callback raises, and every rank still leaves the loop.
 
-    The predicate is a real `dist.broadcast` of rank 0's decision, which is the shape
-    `ShardedWorkerMixin._step_sync` gives this runtime at TP>1. A rank 0 that unwound on the raise
-    would never broadcast again, so the other rank would sit in it until the join timeout above.
+    On the broken code rank 0 unwinds at the callback and never reaches another broadcast, so the
+    other rank sits in `dist.broadcast` until `_run_ranks` times out.
     """
-    import torch.distributed as dist
+    results = _run_ranks("raise")
 
-    def body(rank: int, world: int):
-        backend = _backend_without_loading()
-        backend._rank = rank
-        backend._world = world
-        backend._distributed = True
-
-        flag = torch.zeros(1, dtype=torch.int32, device="cpu")
-
-        def on_step() -> bool:
-            # Rank 0's local decision, broadcast -- the one collective the loop has per step.
-            if rank == 0:
-                flag.fill_(1 if backend._callback_failure else 0)
-            dist.broadcast(flag, src=0)
-            return bool(int(flag.item()))
-
-        def boom(token: int) -> None:
-            raise RuntimeError("streamer failed")
-
-        guarded = backend._rank0_callback(boom if rank == 0 else None, "req-tp")
-
-        return runtime.generate(
-            _ScriptedModel([3, 4, 5, 6, 7, 8]),
-            _ctx_for(rank, world),
-            torch.tensor([[1, 2]], dtype=torch.long),
-            max_new_tokens=8,
-            chunk_size=8,
-            eos_token_ids=(),
-            on_token=guarded,
-            on_step=on_step,
-            local_eos=[False],
+    for result in results:
+        assert result["stopped"] == "cancel", (
+            f"rank {result['rank']} ended as {result['stopped']!r}, not through the agreed "
+            f"cancellation"
         )
+        # Rank 0's failure is acted on at the next step boundary, so at most the one token already
+        # in flight is produced.
+        assert len(result["produced"]) <= 1
 
-    results = _run_two_ranks(body)
-
-    for produced, stats in results:
-        assert stats["stopped"] == "cancel", (
-            f"the loop ended as {stats['stopped']!r}, not through the agreed cancellation"
-        )
-        assert len(produced) <= 1, "rank 0's failure was not acted on until the next step boundary"
+    rank0 = [r for r in results if r["rank"] == 0][0]
+    assert rank0["failure"] == ["streamer failed"], "rank 0 did not record the callback's failure"
 
 
 def test_a_healthy_run_still_agrees_without_a_callback_failure():
-    """The same harness with no raise, so the test above is measuring the raise and not the shape."""
-    import torch.distributed as dist
+    """The same harness with no raise, so the test above measures the raise and not the shape."""
+    results = _run_ranks("healthy")
 
-    def body(rank: int, world: int):
-        backend = _backend_without_loading()
-        backend._rank = rank
-        backend._world = world
-        backend._distributed = True
+    for result in results:
+        assert result["stopped"] == "length", f"rank {result['rank']} stopped early"
+        # Six scripted tokens and an eight-token budget: the model repeats its last one once the
+        # script runs out, so the answer is eight long and both ranks must agree on all of it.
+        assert result["produced"] == [3, 4, 5, 6, 7, 8, 8, 8]
+        assert result["failure"] == []
 
-        stop = [False]
 
-        def on_step() -> bool:
-            return stop[0]
+def _main(argv: list[str]) -> int:
+    """The per-rank entry point `_run_ranks` re-executes this file with."""
+    import argparse
+    import json
 
-        return runtime.generate(
-            _ScriptedModel([3, 4, 5, 6, 7, 8]),
-            _ctx_for(rank, world),
-            torch.tensor([[1, 2]], dtype=torch.long),
-            max_new_tokens=8,
-            chunk_size=8,
-            eos_token_ids=(),
-            on_token=backend._rank0_callback(rank == 0 and (lambda token: None) or None, "req-ok"),
-            on_step=on_step,
-            local_eos=[False],
-        )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rank", type=int, required=True)
+    parser.add_argument("--world", type=int, required=True)
+    parser.add_argument("--mode", required=True)
+    parser.add_argument("--port", type=int, required=True)
+    args = parser.parse_args(argv)
 
-    results = _run_two_ranks(body)
+    result = _rank_body(args.rank, args.world, args.mode, args.port)
+    print(json.dumps(result), flush=True)
+    return 0
 
-    for produced, stats in results:
-        assert stats["stopped"] == "length"
-        assert produced == [3, 4, 5, 6, 7, 8]
+
+if __name__ == "__main__":
+    raise SystemExit(_main(sys.argv[1:]))
