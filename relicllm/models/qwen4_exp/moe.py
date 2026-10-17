@@ -512,3 +512,66 @@ class ShardedMoE:
         mine = (indices % self.world_size) == self.rank
         local = torch.where(mine, indices, torch.full_like(indices, self.inner.num_experts))
         return self.inner(layer_idx, hidden_states, local, weights)
+
+
+class DeviceExpertMoE:
+    """This rank's experts resident on the device; nothing is staged per step.
+
+    The same shard `HostExpertMoE` stages from, held where it is read instead of
+    where it is stored.  It is a *substitution at `_dispatch_experts`'s
+    `expert_weights` seam* rather than a second dispatch loop: grouping, the
+    ascending-id accumulation order, the dequantization at the GEMM and the
+    scatter-add are the host path's, shared rather than reimplemented, so the two
+    modes cannot drift apart in arithmetic while differing in placement.
+
+    What it drops is the staging policy, and with it the whole reason
+    `HostExpertMoE` exists: no `_fetch`, no `_prefetch`, no LRU, no per-expert
+    event or copy stream, because `rows()` already answers with device tensors.
+    `_stage_weight` is the identity here.
+
+    The three counters are kept and stay at zero.  They are not decorative:
+    `/metrics` reads `stage_bytes` / `stage_calls` / `cache_hits` to tell
+    *residency* from *a hot cache*, and a deployment that sizes an LRU to hold
+    every expert it owns stops staging too -- so a zero here is the evidence that
+    the experts are present, not merely being hit.  A backend without the
+    attributes could not be told apart from one that never staged.
+    """
+
+    def __init__(self, shard, num_experts: int, device: torch.device) -> None:
+        self.shard = shard
+        self.num_experts = num_experts
+        self.device = device
+        #: Never incremented: there is no staging on this path, which is the point.
+        self.stage_bytes = 0
+        self.stage_calls = 0
+        self.cache_hits = 0
+        #: No cache, so no capacity -- reported as 0 rather than the shard's expert count so a
+        #: metrics reader cannot mistake residency for an LRU sized to fit.
+        self.cache_capacity = 0
+        self.phase_stats = None
+
+    def expert_weights(self, layer_idx: int, expert_id: int):
+        """One expert's `(gate_up, down)` straight off the card, already there."""
+        if not self.shard.owns(expert_id):
+            raise ValueError(
+                f"expert {expert_id} is not this rank's: rank {self.shard.rank} of "
+                f"{self.shard.world_size} owns ids where id % {self.shard.world_size} "
+                f"== {self.shard.rank}"
+            )
+        return self.shard.rows(layer_idx, expert_id)
+
+    def __call__(
+        self,
+        layer_idx: int,
+        hidden_states: torch.Tensor,
+        indices: torch.Tensor,
+        weights: torch.Tensor,
+    ) -> torch.Tensor:
+        return _dispatch_experts(
+            hidden_states,
+            indices,
+            weights,
+            self.num_experts,
+            lambda expert_id: self.expert_weights(layer_idx, expert_id),
+            stats=self.phase_stats,
+        )

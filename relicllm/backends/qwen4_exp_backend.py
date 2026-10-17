@@ -103,6 +103,22 @@ OPTIONS: tuple[BackendOption, ...] = (
         "hold this rank's expert shard in host RAM rather than reading it from the mapping",
         group=Group.EXPERT,
     ),
+    BackendOption(
+        "expert_resident",
+        Kind.FLAG,
+        False,
+        "hold this rank's expert shard on the *device* instead, so a decode step stages nothing; "
+        "needs the experts to fit on the card, and the loader refuses by name when they do not",
+        group=Group.EXPERT,
+    ),
+    BackendOption(
+        "expert_reserve",
+        Kind.BYTES,
+        3 * (1 << 30),
+        "device memory left free for activations and KV when the experts are device-resident; "
+        "takes a suffix (3g)",
+        group=Group.EXPERT,
+    ),
 )
 
 
@@ -121,6 +137,8 @@ class _Options:
     expert_cache: int = 0
     pin_experts: bool = True
     host_expert_memory: bool = True
+    expert_resident: bool = False
+    expert_reserve: int = 3 << 30
 
     @classmethod
     def from_args(cls, args: Any) -> "_Options":
@@ -133,6 +151,8 @@ class _Options:
             expert_cache=0 if values["expert_cache"] is None else int(values["expert_cache"]),
             pin_experts=bool(values["pin_experts"]),
             host_expert_memory=bool(values["host_expert_memory"]),
+            expert_resident=bool(values["expert_resident"]),
+            expert_reserve=int(values["expert_reserve"]),
         )
 
 
@@ -257,6 +277,8 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             expert_cache_capacity=options.expert_cache,
             host_expert_memory=options.host_expert_memory,
             pin_experts=options.pin_experts,
+            expert_resident=options.expert_resident,
+            expert_reserve_gib=options.expert_reserve / (1 << 30),
         )
         self._build_details()
         if self._tokenizer is None:

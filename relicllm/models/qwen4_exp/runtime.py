@@ -430,6 +430,148 @@ def gather_logits(logits: torch.Tensor, ctx: TPContext) -> torch.Tensor:
     return torch.cat(parts, dim=-1)
 
 
+@dataclass
+class ResidentBudget:
+    """What a device-resident expert shard would cost, measured against what is free.
+
+    A dataclass rather than a bool because the *report* is the point: the caller
+    and the operator both need to know the requirement and the headroom, and a
+    refusal that only says "no" leaves the next box to be sized by guesswork.
+    """
+
+    #: Bytes this rank's share of the routed experts occupies, all layers.
+    experts_bytes: int
+    #: Free device memory before the experts were uploaded -- the budget the run spends out of.
+    free_bytes: int
+    #: Free device memory after the upload, i.e. what the dense weights, KV and activations share.
+    free_after_bytes: int
+    #: Total bytes on the card.
+    total_bytes: int
+
+
+def resident_expert_bytes(
+    config: Qwen4ExpConfig,
+    *,
+    pp_size: int = 1,
+    pp_rank: int = 0,
+    world_size: int = 1,
+) -> int:
+    """Bytes a rank holds if this rank's experts are resident for the whole run.
+
+    Derived from the config and the checkpoint's own layout rather than from a
+    table, so it is a *formula in cards and TP* and not a TP8 constant: one
+    routed expert is `gate_up [2*inter, hidden] + down [hidden, inter]` plus its
+    block scales, this rank owns every `world_size`-th expert of each layer it
+    runs, and under pipeline parallelism it runs only its own layer slice.  At
+    TP8 over 48 layers that is 14.06 GiB; at TP16 with 96 layers it is 7.03 GiB
+    -- the V100 PP16 case, which fits on a 16 GiB card, so the mode is not a
+    24 GiB feature.
+
+    The dtype is read from the config's `quantization_config`: an FP8 checkpoint
+    stores a one-byte code an element (the layout the reader's `expert_bytes`
+    reports), a BF16 one stores two.  Both scale placements are counted -- the
+    128x128 tiles of a block-scaled FP8 checkpoint and a single per-expert
+    scalar -- because the difference is a rounding error next to the codes and a
+    formula that quietly drops one is worse than one that over-counts by 0.1%.
+    """
+    text = config.text_config
+    start, end = layer_range_for(text.num_hidden_layers, pp_size, pp_rank)
+    layers = max(0, end - start)
+    per_rank_experts = (int(text.num_experts) + int(world_size) - 1) // int(world_size) if world_size > 0 else 0
+    if layers == 0 or per_rank_experts == 0:
+        return 0
+
+    inter = int(text.moe_intermediate_size)
+    hidden = int(text.hidden_size)
+    elements = 2 * inter * hidden + hidden * inter
+    spec = config.fp8
+    if spec is None:
+        per_expert_raw = elements * 2
+    else:
+        block = spec.block_size
+        tiles = ((2 * inter) // block[0]) * (hidden // block[1]) + (hidden // block[0]) * (inter // block[1])
+        per_expert_raw = elements + tiles * 2
+    return per_expert_raw * per_rank_experts * layers
+
+
+def require_resident_budget(
+    config: Qwen4ExpConfig,
+    ctx: TPContext,
+    *,
+    reserve_bytes: int,
+    free_at_start: int | None = None,
+) -> ResidentBudget:
+    """Check that the whole run fits, in one place, and refuse if it does not.
+
+    The requirement is the *complete* per-rank footprint: this rank's experts
+    (`experts_bytes`, the formula in :func:`resident_expert_bytes`, which is the
+    only part that moves with TP and the card count) plus `reserve_bytes`, the
+    dense weights, the KV cache and the activations of a run of the intended
+    length.  `reserve_bytes` is a caller's fact and not one this function can
+    derive -- how long the sequences are is decided by the caller, and the dense
+    weight is a constant of the checkpoint that the caller has already measured.
+
+    The measured side is `free_at_start` when the caller has it: free device
+    memory *before* the experts were uploaded.  That is the budget the run is
+    spending out of.  Read after the fill it would already have had
+    `experts_bytes` subtracted, and comparing the requirement against that number
+    would double-count it -- every residency would come out impossible.  Taken
+    here as an argument rather than read from the device for exactly that reason.
+
+    Refusing is the point of the mode: a residency that does not fit must fail
+    with a named error saying what was needed and what was found, rather than OOM
+    several layers into a forward -- on this box that is eight ranks deep and
+    hours into a checkpoint load.
+    """
+    if ctx.device.type != "cuda":
+        return ResidentBudget(0, 0, 0, 0)
+    free_now, total_bytes = (int(v) for v in torch.cuda.mem_get_info(ctx.device))
+    experts_bytes = resident_expert_bytes(
+        config,
+        pp_size=ctx.pp_size,
+        pp_rank=ctx.pp_rank,
+        world_size=ctx.tp_world_size,
+    )
+    measured = int(free_at_start) if free_at_start is not None else free_now
+    if experts_bytes == 0:
+        return ResidentBudget(0, measured, free_now, int(total_bytes))
+    if measured < experts_bytes + reserve_bytes:
+        raise RuntimeError(
+            f"rank {ctx.rank}: {expert_resident_requirement(config, ctx)} -- the experts plus "
+            f"{reserve_bytes / (1 << 30):.2f} GiB held back for the dense weights, KV and "
+            f"activations -- but only {measured / (1 << 30):.2f} GiB of "
+            f"{total_bytes / (1 << 30):.2f} GiB was free on {ctx.device} before the upload. "
+            f"Drop --expert-resident to stage experts from host RAM instead (that is the "
+            f"2080 Ti path and has no device-side expert cost), or use a box with more room "
+            f"a card."
+        )
+    return ResidentBudget(int(experts_bytes), measured, free_now, int(total_bytes))
+
+
+def expert_resident_requirement(config: Qwen4ExpConfig, ctx: TPContext) -> str:
+    """The resident requirement as a sentence, in the units a plan is made in.
+
+    Reported as a formula in cards and TP rather than as a TP8 constant, because
+    the question the caller has is "does this fit *here*", and the answer moves
+    with both: one expert is 4.6881 MiB, a rank holds `num_experts / TP` of them a
+    layer over its share of the layers, so TP8 over 48 layers is 14.06 GiB a rank
+    and TP16 over 96 layers is 7.03 GiB -- which is why the mode is not a
+    24 GiB-only feature and belongs on a V100 PP16 box as much as on a 3090.
+    """
+    text = config.text_config
+    start, end = ctx.layer_range
+    layers = max(0, end - start)
+    per_rank = max(1, int(text.num_experts) // max(1, ctx.tp_world_size))
+    gib = resident_expert_bytes(
+        config, pp_size=ctx.pp_size, pp_rank=ctx.pp_rank, world_size=ctx.tp_world_size
+    ) / (1 << 30)
+    return (
+        f"device-resident experts need {gib:.2f} GiB "
+        f"({int(text.num_experts)} experts / {ctx.tp_world_size} way tensor parallel "
+        f"= {per_rank} a rank x {layers} layers)"
+    )
+
+
 def load_model(
     model_dir: str,
     ctx: TPContext,
@@ -438,18 +580,40 @@ def load_model(
     expert_cache_capacity: int = 0,
     host_expert_memory: bool = True,
     pin_experts: bool = True,
+    expert_resident: bool = False,
+    expert_reserve_bytes: int = 3 << 30,
     profiler=None,
 ) -> tuple[Qwen4ExpModel, Qwen4ExpConfig]:
     _configure_cpu_affinity(ctx)
     config = Qwen4ExpConfig.from_pretrained(model_dir)
     ctx.num_layers = config.text_config.num_hidden_layers
     checkpoint = Qwen4ExpCheckpoint(model_dir, store=MmapSafetensors(model_dir))
+    # The resident mode *is* a placement, so it implies the host preload machinery
+    # and replaces its destination rather than running beside it: there is no
+    # separate "resident shard" and "host shard", only the one shard this rank
+    # owns, and where it was put.
+    if expert_resident:
+        host_expert_memory = True
     if host_expert_memory:
         # Pull this rank's routed experts off the disk-backed mapping and into
         # host RAM before any step runs, so steady-state staging never seeks.
         import torch.distributed as dist
 
         distributed = ctx.world_size > 1 and dist.is_initialized()
+        # Where this rank's experts go.  The host bank is the 2080 Ti path and is
+        # what the staging machinery exists for; the device bank is the same shard
+        # with a different destination, and `build_heterogeneous` picks the backend
+        # from this placement rather than from a flag of its own.
+        shard_device = ctx.device if expert_resident else None
+        # Free memory *before* any of this rank's experts land.  The check needs the budget
+        # the run is spending out of, not what is left after it has spent it -- measured
+        # afterwards, the requirement would be compared against a number that had already
+        # had the requirement subtracted from it, and every residency would look impossible.
+        free_at_start = (
+            int(torch.cuda.mem_get_info(ctx.device)[0])
+            if shard_device is not None
+            else None
+        )
         started = time.perf_counter()
         # Under pipeline parallelism a rank owns its stage's layers and nothing within them is
         # split, so it preloads every expert of those layers: `world_size=1` here is the expert
@@ -462,20 +626,40 @@ def load_model(
             world_size=ctx.tp_world_size,
             layer_range=ctx.layer_range if ctx.pp_size > 1 else None,
             pin=pin_experts,
+            device=shard_device,
             progress=ctx.rank == 0 and os.environ.get("QWEN4EXP_PRELOAD_PROGRESS") == "1",
             barrier=dist.barrier if distributed else None,
         )
         elapsed = time.perf_counter() - started
         start, end = ctx.layer_range
+        where = "device" if shard_device is not None else ("pinned" if shard.pinned else "pageable")
         print(
             f"[qwen4exp] rank {ctx.rank}: {shard.num_local_experts} experts/layer "
             f"x {shard.stats()['layers']} layers resident, "
             f"{shard.resident_bytes / (1 << 30):.2f} GiB "
-            f"({'pinned' if shard.pinned else 'pageable'}) in {elapsed:.1f}s"
+            f"({where}) in {elapsed:.1f}s"
             + (f" (pipeline stage {ctx.pp_rank}/{ctx.pp_size}, layers {start}:{end})"
                if ctx.pp_size > 1 else ""),
             flush=True,
         )
+        # The fill has happened by now, so this is the report and the *second* half of the
+        # check: `free_at_start` is what the run had to spend, and what is left here is what
+        # the dense weights and the KV will have to share.  A residency that does not fit
+        # says so at this point rather than OOM eight ranks deep in a forward.
+        if expert_resident:
+            budget = require_resident_budget(
+                config,
+                ctx,
+                reserve_bytes=int(expert_reserve_bytes),
+                free_at_start=free_at_start,
+            )
+            print(
+                f"[qwen4exp] rank {ctx.rank}: resident experts {budget.experts_bytes / (1 << 30):.2f} GiB, "
+                f"{budget.free_after_bytes / (1 << 30):.2f} GiB left of "
+                f"{budget.total_bytes / (1 << 30):.2f} GiB after the fill, "
+                f"{expert_reserve_bytes / (1 << 30):.1f} GiB held back for activations",
+                flush=True,
+            )
         if distributed:
             dist.barrier()
     model = build_heterogeneous(
@@ -652,6 +836,8 @@ def run_tp4(
     expert_cache_capacity: int = 0,
     host_expert_memory: bool = True,
     pin_experts: bool = True,
+    expert_resident: bool = False,
+    expert_reserve_bytes: int = 3 << 30,
     raw_prompt: bool = False,
     enable_profile: bool = False,
 ) -> dict:
@@ -671,6 +857,8 @@ def run_tp4(
         expert_cache_capacity=expert_cache_capacity,
         host_expert_memory=host_expert_memory,
         pin_experts=pin_experts,
+        expert_resident=expert_resident,
+        expert_reserve_bytes=expert_reserve_bytes,
         profiler=profiler,
     )
     load_s = time.perf_counter() - t0
@@ -709,14 +897,25 @@ def run_tp4(
 
         if moe_phase_profile and getattr(moe_backend, "phase_stats", None):
             ps = moe_backend.phase_stats
-            staged = moe_backend.stage_calls
-            hits = moe_backend.cache_hits
-            gib = moe_backend.stage_bytes / 2**30
             print(
                 "\n[rank0] moe phases: "
                 f"stage {ps.get('stage_s', 0.0):.3f}s  "
                 f"compute {ps.get('compute_s', 0.0):.3f}s  "
-                f"expert-calls {ps.get('experts', 0)} over {ps.get('calls', 0)} moe calls\n"
+                f"expert-calls {ps.get('experts', 0)} over {ps.get('calls', 0)} moe calls",
+                flush=True,
+            )
+
+        # Always, profiled or not.  `--profile` suppresses `_prefetch` and switches
+        # `_dispatch_experts` to a synchronizing path, so a profiled run cannot say what the
+        # counters would have been -- the run that reports them is exactly the run that
+        # destroyed what they measure.  The values are not gated; only this print was, and an
+        # acceptance criterion that needs `stage_bytes == 0` has to be readable off the run it
+        # is a criterion for.
+        if moe_backend is not None and hasattr(moe_backend, "stage_calls"):
+            staged = moe_backend.stage_calls
+            hits = moe_backend.cache_hits
+            gib = moe_backend.stage_bytes / 2**30
+            print(
                 f"[rank0] staging: {staged} misses / {hits} hits "
                 f"({100.0 * hits / max(1, staged + hits):.1f}% hit), {gib:.2f} GiB H2D",
                 flush=True,
@@ -761,6 +960,21 @@ def main() -> None:
     )
     parser.add_argument("--raw-prompt", action="store_true", help="skip the chat template")
     parser.add_argument("--profile", action="store_true", help="enable hierarchical profiler")
+    parser.add_argument(
+        "--expert-resident",
+        action="store_true",
+        help=(
+            "hold this rank's routed experts on the device instead of in host RAM, so a decode "
+            "step stages nothing (experts must fit on the card; see --expert-reserve-gib). "
+            "Off by default: the 2080 Ti path stages from host and has no device-side expert cost"
+        ),
+    )
+    parser.add_argument(
+        "--expert-reserve-gib",
+        type=float,
+        default=3.0,
+        help="device memory to leave free for activations and KV under --expert-resident",
+    )
     args = parser.parse_args()
 
     prompt = args.prompt
@@ -777,6 +991,8 @@ def main() -> None:
         expert_cache_capacity=args.expert_cache,
         host_expert_memory=not args.mmap_experts,
         pin_experts=not args.pageable_experts,
+        expert_resident=args.expert_resident,
+        expert_reserve_bytes=int(args.expert_reserve_gib * (1 << 30)),
         raw_prompt=args.raw_prompt,
         enable_profile=args.profile,
     )

@@ -58,6 +58,17 @@ class HostExpertShard:
     so a layer holds four tensors instead of two.  They are still allocated as
     one group: a shard where the codes are pinned and the scales are not would
     stall every staging copy on the unpinned half.
+
+    ``device`` turns the shard from a *host* bank into a device-resident one.
+    It is the whole of what the resident mode needs on this side: the layout is
+    already per-layer and per-local-expert, so the same four buffers and the
+    same ``rows()`` serve either placement, and the only difference is which
+    device they are allocated on.  ``pin_memory`` is a host concept and is
+    ignored when a device is named -- pinned memory is what makes an
+    asynchronous H2D copy cheap, and a resident shard does not copy at all.
+    Codes and scales stay quantized on the card and are dequantized at the
+    GEMM, exactly as the host path does; expanding them to bf16 would be
+    28 GiB a rank and would not fit on a 24 GiB card.
     """
 
     def __init__(
@@ -67,13 +78,20 @@ class HostExpertShard:
         rank: int = 0,
         world_size: int = 1,
         pin_memory: bool = True,
+        device: torch.device | str | None = None,
     ) -> None:
         if world_size < 1 or not (0 <= rank < world_size):
             raise ValueError(f"bad shard placement: rank={rank} world_size={world_size}")
         self.num_layers = int(num_layers)
         self.rank = int(rank)
         self.world_size = int(world_size)
-        self.pin_requested = bool(pin_memory)
+        #: ``None`` is the host bank every configuration had before the resident mode, which is why
+        #: it stays the default: the Turing boxes that need staging must not change behaviour
+        #: because a big-memory box gained a mode.
+        self.device = None if device is None else torch.device(device)
+        # A resident shard is not pinned: it is not staged from, so there is no copy for pinning to
+        # accelerate, and a pinned 14 GiB buffer would just hold locked host pages for nothing.
+        self.pin_requested = bool(pin_memory) and self.device is None
         self.pinned = False
         self.resident_bytes = 0
         self.num_local_experts = 0
@@ -132,7 +150,13 @@ class HostExpertShard:
         Allocating them one at a time could leave a layer half-pinned if the
         memlock limit is hit partway through, so a failure on any of them
         discards the whole group and the layer is retried as pageable.
+
+        On a resident shard the group is allocated on ``self.device`` instead and
+        ``pinned`` stays False: the flag means "these are page-locked host
+        buffers", which is a claim about a host bank this shard is not.
         """
+        if self.device is not None:
+            return [torch.empty(shape, dtype=dtype, device=self.device) for shape, dtype in specs]
         if self.pin_requested:
             allocated: list[torch.Tensor] = []
             try:
@@ -173,8 +197,8 @@ class HostExpertShard:
         # backing store is a mechanical disk, so ordering matters more than
         # parallelism here.
         for local, expert_id in enumerate(ids):
-            gate_up[local].copy_(gate_up_all[expert_id])
-            down[local].copy_(down_all[expert_id])
+            self._copy_row(gate_up[local], gate_up_all[expert_id])
+            self._copy_row(down[local], down_all[expert_id])
         self._gate_up[layer_idx] = gate_up
         self._down[layer_idx] = down
         self._loaded.add(layer_idx)
@@ -217,10 +241,10 @@ class HostExpertShard:
         gate_up, down, gate_up_scale, down_scale = buffers
         for local, expert_id in enumerate(ids):
             pair = (first_gate_up, first_down) if local == 0 else expert_reader(expert_id)
-            gate_up[local].copy_(pair[0].code)
-            gate_up_scale[local].copy_(pair[0].scale)
-            down[local].copy_(pair[1].code)
-            down_scale[local].copy_(pair[1].scale)
+            self._copy_row(gate_up[local], pair[0].code)
+            self._copy_row(gate_up_scale[local], pair[0].scale)
+            self._copy_row(down[local], pair[1].code)
+            self._copy_row(down_scale[local], pair[1].scale)
         self._gate_up[layer_idx] = gate_up
         self._down[layer_idx] = down
         self._gate_up_scale[layer_idx] = gate_up_scale
@@ -231,6 +255,25 @@ class HostExpertShard:
         copied = sum(t.numel() * t.element_size() for t in buffers)
         self.resident_bytes += copied
         return copied
+
+    def _copy_row(self, destination: torch.Tensor, source: torch.Tensor) -> None:
+        """One expert's row of one buffer into this shard's placement of it.
+
+        The host bank's ``copy_`` is unchanged.  A resident shard crosses PCIe once per row,
+        and does it with ``non_blocking=True``: this runs outside any ``torch.cuda.stream``
+        context, so a blocking copy would be one synchronise per expert row -- 1536 of them a
+        layer at TP16, which is the difference between a preload bounded by the link and one
+        bounded by round-trip latency.  Pageable host memory still makes the driver stage it,
+        so this is about not waiting on each row, not about overlapping it.
+
+        Deliberately one hop: ``source.to(device, non_blocking=True)`` first and then a
+        ``copy_`` into the destination would be two, and would allocate a temporary the size of
+        an expert row per call for the caching allocator to churn through.
+        """
+        if self.device is None:
+            destination.copy_(source)
+            return
+        destination.copy_(source, non_blocking=True)
 
     # -- access -----------------------------------------------------------
 
@@ -273,6 +316,7 @@ class HostExpertShard:
             "resident_bytes": self.resident_bytes,
             "pinned": self.pinned,
             "fp8": self.is_fp8,
+            "device": None if self.device is None else str(self.device),
         }
 
 
@@ -372,6 +416,7 @@ class Qwen4ExpCheckpoint:
         progress: bool = False,
         barrier=None,
         release_mapping: bool = True,
+        device: torch.device | str | None = None,
     ) -> HostExpertShard:
         """Copy this rank's routed experts into host RAM and serve them from there.
 
@@ -392,12 +437,21 @@ class Qwen4ExpCheckpoint:
 
         `num_experts` is only consulted for an FP8 checkpoint, where the expert
         count cannot be read off a packed tensor's leading dimension.
+
+        `device` names where the shard *lands*.  Left None it is the host bank
+        this method has always filled; given a device, the same rows are filled
+        into device buffers instead and `pin` is ignored, which is what makes
+        this rank's experts resident for the whole run rather than a source to
+        stage from.  The layer loop, the barrier and the `advise_dontneed` are
+        unchanged either way -- releasing the mapped pages matters more, not
+        less, when the copy that just read them went to the card.
         """
         shard = HostExpertShard(
             num_layers=num_layers,
             rank=rank,
             world_size=world_size,
             pin_memory=pin,
+            device=device,
         )
         # Only this stage's layers under pipeline parallelism. Without it a rank would preload an
         # expert set for layers it never runs -- at PP16 that is the whole 112 GiB of host RAM per

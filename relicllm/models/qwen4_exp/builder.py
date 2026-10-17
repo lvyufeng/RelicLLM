@@ -21,7 +21,12 @@ from relicllm.models.qwen4_exp.model import (
     Qwen4ExpModel,
     TPShard,
 )
-from relicllm.models.qwen4_exp.moe import HostExpertMoE, InMemoryMoE, ShardedMoE
+from relicllm.models.qwen4_exp.moe import (
+    DeviceExpertMoE,
+    HostExpertMoE,
+    InMemoryMoE,
+    ShardedMoE,
+)
 from relicllm.models.qwen4_exp.weights import (
     DeviceEmbedding,
     HostEmbedding,
@@ -309,13 +314,26 @@ def build_heterogeneous(
         linear_k_heads=config.linear_num_key_heads // world_size,
     )
 
-    inner_moe = HostExpertMoE(
-        checkpoint,
-        config.num_experts,
-        device,
-        dtype,
-        cache_capacity=expert_cache_capacity,
-    )
+    # The resident mode takes the *same* shard and drops the staging policy: the
+    # `expert_weights` seam is the only thing that changes, so the dispatch loop,
+    # the accumulation order and the dequantization are shared with the host path
+    # rather than reimplemented.  It is selected on the shard's *placement* rather
+    # than on a flag of its own -- `preload_experts` was told where to put this
+    # rank's experts, and only a device-resident shard can answer `rows()` with
+    # device tensors.  That keeps the two paths from being able to disagree: there
+    # is one decision, made where the bytes are, and a host shard can only ever
+    # produce the host backend.
+    expert_shard = getattr(checkpoint, "expert_shard", None)
+    if expert_shard is not None and getattr(expert_shard, "device", None) is not None:
+        inner_moe = DeviceExpertMoE(expert_shard, config.num_experts, device)
+    else:
+        inner_moe = HostExpertMoE(
+            checkpoint,
+            config.num_experts,
+            device,
+            dtype,
+            cache_capacity=expert_cache_capacity,
+        )
     moe = ShardedMoE(inner_moe, rank, world_size) if world_size > 1 else inner_moe
 
     # Under pipeline parallelism this rank builds only its own stage's layers and leaves a `None`
