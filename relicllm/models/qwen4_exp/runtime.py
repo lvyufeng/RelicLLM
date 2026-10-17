@@ -769,6 +769,12 @@ def generate(
             if t_first is None:
                 t_first = time.perf_counter() - t1
             if on_token is not None and ctx.rank == 0:
+                # Rank 0 alone, and that is a collective hazard rather than an optimisation: every
+                # other rank has already left this line for the next step's collective, so a
+                # callback that raises here unwinds rank 0 out of a broadcast its peers are waiting
+                # in. The caller owns making it safe -- `Qwen4ExpBackend._rank0_callback` catches
+                # and turns it into a `cancel()` that `on_step` broadcasts -- because only the
+                # caller knows what the failure means for the request.
                 on_token(token)
             if token in eos_token_ids:
                 if local_eos is None:

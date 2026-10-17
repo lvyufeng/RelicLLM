@@ -193,6 +193,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         self._rank = 0
         self._distributed = False
         self._details: dict[str, Any] = {}
+        #: What the rank-0 token callback raised, held until the group has unwound so it can be
+        #: re-raised from the request that owns it. See :meth:`_rank0_callback` for why it cannot
+        #: be raised where it was caught.
+        self._callback_failure: list[BaseException] = []
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -464,14 +468,68 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             max_new_tokens=budget,
             chunk_size=self._options.prefill_chunk,
             eos_token_ids=tuple(sorted(self._eos_tokens())),
-            on_token=on_token,
+            on_token=self._rank0_callback(on_token, request.request_id),
             on_step=self._step_sync(
                 request.request_id,
                 None if stop is None else (lambda: stop() or local_eos[0]),
             ),
             local_eos=local_eos,
         )
+        # The callback's exception has to leave here rather than from inside the loop: by the time
+        # it is recorded the ranks have unwound together, and this is the frame that owns the
+        # request. Raising it from the callback is the hang `_rank0_callback` documents.
+        self._raise_callback_failure()
         return _Generation.from_stats(tokens, stats)
+
+    def _rank0_callback(
+        self, on_token: Callable[[int], None] | None, request_id: str
+    ) -> Callable[[int], None] | None:
+        """Wrap the token callback so a failure stops the group, not just rank 0.
+
+        ``on_token`` runs on rank 0 alone -- the loop calls it under ``ctx.rank == 0`` and every
+        other rank has already moved on to the *next* step's collective -- so an exception escaping
+        it unwinds rank 0 out of a broadcast its peers are already waiting in. The request does not
+        fail; it hangs, and then the watchdog kills the process:
+
+            WorkNCCL(OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+            ran for 600000 milliseconds before timing out.
+
+        That shape is shared with the end-of-sequence bug ``local_eos`` fixes, but it is a second,
+        independent exit: ``local_eos`` covers a token *disagreement*, and this covers one rank
+        raising where the others cannot see it. Measured on 8 x RTX 4090 by injecting a raise at
+        the callback: rank 0 went idle at 0% utilization while the other seven spun at 100% until
+        the watchdog fired, and a second request to the still-``ready`` server never returned.
+
+        The exception is recorded and translated into a ``cancel()``, which is the one channel that
+        reaches the other ranks: :meth:`ShardedWorkerMixin._step_sync` broadcasts rank 0's
+        cancellation flag at the top of the next step, so every rank leaves at a boundary they all
+        arrive at. The failed step is still forwarded and its ``forward`` still runs -- dropping out
+        *here* is the desync this method exists to remove. The recorded exception is re-raised by
+        the caller once the group has unwound, because it cannot be raised in place for the same
+        reason it cannot be allowed to propagate.
+        """
+        if on_token is None:
+            return None
+
+        def guarded(token: int) -> None:
+            # Once a failure is recorded the callback stays silent: the loop is only running out
+            # the steps every rank must still take, and a second raise would be noise on top of a
+            # request that is already ending.
+            if self._callback_failure:
+                return
+            try:
+                on_token(token)
+            except Exception as exc:  # noqa: BLE001 -- catching everything is the point
+                self._callback_failure.append(exc)
+                self.cancel(request_id)
+
+        return guarded
+
+    def _raise_callback_failure(self) -> None:
+        """Re-raise what :meth:`_rank0_callback` recorded, once the group has unwound."""
+        if not self._callback_failure:
+            return
+        raise self._callback_failure.pop()
 
     def _run_payload(self, payload: Mapping[str, Any]) -> None:
         """Run the same loop rank 0 is running, for the collective's sake and not for its answer.
