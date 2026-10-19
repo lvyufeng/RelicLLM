@@ -70,6 +70,47 @@ def _expert_matrix(
     return weight
 
 
+def _run_experts_fixed(
+    hidden_states: torch.Tensor,
+    weights: torch.Tensor,
+    indices: torch.Tensor,
+    num_experts: int,
+    expert_rows,
+    *,
+    compute_dtype: torch.dtype | None = None,
+) -> torch.Tensor:
+    """One token's top-k experts with a fixed amount of work and no host read.
+
+    `_dispatch_experts` brings the routing back to the host twice (`unique.tolist()` and
+    `counts.tolist()`) and then runs a Python loop whose length is how many *distinct* experts the
+    token drew. Neither is needed: the slot count is `top_k` whatever the draw, so the work can be
+    fixed and the loop replaced by `top_k` bound Python calls that are identical every step, which
+    is what a captured graph holds. The arithmetic is the same as the loop's, slot by slot.
+
+    `expert_rows(expert_id)` answers one expert's `(gate_up, down)` -- dense, `FP8Tensor`s or
+    fp16, cast by `swiglu_expert`'s caller (`_expert_matrix`) as before. An id at or past
+    `num_experts` is another rank's expert (`ShardedMoE`'s sentinel): it reads a row that the slot's
+    zero weight multiplies out, which is the same answer the loop gets by skipping it.
+    """
+    top_k = int(indices.numel())
+    flat = indices.reshape(-1)
+    local = int(expert_rows.local_experts)
+    rows = torch.where(flat < num_experts, flat, torch.zeros_like(flat)).clamp_(0, local - 1)
+    owned = torch.where(
+        flat < num_experts, torch.ones_like(flat), torch.zeros_like(flat)
+    ).to(weights.dtype)
+    out = torch.zeros_like(hidden_states)
+    for slot in range(top_k):
+        local_row = int(rows[slot])
+        gate_up, down = expert_rows(local_row)
+        gate_up = _expert_matrix(gate_up, compute_dtype, hidden_states.dtype)
+        down = _expert_matrix(down, compute_dtype, hidden_states.dtype)
+        contrib = swiglu_expert(hidden_states, gate_up, down)
+        weight = weights.reshape(-1)[slot].to(contrib.dtype) * owned[slot].to(contrib.dtype)
+        out.index_add_(0, torch.zeros_like(flat[:1]), (contrib * weight).to(out.dtype))
+    return out
+
+
 def _dispatch_experts(
     hidden_states: torch.Tensor,
     indices: torch.Tensor,
@@ -567,6 +608,29 @@ class DeviceExpertMoE:
         indices: torch.Tensor,
         weights: torch.Tensor,
     ) -> torch.Tensor:
+        if (
+            hidden_states.shape[0] == 1
+            and self.phase_stats is None
+            and os.environ.get("POCKETLLM_QWEN4_MOE_FIXED", "1").lower() in {"1", "true", "yes"}
+        ):
+            # A decode step: `top_k` bound calls whatever the draw, and no host read, which is the
+            # shape a captured graph needs. The arithmetic is the loop's, slot by slot
+            # (tests/test_qwen4_exp_moe_fixed.py); it buys ~10% at ten distinct experts, and the
+            # fixed work is what a graph would then remove the launch overhead from.
+            def rows(local_row: int):
+                gate_up, down = self.shard.layer_tensors(layer_idx)
+                if isinstance(gate_up, FP8Tensor):
+                    gate_up = FP8Tensor(
+                        gate_up.code[local_row], gate_up.scale[local_row], gate_up.block
+                    )
+                    down = FP8Tensor(down.code[local_row], down.scale[local_row], down.block)
+                    return gate_up, down
+                return gate_up[local_row], down[local_row]
+
+            rows.local_experts = int(self.shard.layer_tensors(layer_idx)[0].shape[0])
+            return _run_experts_fixed(
+                hidden_states, weights, indices, self.num_experts, rows
+            )
         return _dispatch_experts(
             hidden_states,
             indices,
