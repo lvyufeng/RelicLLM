@@ -711,8 +711,23 @@ Restoring the cache between positions was tried in several forms -- snapshot and
 of each layer's `length`, of the linear layers' recurrent state and `initialized` flag, of the PLE
 history, plus pre-growing the rotary table so the graphs' recorded addresses survive, plus blanking
 the tail past each position. With one position the answer is right; with two it is not, and with
-all graphs sharing a pool it is a segfault. What would make it work is a forward that does not
-allocate per call, which is a rewrite of the decode path rather than a fix.
+all graphs sharing a pool it is a segfault.
+
+Cloning the cache per position is the closest this got: three positions then replay correctly
+(`[1144, 1144, 1144]`, matching eager), which is what named the shared cache as the cause. It is
+still not a decode. A clone seeded from the window's opening state is missing every position the
+window has already decoded, and the answer repeats itself (`'We!!"! I am Qwen is Qwen is Qwen'`);
+seeding each clone from the previous one instead makes it worse (`'WeWeWeWeWeWe...'`), because the
+capture has to freeze the token at each position and the token is what the step before it has yet
+to produce.
+
+That is the shape of the problem: an autoregressive decode's step reads a history its own
+predecessor writes, and a graph freezes the addresses it read. The versions that work in the field
+put the position on the device -- `past_len` as a tensor rather than a Python int -- so one graph
+serves every position. Here the rope and the causal mask already accept a tensor
+(`attention.py:557`), but the KV cache is written and read by slicing to `past_len`
+(`attention.py:502`, `:660`), and a slice needs an int. Moving that is a change to the cache's
+addressing, not a flag.
 
 `--graph-window` therefore stays at 0 and is marked experimental. The pieces it needed -- the
 warmup that keeps cuBLAS's algorithm selection out of the capture, the cache save/restore, and a

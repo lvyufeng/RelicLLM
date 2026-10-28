@@ -982,6 +982,9 @@ def generate(
                 # graph writes.  `past` advances because this position is spent either way.
                 _t_a = time.perf_counter()
                 next_id = window.replay(past, next_id.to(ctx.device))
+                # The position's cache clone is what the next one is cloned from, so it has to be
+                # handed back before the generation moves on.
+                window.commit(past)
                 _step_s += time.perf_counter() - _t_a
                 past += 1
                 continue
