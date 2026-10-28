@@ -653,6 +653,24 @@ class Qwen4ExpModel:
                 layer._phased_hc = layer._phased_attn = layer._phased_moe = layer._phased_route = None
         return h
 
+    def _pinned_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+        """`input_ids` in host memory, through a buffer whose address a graph can keep.
+
+        One row a step, so the buffer is sized per call and kept: a token id is 8 bytes and this
+        runs once a forward, which is not worth a growing pool to avoid allocating.
+        """
+        width = int(input_ids.shape[1])
+        buffer = self.__dict__.get("_ids_pinned")
+        if buffer is None or buffer.shape[1] < width:
+            # Allocated outside inference mode: a buffer made inside it is an inference tensor,
+            # and an inference tensor refuses the in-place update the next call makes.
+            with torch.inference_mode(False):
+                buffer = torch.empty(1, width, dtype=torch.long, pin_memory=True)
+            self.__dict__["_ids_pinned"] = buffer
+        pinned = buffer[:, :width]
+        pinned.copy_(input_ids, non_blocking=True)
+        return pinned
+
     def _forward_by_layer(
         self,
         hidden: torch.Tensor,
@@ -702,8 +720,10 @@ class Qwen4ExpModel:
         if any(layer is not None and layer.ple is not None for layer in self.layers):
             with prof_scope("token_history"):
                 # Token ids and the n-gram hash live on the CPU (the PLE table is
-                # host-resident), so keep the history there too.
-                ids_cpu = input_ids.to("cpu", dtype=torch.long)
+                # host-resident), so keep the history there too.  The crossing goes into a pinned
+                # buffer: a pageable one is a copy the driver stages through the CPU, and a
+                # captured step refuses it outright rather than slow down for it.
+                ids_cpu = self._pinned_ids(input_ids)
                 if cache is not None and cache.ple_token_history is not None:
                     token_history = torch.cat([cache.ple_token_history, ids_cpu], dim=1)
                 else:

@@ -713,20 +713,32 @@ class HostNGramTable:
             [s.view(torch.uint8) for s in shards] if self.is_fp8 else shards
         )
         self._gather_dtype = torch.uint8 if self.is_fp8 else shards[0].dtype
+        #: The pinned host buffer the gathered rows are written into; see `_host_rows`.
+        self._rows_buffer: torch.Tensor | None = None
 
     def __call__(self, row_ids: torch.Tensor) -> torch.Tensor:
         """row_ids: (..., ngram_heads) -> (..., ngram_heads, head_dim) on device."""
+        rows = int(row_ids.numel() // row_ids.shape[-1]) * int(row_ids.shape[-1])
         flat = row_ids.reshape(-1).to("cpu", dtype=torch.long)
-        out = torch.empty(flat.shape[0], self.head_dim, dtype=self._gather_dtype)
+        out = self._host_rows(rows)
         self._gather_into(flat, out)
         return self._to_device(out).reshape(*row_ids.shape, self.head_dim)
 
-    def _call_eager(self, row_ids: torch.Tensor) -> torch.Tensor:
-        """The step as written: allocate, gather, copy.  Used wherever a step is not captured."""
-        flat = row_ids.reshape(-1).to("cpu", dtype=torch.long)
-        out = torch.empty(flat.shape[0], self.head_dim, dtype=self._gather_dtype)
-        self._gather_into(flat, out)
-        return self._to_device(out).reshape(*row_ids.shape, self.head_dim)
+    def _host_rows(self, rows: int) -> torch.Tensor:
+        """The host buffer the gathered rows land in, pinned and kept across calls.
+
+        A decode step reads `ngram_heads` rows, several kilobytes, and the crossing back to the
+        device is the only part of this table a step pays for.  Pinned memory makes that crossing
+        one copy instead of a staged one, and keeping the buffer makes its address the same every
+        step -- which is what lets a captured graph replay the copy at all.
+        """
+        buffer = self._rows_buffer
+        if buffer is None or buffer.shape[0] < rows:
+            with torch.inference_mode(False):
+                buffer = torch.empty(rows, self.head_dim, dtype=self._gather_dtype,
+                                     pin_memory=True)
+            self._rows_buffer = buffer
+        return buffer[:rows]
 
     def _gather_into(self, flat: torch.Tensor, out: torch.Tensor) -> None:
         """Fill `out` with the rows `flat` names, shard by shard."""

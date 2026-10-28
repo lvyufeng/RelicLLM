@@ -526,7 +526,11 @@ def build_heterogeneous(
     return Qwen4ExpModel(
         config,
         layers,
-        embed_tokens=HostEmbedding(embed_weight, device=device, dtype=dtype) if owns_embedding else None,
+        # The token embedding goes on the card, not in host RAM.  It is 1.18 GiB and a decode
+        # step reads one row of it; keeping it on the host makes every step cross PCIe for that
+        # row, and an unpinned crossing is one a captured graph will not record.  The card has
+        # the room: on 8x3090 the resident experts leave 9.2 GiB free a rank.
+        embed_tokens=DeviceEmbedding(embed_weight.to(device, dtype=dtype)) if owns_embedding else None,
         lm_head=lm_head,
         final_mixer=final_mixer,
         device=device,
