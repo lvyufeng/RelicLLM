@@ -44,6 +44,45 @@ __all__ = [
 ]
 
 
+def _gate_up_plane_shape(row_shape: torch.Size) -> tuple[int, ...]:
+    """`[2*inter, hidden]` codes as `[ceil(hidden/16), 2*inter, 16]`, the fused kernel's plane."""
+    rows, cols = row_shape
+    if cols % 16:
+        raise ValueError(f"a packed gate/up plane needs a hidden size of a multiple of 16, got {cols}")
+    return (cols // 16, rows, 16)
+
+
+def pack_gate_up_plane(codes: torch.Tensor, out: torch.Tensor, *, device=None) -> None:
+    """Write `[..., 2*inter, hidden]` e4m3 codes into `out`'s plane layout, one 16-code chunk at a time.
+
+    The transposition `relic_core`'s `qwen4_exp_fp8_pack_t` does on the card, done here without a
+    second copy of the rows: each chunk is a view the reader assembles into a buffer the shard
+    already owns, which is the point -- a resident rank has no memory to spare for the row copy
+    *and* the plane.
+
+    Both sides are handled as bytes.  A `float8_e4m3fn` permute is a *value* gather -- this torch
+    stores a viewed e4m3 with its low bit in the sign position, and promotes it back through a
+    scalar loop -- which is both lossy and slow; the planes are copied, so the codes have to be
+    read and written as the bytes they are.
+    """
+    rows, cols = codes.shape[-2:]
+    chunks = cols // 16
+    lead = codes.shape[:-2]
+    flat = out.reshape(*lead, chunks, rows, 16)
+    source = codes.view(torch.uint8).reshape(*lead, rows, chunks, 16)
+    target = flat.view(torch.uint8)
+    target.copy_(source.permute(*range(len(lead)), -2, -3, -1), non_blocking=device is not None)
+
+
+def unpack_gate_up_plane(planes: torch.Tensor) -> torch.Tensor:
+    """`[..., ceil(hidden/16), 2*inter, 16]` planes back to the row layout `[..., 2*inter, hidden]`."""
+    lead = planes.shape[:-3]
+    chunks, rows, width = planes.shape[-3:]
+    out = torch.empty(*lead, rows, chunks * width, dtype=torch.uint8, device=planes.device)
+    out.view(*lead, rows, chunks, width).copy_(planes.view(torch.uint8).permute(*range(len(lead)), -2, -3, -1))
+    return out.view(torch.float8_e4m3fn)
+
+
 class HostExpertShard:
     """This rank's routed experts, copied out of the mapping into host RAM.
 
@@ -79,9 +118,15 @@ class HostExpertShard:
         world_size: int = 1,
         pin_memory: bool = True,
         device: torch.device | str | None = None,
+        packed_gate_up: bool = False,
     ) -> None:
         if world_size < 1 or not (0 <= rank < world_size):
             raise ValueError(f"bad shard placement: rank={rank} world_size={world_size}")
+        #: Store gate/up in the fused kernel's plane layout instead of `[2*inter, hidden]`.  The
+        #: fused decode reads that layout, and holding both would double a resident layer; so it is
+        #: a property of how the layer is *written*, chosen before the first copy, and
+        #: `layer_tensors` still answers with the row layout by reading the planes back.
+        self.packed_gate_up = bool(packed_gate_up)
         self.num_layers = int(num_layers)
         self.rank = int(rank)
         self.world_size = int(world_size)
@@ -230,9 +275,12 @@ class HostExpertShard:
                 f"rank {self.rank} of {self.world_size} owns no experts out of {num_experts}"
             )
         first_gate_up, first_down = expert_reader(ids[0])
+        gate_up_spec = (
+            _gate_up_plane_shape(first_gate_up.code.shape) if self.packed_gate_up else first_gate_up.code.shape
+        )
         buffers = self._alloc_group(
             [
-                ((len(ids), *first_gate_up.code.shape), first_gate_up.code.dtype),
+                ((len(ids), *gate_up_spec), first_gate_up.code.dtype),
                 ((len(ids), *first_down.code.shape), first_down.code.dtype),
                 ((len(ids), *first_gate_up.scale.shape), first_gate_up.scale.dtype),
                 ((len(ids), *first_down.scale.shape), first_down.scale.dtype),
@@ -241,7 +289,10 @@ class HostExpertShard:
         gate_up, down, gate_up_scale, down_scale = buffers
         for local, expert_id in enumerate(ids):
             pair = (first_gate_up, first_down) if local == 0 else expert_reader(expert_id)
-            self._copy_row(gate_up[local], pair[0].code)
+            if self.packed_gate_up:
+                pack_gate_up_plane(pair[0].code, gate_up[local], device=self.device)
+            else:
+                self._copy_row(gate_up[local], pair[0].code)
             self._copy_row(gate_up_scale[local], pair[0].scale)
             self._copy_row(down[local], pair[1].code)
             self._copy_row(down_scale[local], pair[1].scale)
@@ -296,9 +347,13 @@ class HostExpertShard:
         """This rank's contiguous local expert tensors, for grouped prefill.
 
         Returns `FP8Tensor`s for an FP8 shard, whose leading dimension is the
-        local expert index rather than a matrix row.
+        local expert index rather than a matrix row. A shard that stored the planes
+        (`packed_gate_up`) answers with the row layout read back out of them, which
+        is what the prefill's grouped GEMM takes.
         """
         gate_up = self._gate_up[layer_idx]
+        if self.packed_gate_up:
+            gate_up = unpack_gate_up_plane(gate_up)
         down = self._down[layer_idx]
         if self.block_size is None:
             return gate_up, down
@@ -306,6 +361,37 @@ class HostExpertShard:
             FP8Tensor(gate_up, self._gate_up_scale[layer_idx], self.block_size),
             FP8Tensor(down, self._down_scale[layer_idx], self.block_size),
         )
+
+    def gate_up_planes(self, layer_idx: int) -> torch.Tensor:
+        """This rank's gate/up codes as the fused kernel's planes, `[local, ceil(hidden/16), 2*inter, 16]`.
+
+        Only a `packed_gate_up` shard holds them; any other shard would have to build them, which is
+        a second copy of its codes and is what the flag exists to avoid.
+        """
+        if not self.packed_gate_up:
+            raise ValueError("this shard stores gate/up in the row layout, not as planes")
+        return self._gate_up[layer_idx]
+
+    def gate_up_plane_scale(self, layer_idx: int) -> torch.Tensor:
+        """The scale grid that goes with `gate_up_planes`, without unpacking the codes.
+
+        `layer_tensors` would answer the same scale, but it answers by unpacking the whole layer's
+        gate/up codes back into rows first, and a caller that only wants the scale should not pay
+        for that -- a decode step asks every layer, every step.
+        """
+        return self._gate_up_scale[layer_idx]
+
+    def down_tensors(self, layer_idx: int) -> FP8Tensor | torch.Tensor:
+        """This rank's down projection for `layer_idx`, without touching the gate/up codes.
+
+        `layer_tensors` answers both, and on a `packed_gate_up` shard that means unpacking the
+        gate/up planes back into rows -- a per-layer permute and copy of the whole layer.  A step
+        that has already read the planes has no use for that copy, so this is the door for it.
+        """
+        down = self._down[layer_idx]
+        if self.block_size is None:
+            return down
+        return FP8Tensor(down, self._down_scale[layer_idx], self.block_size)
 
     def stats(self) -> dict[str, object]:
         return {
@@ -387,14 +473,24 @@ class Qwen4ExpCheckpoint:
         block = self.fp8.block_size
 
         def read(proj: str) -> FP8Tensor:
-            key = self.fp8_expert_key(layer_idx, expert_id, proj)
-            return FP8Tensor(
-                self.store.view(key),
-                self.store.view(f"{key}_scale_inv"),
-                block,
-            )
+            return FP8Tensor(*self.fp8_expert_projection(layer_idx, expert_id, proj), block)
 
         return pack_gate_up_fp8(read("gate"), read("up")), read("down")
+
+    def fp8_expert_projection(
+        self, layer_idx: int, expert_id: int, proj: str
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """One expert projection's `(codes, scale_inv)` views of the mapping.
+
+        Unpacked, and served uncached: a reader that wants a rank's rows of one layer holds all of
+        them at once, and `view` would keep a handle on each of the 150k expert tensors it looked at.
+        """
+        if self.fp8 is None:
+            raise ValueError("checkpoint is not FP8; use expert_rows instead")
+        key = self.fp8_expert_key(layer_idx, expert_id, proj)
+        return self.store.entry_view(self.store.entry(key)), self.store.entry_view(
+            self.store.entry(f"{key}_scale_inv")
+        )
 
     def fp8_expert_keys(self, layer_idx: int, expert_id: int) -> list[str]:
         """Every mapped tensor name backing one FP8 expert (codes and scales)."""
@@ -417,6 +513,7 @@ class Qwen4ExpCheckpoint:
         barrier=None,
         release_mapping: bool = True,
         device: torch.device | str | None = None,
+        packed_gate_up: bool = False,
     ) -> HostExpertShard:
         """Copy this rank's routed experts into host RAM and serve them from there.
 
@@ -452,6 +549,7 @@ class Qwen4ExpCheckpoint:
             world_size=world_size,
             pin_memory=pin,
             device=device,
+            packed_gate_up=packed_gate_up,
         )
         # Only this stage's layers under pipeline parallelism. Without it a rank would preload an
         # expert set for layers it never runs -- at PP16 that is the whole 112 GiB of host RAM per
@@ -605,7 +703,10 @@ class HostNGramTable:
         self.is_fp8 = shards[0].dtype is torch.float8_e4m3fn
         if self.is_fp8 and scale is None:
             raise ValueError("an FP8 n-gram table needs its weight_scale")
-        self.scale = scale
+        # The scale is one scalar and every step multiplies by it, so it is moved once here rather
+        # than per call: a `.to(device)` inside a step is a host-to-device copy, and under a
+        # capture an unpinned one is refused outright.
+        self.scale = scale.to(device) if scale is not None else None
         # `index_select` has no float8 CPU kernel, so gather over a byte alias of
         # the same storage and reinterpret afterwards.  This is a view, not a copy.
         self._gather_shards = (
@@ -617,6 +718,18 @@ class HostNGramTable:
         """row_ids: (..., ngram_heads) -> (..., ngram_heads, head_dim) on device."""
         flat = row_ids.reshape(-1).to("cpu", dtype=torch.long)
         out = torch.empty(flat.shape[0], self.head_dim, dtype=self._gather_dtype)
+        self._gather_into(flat, out)
+        return self._to_device(out).reshape(*row_ids.shape, self.head_dim)
+
+    def _call_eager(self, row_ids: torch.Tensor) -> torch.Tensor:
+        """The step as written: allocate, gather, copy.  Used wherever a step is not captured."""
+        flat = row_ids.reshape(-1).to("cpu", dtype=torch.long)
+        out = torch.empty(flat.shape[0], self.head_dim, dtype=self._gather_dtype)
+        self._gather_into(flat, out)
+        return self._to_device(out).reshape(*row_ids.shape, self.head_dim)
+
+    def _gather_into(self, flat: torch.Tensor, out: torch.Tensor) -> None:
+        """Fill `out` with the rows `flat` names, shard by shard."""
         shard_idx = torch.div(flat, self.rows_per_shard, rounding_mode="floor")
         local_idx = flat - shard_idx * self.rows_per_shard
         for s in shard_idx.unique().tolist():
@@ -627,12 +740,12 @@ class HostNGramTable:
                 out[picks] = 0
                 continue
             out[picks] = self._gather_shards[s].index_select(0, local_idx[picks])
+
+    def _to_device(self, out: torch.Tensor) -> torch.Tensor:
         if self.is_fp8:
             codes = out.to(self.device, non_blocking=True).view(torch.float8_e4m3fn)
-            out = fp8_scalar_dequantize(codes, self.scale.to(self.device), self.dtype)
-        else:
-            out = out.to(self.device, dtype=self.dtype, non_blocking=True)
-        return out.reshape(*row_ids.shape, self.head_dim)
+            return fp8_scalar_dequantize(codes, self.scale, self.dtype)
+        return out.to(self.device, dtype=self.dtype, non_blocking=True)
 
 
 class HostEmbedding:
