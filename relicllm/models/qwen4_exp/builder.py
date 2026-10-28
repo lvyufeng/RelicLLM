@@ -22,7 +22,10 @@ from relicllm.models.qwen4_exp.model import (
     TPShard,
 )
 from relicllm.models.qwen4_exp.moe import (
+    DeepCacheMoE,
+    DeepFallbackMoE,
     DeviceExpertMoE,
+    Fp8SlotExpertMoE,
     HostExpertMoE,
     InMemoryMoE,
     ShardedMoE,
@@ -248,6 +251,8 @@ def build_heterogeneous(
     pp_size: int = 1,
     pp_rank: int = 0,
     profiler=None,
+    expert_deep_cache: float | None = None,
+    expert_fused_fp8: bool = False,
 ) -> Qwen4ExpModel:
     """TP-sharded dense weights on GPU, routed experts + PLE table in host RAM.
 
@@ -324,7 +329,31 @@ def build_heterogeneous(
     # is one decision, made where the bytes are, and a host shard can only ever
     # produce the host backend.
     expert_shard = getattr(checkpoint, "expert_shard", None)
-    if expert_shard is not None and getattr(expert_shard, "device", None) is not None:
+    if expert_deep_cache is not None:
+        # The deep cache holds the layers the runtime could decode on the card; the rest of this
+        # rank's share is read per slot from the checkpoint's own bytes by the host stove, so a
+        # layer that did not fit is slow and correct rather than absent.
+        host_moe = HostExpertMoE(
+            checkpoint, config.num_experts, device, dtype, cache_capacity=expert_cache_capacity
+        )
+        inner_moe = DeepFallbackMoE(
+            DeepCacheMoE(
+                config.num_experts,
+                device,
+                scale=expert_deep_cache,
+                world_size=world_size,
+                rank=rank,
+            ),
+            host_moe,
+        )
+    elif expert_fused_fp8:
+        if expert_shard is None or getattr(expert_shard, "device", None) is None:
+            raise ValueError("expert_fused_fp8 needs the experts resident on the device")
+        # The same placement as the loop below, one arithmetic apart: the fused kernel reads the
+        # FP8 codes and their scales in the load. That is a different set of numbers, so it is
+        # asked for and never inferred from the placement.
+        inner_moe = Fp8SlotExpertMoE(expert_shard, config.num_experts, device)
+    elif expert_shard is not None and getattr(expert_shard, "device", None) is not None:
         inner_moe = DeviceExpertMoE(expert_shard, config.num_experts, device)
     else:
         inner_moe = HostExpertMoE(

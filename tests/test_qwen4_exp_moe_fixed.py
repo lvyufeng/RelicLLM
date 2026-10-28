@@ -83,6 +83,68 @@ def _reference(g, op, hidden, indices, weights, fp8=False):
     return out
 
 
+def test_the_deep_cache_row_is_the_route_id_not_a_local_line():
+    """The cache indexes rows by the id it owns (`id % world_size`), so nothing is renumbered.
+
+    A 0-based local line would have turned expert 3 into row 0 for the rank whose first id is 24,
+    which is a different expert's weights under the same route.
+    """
+    g = _geometry()
+    op = _operands(g)
+    hidden = torch.randn(1, g["hidden"], dtype=torch.bfloat16)
+    indices = torch.tensor([[5, 2, 7]], dtype=torch.long)
+    weights = torch.tensor([[0.5, 0.3, 0.2]], dtype=torch.bfloat16)
+    reads = []
+
+    def rows(row):
+        reads.append(row)
+        return op["gate_up"][row], op["down"][row]
+
+    got = moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows, g["experts"])
+    want = _reference(g, op, hidden, indices, weights)
+
+    assert reads == [5, 2, 7]
+    assert torch.equal(got, want)
+
+
+def test_the_deep_cache_masks_a_foreign_id_the_way_the_shard_does():
+    """The cache holds this rank's rows only, so a foreign id must become the sentinel.
+
+    Read raw, expert 5 on the rank that owns ids 2 and 6 would be row 5 of a 2-row table -- past
+    its end -- or, unsentinel-ised, someone else's expert under a real weight.
+    """
+    g = _geometry()
+    op = _operands(g)
+    cache = moe.DeepCacheMoE(g["experts"], torch.device("cpu"), scale=1.0, world_size=4, rank=2)
+    layer = 0
+    # Stored compact, one row per owned id -- expert 2 is line 0, expert 6 is line 1.
+    mine = torch.arange(2, g["experts"], 4)
+    cache.decode_layer(layer, (op["gate_up"][mine], op["down"][mine]))
+    assert cache.num_local_experts == 2
+
+    route = [5, 2, 7]
+    hidden = torch.randn(1, g["hidden"], dtype=torch.bfloat16)
+    indices = torch.tensor([route], dtype=torch.long)
+    weights = torch.tensor([[0.5, 0.3, 0.2]], dtype=torch.bfloat16)
+    masked = cache.local_rows(indices)
+    assert masked.tolist() == [[g["experts"], 2, g["experts"]]]
+
+    got = cache(layer, hidden, indices, weights)
+    contrib = moe.swiglu_expert(hidden, op["gate_up"][2], op["down"][2])
+    want = (contrib * weights[0, 1].to(contrib.dtype)).to(got.dtype)
+    assert torch.equal(got, want)
+
+
+def test_a_layer_decoded_twice_is_kept_once():
+    """Resuming a decode that was interrupted re-reads a layer it already holds; the bytes stay."""
+    g = _geometry()
+    op = _operands(g)
+    cache = moe.DeepCacheMoE(g["experts"], torch.device("cpu"), scale=1.0)
+    held = cache.decode_layer(0, (op["gate_up"], op["down"]))
+    again = cache.decode_layer(0, (op["gate_up"], op["down"]))
+    assert again == 0 and cache.decoded_bytes == held
+
+
 @pytest.mark.parametrize("fp8", [False, True], ids=["dense", "fp8"])
 def test_one_slot_of_work_per_call_matches_the_per_expert_path(fp8):
     g = _geometry()
@@ -96,8 +158,7 @@ def test_one_slot_of_work_per_call_matches_the_per_expert_path(fp8):
             return _fp8_rows(op, g, local_row)
         return op["gate_up"][local_row], op["down"][local_row]
 
-    rows.local_experts = g["experts"]
-    got = moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows)
+    got = moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows, g["experts"])
     want = _reference(g, op, hidden, indices, weights, fp8=fp8)
 
     assert torch.equal(got, want), f"max {(got - want).abs().max().item()}"
@@ -115,13 +176,13 @@ def test_a_repeated_expert_runs_once_per_slot_not_once_per_id():
     op = _operands(g)
     hidden = torch.randn(1, g["hidden"], dtype=torch.bfloat16)
     indices = torch.tensor([[3, 3, 6]], dtype=torch.long)
+    local = g["experts"]
     weights = torch.tensor([[0.25, 0.25, 0.5]], dtype=torch.bfloat16)
 
     def rows(local_row):
         return op["gate_up"][local_row], op["down"][local_row]
 
-    rows.local_experts = g["experts"]
-    got = moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows)
+    got = moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows, local)
     want = _reference(g, op, hidden, indices, weights)
 
     assert torch.equal(got, want)
@@ -147,8 +208,9 @@ def test_a_foreign_sentinel_contributes_nothing_and_reads_in_bounds():
         reads.append(local_row)
         return op["gate_up"][local_row], op["down"][local_row]
 
-    rows.local_experts = local
-    got = moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows)
+    got = moe._run_experts_fixed(
+        hidden, weights, indices, g["experts"], rows, local, rows_are_local=False
+    )
     want = moe.swiglu_expert(hidden, op["gate_up"][1], op["down"][1]) * weights[0, 0]
 
     assert all(0 <= row < local for row in reads), reads
@@ -174,8 +236,7 @@ def test_the_shape_is_the_same_whatever_the_route():
             shapes.append((tuple(hidden.shape), tuple(gate_up.shape), tuple(down.shape)))
             return gate_up, down
 
-        rows.local_experts = g["experts"]
-        moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows)
+        moe._run_experts_fixed(hidden, weights, indices, g["experts"], rows, g["experts"])
 
     per_step = len(shapes) // 3
     assert per_step == g["top_k"]

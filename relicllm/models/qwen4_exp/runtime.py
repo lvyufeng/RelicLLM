@@ -34,6 +34,7 @@ import torch
 from relicllm.models.qwen4_exp.builder import build_heterogeneous, layer_range_for
 from relicllm.models.qwen4_exp.config import Qwen4ExpConfig
 from relicllm.models.qwen4_exp.model import Qwen4ExpModel
+from relicllm.models.qwen4_exp.quant import FP8Tensor, pack_gate_up_fp8
 from relicllm.models.qwen4_exp.weights import MmapSafetensors, Qwen4ExpCheckpoint
 from relicllm.runtime.device import bind_device, probe_accelerator
 
@@ -582,7 +583,10 @@ def load_model(
     pin_experts: bool = True,
     expert_resident: bool = False,
     expert_reserve_bytes: int = 3 << 30,
+    expert_decode_device_gib: float | None = None,
     profiler=None,
+    expert_deep_cache: float | None = None,
+    expert_fused_fp8: bool = False,
 ) -> tuple[Qwen4ExpModel, Qwen4ExpConfig]:
     _configure_cpu_affinity(ctx)
     config = Qwen4ExpConfig.from_pretrained(model_dir)
@@ -594,6 +598,11 @@ def load_model(
     # owns, and where it was put.
     if expert_resident:
         host_expert_memory = True
+    deep_cache = expert_deep_cache is not None
+    if deep_cache:
+        # The deep cache replaces every placement decision above, so it must not also pay for one:
+        # no host preload (the file mapping is what it reads), no resident shard, no LRU.
+        host_expert_memory = False
     if host_expert_memory:
         # Pull this rank's routed experts off the disk-backed mapping and into
         # host RAM before any step runs, so steady-state staging never seeks.
@@ -627,6 +636,7 @@ def load_model(
             layer_range=ctx.layer_range if ctx.pp_size > 1 else None,
             pin=pin_experts,
             device=shard_device,
+            packed_gate_up=expert_fused_fp8,
             progress=ctx.rank == 0 and os.environ.get("QWEN4EXP_PRELOAD_PROGRESS") == "1",
             barrier=dist.barrier if distributed else None,
         )
@@ -674,8 +684,105 @@ def load_model(
         pp_size=ctx.pp_size,
         pp_rank=ctx.pp_rank,
         profiler=profiler,
+        expert_deep_cache=expert_deep_cache,
+        expert_fused_fp8=expert_fused_fp8,
     )
+    if deep_cache:
+        _decode_experts(
+            model, checkpoint, ctx, expert_deep_cache, expert_decode_device_gib, expert_reserve_bytes
+        )
     return model, config
+
+
+def _expert_layer_source(checkpoint, ctx: TPContext, num_experts: int, layer_idx: int):
+    """This rank's stored rows of one layer, laid out as `HostExpertShard.layer_tensors` lays them.
+
+    The shard copies those rows into one buffer per projection, scale grids and all; here they are
+    gathered off the mapping, so a layer costs a read of this rank's rows and no more, and the
+    layout (local row first, gate|up packed) is the one the cache decodes or stages.
+
+    The gather has an output buffer from the start and copies each row into it as it goes, which is
+    also the safe way to read these rows: a view the mapping hands back shares memory with a
+    million other tensors, and a reader that collects views and copies them afterwards can have
+    read them into bytes another read replaced.
+    """
+    block = checkpoint.fp8.block_size
+    ids = list(range(ctx.tp_rank, num_experts, ctx.tp_world_size))
+    if not ids:
+        raise ValueError(f"rank {ctx.tp_rank} owns no experts out of {num_experts}")
+
+    def owned(proj: str) -> FP8Tensor:
+        code0, grid0 = checkpoint.fp8_expert_projection(layer_idx, ids[0], proj)
+        codes = torch.empty((len(ids), *code0.shape), dtype=code0.dtype)
+        grids = torch.empty((len(ids), *grid0.shape), dtype=grid0.dtype)
+        codes[0].copy_(code0)
+        grids[0].copy_(grid0)
+        for local, expert in enumerate(ids[1:], start=1):
+            code, grid = checkpoint.fp8_expert_projection(layer_idx, expert, proj)
+            codes[local].copy_(code)
+            grids[local].copy_(grid)
+        return FP8Tensor(codes, grids, block)
+
+    gate, up = owned("gate"), owned("up")
+    return pack_gate_up_fp8(gate, up), owned("down")
+
+
+def _decode_experts(
+    model, checkpoint, ctx: TPContext, scale: float, budget_gib: float | None, reserve_bytes: int
+) -> None:
+    """Decode this rank's expert layers into its deep cache, as far as the card holds.
+
+    Per layer: read this rank's stored rows off the mapping, decode them, drop the mapped pages.
+    Whole-layer granularity is what keeps the peak at one layer's codes and scales on the host and
+    one decoded layer on the card beyond the layers already kept.
+
+    The card is a real constraint here and not an assertion: a rank owns 48 x 64 experts, which
+    decoded is about 39 GiB, and an 8-way width does not put that on a 24 GiB card.  So the decode
+    stops when the next layer no longer fits and the remaining layers stay with the host stove --
+    which is also the honest deployment: a card with no room runs the cache empty.
+    """
+    from relicllm.models.qwen4_exp.moe import DeepFallbackMoE
+
+    # Layers share one backend; reach it through the first layer this rank holds, which is not
+    # necessarily layer 0 under pipeline parallelism.
+    layer_moe = model.local_layers[0].moe
+    inner = getattr(layer_moe, "inner", layer_moe)
+    if not isinstance(inner, DeepFallbackMoE):
+        raise TypeError(f"deep cache asked for but the backend is {type(inner).__name__}")
+    cache = inner.cache
+    start, end = ctx.layer_range
+    free_before = int(torch.cuda.mem_get_info(ctx.device)[0])
+    # A budget is a share of what the card held after the dense weights, and the allocator's cached
+    # blocks are part of that -- the decode reuses them.  The default leaves the run's own reserve.
+    budget = (
+        free_before - int(reserve_bytes) if budget_gib is None else int(budget_gib * (1 << 30))
+    )
+    started = time.perf_counter()
+    decoded: list[int] = []
+    for layer_idx in range(start, end):
+        stored = _expert_layer_source(checkpoint, ctx, cache.num_experts, layer_idx)
+        # What the decoded layer will take: two bf16 values per stored code.
+        layer_bytes = 4 * int(stored[0].code.numel() + stored[1].code.numel())
+        if cache.decoded_bytes + layer_bytes > max(0, budget):
+            break
+        cache.decode_layer(layer_idx, stored)
+        del stored
+        decoded.append(layer_idx)
+        if ctx.rank == 0 and len(decoded) % 8 == 0:
+            print(
+                f"[qwen4exp] rank 0: deep cache through layer {layer_idx} "
+                f"({cache.decoded_bytes / (1 << 30):.2f} GiB)",
+                flush=True,
+            )
+    free_after = int(torch.cuda.mem_get_info(ctx.device)[0])
+    print(
+        f"[qwen4exp] rank {ctx.rank}: deep cache {len(decoded)}/{end - start} of this rank's layers "
+        f"{'[%d..%d]' % (decoded[0], decoded[-1]) if decoded else ''}, "
+        f"{cache.decoded_bytes / (1 << 30):.2f} GiB bf16 at scale {scale:.3g} in "
+        f"{time.perf_counter() - started:.1f}s; {free_after / (1 << 30):.2f} GiB free of "
+        f"{free_before / (1 << 30):.2f}{'' if len(decoded) == end - start else ' (the rest staged)'}",
+        flush=True,
+    )
 
 
 def generate(
@@ -846,6 +953,9 @@ def run_tp4(
     expert_reserve_bytes: int = 3 << 30,
     raw_prompt: bool = False,
     enable_profile: bool = False,
+    expert_deep_cache: float | None = None,
+    expert_decode_device_gib: float | None = None,
+    expert_fused_fp8: bool = False,
 ) -> dict:
     from relicllm.models.qwen4_exp.profiler import Profiler
 
@@ -866,6 +976,9 @@ def run_tp4(
         expert_resident=expert_resident,
         expert_reserve_bytes=expert_reserve_bytes,
         profiler=profiler,
+        expert_deep_cache=expert_deep_cache,
+        expert_decode_device_gib=expert_decode_device_gib,
+        expert_fused_fp8=expert_fused_fp8,
     )
     load_s = time.perf_counter() - t0
     if ctx.rank == 0:
@@ -981,6 +1094,35 @@ def main() -> None:
         default=3.0,
         help="device memory to leave free for activations and KV under --expert-resident",
     )
+    parser.add_argument(
+        "--expert-deep-cache",
+        type=float,
+        metavar="SCALE",
+        default=None,
+        help=(
+            "hold each layer's experts on the device, decoded to bf16 at a fixed weight scale, "
+            "so a decode step reads a row instead of staging or dequantizing one. Reads the "
+            "checkpoint's own FP8 codes; the scale is the value t where every code * t <= 448 "
+            "(pick it from the checkpoint's weight distribution, not from guesswork)"
+        ),
+    )
+    parser.add_argument(
+        "--expert-decode-gib",
+        type=float,
+        default=None,
+        help=(
+            "device memory the deep cache may use; layers beyond it stay on the host. Default is "
+            "every layer the card can still hold after the dense weights"
+        ),
+    )
+    parser.add_argument(
+        "--expert-fused-fp8",
+        action="store_true",
+        help=(
+            "with --expert-resident, run each step's top-k FP8 experts in one fused kernel pair "
+            "that reads the codes and block scales in the load, instead of a per-slot Python loop"
+        ),
+    )
     args = parser.parse_args()
 
     prompt = args.prompt
@@ -998,7 +1140,10 @@ def main() -> None:
         host_expert_memory=not args.mmap_experts,
         pin_experts=not args.pageable_experts,
         expert_resident=args.expert_resident,
+        expert_deep_cache=args.expert_deep_cache,
+        expert_decode_device_gib=args.expert_decode_gib,
         expert_reserve_bytes=int(args.expert_reserve_gib * (1 << 30)),
+        expert_fused_fp8=args.expert_fused_fp8,
         raw_prompt=args.raw_prompt,
         enable_profile=args.profile,
     )

@@ -8,6 +8,7 @@ module code serves the single-GPU reference path and the TP4 heterogeneous path
 from __future__ import annotations
 
 import math
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 
@@ -40,6 +41,22 @@ def _noop_context():
     yield
 
 
+#: How far a sequence's rotary table grows past the last position it was asked for, so a decode
+#: step over a few hundred tokens extends it a handful of times rather than every step.
+_ROPE_GROW = 256
+
+
+# Decode drives the layers in one of three orders; `by_layer` is the reference answer.
+#
+# `by_phase` runs every layer's block `p` before any layer's block `p + 1`, so the stream carries 48
+# partial pieces and a host read is paid once.  Measured on the 8x3090 box at batch 1 it was not
+# faster (0.118 s/step against the loop's 0.198 in a resident-only run that also had the rope table
+# rebuilt every step; once the table was fixed both schedules sat at ~0.198), so the pieces of a
+# phase, not the number of drains, are what the step is made of.  `by_outer` defers only the
+# outermost stream mix, which is the smallest version of the same idea.
+_SCHEDULE = os.environ.get("POCKETLLM_QWEN4_SCHEDULE", "by_layer")
+
+
 @dataclass
 class Qwen4ExpCache:
     """Per-layer cache state plus the PLE token-history window.
@@ -51,6 +68,9 @@ class Qwen4ExpCache:
     layers: list[object] = field(default_factory=list)
     ple_token_history: torch.Tensor | None = None
     length: int = 0
+    #: The rotary table grown so far -- absolute positions `[0, width)`, so every step reuses it.
+    cos: torch.Tensor | None = None
+    sin: torch.Tensor | None = None
 
 
 class PLELayer:
@@ -228,10 +248,18 @@ class Qwen4ExpDecoderLayer:
         token_history: torch.Tensor | None,
         use_cache: bool,
         profiler=None,
+        defer_final_mix: bool = False,
     ) -> torch.Tensor:
         prof_scope = profiler.scope if profiler else lambda x: _noop_context()
 
         with prof_scope(f"layer_{self.layer_idx}"):
+            if defer_final_mix and isinstance(hidden_states, tuple):
+                block_output, hyper_input, inject = hidden_states
+                if hyper_input is None:
+                    hidden_states = block_output
+                else:
+                    with prof_scope("deferred_inject"):
+                        hidden_states = inject_into_streams(block_output, hyper_input, inject)
             if self.ple is not None:
                 assert token_history is not None, "PLE layers need the token id history"
                 with prof_scope("ple"):
@@ -284,6 +312,9 @@ class Qwen4ExpDecoderLayer:
                 with prof_scope("mlp_reduce"):
                     mlp_out = self.all_reduce(mlp_out)
 
+            if defer_final_mix:
+                # `by_outer` carries the stream as its pieces and mixes them once at the end.
+                return mlp_out, hyper_input, inject
             with prof_scope("mlp_inject"):
                 return inject_into_streams(mlp_out, hyper_input, inject)
 
@@ -370,14 +401,26 @@ class Qwen4ExpModel:
         )
         return cache
 
-    def _rope_cache(self, total_len: int, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def _rope_cache(
+        self, total_len: int, batch_size: int, cache: Qwen4ExpCache | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """cos/sin for absolute positions [0, total_len). The QSA indexer needs
         every past position, not just the current ones, so we keep the full span
         and grow it in place."""
-        if self._cos is None or self._cos.shape[1] < total_len or self._cos.shape[0] != batch_size:
+        if cache is None:
+            # A one-shot forward: the table is this call's alone, so it is not kept.
             position_ids = torch.arange(total_len, device=self.device).view(1, 1, -1).expand(3, batch_size, -1)
-            self._cos, self._sin = self.rope(position_ids, self.dtype)
-        return self._cos[:, :total_len], self._sin[:, :total_len]
+            cos, sin = self.rope(position_ids, self.dtype)
+            return cos[:, :total_len], sin[:, :total_len]
+        # The table belongs to the sequence, so it lives on the cache and spans what was grown
+        # for it: kept on the model, the next call sees the previous call's *slice* and rebuilds
+        # the whole span every step, which at a few hundred tokens is most of a decode step.
+        width = -(-total_len // _ROPE_GROW) * _ROPE_GROW
+        if cache.cos is None or cache.cos.shape[1] != batch_size or cache.cos.shape[-1] < width:
+            width = max(width, total_len)
+            position_ids = torch.arange(width, device=self.device).view(1, 1, -1).expand(3, batch_size, -1)
+            cache.cos, cache.sin = self.rope(position_ids, self.dtype)
+        return cache.cos[:, :total_len], cache.sin[:, :total_len]
 
     def forward(
         self,
@@ -497,6 +540,143 @@ class Qwen4ExpModel:
         with prof_scope("lm_head"):
             return F.linear(hidden, self.lm_head)
 
+    def _forward_outer_phased(
+        self,
+        hidden: torch.Tensor,
+        layers: list,
+        cache: Qwen4ExpCache,
+        cos: torch.Tensor,
+        sin: torch.Tensor,
+        past_len: int,
+        token_history: torch.Tensor | None,
+        prof_scope,
+    ) -> torch.Tensor:
+        """`by_outer`: the stream is never mixed inside a layer, only once, at the end.
+
+        A layer's body is bound to the stream at its first use, so this is the per-layer loop up to
+        that first site: the stream is carried from one layer to the next *as its three partial
+        pieces*, and every mix the loop does at the end of a layer is done once afterwards, in
+        order.  That is arithmetic on the same pieces, so the only thing it can change is where
+        the wait is paid, which is the point: it says whether the loop's cost is its dependency
+        chain or its energy.
+        """
+        block_output, hyper_input, inject = hidden, None, None
+        deferred = []
+        for idx, layer in layers:
+            block_output, hyper_input, inject = layer(
+                (block_output, hyper_input, inject),
+                cos=cos,
+                sin=sin,
+                cache=cache.layers[idx],
+                past_len=past_len,
+                token_history=token_history,
+                use_cache=True,
+                profiler=self.profiler,
+                defer_final_mix=True,
+            )
+            deferred.append((block_output, hyper_input, inject))
+        streams = hidden
+        for deferred_block, hyper_input, inject in deferred:
+            streams = inject_into_streams(deferred_block, hyper_input, inject)
+        return streams
+
+    def _forward_phased(
+        self,
+        hidden: torch.Tensor,
+        layers: list,
+        cache: Qwen4ExpCache,
+        cos: torch.Tensor,
+        sin: torch.Tensor,
+        past_len: int,
+        token_history: torch.Tensor | None,
+        prof_scope,
+    ) -> torch.Tensor:
+        """One decode token through every layer, a block at a time across all of them.
+
+        The schedule is the per-layer loop's, flattened: layer `i`'s attention is still run before
+        layer `i`'s hyper-connection output, and layer `i` finishes before layer `i + 1` reads the
+        stream.  What changes is the order *the host issues* its work in.  A block's output is a
+        host-dependent wait -- an expert row read off the host, or a collective -- and in the
+        per-layer loop every such wait is paid before the next layer's independent compute is
+        queued.  Here every layer's row read is issued in one block pass, so the stream drains once
+        instead of once a layer, and the two collectives are issued 48 times and waited on
+        together.  The answer is the loop's: the queue order between independent reads and copies
+        changes, not the arithmetic.  It also removes a per-layer host round trip in this tree,
+        which makes the blocks that run on the host (experts, rope) the whole of what is left.
+        """
+        n = len(layers)
+        h = hidden
+
+        with prof_scope("dec_ple_hc"):
+            for i, (_, layer) in enumerate(layers):
+                if layer.ple is not None:
+                    h = h + layer.ple(h, token_history, 1, use_cache=True)
+                layer._phased_hc = layer.attn_hc(h)
+        with prof_scope("dec_attn"):
+            for i, (idx, layer) in enumerate(layers):
+                mixed = layer._phased_hc[0]
+                if layer.is_linear:
+                    attn = layer.attn(mixed, cache.layers[idx])
+                else:
+                    attn = layer.attn(mixed, cos, sin, cache.layers[idx], past_len=past_len)
+                ar = layer.all_reduce
+                layer._phased_attn = attn if ar is None else ar(attn)
+        with prof_scope("dec_attn_inject"):
+            for _, layer in layers:
+                mixed, hyper_input, inject = layer._phased_hc
+                h = inject_into_streams(layer._phased_attn, hyper_input, inject)
+                mixed, hyper_input, inject = layer.mlp_hc(h)
+                layer._phased_hc = (mixed, hyper_input, inject)
+        with prof_scope("dec_router"):
+            for _, layer in layers:
+                flat = layer._phased_hc[0].reshape(-1, layer._phased_hc[0].shape[-1])
+                layer._phased_route = layer.router(flat)
+        with prof_scope("dec_moe"):
+            for idx, layer in layers:
+                flat = layer._phased_hc[0].reshape(-1, layer._phased_hc[0].shape[-1])
+                layer._phased_moe = layer.moe(idx, flat, *layer._phased_route)
+        with prof_scope("dec_shared"):
+            for _, layer in layers:
+                flat = layer._phased_hc[0].reshape(-1, layer._phased_hc[0].shape[-1])
+                layer._phased_moe = layer._phased_moe + torch.sigmoid(
+                    prefill_linear(flat, layer.shared_expert_gate)
+                ) * layer.shared_expert(flat)
+        with prof_scope("dec_mlp_reduce"):
+            for _, layer in layers:
+                mlp_out = layer._phased_moe.reshape(layer._phased_hc[0].shape)
+                ar = layer.all_reduce
+                layer._phased_moe = mlp_out if ar is None else ar(mlp_out)
+        with prof_scope("dec_mlp_inject"):
+            for _, layer in layers:
+                _, hyper_input, inject = layer._phased_hc
+                h = inject_into_streams(layer._phased_moe, hyper_input, inject)
+                layer._phased_hc = layer._phased_attn = layer._phased_moe = layer._phased_route = None
+        return h
+
+    def _forward_by_layer(
+        self,
+        hidden: torch.Tensor,
+        layers: list,
+        cache: Qwen4ExpCache | None,
+        cos: torch.Tensor,
+        sin: torch.Tensor,
+        past_len: int,
+        token_history: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """The per-token loop every call has always run: one layer end to end, then the next."""
+        for idx, layer in layers:
+            hidden = layer(
+                hidden,
+                cos=cos,
+                sin=sin,
+                cache=cache.layers[idx],
+                past_len=past_len,
+                token_history=token_history,
+                use_cache=cache is not None,
+                profiler=self.profiler,
+            )
+        return hidden
+
     def _forward_layers(
         self,
         hidden: torch.Tensor,
@@ -516,7 +696,7 @@ class Qwen4ExpModel:
         total_len = past_len + seq_len
 
         with prof_scope("rope_cache"):
-            cos, sin = self._rope_cache(total_len, batch_size)
+            cos, sin = self._rope_cache(total_len, batch_size, cache)
 
         token_history = None
         if any(layer is not None and layer.ple is not None for layer in self.layers):
@@ -534,19 +714,18 @@ class Qwen4ExpModel:
                     )
                     token_history = torch.cat([pad, ids_cpu], dim=1)
 
-        for idx, layer in enumerate(self.layers):
-            if layer is None:
-                continue
-            hidden = layer(
-                hidden,
-                cos=cos,
-                sin=sin,
-                cache=cache.layers[idx] if cache is not None else None,
-                past_len=past_len,
-                token_history=token_history,
-                use_cache=cache is not None,
-                profiler=self.profiler,
-            )
+        # How the layers are driven. `by_layer` is the per-token loop every call has always run.
+        # `by_phase` runs the same blocks in the same order with the same inputs, but walks the
+        # layers inside each phase, so a host read only has to cross the stream once and a
+        # collective is not waited on before the next layer's compute can be queued. It is what a
+        # decode step of this size wants; prefill keeps the per-layer loop, whose host traffic it
+        # already covers with a chunk.
+        layers = [(idx, layer) for idx, layer in enumerate(self.layers) if layer is not None]
+        if cache is not None and seq_len == 1 and len(layers) > 1 and _SCHEDULE != "by_layer":
+            run = self._forward_phased if _SCHEDULE == "by_phase" else self._forward_outer_phased
+            hidden = run(hidden, layers, cache, cos, sin, past_len, token_history, prof_scope)
+        else:
+            hidden = self._forward_by_layer(hidden, layers, cache, cos, sin, past_len, token_history)
 
         if cache is not None:
             cache.length = total_len

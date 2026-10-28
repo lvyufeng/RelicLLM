@@ -282,7 +282,7 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             host_expert_memory=options.host_expert_memory,
             pin_experts=options.pin_experts,
             expert_resident=options.expert_resident,
-            expert_reserve_gib=options.expert_reserve / (1 << 30),
+            expert_reserve_bytes=options.expert_reserve,
         )
         self._build_details()
         if self._tokenizer is None:
