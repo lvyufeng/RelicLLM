@@ -81,8 +81,9 @@ def main() -> int:
 
     # The kernel's own layout: gate/up repacked into 16-byte chunk planes.
     packed = ops.qwen4_exp_fp8_pack_t(gu_codes)
+    # The kernel reads the gate/up table as the planes; `packed` is that table in its layout.
     out = ops.qwen4_exp_fp8_slots_swiglu(
-        x, ids, wts, gu_codes, gu_scale, packed, dw_codes, dw_scale, args.blocks
+        x, ids, wts, packed, gu_scale, packed, dw_codes, dw_scale, args.blocks
     )
     got = out.float().sum(0) if out.dim() == 2 else out.float().reshape(-1, H).sum(0)
 

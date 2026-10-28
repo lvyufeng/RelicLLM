@@ -703,14 +703,22 @@ class Fp8SlotExpertMoE:
         )
 
     def _table(self, layer_idx: int):
-        """The layer's row-layout gate/up codes, its down codes, and the gate/up planes."""
-        gate_up, down = self.shard.layer_tensors(layer_idx)
-        if not isinstance(gate_up, FP8Tensor):
+        """The layer's gate/up planes and their scale, and its down codes.
+
+        The kernel reads the planes as the shard stores them, so the row-layout form never has to
+        exist: asking `layer_tensors` for it answers by unpacking the whole layer back into rows,
+        a permute and copy of ~300 MiB once a layer and once a step -- for bytes the step already
+        has, in the order it wants them.
+        """
+        planes = self.shard.gate_up_planes(layer_idx)
+        scale = self.shard.gate_up_plane_scale(layer_idx)
+        down = self.shard.down_tensors(layer_idx)
+        if not isinstance(down, FP8Tensor):
             raise TypeError(
-                f"layer {layer_idx} holds {type(gate_up).__name__}, not FP8 codes: the fused "
+                f"layer {layer_idx} holds {type(down).__name__}, not FP8 codes: the fused "
                 "backend runs the block-scaled layout only"
             )
-        return gate_up, down, self.shard.gate_up_planes(layer_idx)
+        return planes, scale, down
 
     def __call__(
         self,
@@ -727,14 +735,14 @@ class Fp8SlotExpertMoE:
         # work and the shapes are the route's, not the draw's.
         wts = torch.where(empty, torch.zeros((), dtype=weights.dtype, device=weights.device),
                           weights.to(torch.bfloat16).reshape(-1))
-        gate_up, down, packed = self._table(layer_idx)
+        planes, plane_scale, down = self._table(layer_idx)
         slot_rows = self.ops.qwen4_exp_fp8_slots_swiglu(
             hidden_states.reshape(-1),
             routed,
             wts,
-            gate_up.code,
-            gate_up.scale,
-            packed,
+            planes,
+            plane_scale,
+            planes,
             down.code,
             down.scale,
             self.blocks_per_expert,
