@@ -613,7 +613,7 @@ class Fp8SlotExpertMoE:
     empty slot reads an empty row and adds nothing: the loop's answer for skipping it.
     """
 
-    def __init__(self, shard, num_experts: int, device: torch.device, *, blocks_per_expert: int = 128):
+    def __init__(self, shard, num_experts: int, device: torch.device, *, blocks_per_expert: int = 40):
         self.shard = shard
         self.num_experts = int(num_experts)
         self.world_size = int(getattr(shard, "world_size", 1))

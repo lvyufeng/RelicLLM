@@ -332,9 +332,23 @@ class HostExpertShard:
         return layer_idx in self._loaded
 
     def rows(self, layer_idx: int, expert_id: int):
-        """One expert's `(gate_up, down)`; `FP8Tensor`s for an FP8 shard."""
+        """One expert's `(gate_up, down)`, in the row layout a GEMM takes.
+
+        A `packed_gate_up` shard stores its gate/up codes as the fused kernel's planes -- one
+        expert's codes spread over `hidden/16` chunks rather than laid out by row -- so indexing
+        that table by local id answers with a plane slice, not with the expert's matrix.  The row
+        form has to be read back out of it, which is what the per-expert backends consume.
+
+        The whole layer is unpacked and then indexed, not one expert at a time: unpacking is a
+        permute and a copy over the layer's contiguous code block, and a caller that wants one
+        expert still pays for the layer.  Backends that read every expert per step (the grouped
+        prefill, the resident loop) want `layer_tensors` anyway; this door is for the callers that
+        want a single row.
+        """
         local = self.local_index(expert_id)
-        gate_up = self._gate_up[layer_idx][local]
+        gate_up = self._gate_up[layer_idx]
+        gate_up = unpack_gate_up_plane(gate_up) if self.packed_gate_up else gate_up
+        gate_up = gate_up[local]
         down = self._down[layer_idx][local]
         if self.block_size is None:
             return gate_up, down

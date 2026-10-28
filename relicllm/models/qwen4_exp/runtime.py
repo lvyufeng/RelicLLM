@@ -796,6 +796,7 @@ def generate(
     on_token=None,
     on_step=None,
     local_eos: list[bool] | None = None,
+    graph_window: int = 0,
 ) -> tuple[list[int], dict[str, float]]:
     """Greedy decode with chunked prefill.
 
@@ -863,6 +864,37 @@ def generate(
     t1 = time.perf_counter()
     t_first = None
     next_id = next_token_from_logits(logits, ctx, batch_size=input_ids.shape[0])
+
+    # A run of captured steps, when the caller asked for one.  Everything below treats it as
+    # optional: an unusable window leaves the loop eager, which is the path it is checked against.
+    window = None
+    _replay_count = 0
+    _capture_s = 0.0
+    _window_size = 0
+    _window_start = 0
+    _window_size_used = 0
+    if graph_window > 0 and ctx.device.type == "cuda" and max_new_tokens > graph_window:
+        from relicllm.models.qwen4_exp.graph_window import build
+
+        _capture_t0 = time.perf_counter()
+        window = build(
+            model=model,
+            cache=cache,
+            start=past,
+            steps=min(graph_window, max_new_tokens),
+            token=next_id,
+        )
+        _window_size = min(graph_window, max_new_tokens)
+        _window_start = past
+        _window_size_used = _window_size if window is not None else 0
+        # The capture is a one-off setup cost, not part of the step rate: charging it to the
+        # decode makes a window look slower the longer it is, which is the opposite of what it
+        # buys.  It is reported on its own.
+        _capture_s = time.perf_counter() - _capture_t0
+        capture_s = _capture_s
+        if window is None and ctx.rank == 0:
+            print("[qwen4exp] decode graph window unavailable; stepping eagerly", flush=True)
+
     with torch.inference_mode(), prof_scope("decode"):
         for _ in range(max_new_tokens):
             if on_step is not None and on_step():
@@ -891,6 +923,38 @@ def generate(
                 # the broadcast is what ends the loop, so no rank leaves on its own. See the
                 # `local_eos` paragraph in the docstring for what acting on it locally cost.
                 local_eos[0] = True
+            if _window_size > 0 and past >= _window_start + _window_size_used:
+                # This round's positions are spent.  Its graphs are worth nothing now, so they are
+                # given back and the next stretch is captured in their place -- a generation longer
+                # than one window stays on the captured path instead of dropping to eager for the
+                # rest of its steps.
+                if window is not None:
+                    window.release()
+                    window = None
+                remaining = max_new_tokens - len(produced)
+                if remaining > 1:
+                    _round_t0 = time.perf_counter()
+                    _next_window = build(
+                        model=model,
+                        cache=cache,
+                        start=past,
+                        steps=min(_window_size, remaining - 1),
+                        token=next_id,
+                    )
+                    # Setup again, not a step: the same reason the first window's capture is
+                    # taken out of the decode rate.
+                    _capture_s += time.perf_counter() - _round_t0
+                    if _next_window is not None:
+                        window = _next_window
+                        _window_start = past
+                        _window_size_used = len(window)
+            if window is not None and window.start <= past < window.start + window.steps:
+                _replay_count += 1
+                # A replay returns nothing, so the token it produced is read from the buffer the
+                # graph writes.  `past` advances because this position is spent either way.
+                next_id = window.replay(past, next_id.to(ctx.device))
+                past += 1
+                continue
             step = model.forward(next_id.to(ctx.device), cache=cache, past_len=past)
             past += 1
             # Under PP only the last stage produced logits; every other stage got `None` back and
@@ -902,7 +966,10 @@ def generate(
             next_id = next_token_from_logits(last, ctx, batch_size=input_ids.shape[0])
     if ctx.device.type == "cuda":
         torch.cuda.synchronize()
+    t1 += _capture_s
     decode_s = time.perf_counter() - t1
+    if ctx.rank == 0:
+        print(f"[qwen4exp] replayed {_replay_count} steps of {len(produced)}", flush=True)
 
     stats = {
         "prompt_tokens": float(prompt_len),
@@ -956,6 +1023,7 @@ def run_tp4(
     expert_deep_cache: float | None = None,
     expert_decode_device_gib: float | None = None,
     expert_fused_fp8: bool = False,
+    graph_window: int = 0,
 ) -> dict:
     from relicllm.models.qwen4_exp.profiler import Profiler
 
@@ -1006,6 +1074,7 @@ def run_tp4(
         max_new_tokens=max_new_tokens,
         chunk_size=chunk_size,
         eos_token_ids=eos,
+        graph_window=graph_window,
     )
     stats["load_s"] = load_s
 
@@ -1080,6 +1149,16 @@ def main() -> None:
     parser.add_argument("--raw-prompt", action="store_true", help="skip the chat template")
     parser.add_argument("--profile", action="store_true", help="enable hierarchical profiler")
     parser.add_argument(
+        "--graph-window",
+        type=int,
+        default=0,
+        help=(
+            "capture this many decode steps as CUDA graphs and replay them instead of running "
+            "each eagerly. A capture costs about 0.2s a step, so the window has to be shorter "
+            "than the generation to pay for itself; 0 leaves the loop eager"
+        ),
+    )
+    parser.add_argument(
         "--expert-resident",
         action="store_true",
         help=(
@@ -1120,7 +1199,10 @@ def main() -> None:
         action="store_true",
         help=(
             "with --expert-resident, run each step's top-k FP8 experts in one fused kernel pair "
-            "that reads the codes and block scales in the load, instead of a per-slot Python loop"
+            "that reads the codes and block scales in the load, instead of a per-slot Python loop. "
+            "WARNING: this path currently produces wrong logits (a decode of a real prompt "
+            "degenerates to repeated tokens) while the per-expert loop beside it does not; it is "
+            "kept for measurement and is not a working decode path yet"
         ),
     )
     args = parser.parse_args()
@@ -1146,6 +1228,7 @@ def main() -> None:
         expert_fused_fp8=args.expert_fused_fp8,
         raw_prompt=args.raw_prompt,
         enable_profile=args.profile,
+        graph_window=args.graph_window,
     )
 
 
