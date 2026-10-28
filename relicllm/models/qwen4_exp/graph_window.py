@@ -31,8 +31,12 @@ import torch
 class GraphWindow:
     """`steps` captured decode steps starting at `start`, replayed by position."""
 
-    def __init__(self, *, model, cache, start: int, steps: int, token: torch.Tensor) -> None:
+    def __init__(self, *, model, cache, start: int, steps: int, token: torch.Tensor,
+                 select=None) -> None:
         self.model = model
+        #: Turns one position's sharded logits into the token the model chose.  It has to run
+        #: outside the capture, because it gathers the shards and that is a collective.
+        self.select = select
         self.cache = cache
         self.start = start
         self.steps = steps
@@ -75,33 +79,155 @@ class GraphWindow:
         torch.cuda.current_stream().wait_stream(warm)
         torch.cuda.synchronize()
 
-        # One stream and one pool for the whole window.  A pool a capture allocates from is held
-        # for as long as any graph that used it lives, so a pool a position would be sixteen pools
-        # the window never gives back; sharing them means the window's memory is bounded by what
-        # one step allocates, not by its length.
+        # A stream shared by the window, but a pool per graph.  Sharing the pool looked like the
+        # saving it is not: positions recorded from the same pool hand their buffers back and the
+        # next capture reuses them, so a position replayed later reads a buffer another position
+        # has since written -- two runs over eight positions disagree from the third one on.
+        # Separate pools cost memory and are the only version that answers the same thing twice.
         stream = torch.cuda.Stream()
-        pool = torch.cuda.graph_pool_handle()
-        # The per-position warmup is one pass, not two: the shapes repeat from position to
-        # position and the endpoint warmup above already ran them, so a second pass here only
-        # doubles the setup.  What is left per position is the capture itself, which is one pass.
+        # Capturing runs the step, and running the step writes the KV cache -- so the capture
+        # leaves the positions it recorded filled with the placeholder tokens the graphs were
+        # built around.  The caller's cache has to come back as it was, or the generation would
+        # read a history it never produced.  The window records what it is about to overwrite and
+        # puts it back below.
+        # The rotary table lives on the cache and is rebuilt when the sequence outgrows it -- a
+        # new allocation, at a new address.  A captured step holds the old address, so the first
+        # replay after a rebuild is an illegal memory access.  Growing it once, to the far end of
+        # the window, keeps the address the graphs recorded.
+        with torch.inference_mode():
+            model._rope_cache(self.start + self.steps + 1, 1, cache)
+        saved = self._save_cache()
+        # The step's answer is its logits, not a token: the head is vocab-sharded, so an argmax
+        # taken here would be over this rank's slice of the vocabulary, and the pick would be its
+        # local best rather than the model's.  Gathering the shards is a collective, which a
+        # capture will not hold -- so the graph leaves the logits in a buffer and the caller
+        # gathers and takes the argmax after the replay.  The width is the step's own output, and
+        # the probe that reads it runs before the save, so the save covers what it writes.
+        width = self._logits_width()
+        # Every output buffer is allocated before any capture runs.  Allocated inside the loop, a
+        # position's buffer was handed back by the allocator and reused by a later capture, so the
+        # position replayed afterwards wrote into memory another graph was using: one position
+        # worked, two did not, and the only difference was when the buffer was created.
+        holders = [
+            torch.zeros(1, width, dtype=torch.float32, device=self.inputs[p].device)
+            for p in range(self.steps)
+        ]
         for p in range(self.steps):
             past = self.start + p
-            holder = torch.zeros(1, 1, dtype=torch.long, device=self.inputs[p].device)
+            holder = holders[p]
             stream.wait_stream(torch.cuda.current_stream())
             with torch.cuda.stream(stream), torch.inference_mode():
                 model.forward(self.inputs[p], cache=cache, past_len=past, last_token_only=True)
             torch.cuda.current_stream().wait_stream(stream)
             torch.cuda.synchronize()
+            # The warmup wrote this position into the cache, so the capture that follows would
+            # read a history with one more token in it than the caller has -- a different step,
+            # recorded at the right offset, answering a question nobody asked.  Put the cache
+            # back before recording.
+            self._restore_cache(saved)
             graph = torch.cuda.CUDAGraph()
-            with torch.cuda.graph(graph, pool=pool):
-                # The argmax is inside the graph for the same reason the step is: read back to the
-                # host, it would be the one sync a replay costs.
+            with torch.cuda.graph(graph, pool=torch.cuda.graph_pool_handle()):
                 out = model.forward(self.inputs[p], cache=cache, past_len=past, last_token_only=True)
                 if out is not None:
-                    holder.copy_(out[:, -1].argmax(-1, keepdim=True))
+                    holder.copy_(out[:, -1].float())
+            torch.cuda.synchronize()
+            # The `copy_` inside the capture is recorded, not performed: a graph holds the work an
+            # instantiation later repeats, and until it repeats it the buffer is still whatever it
+            # was allocated as -- zeros.  One replay here fills it, so the window's outputs are
+            # answers from the moment it exists rather than after some later position happens to
+            # replay them.
+            graph.replay()
             torch.cuda.synchronize()
             self.graphs.append(graph)
             self.outputs.append(holder)
+        self._restore_cache(saved)
+
+    #: The cache tensors a capture writes, and therefore the ones it has to put back. A
+    #: full-attention layer's KV is addressed by position, so only the captured span moves; a
+    #: linear-attention layer's conv window and recurrent state are not addressed by position at
+    #: all -- one capture advances them for good -- so those are saved whole.
+    _POSITIONAL = ("k", "v", "index_k")
+
+    def _logits_width(self) -> int:
+        """How wide one position's logits are on this rank.
+
+        Read from a step on a cache of the window's own: asking the real one would write the
+        placeholder token into the very positions the caller is about to decode at.
+        """
+        with torch.inference_mode():
+            scratch = self.model.make_cache(1, self.start + self.steps + 2)
+            probe = self.model.forward(
+                self.inputs[0], cache=scratch, past_len=self.start, last_token_only=True
+            )
+            del scratch
+            torch.cuda.empty_cache()
+        return int(probe.shape[-1])
+
+    def _save_cache(self):
+        """Everything the captures are about to write, and the length to restore."""
+        span = slice(self.start, self.start + self.steps + 1)
+        saved = []
+        # Cloned outside inference mode: a tensor made inside it is an inference tensor, and
+        # copying one back into the cache is an in-place update the cache refuses.
+        with torch.inference_mode(False):
+            for layer in self.cache.layers:
+                if layer is None:
+                    continue
+                entry = {}
+                for name in self._POSITIONAL:
+                    tensor = getattr(layer, name, None)
+                    if tensor is not None:
+                        entry[name] = (
+                            tensor[:, :, span].clone() if tensor.dim() == 4 else tensor[:, span].clone()
+                        )
+                for name in ("conv_state", "recurrent_state"):
+                    tensor = getattr(layer, name, None)
+                    if tensor is not None:
+                        entry[name] = tensor.clone()
+                # A linear layer starts uninitialised and the first step flips it; a capture flips
+                # it too, and restoring only the tensors would leave it reading a recurrent state
+                # the caller never had.
+                if hasattr(layer, "initialized"):
+                    entry["initialized"] = layer.initialized
+                # A full-attention layer keeps its own `length`, and a step sets it to
+                # `past_len + 1`; a capture leaves it at the last position it recorded, so the
+                # next eager step would read a longer history than the caller has.
+                if hasattr(layer, "length"):
+                    entry["length"] = layer.length
+                saved.append((layer, entry))
+        # The rope table is deliberately left grown: shrinking it would free the very buffers the
+        # graphics recorded, which is the failure this pre-grow exists to prevent.
+        return saved, self.cache.length, self.cache.ple_token_history
+
+    def _restore_cache(self, saved) -> None:
+        """Put the cache back the way the captures found it.
+
+        Inside `inference_mode`, which is where the cache's tensors were made: writing into them
+        from outside it is the in-place update that mode refuses.
+        """
+        entries, length, ple_history = saved
+        span = slice(self.start, self.start + self.steps + 1)
+        with torch.inference_mode():
+            for layer, entry in entries:
+                for name, tensor in entry.items():
+                    if name in ("initialized", "length"):
+                        setattr(layer, name, tensor)
+                        continue
+                    target = getattr(layer, name)
+                    if name in self._POSITIONAL:
+                        # The KV a capture wrote is left where it is: the replay writes the same
+                        # position again, and restoring a slice the replay is about to overwrite
+                        # only makes the window disagree with itself.  What has to be put back is
+                        # the bookkeeping around it.
+                        continue
+                    target.copy_(tensor)
+            self.cache.length = length
+            # The n-gram history is what every PLE layer reads to pick its rows; a capture appends
+            # the placeholder token to it, and a generation that kept that would be reading a
+            # prompt it never received.
+            self.cache.ple_token_history = (
+                None if ple_history is None else ple_history.clone()
+            )
 
     def replay(self, position: int, token: torch.Tensor) -> torch.Tensor:
         """Run position `position`, which reads `token` and answers into `outputs[position]`.
@@ -112,10 +238,45 @@ class GraphWindow:
         rather than its size -- and it is on the same stream as the replay, so it is in order.
         """
         idx = position - self.start
+        # The step captured at this position saw `length = position + 1` -- what one decoded token
+        # leaves behind.  `_restore_cache` puts back the length the capture found, which is one
+        # short, and the layer would then read a shorter history than the step was recorded
+        # against: the first full-attention layer that reads it drifts by about four, and eleven
+        # layers later the drift is nan.
+        # A graph was recorded reading the cache with exactly this much history, so the cache has
+        # to be at that length when it replays -- not at whatever the previous position left it.
+        # `cache.length` and every layer's own are the whole difference between the two readings.
+        self.cache.length = position + 1
+        for layer in self.cache.layers:
+            if layer is not None and hasattr(layer, "length"):
+                layer.length = position + 1
+        # And the positions past this one have to be blank: a second graph's capture wrote its own
+        # placeholder there, and a KV slot beyond `length` that still holds another graph's answer
+        # is read by the linear layers, which carry state across positions rather than addressing
+        # it.  Blanking the tail restores the cache the recording was made against.
+        if idx + 1 < self.steps:
+            span = slice(position + 1, self.start + self.steps)
+            with torch.inference_mode():
+                for layer in self.cache.layers:
+                    if layer is None:
+                        continue
+                    for name in self._POSITIONAL:
+                        tensor = getattr(layer, name, None)
+                        if tensor is not None:
+                            if tensor.dim() == 4:
+                                tensor[:, :, span] = 0
+                            else:
+                                tensor[:, span] = 0
+        # Blocking, deliberately.  `non_blocking=True` hands the transfer to the copy queue and
+        # returns, and the replay queued right after it can reach the device first -- the graph
+        # then reads the placeholder token the window was built around instead of this step's.
+        # The payload is one int64; the sync costs less than the ordering mistake did.
         self._host_token.copy_(token)
-        self.inputs[idx].copy_(self._host_token, non_blocking=True)
+        self.inputs[idx].copy_(self._host_token)
         self.graphs[idx].replay()
-        return self.outputs[idx]
+        if self.select is None:
+            return self.outputs[idx].argmax(-1, keepdim=True)
+        return self.select(self.outputs[idx])
 
     def __len__(self) -> int:
         return self.steps
@@ -135,7 +296,7 @@ class GraphWindow:
         torch.cuda.empty_cache()
 
 
-def build(*, model, cache, start: int, steps: int, token: torch.Tensor) -> GraphWindow | None:
+def build(*, model, cache, start: int, steps: int, token: torch.Tensor, select=None) -> GraphWindow | None:
     """Capture a window, or None when the step will not be captured.
 
     Windows are reused across generations on the same model.  A graph is recorded at a position
@@ -153,7 +314,9 @@ def build(*, model, cache, start: int, steps: int, token: torch.Tensor) -> Graph
     with torch.inference_mode(False):
         token_buf = token.clone()
     try:
-        window = GraphWindow(model=model, cache=cache, start=start, steps=steps, token=token_buf)
+        window = GraphWindow(
+            model=model, cache=cache, start=start, steps=steps, token=token_buf, select=select
+        )
         return window
     except Exception as exc:  # noqa: BLE001 - falling back to eager is the contract
         # torchrun routes a child's stdout to the launcher, which drops lines that arrive while it

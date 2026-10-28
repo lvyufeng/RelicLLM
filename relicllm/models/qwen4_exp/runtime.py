@@ -895,6 +895,9 @@ def generate(
             start=past,
             steps=min(graph_window, max_new_tokens),
             token=next_id,
+            select=lambda logits: next_token_from_logits(
+                logits, ctx, batch_size=input_ids.shape[0]
+            ),
         )
         _window_size = min(graph_window, max_new_tokens)
         _window_start = past
@@ -960,6 +963,9 @@ def generate(
                         start=past,
                         steps=_window_size,
                         token=next_id,
+                        select=lambda logits: next_token_from_logits(
+                            logits, ctx, batch_size=input_ids.shape[0]
+                        ),
                     )
                     # Setup again, not a step: the same reason the first window's capture is
                     # taken out of the decode rate.
@@ -1181,9 +1187,12 @@ def main() -> None:
         type=int,
         default=0,
         help=(
-            "capture this many decode steps as CUDA graphs and replay them instead of running "
-            "each eagerly. A capture costs about 0.2s a step, so the window has to be shorter "
-            "than the generation to pay for itself; 0 leaves the loop eager"
+            "EXPERIMENTAL and not working: a window of one position replays correctly, two or "
+            "more do not -- each graph is recorded against the cache as it was at its own "
+            "position, and the graphs share one mutable cache, so the second capture is read by "
+            "the first replay. Captures also cost about 0.3s a position. Left behind because the "
+            "supporting work (the warmup, the cache save/restore, the logits selector) is right; "
+            "0 leaves the decode eager, which is the only working path today"
         ),
     )
     parser.add_argument(

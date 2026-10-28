@@ -676,6 +676,58 @@ well above 20 ms.
 None of these is a flag; each is a change to this model's decode path, and 2 needs 1 to be a single
 stream of work a graph can hold.
 
+## Where a decode actually stands on 8xRTX 3090
+
+Measured on `ts-208` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
+`--expert-resident --expert-fused-fp8`:
+
+```
+decode  8.00 tok/s    122 ms a step
+prefill 59 tok/s
+```
+
+It is the only configuration that produces a correct answer, and everything below is measured
+against it.
+
+**The step is bound by the host, not the card.** A decode step issues about 7,000 kernels;
+`cudaLaunchKernel` alone accounts for 6,938 of them, and the CPU profile is 148 ms against 86 ms of
+device time. The largest single device term is the collective: 96 all-reduces (two a layer) of
+5 KB each, 15.3 ms of a step.
+
+**Two things this box makes worse than they need to be.** The eight cards sit on two PCIe switches
+across NUMA with no NVLink between them, so `NCCL_PROTO=LL` cuts a 5 KB all-reduce from 91.5 to
+74.5 us; `Simple` and `LL128` are both worse for this payload. And the resident experts hold 14 GiB
+a card, which is what limits how much a captured step could ever be sized to.
+
+**What was tried for the host cost, and what it cost to try.** A decode step can be captured as a
+CUDA graph and replayed -- `--graph-window N`. One position replays correctly and is 3x faster.
+Two do not, and the reason is structural rather than a missing fix:
+
+* a graph records the position it was captured at, so a decode of N tokens needs N graphs;
+* every graph is recorded against the same mutable KV cache, and captures write it;
+* so the second capture's writes are what the first graph's replay reads back.
+
+Restoring the cache between positions was tried in several forms -- snapshot and restore of the KV,
+of each layer's `length`, of the linear layers' recurrent state and `initialized` flag, of the PLE
+history, plus pre-growing the rotary table so the graphs' recorded addresses survive, plus blanking
+the tail past each position. With one position the answer is right; with two it is not, and with
+all graphs sharing a pool it is a segfault. What would make it work is a forward that does not
+allocate per call, which is a rewrite of the decode path rather than a fix.
+
+`--graph-window` therefore stays at 0 and is marked experimental. The pieces it needed -- the
+warmup that keeps cuBLAS's algorithm selection out of the capture, the cache save/restore, and a
+logits selector because the head is vocab-sharded and argmax has to follow the gather -- are in
+`graph_window.py` and are the part of it that is right.
+
+**And one bug that invalidated a great deal of measurement.** The fused expert backend answered
+`nan` for every decode step for a long time, because `ShardedMoE` masks another rank's expert with
+`num_experts` as a sentinel and `encode_route` tested ownership with `index % world_size == rank`:
+for the sentinel that is true on rank 0, and `512 // 8` is row 64 of a 64-row table. The weight is
+zero, but zero times garbage is nan. `argmax` over a nan logit is index 0, so the model emitted `!`
+forever -- and any throughput measured on that path was the speed of a decoder that was not
+decoding. The fix is one predicate; the lesson is that a perf number needs a correctness check
+beside it before it means anything.
+
 ## The captured decode, and what a capture costs
 
 The three prerequisites above were built and measured on 8×RTX 3090 (`ts-208`, TP8, `/dev/shm`
