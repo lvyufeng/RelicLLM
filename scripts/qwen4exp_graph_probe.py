@@ -95,6 +95,34 @@ def main() -> int:
     past = prompt_len + args.warmup + args.eager_steps + 4
     token_in = nxt.clone().reshape(1, 1)
 
+    # Every shape the captured step touches has to have run at least once before the capture, or
+    # the first cuBLAS call for it selects its algorithm *during* the capture and invalidates it --
+    # which surfaces as `cudaErrorStreamCaptureInvalidated` with no hint about which call did it.
+    # The eager rounds above warmed the decode positions; this warms the exact one about to be
+    # captured, on a side stream, which is where a capture's work is required to have run.
+    # The warmup has to cover every call the step makes, not just the ones the eager rounds
+    # above reached: the eager loop stopped before this position, so a shape that first appears
+    # here -- a cache slice, a rope range, a softmax over a new length -- would still be selected
+    # during the capture.  A separate cache, stepped to the same position, runs the identical
+    # sequence of shapes without disturbing the one about to be captured.
+    warm_stream = torch.cuda.Stream()
+    warm_stream.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(warm_stream), torch.inference_mode():
+        warm_cache = model.make_cache(1, prompt_len + 128)
+        warm_logits = model.forward(ids, cache=warm_cache, past_len=0, last_token_only=True)
+        if warm_logits.dim() == 1:
+            warm_logits = warm_logits.unsqueeze(0)
+        warm_token = warm_logits[:, -1].argmax(-1, keepdim=True)
+        for step in range(past + 2):
+            warm_token = model.forward(
+                warm_token, cache=warm_cache, past_len=prompt_len + step, last_token_only=True
+            )[:, -1].argmax(-1, keepdim=True)
+        for _ in range(2):
+            model.forward(token_in, cache=cache, past_len=past, last_token_only=True)
+        del warm_cache
+    torch.cuda.current_stream().wait_stream(warm_stream)
+    torch.cuda.synchronize()
+
     graph_s = None
     failure = None
     try:

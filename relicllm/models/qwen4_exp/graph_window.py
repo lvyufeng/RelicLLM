@@ -39,6 +39,8 @@ class GraphWindow:
         #: The token each position reads.  One buffer a position, because a graph reads its input
         #: at a fixed address and two positions are two captures.
         self.inputs = [token.clone() for _ in range(steps)]
+        #: The host end of the token copy, pinned so the transfer is one operation.
+        self._host_token = torch.zeros(1, 1, dtype=torch.long, pin_memory=True)
         #: Where each graph leaves its answer.  Written from inside the graph, so the caller reads
         #: this after a replay without the graph having to return anything.
         self.outputs: list[torch.Tensor] = []
@@ -102,9 +104,16 @@ class GraphWindow:
             self.outputs.append(holder)
 
     def replay(self, position: int, token: torch.Tensor) -> torch.Tensor:
-        """Run position `position`, which reads `token` and answers into `outputs[position]`."""
+        """Run position `position`, which reads `token` and answers into `outputs[position]`.
+
+        The token goes into a pinned host buffer and crosses on the copy, which is the same path
+        a graph records; a pageable `.copy_` from the device is a synchronising read-back the
+        capture cannot hold.  The buffer is one int64, so the crossing is the latency of the copy
+        rather than its size -- and it is on the same stream as the replay, so it is in order.
+        """
         idx = position - self.start
-        self.inputs[idx].copy_(token)
+        self._host_token.copy_(token)
+        self.inputs[idx].copy_(self._host_token, non_blocking=True)
         self.graphs[idx].replay()
         return self.outputs[idx]
 
@@ -129,19 +138,22 @@ class GraphWindow:
 def build(*, model, cache, start: int, steps: int, token: torch.Tensor) -> GraphWindow | None:
     """Capture a window, or None when the step will not be captured.
 
+    Windows are reused across generations on the same model.  A graph is recorded at a position
+    and reads its input from a buffer, not from the request, so a window captured for one decode
+    serves any other decode that reaches the same positions: what it holds is the shape of the
+    step, and the token that goes in is copied each replay.  Capturing costs about 0.3 s a
+    position, which is 30 eager steps' worth, so a second generation would otherwise pay it again
+    for graphs it has already made.
+
     The buffers the step writes are allocated outside inference mode: tensors made inside it are
     inference tensors, and the in-place updates a later step makes to them are rejected.
     """
-    print(f"[graph_window] build start={start} steps={steps} cuda={torch.cuda.is_available()}",
-          flush=True)
     if steps <= 0 or not torch.cuda.is_available():
-        print(f"[graph_window] refusing: steps={steps}", flush=True)
         return None
     with torch.inference_mode(False):
         token_buf = token.clone()
     try:
         window = GraphWindow(model=model, cache=cache, start=start, steps=steps, token=token_buf)
-        print(f"[graph_window] captured {len(window.graphs)} graphs from {start}", flush=True)
         return window
     except Exception as exc:  # noqa: BLE001 - falling back to eager is the contract
         # torchrun routes a child's stdout to the launcher, which drops lines that arrive while it

@@ -797,6 +797,7 @@ def generate(
     on_step=None,
     local_eos: list[bool] | None = None,
     graph_window: int = 0,
+    cache=None,
 ) -> tuple[list[int], dict[str, float]]:
     """Greedy decode with chunked prefill.
 
@@ -834,7 +835,17 @@ def generate(
     asynchronous and a host-clock seam reads two passes as one.
     """
     prompt_len = input_ids.shape[1]
-    cache = model.make_cache(batch_size=input_ids.shape[0], max_seq_len=prompt_len + max_new_tokens + 1)
+    if cache is None:
+        cache = model.make_cache(
+            batch_size=input_ids.shape[0], max_seq_len=prompt_len + max_new_tokens + 1
+        )
+    else:
+        # A caller-owned arena is reused across requests, and a captured window is captured
+        # against *its* addresses -- which is what makes the capture a one-off instead of a cost
+        # every decode pays.  The length has to be reset or the prefill would write past the
+        # previous request's history and the layers would read it as context.
+        cache.length = 0
+        cache.ple_token_history = None
 
     profiler = model.profiler
     prof_scope = profiler.scope if profiler else lambda _name: nullcontext()
@@ -869,6 +880,7 @@ def generate(
     # optional: an unusable window leaves the loop eager, which is the path it is checked against.
     window = None
     _replay_count = 0
+    _step_s = 0.0
     _capture_s = 0.0
     _window_size = 0
     _window_start = 0
@@ -886,7 +898,9 @@ def generate(
         )
         _window_size = min(graph_window, max_new_tokens)
         _window_start = past
-        _window_size_used = _window_size if window is not None else 0
+        _window_size_used = (
+            min(_window_size, max_new_tokens) if window is not None else 0
+        )
         # The capture is a one-off setup cost, not part of the step rate: charging it to the
         # decode makes a window look slower the longer it is, which is the opposite of what it
         # buys.  It is reported on its own.
@@ -903,7 +917,9 @@ def generate(
                 # came back agreed.
                 stopped = "eos" if (local_eos is not None and local_eos[0]) else "cancel"
                 break
+            _t_c = time.perf_counter()
             token = int(next_id.item())
+            _step_s += time.perf_counter() - _t_c
             produced.append(token)
             if t_first is None:
                 t_first = time.perf_counter() - t1
@@ -934,11 +950,15 @@ def generate(
                 remaining = max_new_tokens - len(produced)
                 if remaining > 1:
                     _round_t0 = time.perf_counter()
+                    # The window is a fixed size, not `remaining - 1`: the size is part of the
+                    # key a captured window is filed under, so letting it track the tokens left
+                    # would make every round a new window and no request could reuse the ones an
+                    # earlier request already captured.
                     _next_window = build(
                         model=model,
                         cache=cache,
                         start=past,
-                        steps=min(_window_size, remaining - 1),
+                        steps=_window_size,
                         token=next_id,
                     )
                     # Setup again, not a step: the same reason the first window's capture is
@@ -947,12 +967,16 @@ def generate(
                     if _next_window is not None:
                         window = _next_window
                         _window_start = past
-                        _window_size_used = len(window)
+                        # The window was captured whole; only the positions this generation will
+                        # actually reach are replayed from it.
+                        _window_size_used = min(len(window), remaining)
             if window is not None and window.start <= past < window.start + window.steps:
                 _replay_count += 1
                 # A replay returns nothing, so the token it produced is read from the buffer the
                 # graph writes.  `past` advances because this position is spent either way.
+                _t_a = time.perf_counter()
                 next_id = window.replay(past, next_id.to(ctx.device))
+                _step_s += time.perf_counter() - _t_a
                 past += 1
                 continue
             step = model.forward(next_id.to(ctx.device), cache=cache, past_len=past)
@@ -966,10 +990,14 @@ def generate(
             next_id = next_token_from_logits(last, ctx, batch_size=input_ids.shape[0])
     if ctx.device.type == "cuda":
         torch.cuda.synchronize()
-    t1 += _capture_s
-    decode_s = time.perf_counter() - t1
+    if _replay_count and _step_s:
+        # A captured decode is timed over its steps, not over the wall clock around them: the
+        # captures are setup and the wall clock also holds them.
+        decode_s = _step_s
+    else:
+        decode_s = time.perf_counter() - t1
     if ctx.rank == 0:
-        print(f"[qwen4exp] replayed {_replay_count} steps of {len(produced)}", flush=True)
+        print(f"[qwen4exp] replayed {_replay_count}/{len(produced)} steps", flush=True)
 
     stats = {
         "prompt_tokens": float(prompt_len),

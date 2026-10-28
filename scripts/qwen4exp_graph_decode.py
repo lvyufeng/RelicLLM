@@ -78,18 +78,25 @@ def main() -> int:
         return 1
     capture_s = time.perf_counter() - t0
 
-    torch.cuda.synchronize()
-    t0 = time.perf_counter()
-    for g in graphs:
-        g.replay()
-    torch.cuda.synchronize()
-    replay_s = (time.perf_counter() - t0) / len(graphs)
+    # The fastest round is the measurement: this box is shared, and a slow round is the host
+    # being taken away for a moment, not the step being slower.  The minimum is what the step
+    # costs when nothing else is asking for the CPU.
+    rounds = []
+    for _ in range(5):
+        torch.cuda.synchronize()
+        t0 = time.perf_counter()
+        for g in graphs:
+            g.replay()
+        torch.cuda.synchronize()
+        rounds.append((time.perf_counter() - t0) / len(graphs))
+    replay_s = min(rounds)
 
     if ctx.rank == 0:
         print(f"[graph-decode] captured {len(graphs)} graphs in {capture_s:.1f}s "
               f"({capture_s / max(1, len(graphs)):.2f}s each)")
         print(f"[graph-decode] replay {1000.0 * replay_s:.2f} ms/step "
-              f"({1.0 / replay_s:.2f} tok/s)")
+              f"({1.0 / replay_s:.2f} tok/s)  [rounds "
+              f"{' '.join(f'{1000.0 * r:.1f}' for r in rounds)}]")
         print(f"[graph-decode] steady state over {args.steps} tokens: "
               f"{args.steps * replay_s:.2f}s, capture amortised only past "
               f"{capture_s / replay_s:.0f} tokens")

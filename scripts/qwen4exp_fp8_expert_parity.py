@@ -112,5 +112,12 @@ def main() -> int:
     return 0
 
 
+# A synthetic parity check compares the kernel against the arithmetic, which is what a layout
+# change must preserve -- but it feeds random codes, and a tiling bug that drops a few rows of
+# one expert still agrees with itself on data the bug also sees.  What caught one was the model:
+# a decode of a real prompt ran from "We need to respond" to "We!!!" when the act phase stopped
+# covering the tail of an expert's rows.  Keeping the two checks apart is deliberate; this note is
+# here so the synthetic one is not mistaken for the whole story.
+
 if __name__ == "__main__":
     raise SystemExit(main())

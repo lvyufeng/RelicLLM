@@ -675,3 +675,53 @@ well above 20 ms.
 
 None of these is a flag; each is a change to this model's decode path, and 2 needs 1 to be a single
 stream of work a graph can hold.
+
+## The captured decode, and what a capture costs
+
+The three prerequisites above were built and measured on 8×RTX 3090 (`ts-208`, TP8, `/dev/shm`
+checkpoint, 128 tokens from a 53-token prompt). Two numbers matter, and they are different numbers.
+
+**The step itself: 36.5 tok/s (27.4 ms).** A decode step captured as a CUDA graph and replayed,
+with the fused expert kernel, reads 15× faster than the 2.84 tok/s the fused path started at. The
+terms, each measured on the device timeline:
+
+| Change | Effect |
+|---|---|
+| `fp8_expert_act_kernel` splitting an expert's rows over the grid, not one block a slot | 2.84 → 7.03 |
+| reading the hidden width off the plane shape instead of unpacking the layer for it | → 7.90 |
+| the act phase addressing the packed plane directly (no unpack at all) | device time a step 168.9 → 74.9 ms |
+| a lane reading a whole 16-byte plane chunk, so a warp's loads are contiguous | 25 → 28.3 GB/s of code reads |
+| `blocks_per_expert` retuned for the captured step (32 → 48) | plateau, 24 is measurably worse |
+| `NCCL_PROTO=LL` for the 5 KB all-reduces | 91.5 → 74.5 µs each, 33.2 → 27.1 ms a step |
+
+That last one is this box, not the model: the eight cards sit on two PCIe switches across NUMA with
+no NVLink between them, so a ring of 5 KB blocks is a latency problem, and the low-latency protocol
+is the one that fits. On a machine with a real fabric it will not matter.
+
+**The generation: about 2.6 tok/s for a 128-token request.** A graph records the position it was
+captured at -- `past_len` picks a rope slice and a KV cache slice on the host -- so one capture
+serves one position, and a decode of N tokens needs N captures. A capture costs **0.30 s a
+position**: 124 ms of warmup (one full forward, because cuBLAS selects its algorithm on first sight
+of a shape and doing that inside a capture voids it) and 176 ms of recording. Sixty-four positions
+is what the resident experts leave room for, so a 128-token decode captures in rounds.
+
+Three hundred milliseconds a position against the 13 ms a position it saves means the capture pays
+for itself only past about **2700 generated tokens**. Shorter requests are slower on the captured
+path than eager, and that is the whole of the gap between the two numbers above.
+
+The capture cost was attacked and did not come down:
+
+- **Sharing one pool and one stream across the window** removed an out-of-memory at 80 positions
+  and returns the memory at `release()`, but leaves the 0.30 s.
+- **Reusing windows across requests** works when the caller brings its own KV arena (the second
+  request's `build()` returns in 0.000 s against 5.89 s) and fails in practice: a window is filed
+  under a fixed size to be reusable, and spending a whole window on a tail that has fewer tokens
+  left overruns the card.
+- **`torch.compile` before the capture** does not survive this model's decode path.
+
+What would collapse it is one graph serving every position, which needs `past_len` off the host:
+the rope and the causal mask already take it as a tensor (`attention.py:557`), but the KV cache is
+written and read by slicing to it (`attention.py:502`, `:660`), and a slice needs an int. That is a
+change to the cache's addressing, not a flag.
+
+So: the step is fast enough, the setup is not, and the setup is the open problem.
