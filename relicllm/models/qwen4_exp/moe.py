@@ -577,7 +577,9 @@ def _fp8_slots_ops():
     return ops
 
 
-def encode_route(indices: torch.Tensor, world_size: int, rank: int) -> torch.Tensor:
+def encode_route(
+    indices: torch.Tensor, world_size: int, rank: int, num_experts: int | None = None
+) -> torch.Tensor:
     """A route as a local-row *code*: this rank's row, or `-1` for another rank's expert.
 
     The expert partition is round-robin by id across the TP width (`expert_id % world_size`), so
@@ -593,6 +595,13 @@ def encode_route(indices: torch.Tensor, world_size: int, rank: int) -> torch.Ten
         return indices.reshape(-1).to(torch.int32)
     flat = indices.reshape(-1)
     mine = (flat % world_size) == rank
+    if num_experts is not None:
+        # `ShardedMoE` masks a foreign route with `num_experts` as its sentinel, and that value is
+        # not an id: it is the first one past the table.  `% world_size` would still make it look
+        # like this rank's -- 512 % 8 is 0 on rank 0 -- and `// world_size` would then index row
+        # 64 of a 64-row table, reading past the end of the expert.  The weight is zero, but zero
+        # times garbage is nan in the sum, not zero.
+        mine = mine & (flat < num_experts)
     local = torch.div(flat, world_size, rounding_mode="floor")
     return torch.where(mine, local, torch.full_like(flat, -1)).to(torch.int32)
 
@@ -729,7 +738,7 @@ class Fp8SlotExpertMoE:
     ) -> torch.Tensor:
         if not self._is_decode_step(hidden_states, layer_idx):
             return self._prefill(layer_idx, hidden_states, indices, weights)
-        routed = encode_route(indices, self.world_size, self.rank)
+        routed = encode_route(indices, self.world_size, self.rank, self.num_experts)
         empty = routed < 0
         # A foreign slot's weight is the zeroing: the kernel still runs its (empty) row, so the
         # work and the shapes are the route's, not the draw's.
