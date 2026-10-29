@@ -808,22 +808,26 @@ take a device position, the linear state lives one entry a position, and the rop
 built before a recording. A whole step can now be captured and replayed in **30.4 ms** -- 32.9
 tok/s, measured with the window fill, the replay, the token choice and the id copy all counted.
 
-It decodes the wrong thing, and the measurement that says where:
+It decodes the wrong thing. The output is what says so, and nothing narrower does:
 
 ```
-layer 0: 0.359   layer 1: 0.210   layer 2..5: 0.279
+generate [1596, 1144, 310, 5707, 310, 1156, 328, 12675, ...]
+capture  [1144, 310, 5707, 13, 271, 248069, 271, 248069, ...]
 ```
 
-Comparing a captured walk against an eager one, layer by layer, the first layer is already 0.36
-apart and the gap does not grow after it. A gap that appears in one layer and stays put is not
-accumulating state -- it is one operator answering slightly differently depending on how it was
-launched. Ruled out along the way, each by measurement rather than by reading:
+A layer-by-layer comparison was attempted and **did not measure what it claimed**: it read the
+intermediate tensors of the capture itself rather than of a replay, so the numbers it produced were
+of a pass that never ran. They are not recorded here as a finding. What the same harness did measure
+reliably is the QSA kernel alone, which is bit-identical under a capture, so the attention kernel is
+not the explanation.
 
-* the QSA kernel itself (identical bits under a capture);
-* TF32 (`allow_tf32` on or off changes nothing);
-* the slot index (counting steps or positions gives the same answer);
-* the arena width (taking it from the cache or a constant, same);
-* the n-gram window (filling it correctly, same).
+The rest -- the slot index, the arena width, the n-gram window, TF32 -- was each changed and the
+end-to-end output compared, and none of them changed it. That is a real exclusion, but a coarse one:
+any of them could still matter in a way this comparison could not see.
+
+What is left is that a replay and an eager step of the same input differ somewhere inside the fused
+operators, and the recorded step's error compounds until a token goes wrong. Where inside them is
+open, and finding it needs a probe this work did not build.
 
 Over a generation the difference flips an argmax where two tokens are close: the first five agree
 with eager and the sixth does not. So the honest position is that the speed is reachable and the
