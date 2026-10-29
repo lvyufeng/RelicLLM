@@ -426,9 +426,20 @@ class Qwen4ExpModel:
         # The table belongs to the sequence, so it lives on the cache and spans what was grown
         # for it: kept on the model, the next call sees the previous call's *slice* and rebuilds
         # the whole span every step, which at a few hundred tokens is most of a decode step.
+        # A caller that laid the whole generation out -- a capture has to, because a table that
+        # grows on demand reallocates inside the recording -- says how wide the table is, and the
+        # slice is then taken at a position that may be a device tensor.
+        fixed = getattr(cache, "rope_width", 0)
+        if isinstance(total_len, torch.Tensor):
+            if not fixed or cache.cos is None or cache.cos.shape[-1] < fixed:
+                raise RuntimeError(
+                    "a tensor past_len needs cache.rope_width set and the table built for it"
+                )
+            begin = total_len - int(total_len.shape[0]) if total_len.dim() else total_len
+            return cache.cos[:, begin], cache.sin[:, begin]
         width = -(-total_len // _ROPE_GROW) * _ROPE_GROW
         if cache.cos is None or cache.cos.shape[1] != batch_size or cache.cos.shape[-1] < width:
-            width = max(width, total_len)
+            width = max(width, fixed, total_len)
             position_ids = torch.arange(width, device=self.device).view(1, 1, -1).expand(3, batch_size, -1)
             cache.cos, cache.sin = self.rope(position_ids, self.dtype)
         return cache.cos[:, :total_len], cache.sin[:, :total_len]
@@ -736,16 +747,25 @@ class Qwen4ExpModel:
                 # host-resident), so keep the history there too.  The crossing goes into a pinned
                 # buffer: a pageable one is a copy the driver stages through the CPU, and a
                 # captured step refuses it outright rather than slow down for it.
-                ids_cpu = self._pinned_ids(input_ids)
-                if cache is not None and cache.ple_token_history is not None:
-                    token_history = torch.cat([cache.ple_token_history, ids_cpu], dim=1)
+                # A caller that keeps the window itself -- a capture has to, because the ids it
+                # is about to embed do not exist when the recording is made -- hands over the
+                # whole row, and no device-to-host copy happens here at all.
+                staged = (
+                    getattr(cache, "ple_history_at", None) if cache is not None else None
+                )
+                if staged is not None:
+                    token_history = staged(input_ids)
                 else:
-                    pad = torch.full(
-                        (batch_size, self.config.ngram_size - 1),
-                        self.config.primary_eos_token_id,
-                        dtype=torch.long,
-                    )
-                    token_history = torch.cat([pad, ids_cpu], dim=1)
+                    ids_cpu = self._pinned_ids(input_ids)
+                    if cache is not None and cache.ple_token_history is not None:
+                        token_history = torch.cat([cache.ple_token_history, ids_cpu], dim=1)
+                    else:
+                        pad = torch.full(
+                            (batch_size, self.config.ngram_size - 1),
+                            self.config.primary_eos_token_id,
+                            dtype=torch.long,
+                        )
+                        token_history = torch.cat([pad, ids_cpu], dim=1)
 
         # How the layers are driven. `by_layer` is the per-token loop every call has always run.
         # `by_phase` runs the same blocks in the same order with the same inputs, but walks the
@@ -762,6 +782,6 @@ class Qwen4ExpModel:
 
         if cache is not None:
             cache.length = total_len
-            if token_history is not None:
+            if token_history is not None and getattr(cache, "ple_history_at", None) is None:
                 cache.ple_token_history = token_history[:, -(self.config.ngram_size - 1) :].clone()
         return hidden
