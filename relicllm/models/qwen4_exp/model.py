@@ -413,7 +413,11 @@ class Qwen4ExpModel:
         return cache
 
     def _rope_cache(
-        self, total_len: int, batch_size: int, cache: Qwen4ExpCache | None = None
+        self,
+        total_len: int,
+        batch_size: int,
+        cache: Qwen4ExpCache | None = None,
+        seq_len: int = 1,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """cos/sin for absolute positions [0, total_len). The QSA indexer needs
         every past position, not just the current ones, so we keep the full span
@@ -439,13 +443,19 @@ class Qwen4ExpModel:
                     "a tensor past_len needs cache.rope_width set and the table built for it"
                 )
             # A slice boundary has to be a host integer, and reading one off the device is what a
-            # capture refuses -- so the row is taken by index on the device instead.  The result
-            # is (3, 1, head_dim/2), the shape the eager path's slice produces.
-            if total_len.dim() == 0:
-                total_len = total_len.reshape(1)
+            # capture refuses -- so the rows are taken by index on the device instead.
+            #
+            # Which rows matters, and getting it wrong here is quiet. The integer path returns the
+            # span `[0, total_len)`, and every caller slices `[-seq_len:]` off the end of it --
+            # rows `[total_len - seq_len, total_len)`, the positions this call is computing.
+            # Returning row `total_len`, as this did, is the row one *past* the current position,
+            # so every decode step rotated its query by the next position's phase. Greedy decoding
+            # survives the first few tokens on that and then picks a different one.
+            start = total_len.reshape(()) - seq_len
+            rows = start + torch.arange(seq_len, device=cache.cos.device)
             return (
-                cache.cos.index_select(1, total_len),
-                cache.sin.index_select(1, total_len),
+                cache.cos.index_select(1, rows),
+                cache.sin.index_select(1, rows),
             )
         width = -(-total_len // _ROPE_GROW) * _ROPE_GROW
         if cache.cos is None or cache.cos.shape[0] != batch_size or cache.cos.shape[1] < width:
@@ -748,7 +758,7 @@ class Qwen4ExpModel:
         total_len = past_len + seq_len
 
         with prof_scope("rope_cache"):
-            cos, sin = self._rope_cache(total_len, batch_size, cache)
+            cos, sin = self._rope_cache(total_len, batch_size, cache, seq_len)
 
         token_history = None
         if any(layer is not None and layer.ple is not None for layer in self.layers):
@@ -791,7 +801,12 @@ class Qwen4ExpModel:
             hidden = self._forward_by_layer(hidden, layers, cache, cos, sin, past_len, token_history)
 
         if cache is not None:
-            cache.length = total_len
+            # `length` stays a Python int. A tensor position would make this an assignment of a
+            # device scalar, which a capture cannot recompute and which turns every later
+            # `int(cache.length)` into a read of whatever the recording saw. A caller driving the
+            # position itself -- a capture has to -- advances `length` beside it.
+            if not isinstance(total_len, torch.Tensor):
+                cache.length = total_len
             if token_history is not None and getattr(cache, "ple_history_at", None) is None:
                 cache.ple_token_history = token_history[:, -(self.config.ngram_size - 1) :].clone()
         return hidden
