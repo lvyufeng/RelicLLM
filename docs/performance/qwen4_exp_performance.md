@@ -737,12 +737,20 @@ host queues work, so filling them with more rows is free.
 The batched path used to crash outright: `_pinned_ids` allocated a one-row buffer and a two-row
 batch failed writing into it. It follows the batch now.
 
-**It is not yet correct, and the number above should be read with that.** Three identical rows
-decode `[1596, 1144, 310, 5707, 310, 1156, 328, 12675]` the same way a single sequence does for
-rows 0 and 2, but row 1 answers `25` at the sixth token instead of `328`. It is deterministic --
-the same row, the same position, every run -- so it is a state bug rather than a near-tie in the
-logits, and making the id copy blocking did not change it. Until that is found, treat the batched
-throughput as an upper bound measured on a path that is not fully verified.
+**It is not yet correct, and the number above should be read with that.** Identical rows do not
+all decode what a single sequence decodes: the answer goes off by one position at the sixth token,
+and which rows are affected depends on the batch width -- with two rows both are wrong, with four
+the first two agree and the last two do not. It is deterministic, and the top-1/top-2 margin at
+that step is 5.0, so it is state rather than a near-tie in the logits. Making the id copy blocking
+did not change it.
+
+The mechanism is in `Fp8SlotExpertMoE`. Its decode predicate is `hidden_states.numel() == hidden`,
+which is true for one token and false for a batch, and the fast path it guards is written for one
+token besides -- it ends in `slot_rows.sum(0)`, which folds every row into one. So a batch is
+routed to `_prefill`, whose multi-row handling is what diverges. Fixing it means teaching the fused
+kernel to take several rows, which lives in relic-core and needs a rebuild.
+
+Until then, treat the batched throughput as an upper bound measured on a path that is not verified.
 
 ### The one thing that would get there, and why it does not
 
