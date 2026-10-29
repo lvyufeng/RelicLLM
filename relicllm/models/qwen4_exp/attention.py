@@ -321,6 +321,37 @@ def _state_slots(cache) -> dict | None:
     return getattr(cache, "state_slots", None)
 
 
+def _slot_row(entries: list, slot) -> torch.Tensor:
+    """The array to index, rebuilt only when the entries are not one stack.
+
+    A list of separate tensors cannot be indexed by a device scalar -- that would be a host read,
+    which a capture refuses -- so the entries are stacked once and kept.  The stack is one
+    allocation the graph points at, which is what a replay needs anyway.
+    """
+    stacked = getattr(entries, "stacked", None)
+    if stacked is None:
+        stacked = torch.stack(entries)
+        try:
+            entries.stacked = stacked
+        except AttributeError:
+            pass
+    return stacked
+
+
+def _slot_read(entries: list, slot) -> torch.Tensor:
+    """The entry a step starts from: its own position, selected on the device."""
+    if isinstance(slot, torch.Tensor):
+        return _slot_row(entries, slot)[slot]
+    return entries[slot]
+
+
+def _slot_write(entries: list, slot) -> torch.Tensor:
+    """The entry a step writes: the next position.  Written in place by the caller."""
+    if isinstance(slot, torch.Tensor):
+        return _slot_row(entries, slot)[slot + 1]
+    return entries[slot + 1]
+
+
 def _state_at(cache, name: str):
     """The value a step reads for `name`: its own entry when the cache is laid out by position.
 
@@ -333,7 +364,7 @@ def _state_at(cache, name: str):
         return None
     slots = _state_slots(cache)
     if slots is not None and name in slots:
-        return slots[name][int(cache.state_slot)]
+        return _slot_read(slots[name], cache.state_slot)
     value = getattr(cache, name, None)
     if name == "recurrent_state" and not getattr(cache, "initialized", False):
         return None
@@ -354,7 +385,7 @@ def _update_state(cache, name: str, value: torch.Tensor) -> None:
     """
     slots = _state_slots(cache)
     if slots is not None and name in slots:
-        target = slots[name][int(cache.state_slot) + 1]
+        target = _slot_write(slots[name], cache.state_slot)
         if target.shape != value.shape:
             raise RuntimeError(
                 f"{name} slot is {tuple(target.shape)}, the layer produced {tuple(value.shape)}"

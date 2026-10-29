@@ -431,14 +431,24 @@ class Qwen4ExpModel:
         # slice is then taken at a position that may be a device tensor.
         fixed = getattr(cache, "rope_width", 0)
         if isinstance(total_len, torch.Tensor):
-            if not fixed or cache.cos is None or cache.cos.shape[-1] < fixed:
+            # `cos` is `(3, positions, head_dim/2)`: the span is dim 1, and reading the last dim
+            # here compared the half-head width against the span and refused every capture, which
+            # is what this cost a round to find.
+            if not fixed or cache.cos is None or cache.cos.shape[1] < fixed:
                 raise RuntimeError(
                     "a tensor past_len needs cache.rope_width set and the table built for it"
                 )
-            begin = total_len - int(total_len.shape[0]) if total_len.dim() else total_len
-            return cache.cos[:, begin], cache.sin[:, begin]
+            # `total_len` is the 0-dim position the step writes at; the table row is that
+            # position, kept as a length-1 span so the shapes match the eager path's.
+            if total_len.dim() == 0:
+                total_len = total_len.reshape(1)
+            begin = total_len[0]
+            return (
+                cache.cos[:, begin : begin + 1],
+                cache.sin[:, begin : begin + 1],
+            )
         width = -(-total_len // _ROPE_GROW) * _ROPE_GROW
-        if cache.cos is None or cache.cos.shape[1] != batch_size or cache.cos.shape[-1] < width:
+        if cache.cos is None or cache.cos.shape[0] != batch_size or cache.cos.shape[1] < width:
             width = max(width, fixed, total_len)
             position_ids = torch.arange(width, device=self.device).view(1, 1, -1).expand(3, batch_size, -1)
             cache.cos, cache.sin = self.rope(position_ids, self.dtype)
