@@ -744,11 +744,15 @@ the first two agree and the last two do not. It is deterministic, and the top-1/
 that step is 5.0, so it is state rather than a near-tie in the logits. Making the id copy blocking
 did not change it.
 
-The mechanism is in `Fp8SlotExpertMoE`. Its decode predicate is `hidden_states.numel() == hidden`,
-which is true for one token and false for a batch, and the fast path it guards is written for one
-token besides -- it ends in `slot_rows.sum(0)`, which folds every row into one. So a batch is
-routed to `_prefill`, whose multi-row handling is what diverges. Fixing it means teaching the fused
-kernel to take several rows, which lives in relic-core and needs a rebuild.
+A batch does not take the fused path: `Fp8SlotExpertMoE`'s decode predicate is
+`hidden_states.numel() == hidden`, true for one token and false for a batch, and the fast path
+itself ends in `slot_rows.sum(0)`, which folds every row into one. So a batch is routed to
+`_prefill` and grouped dispatch.
+
+That route is not the cause, which was checked rather than assumed: the decoder hands the MoE
+`flat = mixed.reshape(-1, hidden)`, so the dispatch's `token_idx = slot // top_k` indexes flattened
+tokens and every row is kept apart. Where the divergence actually comes from is still open; it is
+not the id copy (blocking it changed nothing) and not a near-tie in the logits (the margin is 5.0).
 
 Until then, treat the batched throughput as an upper bound measured on a path that is not verified.
 
