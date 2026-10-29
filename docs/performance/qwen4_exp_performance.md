@@ -801,6 +801,34 @@ to four things -- each of them identified by a failed attempt, none of them spec
 The head is vocabulary-sharded, so the argmax cannot be in the recording either: each position
 records its logits and the choice is made on the gathered row outside, one sync a step.
 
+### Where the capture actually stops
+
+The four prerequisites above are in place and each is verified on its own: the KV write and read
+take a device position, the linear state lives one entry a position, and the rope table can be
+built before a recording. A whole step can now be captured and replayed in **30.4 ms** -- 32.9
+tok/s, measured with the window fill, the replay, the token choice and the id copy all counted.
+
+It decodes the wrong thing, and the measurement that says where:
+
+```
+layer 0: 0.359   layer 1: 0.210   layer 2..5: 0.279
+```
+
+Comparing a captured walk against an eager one, layer by layer, the first layer is already 0.36
+apart and the gap does not grow after it. A gap that appears in one layer and stays put is not
+accumulating state -- it is one operator answering slightly differently depending on how it was
+launched. Ruled out along the way, each by measurement rather than by reading:
+
+* the QSA kernel itself (identical bits under a capture);
+* TF32 (`allow_tf32` on or off changes nothing);
+* the slot index (counting steps or positions gives the same answer);
+* the arena width (taking it from the cache or a constant, same);
+* the n-gram window (filling it correctly, same).
+
+Over a generation the difference flips an argmax where two tokens are close: the first five agree
+with eager and the sixth does not. So the honest position is that the speed is reachable and the
+agreement is not, and both of those are measurements rather than expectations.
+
 ### A bug that invalidated a great deal of measurement
 
 The fused expert backend answered `nan` for every decode step for a long time, because `ShardedMoE`
