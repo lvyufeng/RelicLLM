@@ -321,35 +321,55 @@ def _state_slots(cache) -> dict | None:
     return getattr(cache, "state_slots", None)
 
 
-def _slot_row(entries: list, slot) -> torch.Tensor:
-    """The array to index, rebuilt only when the entries are not one stack.
+class SlotEntries:
+    """One field's per-position entries, and the stack a step indexes.
 
-    A list of separate tensors cannot be indexed by a device scalar -- that would be a host read,
-    which a capture refuses -- so the entries are stacked once and kept.  The stack is one
-    allocation the graph points at, which is what a replay needs anyway.
+    The stack is the store: a read and the write that follows it go through the same memory, and
+    the entries are only the material it is built from.  `slot_layout` builds it, so there is no
+    moment at which the two can disagree.
     """
-    stacked = getattr(entries, "stacked", None)
-    if stacked is None:
-        stacked = torch.stack(entries)
-        try:
-            entries.stacked = stacked
-        except AttributeError:
-            pass
-    return stacked
+
+    __slots__ = ("entries", "stack")
+
+    def __init__(self, entries: list) -> None:
+        self.entries = list(entries)
+        self.stack = torch.stack(self.entries) if self.entries else None
+
+    def __len__(self) -> int:
+        return len(self.entries)
+
+    def __getitem__(self, index):
+        return self.stack[index]
 
 
-def _slot_read(entries: list, slot) -> torch.Tensor:
+def slot_layout(fields: dict) -> dict:
+    """Lay out per-position state: `{"conv_state": [t0, t1, ...], ...}` -> SlotEntries a field.
+
+    Called before the first step, so the stack a recording points at exists and is filled before
+    anything can write through it.
+    """
+    return {name: SlotEntries(values) for name, values in fields.items()}
+
+
+def _slot_read(entry: "SlotEntries", slot) -> torch.Tensor:
     """The entry a step starts from: its own position, selected on the device."""
     if isinstance(slot, torch.Tensor):
-        return _slot_row(entries, slot)[slot]
-    return entries[slot]
+        # `index_select` with a 1-D index: indexing a stack by a 0-dim tensor is advanced
+        # indexing, which returns a copy -- fine for a read, useless for the write that follows.
+        return entry.stack.index_select(0, slot.reshape(1))[0]
+    return entry.stack[slot]
 
 
-def _slot_write(entries: list, slot) -> torch.Tensor:
-    """The entry a step writes: the next position.  Written in place by the caller."""
+def _slot_store(entry: "SlotEntries", slot, value: torch.Tensor) -> None:
+    """Put `value` at `slot + 1` of the stack, on the device, in place.
+
+    A capture writes through the addresses it recorded, so this is an in-place update of the stack,
+    which is also the only store: nothing reads the list the stack was built from.
+    """
     if isinstance(slot, torch.Tensor):
-        return _slot_row(entries, slot)[slot + 1]
-    return entries[slot + 1]
+        entry.stack.index_copy_(0, slot.reshape(1) + 1, value.unsqueeze(0))
+        return
+    entry.stack[slot + 1].copy_(value)
 
 
 def _state_at(cache, name: str):
@@ -385,12 +405,13 @@ def _update_state(cache, name: str, value: torch.Tensor) -> None:
     """
     slots = _state_slots(cache)
     if slots is not None and name in slots:
-        target = _slot_write(slots[name], cache.state_slot)
-        if target.shape != value.shape:
+        entry = slots[name]
+        if entry.stack.shape[1:] != value.shape:
             raise RuntimeError(
-                f"{name} slot is {tuple(target.shape)}, the layer produced {tuple(value.shape)}"
+                f"{name} slot is {tuple(entry.stack.shape[1:])}, "
+                f"the layer produced {tuple(value.shape)}"
             )
-        target.copy_(value)
+        _slot_store(entry, cache.state_slot, value)
         return
     live = getattr(cache, name, None)
     if live is not None and live.shape == value.shape:

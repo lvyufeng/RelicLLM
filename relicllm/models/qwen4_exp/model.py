@@ -438,14 +438,14 @@ class Qwen4ExpModel:
                 raise RuntimeError(
                     "a tensor past_len needs cache.rope_width set and the table built for it"
                 )
-            # `total_len` is the 0-dim position the step writes at; the table row is that
-            # position, kept as a length-1 span so the shapes match the eager path's.
+            # A slice boundary has to be a host integer, and reading one off the device is what a
+            # capture refuses -- so the row is taken by index on the device instead.  The result
+            # is (3, 1, head_dim/2), the shape the eager path's slice produces.
             if total_len.dim() == 0:
                 total_len = total_len.reshape(1)
-            begin = total_len[0]
             return (
-                cache.cos[:, begin : begin + 1],
-                cache.sin[:, begin : begin + 1],
+                cache.cos.index_select(1, total_len),
+                cache.sin.index_select(1, total_len),
             )
         width = -(-total_len // _ROPE_GROW) * _ROPE_GROW
         if cache.cos is None or cache.cos.shape[0] != batch_size or cache.cos.shape[1] < width:
