@@ -682,6 +682,77 @@ Measured on `ts-208` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a
 `--expert-resident --expert-fused-fp8`:
 
 ```
+decode  8.1 tok/s     122 ms a step
+prefill 59 tok/s
+```
+
+That is the only configuration that answers correctly, and every number below is measured against
+it.
+
+### The step is bound by the host, not the card
+
+A decode step issues **24,775 aten calls** -- about 516 a layer -- and dispatch alone is 3.72 us
+each, so 92.7 ms of the 122 ms a step takes is the host queueing work. Device time is 42 ms. A
+breakdown of the host side:
+
+```
+24,775 aten calls   92.7 ms   (mm 773, mul 1257, copy_ 1224, empty_strided 1107, to 1403 ...)
+10,066 other        40.0 ms   (cudaLaunchKernel 6938 at 3.8 us)
+```
+
+There is no hot spot: the largest single entry, `cudaLaunchKernel`, is 26.5 ms, and 9,532 of the
+calls are metadata-only (`as_strided`, `view`, `transpose`, `reshape`) that launch nothing at all.
+Removing any one of them changes the step by a fraction of a percent.
+
+### What each option was worth
+
+| Attempt | Result |
+|---|---|
+| act kernel vectorised reads | device time halved; device was never the bound |
+| `blocks_per_expert` 32 -> 48 | small gain, kept |
+| NCCL protocol (LL / LL128 / Simple) | within 3%, noise |
+| NCCL algorithm (Ring / Tree), channel count | no measurable change |
+| dense FP16 linear path | **slower** than the default |
+| `torch.compile` on the attention half | **53% slower**; on the whole model it fails -- triton 3.6 cannot bitcast e4m3 |
+| RMSNorm gain precomputed | 0.4% |
+| batching (8 rows) | 210 ms a step for 8 rows, but that is throughput, not one request |
+
+### The one thing that would get there, and why it does not
+
+A captured decode step replays in **30 ms** -- 33 tok/s, which is the target -- so a CUDA graph is
+the only mechanism that removes 90 ms of host queueing at once. Two shapes of it were built and
+neither produced a correct token:
+
+* **one graph per position.** A graph freezes the `past_len` it was recorded at, so a generation of
+  N tokens needs N graphs, and every one of them records against the same mutable cache. Cloning
+  the cache per position gets the first answer right and no others; the layers' recurrent state is
+  advanced by the recording itself, so a replay applies it twice.
+* **one step-major layout for the whole generation.** This is the right shape -- slot `p` holds
+  position `p`, each step narrows to its own slot, the linear layers get one recurrent entry a
+  position. It was built far enough to find real defects (the KV prefix was being copied along
+  `head_dim` instead of the sequence axis; the recurrence was seeded from zero; a per-position view
+  wrote through to the layout's own layers) and not far enough to be correct.
+
+What the eager path needs if someone picks this up: the KV write and the selection index have to
+become device-side, so one recording serves every position, and the n-gram window has to be a
+per-position buffer filled between replays. `feature/qwen4exp-pipeline-parallel` carries a partial
+`spec_decode.py` that starts from the same premise.
+
+### A bug that invalidated a great deal of measurement
+
+The fused expert backend answered `nan` for every decode step for a long time, because `ShardedMoE`
+masks another rank's expert with `num_experts` as a sentinel and `encode_route` tested ownership
+with `index % world_size == rank`: for the sentinel that is true on rank 0, and `512 // 8` is row 64
+of a 64-row table. The weight is zero, but zero times garbage is nan, and `argmax` over a nan logit
+is index 0 -- so the model emitted `!` forever, and any throughput measured on that path was the
+speed of a decoder that was not decoding.
+
+
+
+Measured on `ts-208` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
+`--expert-resident --expert-fused-fp8`:
+
+```
 decode  8.00 tok/s    122 ms a step
 prefill 59 tok/s
 ```
