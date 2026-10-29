@@ -871,6 +871,9 @@ def generate(
     # vocabulary here; under PP exactly one stage has them and no gather applies.
     logits = gather_logits(logits[:, -1], ctx) if ctx.pp_size <= 1 and logits is not None else logits
     produced: list[int] = []
+    _steps = 0
+    rows = int(input_ids.shape[0])
+    produced_rows: list[list[int]] = [[] for _ in range(rows)]
     stopped = "length"
     t1 = time.perf_counter()
     t_first = None
@@ -921,9 +924,16 @@ def generate(
                 stopped = "eos" if (local_eos is not None and local_eos[0]) else "cancel"
                 break
             _t_c = time.perf_counter()
-            token = int(next_id.item())
+            # A batch records a token a row, a single sequence records one a step -- and
+            # `produced[i]` stays row 0 for a batch, so a reader that only ever saw the
+            # single-sequence shape is unchanged.
+            step_tokens = [int(v) for v in next_id.reshape(-1).tolist()]
+            token = step_tokens[0]
             _step_s += time.perf_counter() - _t_c
+            _steps += 1
             produced.append(token)
+            for row, value in enumerate(step_tokens):
+                produced_rows[row].append(value)
             if t_first is None:
                 t_first = time.perf_counter() - t1
             if on_token is not None and ctx.rank == 0:
@@ -1016,8 +1026,13 @@ def generate(
         "ttft_s": prefill_s + (t_first if t_first is not None else 0.0),
         "stopped": stopped,
         "prefill_tps": prompt_len / prefill_s if prefill_s > 0 else 0.0,
-        "decode_tps": len(produced) / decode_s if decode_s > 0 else 0.0,
+        # Tokens, not steps: a batch of eight produces eight times the tokens in the same
+        # steps, and a rate that counted steps would report the batch as no faster.
+        "decode_tps": (rows * _steps) / decode_s if decode_s > 0 else 0.0,
     }
+    # A batch answers a list a row; one row answers the flat list every caller already reads.
+    if rows > 1:
+        return produced_rows, stats
     return produced, stats
 
 
