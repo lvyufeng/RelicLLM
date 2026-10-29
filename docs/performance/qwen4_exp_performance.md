@@ -715,7 +715,28 @@ Removing any one of them changes the step by a fraction of a percent.
 | dense FP16 linear path | **slower** than the default |
 | `torch.compile` on the attention half | **53% slower**; on the whole model it fails -- triton 3.6 cannot bitcast e4m3 |
 | RMSNorm gain precomputed | 0.4% |
-| batching (8 rows) | 210 ms a step for 8 rows, but that is throughput, not one request |
+| batching | see below: correct, and the only throughput lever there is |
+
+### Batching: the one lever that works
+
+The step is host-bound, so its cost barely moves with the number of rows: one row is 122 ms, eight
+are 210 ms, twelve are 212 ms. Measured on identical rows, which decode the same tokens as a single
+request does:
+
+```
+rows  1   122 ms/step    8.1 tok/s
+rows  8   210 ms/step   38.1 tok/s
+rows 12   212 ms/step   56.7 tok/s
+```
+
+That is throughput and not one request's latency -- each row still advances at about 4.8 tok/s when
+there are eight of them -- but it is the only thing measured here that reaches 30 tok/s at all, and
+it comes from the same fact that blocks the single-request target: the cards are idle while the
+host queues work, so filling them with more rows is free.
+
+The batched path used to crash outright: `_pinned_ids` allocated a one-row buffer and a two-row
+batch failed writing into it. It follows the batch now, and both fixes below are what let a step be
+batched at all.
 
 ### The one thing that would get there, and why it does not
 
