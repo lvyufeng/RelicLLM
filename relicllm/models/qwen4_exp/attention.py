@@ -139,6 +139,26 @@ def cuda_gated_delta_rule(
     return output, state
 
 
+def _write_kv(cache, key: torch.Tensor, value: torch.Tensor, past_len, seq_len: int) -> None:
+    """Put this step's keys and values at `past_len`.
+
+    A Python `past_len` is a slice, which is what the eager loop has always done.  A tensor
+    `past_len` cannot slice -- torch would read its value on the host, and inside a capture that is
+    an error rather than a slow path -- so it goes through `index_copy_` against the position, which
+    is the form a recording can replay at any offset.
+    """
+    if isinstance(past_len, torch.Tensor):
+        # One row at a time: `index_copy_` takes a 1-D index, and the position is a fact about the
+        # step rather than about a row, so the same offsets serve every row.
+        offsets = past_len.reshape(()) + torch.arange(seq_len, device=key.device)
+        for row in range(key.shape[0]):
+            cache.k[row].index_copy_(1, offsets, key[row])
+            cache.v[row].index_copy_(1, offsets, value[row])
+        return
+    cache.k[:, :, past_len : past_len + seq_len] = key
+    cache.v[:, :, past_len : past_len + seq_len] = value
+
+
 def cuda_qsa_attention(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -675,8 +695,7 @@ class QSAAttention:
         query, key = apply_rotary_pos_emb(query, cur_cos, cur_sin, k=key, unsqueeze_dim=1)
 
         if cache is not None:
-            cache.k[:, :, past_len : past_len + seq_len] = key
-            cache.v[:, :, past_len : past_len + seq_len] = value
+            _write_kv(cache, key, value, past_len, seq_len)
             cache.length = past_len + seq_len
             key = cache.k[:, :, : cache.length]
             value = cache.v[:, :, : cache.length]
