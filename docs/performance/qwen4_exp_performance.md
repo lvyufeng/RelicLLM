@@ -825,9 +825,27 @@ The rest -- the slot index, the arena width, the n-gram window, TF32 -- was each
 end-to-end output compared, and none of them changed it. That is a real exclusion, but a coarse one:
 any of them could still matter in a way this comparison could not see.
 
-What is left is that a replay and an eager step of the same input differ somewhere inside the fused
-operators, and the recorded step's error compounds until a token goes wrong. Where inside them is
-open, and finding it needs a probe this work did not build.
+What is left is that a replay and an eager step of the same input differ inside the operators, and
+the error compounds until a token goes wrong. A working probe was eventually built -- layer 0's
+returned tensor, eager against replayed, with no buffer in between -- and it measured:
+
+```
+diff max 0.352, mean 0.0038, 1276 of 10240 elements over 1e-2
+```
+
+The bad elements are spread evenly over the 10240 channels: split by residue over 4, 8 and 16 they
+are 307/315/336/318, 160/159/152/152/147/156/184/166, 82/84/81/79/67/81/88/77. Two structural
+readings that looked convincing in the moment -- "the last two hyper-connection streams are broken"
+and "the eighth is a rank boundary" -- were both wrong, and the even spread is what killed them.
+
+A large max with a small mean over the whole tensor is the shape of a different summation order
+rather than of a wrong answer: the same arithmetic, accumulated in a different sequence. That is
+not something a graph can be argued out of at this layer of the stack; matching it would mean
+pinning the kernels' reduction order.
+
+So the honest state of this one: eager decode is 8.1 tok/s and correct, a captured step replays in
+30.4 ms and does not agree with it, and the disagreement is last-bits-wide and accumulating rather
+than structural. Both numbers are measured. The 30 tok/s single-request target is not met.
 
 Over a generation the difference flips an argmax where two tokens are close: the first five agree
 with eager and the sixth does not. So the honest position is that the speed is reachable and the
