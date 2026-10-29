@@ -777,6 +777,30 @@ become device-side, so one recording serves every position, and the n-gram windo
 per-position buffer filled between replays. `feature/qwen4exp-pipeline-parallel` carries a partial
 `spec_decode.py` that starts from the same premise.
 
+### What a single capture would need, concretely
+
+The measured replay is 30 ms a step, so this is not a question of whether it would be fast enough.
+It is a question of what has to change for one capture to serve every position, and that came down
+to four things -- each of them identified by a failed attempt, none of them speculative:
+
+1. **The KV write is a Python slice.** `cache.k[:, :, past_len : past_len + seq_len] = key` bakes the
+   offset into the recording, so a graph recorded at position 53 writes position 53 forever. The
+   write has to become `index_copy_`/`scatter_` against a device-side position tensor.
+2. **The KV read is a Python slice too.** `key = cache.k[:, :, : cache.length]` fixes the key length
+   in the graph, which is also what fixes the attention kernel's shapes. Reading a fixed-width arena
+   and masking past `length` makes the shapes position-independent -- `cuda_qsa_attention` takes no
+   `past_len` of its own, it infers everything from tensor shapes, so a constant-shape call is
+   enough and no kernel change is needed.
+3. **The recurrent state of the linear layers has to be indexed by position**, not advanced in
+   place. Advancing in place is what made a replay apply the state update twice; a per-position
+   array that each step reads and the next writes is the shape that works.
+4. **The n-gram window is per position**, `ngram_size` ids ending in the token that step embeds. It
+   cannot be computed during the recording, because the tokens do not exist yet, so it is a buffer
+   filled between replays -- pinned, because a pageable crossing is refused inside a capture.
+
+The head is vocabulary-sharded, so the argmax cannot be in the recording either: each position
+records its logits and the choice is made on the gathered row outside, one sync a step.
+
 ### A bug that invalidated a great deal of measurement
 
 The fused expert backend answered `nan` for every decode step for a long time, because `ShardedMoE`
