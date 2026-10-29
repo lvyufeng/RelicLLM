@@ -310,6 +310,36 @@ def chunk_gated_delta_rule(
 # ---------------------------------------------------------------------------
 
 
+def _state_slots(cache) -> dict | None:
+    """The per-position arrays this cache keeps its linear-layer state in, or None.
+
+    A single mutable pair of buffers is right for a chain of steps run one after another and wrong
+    for a recording: a replay writes the state it computes, so running the same recording twice
+    applies the update twice.  When the caller keeps one entry a position instead, a step reads its
+    own entry and writes the next -- which is what makes a recording repeatable.
+    """
+    return getattr(cache, "state_slots", None)
+
+
+def _state_at(cache, name: str):
+    """The value a step reads for `name`: its own entry when the cache is laid out by position.
+
+    `conv_state` is a window this layer always has -- the first step convolves it against zeros.
+    `recurrent_state` is different: before the first step there is no recurrence to continue, and
+    passing a zero tensor instead of None would make the rule start one where the caller meant it
+    to start from nothing.
+    """
+    if cache is None:
+        return None
+    slots = _state_slots(cache)
+    if slots is not None and name in slots:
+        return slots[name][int(cache.state_slot)]
+    value = getattr(cache, name, None)
+    if name == "recurrent_state" and not getattr(cache, "initialized", False):
+        return None
+    return value
+
+
 def _update_state(cache, name: str, value: torch.Tensor) -> None:
     """Put `value` into `cache.<name>`, keeping the buffer when it already fits.
 
@@ -317,7 +347,20 @@ def _update_state(cache, name: str, value: torch.Tensor) -> None:
     it was recorded against.  Assigning a fresh tensor to the cache every step leaves the recorded
     address pointing at memory the cache no longer names: the replay writes it, the cache keeps
     stale data, and the next step reads a history the graph never produced.
+
+    With `state_slots` set, `name` is written to `slots[name][slot + 1]` -- the entry the *next*
+    step will read -- and the visible attribute is left alone, so a step's output depends only on
+    its own entry.
     """
+    slots = _state_slots(cache)
+    if slots is not None and name in slots:
+        target = slots[name][int(cache.state_slot) + 1]
+        if target.shape != value.shape:
+            raise RuntimeError(
+                f"{name} slot is {tuple(target.shape)}, the layer produced {tuple(value.shape)}"
+            )
+        target.copy_(value)
+        return
     live = getattr(cache, name, None)
     if live is not None and live.shape == value.shape:
         live.copy_(value)
@@ -420,7 +463,8 @@ class GatedDeltaNet:
         if cache is not None:
             # Prepend the cached window so the causal conv sees real history, then
             # keep only the new positions and refresh the window.
-            padded = torch.cat([cache.conv_state.to(mixed_qkv.dtype), mixed_qkv], dim=-1)
+            window = _state_at(cache, "conv_state")
+            padded = torch.cat([window.to(mixed_qkv.dtype), mixed_qkv], dim=-1)
             # In place when the state already exists: rebinding it would leave the old buffer --
             # the one a captured step recorded the address of -- written and unreferenced, and the
             # cache pointing at a tensor no kernel had touched.
@@ -446,7 +490,7 @@ class GatedDeltaNet:
         # float32 on A_log: in bf16 exp() of a large magnitude saturates to inf.
         g = -self.A_log.float().exp() * F.softplus(a.float() + self.dt_bias.float())
 
-        initial_state = cache.recurrent_state if (cache is not None and cache.initialized) else None
+        initial_state = _state_at(cache, "recurrent_state")
         cuda_result = (
             cuda_gated_delta_rule(query, key, value, g, beta, initial_state)
             if self.cuda_rule_enabled and seq_len > 1
