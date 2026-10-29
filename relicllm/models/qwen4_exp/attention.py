@@ -537,8 +537,17 @@ class QSAIndexer:
         new_raw_keys = token_k.reshape(batch_size, seq_len, self.head_dim)
 
         if cache is not None:
-            cache.index_k[:, past_len : past_len + seq_len] = new_raw_keys
-            raw_keys = cache.index_k[:, : past_len + seq_len]
+            # Same reason as the QSA write: a Python slice pins the offset into anything that
+            # records it, so a tensor position goes through `index_copy_` instead.
+            if isinstance(past_len, torch.Tensor):
+                offsets = past_len.reshape(()) + torch.arange(seq_len, device=hidden_states.device)
+                for row in range(batch_size):
+                    cache.index_k[row].index_copy_(0, offsets, new_raw_keys[row])
+                length = int(cache.length)
+                raw_keys = cache.index_k[:, :length]
+            else:
+                cache.index_k[:, past_len : past_len + seq_len] = new_raw_keys
+                raw_keys = cache.index_k[:, : past_len + seq_len]
         elif raw_keys_override is not None:
             raw_keys = torch.cat([raw_keys_override, new_raw_keys], dim=1)
         else:
