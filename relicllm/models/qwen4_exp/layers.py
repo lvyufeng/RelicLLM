@@ -229,7 +229,19 @@ class RMSNorm:
             h = h.flatten(-2)
         # Qwen stores the norm scale centered on zero: the effective gain is
         # (1 + weight), and the multiply happens in float32 before the cast back.
-        return (h * (1.0 + self.weight.to(torch.float32))).to(in_dtype)
+        return (h * self._gain()).to(in_dtype)
+
+    def _gain(self) -> torch.Tensor:
+        """`1 + weight` in float32, computed once.
+
+        The weight does not change, and this norm runs several times a layer on a decode step
+        that is already host-bound: the cast and the add were two more dispatches a call.
+        """
+        gain = self.__dict__.get("_gain_cache")
+        if gain is None or gain.device != self.weight.device:
+            gain = (1.0 + self.weight.float()).contiguous()
+            self.__dict__["_gain_cache"] = gain
+        return gain
 
 
 class RMSNormGated:
