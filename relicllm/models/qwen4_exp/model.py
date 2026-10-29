@@ -116,7 +116,18 @@ class PLELayer:
         if use_cache and self.conv_state is not None:
             x = torch.cat([self.conv_state.to(x.dtype), x], dim=-1)
         if use_cache:
-            self.conv_state = x[:, :, -self.short_conv_state_len :].clone()
+            # In place when the shape allows: a captured step holds this buffer's address, and
+            # rebinding the attribute every step leaves that address written and unread.
+            state = x[:, :, -self.short_conv_state_len :]
+            live = self.conv_state
+            if live is not None and live.shape == state.shape:
+                # Inside inference mode whatever the caller's context: the buffer was made there,
+                # and an in-place update to an inference tensor is refused outside it.
+                with torch.inference_mode():
+                    live.copy_(state)
+            else:
+                with torch.inference_mode(False):
+                    self.conv_state = state.clone()
         x = F.pad(x, (self.short_conv_state_len, 0))
         x = x[..., -(self.short_conv_state_len + seq_len) :]
         channels = self.conv1d_weight.shape[0]
@@ -659,15 +670,17 @@ class Qwen4ExpModel:
         One row a step, so the buffer is sized per call and kept: a token id is 8 bytes and this
         runs once a forward, which is not worth a growing pool to avoid allocating.
         """
-        width = int(input_ids.shape[1])
+        rows, width = int(input_ids.shape[0]), int(input_ids.shape[1])
         buffer = self.__dict__.get("_ids_pinned")
-        if buffer is None or buffer.shape[1] < width:
+        if buffer is None or buffer.shape[0] < rows or buffer.shape[1] < width:
             # Allocated outside inference mode: a buffer made inside it is an inference tensor,
             # and an inference tensor refuses the in-place update the next call makes.
             with torch.inference_mode(False):
-                buffer = torch.empty(1, width, dtype=torch.long, pin_memory=True)
+                buffer = torch.empty(rows, width, dtype=torch.long, pin_memory=True)
             self.__dict__["_ids_pinned"] = buffer
-        pinned = buffer[:, :width]
+        # The rows a batch asks for, not a fixed single row: a decode at batch two used to write
+        # a two-row tensor into a one-row buffer and fail on the broadcast.
+        pinned = buffer[:rows, :width]
         pinned.copy_(input_ids, non_blocking=True)
         return pinned
 

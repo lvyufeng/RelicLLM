@@ -275,6 +275,21 @@ def chunk_gated_delta_rule(
 # ---------------------------------------------------------------------------
 
 
+def _update_state(cache, name: str, value: torch.Tensor) -> None:
+    """Put `value` into `cache.<name>`, keeping the buffer when it already fits.
+
+    A decode step can be captured as a CUDA graph, and a graph holds the addresses of the tensors
+    it was recorded against.  Assigning a fresh tensor to the cache every step leaves the recorded
+    address pointing at memory the cache no longer names: the replay writes it, the cache keeps
+    stale data, and the next step reads a history the graph never produced.
+    """
+    live = getattr(cache, name, None)
+    if live is not None and live.shape == value.shape:
+        live.copy_(value)
+    else:
+        setattr(cache, name, value)
+
+
 class GatedDeltaNetCache:
     """Depthwise conv window + recurrent state for one linear-attention layer.
 
@@ -371,7 +386,10 @@ class GatedDeltaNet:
             # Prepend the cached window so the causal conv sees real history, then
             # keep only the new positions and refresh the window.
             padded = torch.cat([cache.conv_state.to(mixed_qkv.dtype), mixed_qkv], dim=-1)
-            cache.conv_state = padded[:, :, -(self.conv_kernel_size - 1) :].clone()
+            # In place when the state already exists: rebinding it would leave the old buffer --
+            # the one a captured step recorded the address of -- written and unreferenced, and the
+            # cache pointing at a tensor no kernel had touched.
+            _update_state(cache, "conv_state", padded[:, :, -(self.conv_kernel_size - 1) :])
             conv_in = padded
         else:
             conv_in = F.pad(mixed_qkv, (self.conv_kernel_size - 1, 0))
@@ -412,7 +430,7 @@ class GatedDeltaNet:
             torch.cuda.synchronize(hidden_states.device)
             after_core = time.perf_counter()
         if cache is not None:
-            cache.recurrent_state = last_state
+            _update_state(cache, "recurrent_state", last_state)
             cache.initialized = True
 
         core_attn_out = self.norm(
