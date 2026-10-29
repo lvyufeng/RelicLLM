@@ -658,7 +658,10 @@ class QSAIndexer:
                 if width > 0:
                     raw_keys = cache.index_k[:, :width]
                 else:
-                    raw_keys = cache.index_k[:, : int(cache.length)]
+                    # `cache.length` is still the previous step's: this layer runs before the
+                    # attention that advances it, so narrowing to it drops the key just written.
+                    # The integer path reads `past_len + seq_len`, and this has to match it.
+                    raw_keys = cache.index_k[:, : int(past_len.reshape(())) + seq_len]
             else:
                 cache.index_k[:, past_len : past_len + seq_len] = new_raw_keys
                 width = _fixed_kv_width()
