@@ -159,6 +159,21 @@ def _write_kv(cache, key: torch.Tensor, value: torch.Tensor, past_len, seq_len: 
     cache.v[:, :, past_len : past_len + seq_len] = value
 
 
+def _fixed_kv_width() -> int:
+    """The key width a recording should see, or 0 to keep the length-dependent one.
+
+    A capture bakes the tensor shapes it was given, so reading `cache.k[:length]` fixes both the
+    key length and everything downstream of it: one graph per position.  Reading a constant-width
+    arena and letting the selection mask say what is visible makes the shapes position-independent,
+    at a measured cost -- the kernel runs in 94 us at width 54 and 349 us at 512, about 24 ms a
+    step across the layers.  Off by default, so the eager loop pays none of it.
+    """
+    try:
+        return int(os.environ.get("POCKETLLM_QWEN4_QSA_FIXED_WIDTH", "0"))
+    except ValueError:
+        return 0
+
+
 def cuda_qsa_attention(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -543,11 +558,16 @@ class QSAIndexer:
                 offsets = past_len.reshape(()) + torch.arange(seq_len, device=hidden_states.device)
                 for row in range(batch_size):
                     cache.index_k[row].index_copy_(0, offsets, new_raw_keys[row])
-                length = int(cache.length)
-                raw_keys = cache.index_k[:, :length]
+                width = _fixed_kv_width()
+                if width > 0:
+                    raw_keys = cache.index_k[:, :width]
+                else:
+                    raw_keys = cache.index_k[:, : int(cache.length)]
             else:
                 cache.index_k[:, past_len : past_len + seq_len] = new_raw_keys
-                raw_keys = cache.index_k[:, : past_len + seq_len]
+                width = _fixed_kv_width()
+                raw_keys = (cache.index_k[:, :width] if width > 0
+                            else cache.index_k[:, : past_len + seq_len])
         elif raw_keys_override is not None:
             raw_keys = torch.cat([raw_keys_override, new_raw_keys], dim=1)
         else:
@@ -706,8 +726,13 @@ class QSAAttention:
         if cache is not None:
             _write_kv(cache, key, value, past_len, seq_len)
             cache.length = past_len + seq_len
-            key = cache.k[:, :, : cache.length]
-            value = cache.v[:, :, : cache.length]
+            width = _fixed_kv_width()
+            if width > 0:
+                key = cache.k[:, :, :width]
+                value = cache.v[:, :, :width]
+            else:
+                key = cache.k[:, :, : cache.length]
+                value = cache.v[:, :, : cache.length]
         if profile:
             torch.cuda.synchronize(hidden_states.device)
             after_projection = time.perf_counter()
