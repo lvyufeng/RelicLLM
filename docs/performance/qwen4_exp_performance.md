@@ -717,7 +717,7 @@ Removing any one of them changes the step by a fraction of a percent.
 | RMSNorm gain precomputed | 0.4% |
 | batching | see below: correct, and the only throughput lever there is |
 
-### Batching: the one lever that works
+### Batching: the one lever, and the caveat
 
 The step is host-bound, so its cost barely moves with the number of rows: one row is 122 ms, eight
 are 210 ms, twelve are 212 ms. Measured on identical rows, which decode the same tokens as a single
@@ -735,8 +735,14 @@ it comes from the same fact that blocks the single-request target: the cards are
 host queues work, so filling them with more rows is free.
 
 The batched path used to crash outright: `_pinned_ids` allocated a one-row buffer and a two-row
-batch failed writing into it. It follows the batch now, and both fixes below are what let a step be
-batched at all.
+batch failed writing into it. It follows the batch now.
+
+**It is not yet correct, and the number above should be read with that.** Three identical rows
+decode `[1596, 1144, 310, 5707, 310, 1156, 328, 12675]` the same way a single sequence does for
+rows 0 and 2, but row 1 answers `25` at the sixth token instead of `328`. It is deterministic --
+the same row, the same position, every run -- so it is a state bug rather than a near-tie in the
+logits, and making the id copy blocking did not change it. Until that is found, treat the batched
+throughput as an upper bound measured on a path that is not fully verified.
 
 ### The one thing that would get there, and why it does not
 
