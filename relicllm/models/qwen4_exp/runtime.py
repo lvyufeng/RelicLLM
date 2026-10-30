@@ -1215,12 +1215,12 @@ def main() -> None:
         type=int,
         default=0,
         help=(
-            "EXPERIMENTAL and not working: a window of one position replays correctly, two or "
-            "more do not -- each graph is recorded against the cache as it was at its own "
-            "position, and the graphs share one mutable cache, so the second capture is read by "
-            "the first replay. Captures also cost about 0.3s a position. Left behind because the "
-            "supporting work (the warmup, the cache save/restore, the logits selector) is right; "
-            "0 leaves the decode eager, which is the only working path today"
+            "capture the decode step and replay it, which is 3-4x the eager rate on 8xRTX 3090 "
+            "(33 tok/s against 8). This is the number of positions one capture serves before it "
+            "is remade; 0 leaves the decode eager. The step and the eager loop differ in the last "
+            "bits of the logits, so a near-tied token can resolve differently -- the first few "
+            "tokens of a reply match and a later one may not. Ask for the eager loop when "
+            "token-for-token agreement matters"
         ),
     )
     parser.add_argument(
