@@ -181,6 +181,7 @@ nav:
       - Ternary-Bonsai-2-27B served runtime: architecture/bonsai_2_27b_design.md
       - GLM-5.3-Flash checkpoint audit: architecture/glm_5_3_flash_audit.md
       - The command-line surface against vLLM and SGLang: architecture/cli_surface_design_2026_09.md
+      - The capability gap against vLLM and SGLang: architecture/upstream_capability_tracking.md
       - Per-method duplication across the five adapters: architecture/per_method_duplication_2026_09.md
       - The device plane: architecture/device_plane.md
       - Joining a machine, and joining a family: architecture/joining_a_machine_or_a_family.md
