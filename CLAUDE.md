@@ -133,6 +133,29 @@ status, **one concern per PR**, and the body ends with:
 
 Merged branches are not reliably deleted on `origin`; delete yours locally and remotely.
 
+## Choosing a host
+
+The eight-card machines in [the fleet page](docs/architecture/eight_card_fleet_and_size_lines.md) are
+a **shared CI farm**, not a pool of idle dev boxes: most of them run a resident Jenkins agent for
+someone else's MindSpore CI, so a card sitting at 0% is not permission to use it. A CI build can land
+on that node mid-run and take the cards out from under you.
+
+`ts-fleet-bridge` arbitrates that, and it is the only sanctioned way to pick a machine:
+
+- **Default to the `owned` pool** — `ts_claim` with no arguments. Those hosts have no Jenkins agent
+  at all and are free by construction.
+- **More compute means a scan first.** `ts_scan --pool dormant` reports which CI nodes have gone
+  quiet, and `ts_claim(pool="dormant")` draws from them. That is a judgement call, which is why it is
+  not the default.
+- **Never take from `ci`.** The tool refuses that pool outright, and it re-scans before granting, so a
+  stale roster cannot hand over a machine CI is using.
+- **`ts_release` when done.** Nothing enforces it, but the next agent sees the lease and looks
+  elsewhere.
+
+The pool marking and the live scan belong to `ts-fleet-bridge`, not to this repository — for the same
+reason the fleet page records card classes and deliberately no host names. The roster is a snapshot;
+a claim re-checks it against the machines.
+
 ## These facts are per-host
 
 Paths to checkpoints (`/mnt/data2`, `/mnt/data3`), the CUDA toolkit layout, `/dev/shm` size and the
