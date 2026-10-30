@@ -139,6 +139,41 @@ def cuda_gated_delta_rule(
     return output, state
 
 
+def _write_kv(cache, key: torch.Tensor, value: torch.Tensor, past_len, seq_len: int) -> None:
+    """Put this step's keys and values at `past_len`.
+
+    A Python `past_len` is a slice, which is what the eager loop has always done.  A tensor
+    `past_len` cannot slice -- torch would read its value on the host, and inside a capture that is
+    an error rather than a slow path -- so it goes through `index_copy_` against the position, which
+    is the form a recording can replay at any offset.
+    """
+    if isinstance(past_len, torch.Tensor):
+        # One row at a time: `index_copy_` takes a 1-D index, and the position is a fact about the
+        # step rather than about a row, so the same offsets serve every row.
+        offsets = past_len.reshape(()) + torch.arange(seq_len, device=key.device)
+        for row in range(key.shape[0]):
+            cache.k[row].index_copy_(1, offsets, key[row])
+            cache.v[row].index_copy_(1, offsets, value[row])
+        return
+    cache.k[:, :, past_len : past_len + seq_len] = key
+    cache.v[:, :, past_len : past_len + seq_len] = value
+
+
+def _fixed_kv_width() -> int:
+    """The key width a recording should see, or 0 to keep the length-dependent one.
+
+    A capture bakes the tensor shapes it was given, so reading `cache.k[:length]` fixes both the
+    key length and everything downstream of it: one graph per position.  Reading a constant-width
+    arena and letting the selection mask say what is visible makes the shapes position-independent,
+    at a measured cost -- the kernel runs in 94 us at width 54 and 349 us at 512, about 24 ms a
+    step across the layers.  Off by default, so the eager loop pays none of it.
+    """
+    try:
+        return int(os.environ.get("POCKETLLM_QWEN4_QSA_FIXED_WIDTH", "0"))
+    except ValueError:
+        return 0
+
+
 def cuda_qsa_attention(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -275,6 +310,116 @@ def chunk_gated_delta_rule(
 # ---------------------------------------------------------------------------
 
 
+def _state_slots(cache) -> dict | None:
+    """The per-position arrays this cache keeps its linear-layer state in, or None.
+
+    A single mutable pair of buffers is right for a chain of steps run one after another and wrong
+    for a recording: a replay writes the state it computes, so running the same recording twice
+    applies the update twice.  When the caller keeps one entry a position instead, a step reads its
+    own entry and writes the next -- which is what makes a recording repeatable.
+    """
+    return getattr(cache, "state_slots", None)
+
+
+class SlotEntries:
+    """One field's per-position entries, and the stack a step indexes.
+
+    The stack is the store: a read and the write that follows it go through the same memory, and
+    the entries are only the material it is built from.  `slot_layout` builds it, so there is no
+    moment at which the two can disagree.
+    """
+
+    __slots__ = ("entries", "stack")
+
+    def __init__(self, entries: list) -> None:
+        self.entries = list(entries)
+        self.stack = torch.stack(self.entries) if self.entries else None
+
+    def __len__(self) -> int:
+        return len(self.entries)
+
+    def __getitem__(self, index):
+        return self.stack[index]
+
+
+def slot_layout(fields: dict) -> dict:
+    """Lay out per-position state: `{"conv_state": [t0, t1, ...], ...}` -> SlotEntries a field.
+
+    Called before the first step, so the stack a recording points at exists and is filled before
+    anything can write through it.
+    """
+    return {name: SlotEntries(values) for name, values in fields.items()}
+
+
+def _slot_read(entry: "SlotEntries", slot) -> torch.Tensor:
+    """The entry a step starts from: its own position, selected on the device."""
+    if isinstance(slot, torch.Tensor):
+        # `index_select` with a 1-D index: indexing a stack by a 0-dim tensor is advanced
+        # indexing, which returns a copy -- fine for a read, useless for the write that follows.
+        return entry.stack.index_select(0, slot.reshape(1))[0]
+    return entry.stack[slot]
+
+
+def _slot_store(entry: "SlotEntries", slot, value: torch.Tensor) -> None:
+    """Put `value` at `slot + 1` of the stack, on the device, in place.
+
+    A capture writes through the addresses it recorded, so this is an in-place update of the stack,
+    which is also the only store: nothing reads the list the stack was built from.
+    """
+    if isinstance(slot, torch.Tensor):
+        entry.stack.index_copy_(0, slot.reshape(1) + 1, value.unsqueeze(0))
+        return
+    entry.stack[slot + 1].copy_(value)
+
+
+def _state_at(cache, name: str):
+    """The value a step reads for `name`: its own entry when the cache is laid out by position.
+
+    `conv_state` is a window this layer always has -- the first step convolves it against zeros.
+    `recurrent_state` is different: before the first step there is no recurrence to continue, and
+    passing a zero tensor instead of None would make the rule start one where the caller meant it
+    to start from nothing.
+    """
+    if cache is None:
+        return None
+    slots = _state_slots(cache)
+    if slots is not None and name in slots:
+        return _slot_read(slots[name], cache.state_slot)
+    value = getattr(cache, name, None)
+    if name == "recurrent_state" and not getattr(cache, "initialized", False):
+        return None
+    return value
+
+
+def _update_state(cache, name: str, value: torch.Tensor) -> None:
+    """Put `value` into `cache.<name>`, keeping the buffer when it already fits.
+
+    A decode step can be captured as a CUDA graph, and a graph holds the addresses of the tensors
+    it was recorded against.  Assigning a fresh tensor to the cache every step leaves the recorded
+    address pointing at memory the cache no longer names: the replay writes it, the cache keeps
+    stale data, and the next step reads a history the graph never produced.
+
+    With `state_slots` set, `name` is written to `slots[name][slot + 1]` -- the entry the *next*
+    step will read -- and the visible attribute is left alone, so a step's output depends only on
+    its own entry.
+    """
+    slots = _state_slots(cache)
+    if slots is not None and name in slots:
+        entry = slots[name]
+        if entry.stack.shape[1:] != value.shape:
+            raise RuntimeError(
+                f"{name} slot is {tuple(entry.stack.shape[1:])}, "
+                f"the layer produced {tuple(value.shape)}"
+            )
+        _slot_store(entry, cache.state_slot, value)
+        return
+    live = getattr(cache, name, None)
+    if live is not None and live.shape == value.shape:
+        live.copy_(value)
+    else:
+        setattr(cache, name, value)
+
+
 class GatedDeltaNetCache:
     """Depthwise conv window + recurrent state for one linear-attention layer.
 
@@ -370,8 +515,12 @@ class GatedDeltaNet:
         if cache is not None:
             # Prepend the cached window so the causal conv sees real history, then
             # keep only the new positions and refresh the window.
-            padded = torch.cat([cache.conv_state.to(mixed_qkv.dtype), mixed_qkv], dim=-1)
-            cache.conv_state = padded[:, :, -(self.conv_kernel_size - 1) :].clone()
+            window = _state_at(cache, "conv_state")
+            padded = torch.cat([window.to(mixed_qkv.dtype), mixed_qkv], dim=-1)
+            # In place when the state already exists: rebinding it would leave the old buffer --
+            # the one a captured step recorded the address of -- written and unreferenced, and the
+            # cache pointing at a tensor no kernel had touched.
+            _update_state(cache, "conv_state", padded[:, :, -(self.conv_kernel_size - 1) :])
             conv_in = padded
         else:
             conv_in = F.pad(mixed_qkv, (self.conv_kernel_size - 1, 0))
@@ -393,7 +542,7 @@ class GatedDeltaNet:
         # float32 on A_log: in bf16 exp() of a large magnitude saturates to inf.
         g = -self.A_log.float().exp() * F.softplus(a.float() + self.dt_bias.float())
 
-        initial_state = cache.recurrent_state if (cache is not None and cache.initialized) else None
+        initial_state = _state_at(cache, "recurrent_state")
         cuda_result = (
             cuda_gated_delta_rule(query, key, value, g, beta, initial_state)
             if self.cuda_rule_enabled and seq_len > 1
@@ -412,7 +561,7 @@ class GatedDeltaNet:
             torch.cuda.synchronize(hidden_states.device)
             after_core = time.perf_counter()
         if cache is not None:
-            cache.recurrent_state = last_state
+            _update_state(cache, "recurrent_state", last_state)
             cache.initialized = True
 
         core_attn_out = self.norm(
@@ -499,8 +648,25 @@ class QSAIndexer:
         new_raw_keys = token_k.reshape(batch_size, seq_len, self.head_dim)
 
         if cache is not None:
-            cache.index_k[:, past_len : past_len + seq_len] = new_raw_keys
-            raw_keys = cache.index_k[:, : past_len + seq_len]
+            # Same reason as the QSA write: a Python slice pins the offset into anything that
+            # records it, so a tensor position goes through `index_copy_` instead.
+            if isinstance(past_len, torch.Tensor):
+                offsets = past_len.reshape(()) + torch.arange(seq_len, device=hidden_states.device)
+                for row in range(batch_size):
+                    cache.index_k[row].index_copy_(0, offsets, new_raw_keys[row])
+                width = _fixed_kv_width()
+                if width > 0:
+                    raw_keys = cache.index_k[:, :width]
+                else:
+                    # `cache.length` is still the previous step's: this layer runs before the
+                    # attention that advances it, so narrowing to it drops the key just written.
+                    # The integer path reads `past_len + seq_len`, and this has to match it.
+                    raw_keys = cache.index_k[:, : int(past_len.reshape(())) + seq_len]
+            else:
+                cache.index_k[:, past_len : past_len + seq_len] = new_raw_keys
+                width = _fixed_kv_width()
+                raw_keys = (cache.index_k[:, :width] if width > 0
+                            else cache.index_k[:, : past_len + seq_len])
         elif raw_keys_override is not None:
             raw_keys = torch.cat([raw_keys_override, new_raw_keys], dim=1)
         else:
@@ -657,11 +823,15 @@ class QSAAttention:
         query, key = apply_rotary_pos_emb(query, cur_cos, cur_sin, k=key, unsqueeze_dim=1)
 
         if cache is not None:
-            cache.k[:, :, past_len : past_len + seq_len] = key
-            cache.v[:, :, past_len : past_len + seq_len] = value
+            _write_kv(cache, key, value, past_len, seq_len)
             cache.length = past_len + seq_len
-            key = cache.k[:, :, : cache.length]
-            value = cache.v[:, :, : cache.length]
+            width = _fixed_kv_width()
+            if width > 0:
+                key = cache.k[:, :, :width]
+                value = cache.v[:, :, :width]
+            else:
+                key = cache.k[:, :, : cache.length]
+                value = cache.v[:, :, : cache.length]
         if profile:
             torch.cuda.synchronize(hidden_states.device)
             after_projection = time.perf_counter()

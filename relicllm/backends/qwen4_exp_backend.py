@@ -103,6 +103,22 @@ OPTIONS: tuple[BackendOption, ...] = (
         "hold this rank's expert shard in host RAM rather than reading it from the mapping",
         group=Group.EXPERT,
     ),
+    BackendOption(
+        "expert_resident",
+        Kind.FLAG,
+        False,
+        "hold this rank's expert shard on the *device* instead, so a decode step stages nothing; "
+        "needs the experts to fit on the card, and the loader refuses by name when they do not",
+        group=Group.EXPERT,
+    ),
+    BackendOption(
+        "expert_reserve",
+        Kind.BYTES,
+        3 * (1 << 30),
+        "device memory left free for activations and KV when the experts are device-resident; "
+        "takes a suffix (3g)",
+        group=Group.EXPERT,
+    ),
 )
 
 
@@ -121,6 +137,8 @@ class _Options:
     expert_cache: int = 0
     pin_experts: bool = True
     host_expert_memory: bool = True
+    expert_resident: bool = False
+    expert_reserve: int = 3 << 30
 
     @classmethod
     def from_args(cls, args: Any) -> "_Options":
@@ -133,6 +151,8 @@ class _Options:
             expert_cache=0 if values["expert_cache"] is None else int(values["expert_cache"]),
             pin_experts=bool(values["pin_experts"]),
             host_expert_memory=bool(values["host_expert_memory"]),
+            expert_resident=bool(values["expert_resident"]),
+            expert_reserve=int(values["expert_reserve"]),
         )
 
 
@@ -173,6 +193,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         self._rank = 0
         self._distributed = False
         self._details: dict[str, Any] = {}
+        #: What the rank-0 token callback raised, held until the group has unwound so it can be
+        #: re-raised from the request that owns it. See :meth:`_rank0_callback` for why it cannot
+        #: be raised where it was caught.
+        self._callback_failure: list[BaseException] = []
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -257,6 +281,8 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             expert_cache_capacity=options.expert_cache,
             host_expert_memory=options.host_expert_memory,
             pin_experts=options.pin_experts,
+            expert_resident=options.expert_resident,
+            expert_reserve_bytes=options.expert_reserve,
         )
         self._build_details()
         if self._tokenizer is None:
@@ -309,6 +335,55 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             },
             reads_prefix_cache=False,
         )
+
+    def _host_expert_moe(self) -> Any:
+        """This run's ``HostExpertMoE``, or None where there is no host bank.
+
+        ``moe`` belongs to the decoder layer, and the model holds those in ``layers``
+        (``models/qwen4_exp/model.py``), so the counters are one level below where a
+        model-level lookup would find them. ``ShardedMoE`` wraps the bank when the
+        world size is above one, so the wrapper is unwrapped here too. Every layer
+        shares one bank, so the first layer that has one answers for the run.
+        """
+        candidates: list[Any] = []
+        model = self._model
+        if model is not None:
+            direct = getattr(model, "moe", None)
+            if direct is not None:
+                candidates.append(direct)
+            for layer in getattr(model, "layers", ()) or ():
+                layer_moe = getattr(layer, "moe", None)
+                if layer_moe is not None:
+                    candidates.append(layer_moe)
+                    break
+        for candidate in candidates:
+            inner = getattr(candidate, "inner", candidate)
+            if inner is not None and hasattr(inner, "stage_bytes"):
+                return inner
+        return None
+
+    def _expert_stage_metrics(self) -> dict[str, float]:
+        """The routed-expert staging counters, or nothing when this run has no host bank.
+
+        These are the numbers that say whether the experts are *resident* or merely *cached*: a
+        deployment that sizes ``--expert-cache`` to hold every expert it owns stops staging after the
+        first pass over the set, and one that does not keeps paying the PCIe cost every step. Without
+        them on ``/metrics`` a decode rate cannot be told apart from a bigger LRU -- which is the
+        whole question this runtime's decode is asked to answer.
+
+        They live on ``HostExpertMoE``, one level below the ``ShardedMoE`` wrapper the model holds, so
+        both are unwrapped here rather than made public on the wrapper for a scrape's sake.
+        """
+        inner = self._host_expert_moe()
+        if inner is None:
+            return {}
+        return {
+            # `_total` is the server's convention for a counter; the rest are gauges.
+            "qwen4_exp_expert_stage_bytes_total": float(inner.stage_bytes),
+            "qwen4_exp_expert_stage_calls_total": float(inner.stage_calls),
+            "qwen4_exp_expert_cache_hits_total": float(inner.cache_hits),
+            "qwen4_exp_expert_cache_capacity": float(getattr(inner, "cache_capacity", 0) or 0),
+        }
 
     def metrics(self) -> dict[str, float]:
         """What one engine holds between requests, for ``/metrics``.
@@ -381,6 +456,11 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         # The prompt and the budget are what the workers reproduce, so rank 0 broadcasts them before
         # it enters the collective the workers must be inside.
         self._dispatch(request, prompt_ids, budget)
+        # `local_eos` is the loop's own end-of-sequence finding, handed back to this rank's
+        # predicate so it rides the broadcast `_step_sync` already performs instead of ending the
+        # loop on one rank. See `generate`'s `local_eos` paragraph: acting on it locally is what
+        # produced the 600-second NCCL broadcast timeout on both the V100 and the 4090 boxes.
+        local_eos = [False]
         tokens, stats = generate(
             self._model,
             self._ctx,
@@ -388,10 +468,68 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             max_new_tokens=budget,
             chunk_size=self._options.prefill_chunk,
             eos_token_ids=tuple(sorted(self._eos_tokens())),
-            on_token=on_token,
-            on_step=self._step_sync(request.request_id, stop),
+            on_token=self._rank0_callback(on_token, request.request_id),
+            on_step=self._step_sync(
+                request.request_id,
+                None if stop is None else (lambda: stop() or local_eos[0]),
+            ),
+            local_eos=local_eos,
         )
+        # The callback's exception has to leave here rather than from inside the loop: by the time
+        # it is recorded the ranks have unwound together, and this is the frame that owns the
+        # request. Raising it from the callback is the hang `_rank0_callback` documents.
+        self._raise_callback_failure()
         return _Generation.from_stats(tokens, stats)
+
+    def _rank0_callback(
+        self, on_token: Callable[[int], None] | None, request_id: str
+    ) -> Callable[[int], None] | None:
+        """Wrap the token callback so a failure stops the group, not just rank 0.
+
+        ``on_token`` runs on rank 0 alone -- the loop calls it under ``ctx.rank == 0`` and every
+        other rank has already moved on to the *next* step's collective -- so an exception escaping
+        it unwinds rank 0 out of a broadcast its peers are already waiting in. The request does not
+        fail; it hangs, and then the watchdog kills the process:
+
+            WorkNCCL(OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+            ran for 600000 milliseconds before timing out.
+
+        That shape is shared with the end-of-sequence bug ``local_eos`` fixes, but it is a second,
+        independent exit: ``local_eos`` covers a token *disagreement*, and this covers one rank
+        raising where the others cannot see it. Measured on 8 x RTX 4090 by injecting a raise at
+        the callback: rank 0 went idle at 0% utilization while the other seven spun at 100% until
+        the watchdog fired, and a second request to the still-``ready`` server never returned.
+
+        The exception is recorded and translated into a ``cancel()``, which is the one channel that
+        reaches the other ranks: :meth:`ShardedWorkerMixin._step_sync` broadcasts rank 0's
+        cancellation flag at the top of the next step, so every rank leaves at a boundary they all
+        arrive at. The failed step is still forwarded and its ``forward`` still runs -- dropping out
+        *here* is the desync this method exists to remove. The recorded exception is re-raised by
+        the caller once the group has unwound, because it cannot be raised in place for the same
+        reason it cannot be allowed to propagate.
+        """
+        if on_token is None:
+            return None
+
+        def guarded(token: int) -> None:
+            # Once a failure is recorded the callback stays silent: the loop is only running out
+            # the steps every rank must still take, and a second raise would be noise on top of a
+            # request that is already ending.
+            if self._callback_failure:
+                return
+            try:
+                on_token(token)
+            except Exception as exc:  # noqa: BLE001 -- catching everything is the point
+                self._callback_failure.append(exc)
+                self.cancel(request_id)
+
+        return guarded
+
+    def _raise_callback_failure(self) -> None:
+        """Re-raise what :meth:`_rank0_callback` recorded, once the group has unwound."""
+        if not self._callback_failure:
+            return
+        raise self._callback_failure.pop()
 
     def _run_payload(self, payload: Mapping[str, Any]) -> None:
         """Run the same loop rank 0 is running, for the collective's sake and not for its answer.
@@ -402,6 +540,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         from relicllm.models.qwen4_exp.runtime import generate
 
         prompt_ids = [int(token) for token in payload["prompt_ids"]]
+        # The worker carries the flag too, so both sides of the broadcast are asking the same
+        # question on every step. It decides nothing here -- this rank's answer is discarded -- it
+        # only has to reach the collective in step with rank 0.
+        local_eos = [False]
         generate(
             self._model,
             self._ctx,
@@ -409,7 +551,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             max_new_tokens=int(payload["max_new_tokens"]),
             chunk_size=self._options.prefill_chunk,
             eos_token_ids=tuple(sorted(self._eos_tokens())),
-            on_step=self._step_sync(str(payload["request_id"])),
+            on_step=self._step_sync(
+                str(payload["request_id"]), lambda: local_eos[0]
+            ),
+            local_eos=local_eos,
         )
 
 

@@ -35,7 +35,6 @@ SAFETENSORS_DTYPES: dict[str, tuple[np.dtype, torch.dtype]] = {
     "BF16": (np.dtype("<u2"), torch.bfloat16),
     "F8_E4M3": (np.dtype("<u1"), torch.float8_e4m3fn),
     "F8_E5M2": (np.dtype("<u1"), torch.float8_e5m2),
-    "F8_E8M0": (np.dtype("<u1"), torch.float8_e8m0fnu),
     "I64": (np.dtype("<i8"), torch.int64),
     "I32": (np.dtype("<i4"), torch.int32),
     "I16": (np.dtype("<i2"), torch.int16),
@@ -47,8 +46,18 @@ SAFETENSORS_DTYPES: dict[str, tuple[np.dtype, torch.dtype]] = {
 # `Tensor.view` only reinterprets between equal-width types, so these are the dtypes whose mapped
 # numpy array needs the extra step. Everything else is already its own numpy dtype.
 _VIEW_DTYPES = frozenset(
-    {torch.bfloat16, torch.float16, torch.float8_e4m3fn, torch.float8_e5m2, torch.float8_e8m0fnu}
+    {torch.bfloat16, torch.float16, torch.float8_e4m3fn, torch.float8_e5m2}
 )
+
+# E8M0 -- the 8-bit exponent-only scale format FP8 block scaling uses -- is only a torch
+# dtype from 2.8 on. It is resolved here rather than spelled out in the table above because
+# that table is built at import time: a bare `torch.float8_e8m0fnu` there is an
+# AttributeError on the older torch a `--no-deps` install keeps, and the whole loader then
+# fails to import. A checkpoint that uses no E8M0 scales never reaches this.
+_E8M0: torch.dtype | None = getattr(torch, "float8_e8m0fnu", None)
+if _E8M0 is not None:
+    SAFETENSORS_DTYPES["F8_E8M0"] = (np.dtype("<u1"), _E8M0)
+    _VIEW_DTYPES = _VIEW_DTYPES | {_E8M0}
 
 
 

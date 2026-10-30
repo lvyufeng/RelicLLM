@@ -59,23 +59,73 @@ def test_qwen_config_keeps_root_quantization_config() -> None:
 
 
 def test_pack_gate_up_keeps_rows_and_scale_tiles_aligned() -> None:
+    """A layer's two weights pack into the one fused `[2*inter, hidden]` matrix."""
     gate = FP8Tensor(
-        torch.arange(2 * 4 * 4, dtype=torch.uint8).reshape(2, 4, 4).view(torch.float8_e4m3fn),
-        torch.tensor([[[2.0]], [[3.0]]], dtype=torch.bfloat16),
+        torch.arange(4 * 4, dtype=torch.uint8).reshape(4, 4).view(torch.float8_e4m3fn),
+        torch.tensor([[2.0], [3.0]], dtype=torch.bfloat16),
         (2, 4),
     )
     up = FP8Tensor(
-        (100 + torch.arange(2 * 4 * 4, dtype=torch.uint8)).reshape(2, 4, 4).view(torch.float8_e4m3fn),
-        torch.tensor([[[5.0]], [[7.0]]], dtype=torch.bfloat16),
+        (100 + torch.arange(4 * 4, dtype=torch.uint8)).reshape(4, 4).view(torch.float8_e4m3fn),
+        torch.tensor([[5.0], [7.0]], dtype=torch.bfloat16),
         (2, 4),
     )
     packed = pack_gate_up_fp8(gate, up)
-    assert packed.code.shape == (4, 4, 4)
-    assert packed.scale.shape == (4, 1, 1)
-    torch.testing.assert_close(packed.code[:2].view(torch.uint8), gate.code.view(torch.uint8))
-    torch.testing.assert_close(packed.code[2:].view(torch.uint8), up.code.view(torch.uint8))
+    assert packed.code.shape == (8, 4)
+    assert packed.scale.shape == (4, 1)
+    torch.testing.assert_close(packed.code[:4].view(torch.uint8), gate.code.view(torch.uint8))
+    torch.testing.assert_close(packed.code[4:].view(torch.uint8), up.code.view(torch.uint8))
     torch.testing.assert_close(packed.scale[:2], gate.scale)
     torch.testing.assert_close(packed.scale[2:], up.scale)
+
+
+def test_pack_gate_up_stacks_stacked_expert_grids() -> None:
+    """One expert per leading axis: `[E, 640, in]` twice, packed along the matrix's row axis.
+
+    The per-matrix grids keep one tile row per 128 rows, so the packed ten tile rows are gate's
+    five then `up`'s five.  The checkpoint instead writes one grid over the fused 1280 rows; that
+    one is split at the same seam, and both layouts must dequantize to the same matrix.
+    """
+    from relicllm.models.qwen4_exp.quant import dequantize_block_fp8
+
+    experts, inter, hidden, block = 2, 8, 4, (2, 4)
+    gate = FP8Tensor(
+        torch.arange(experts * inter * hidden, dtype=torch.uint8)
+        .reshape(experts, inter, hidden)
+        .view(torch.float8_e4m3fn),
+        torch.full((experts, inter // block[0], 1), 2.0, dtype=torch.bfloat16),
+        block,
+    )
+    up = FP8Tensor(
+        (100 + torch.arange(experts * inter * hidden, dtype=torch.uint8))
+        .view(torch.float8_e4m3fn)
+        .reshape(experts, inter, hidden),
+        torch.full((experts, inter // block[0], 1), 3.0, dtype=torch.bfloat16),
+        block,
+    )
+    packed = pack_gate_up_fp8(gate, up)
+    tiles = 2 * inter // block[0]
+    assert packed.code.shape == (experts, 2 * inter, hidden)
+    assert packed.scale.shape == (experts, tiles, 1)
+    torch.testing.assert_close(
+        packed.scale, torch.cat([gate.scale, up.scale], dim=1)
+    )
+
+    fused = torch.cat([gate.scale, up.scale], dim=1)
+    from_fused = pack_gate_up_fp8(
+        FP8Tensor(gate.code, fused, block),
+        FP8Tensor(up.code, fused, block),
+    )
+    # Compared as codes: NaN is a legal e4m3 code (126 and 127), which `assert_close` calls unequal
+    # to itself.
+    torch.testing.assert_close(
+        from_fused.code.view(torch.uint8), packed.code.view(torch.uint8), rtol=0, atol=0
+    )
+    torch.testing.assert_close(from_fused.scale, packed.scale)
+    want = dequantize_block_fp8(packed.code, fused, block, torch.float32)
+    got = dequantize_block_fp8(packed.code, packed.scale, block, torch.float32)
+    assert torch.equal(got.isnan(), want.isnan())
+    torch.testing.assert_close(got.nan_to_num(0.0), want.nan_to_num(0.0))
 
 
 @REAL_FP8

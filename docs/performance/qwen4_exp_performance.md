@@ -460,3 +460,519 @@ Decode, in order:
 A caveat on one number: an earlier PyTorch loop measured the GDN recurrence at
 596 ms per 8192 rows. That is the naive Python scan, not the shipped kernel,
 which measures 8.05 ms. Only the kernel number is used above.
+
+## Open issue: the 6.0x decode gap on RTX 4090
+
+**Date:** 2026-10-17
+**Hardware:** 8 x RTX 4090 (sm_89), TP8, torch 2.11.0+cu130, against 8 x RTX 3090 (sm_86), TP8.
+**Status:** unexplained. Every cause proposed so far has been eliminated by measurement.
+
+This section exists so the next person does not re-run the eliminations. It records what has
+been ruled out, with the evidence; what is still standing; the claims that were **withdrawn**;
+and the one open confound. Read the retractions before trusting the table.
+
+### The observation
+
+The same model, same checkpoint, same TP8, same 58-token prompt:
+
+| | 8 x RTX 3090 | 8 x RTX 4090 |
+|---|---|---|
+| decode, steady state | **5.54 tok/s** | **0.9185 tok/s** |
+| decode step | ~189 ms | ~1826 ms |
+
+Both boxes were verified to run `world_size=8`, `nproc_per_node=8`, and 64 experts/layer per
+rank. This is a real **6.0x**, and it is in the direction that a faster card should not be.
+
+The 4090's steady state is 124 generated tokens stopped on a real end-of-sequence token
+(`stopped: eos`), `--expert-resident`, `stage_bytes`/`stage_calls` 0/0, exit 0. The 3090's
+number is on the staging path. That asymmetry matters and is addressed under *Open confound*.
+
+### Eliminated, with the evidence
+
+| Suspect | How it was eliminated |
+|---|---|
+| **The extension never loaded** | The `.so` was genuinely stale at first (built Oct 9, torch swapped Oct 17; `load_cuda_kernel()` returned `None`). After a rebuild the matched config returned `decode_s` **78.52 s -> 78.96 s**, a 0.56% difference over a 394 s wall. A torch fallback does not reproduce a fused-kernel timing to 1%. |
+| **No fused kernel on the decode path** | The MoE extension is *not* on the decode path: `_grouped_bf16` is its only consumer and four gates close — `POCKETLLM_QWEN4_MOE_GROUPED` defaults `"0"` (`moe.py:222`), `rows < grouped_min_tokens` (128) fails at decode, `_dequantized_layer_tensors` returns `None` on an FP8 shard (`moe.py:284`), and world size 1. The attention QSA kernel *is* on the path, and was traced running: **2261 calls, 2261 `path=cuda`, 0 fallback** in a 24-token run — with the rate unchanged at 0.783 tok/s. |
+| **Staging / PCIe** | Device-resident experts remove **100%** of the H2D (20.52 GiB, 4483 misses -> 0.00 GiB, 0 misses) and buy **+5.0% decode / +10.6% prefill**. On the 3090 the same mode gives **2.7x prefill**. The bytes were never the dominant term on sm_89. |
+| **Different bytes per call** | `stage_bytes`/`stage_calls` is 4.6864-4.6897 MiB on every 4090 run against the 3090's 4.6881 — the same regime on both boxes, six runs. |
+| **Silicon** | Clocks 2520-2805 MHz against a 3105 max; power 54-79 W against a 450 W cap; PCIe gen4 x16 full width; `SW Power Cap` and `HW Slowdown` both *Not Active* on all 8 cards; a bare GEMM reaches ~62 TFLOPS. Not throttled, not link-degraded. |
+| **Torch version** | torch 2.11.0+cu130 is **13-15% slower** than 2.9.1+cu128 on this box — the hypothesis was backwards. It is a real regression, not a hidden fast path. |
+| **Collectives** | An uncontended NCCL probe times the exact collective at 0.274 ms; 2 per layer x 48 = ~1.4% of a 4090 step. (The corresponding figure is ~22% of a *3090* step, because that step is 9.7x shorter — the absolute costs agree, the denominators do not. Neither share generalises.) |
+| **Storage** | `/workspace` is local NVMe (`/dev/nvme1n1p1 ext4`) at 1.3 GB/s, 134x the 3090's 9.7 MB/s network path. |
+| **NUMA / affinity** | 4 NUMA nodes (not 3), GPUs on nodes 0 and 2, every rank bound to its local 12 logical CPUs — which is the correct 24 physical cores per node over 4 GPUs. Not misfiring. |
+| **Prefill-vs-decode division** | Both boxes use the same 58 prompt tokens, so `prefill_tps` divides by the same constant and is directly comparable. |
+
+### Still standing
+
+- **Both boxes run the same per-expert path.** `_grouped_bf16` is off by default, gated at
+  `rows >= 128`, and returns `None` for an FP8 shard, so prefill and decode both run the
+  per-expert loop, one expert at a time.
+- **The 4090 does identical work at identical bytes and takes 6.0x longer.**
+- **A candidate cost that no current counter sees.** `_expert_matrix` (`moe.py:56-69`, the
+  dequantize call at `:67`) is invoked **inside** the per-expert loop (`moe.py:117-118` and
+  `:148-149`) and dequantizes **both** expert weights, per expert, per layer, per step.
+  `dequantize_block_fp8` (`quant.py:59`, `values = code.to(dtype)` at `:80`) materialises a
+  **full dense bf16 copy** that is discarded after two GEMMs. One routed expert is 9.375 MiB
+  in bf16 — exactly **2x** its 4.6875 MiB FP8 footprint, and `stage_bytes` counts only the
+  FP8 H2D, so it is **blind to this entirely**. This is consistent with the resident result:
+  residency changes where the codes live, not that they are dequantized per expert per step.
+
+  **This is not yet shown to be the gap.** It is a real, unmeasured cost that predicts the
+  observed uniformity across phases. It would only be *the* gap if the per-expert dequant is
+  differentially expensive on sm_89; if it costs the same on both boxes, it is a cost but not
+  the difference. The test is count and per-call time of the dequant on both boxes.
+
+### Withdrawn claims
+
+A record that keeps its retractions is worth more than one that looks clean. These were stated
+during the investigation and are **not** evidence:
+
+- **"The 4090 stages 65% more bytes"** (20.52 vs 12.43 GiB) — a **token-count artifact**:
+  64 tokens against 32. Per-call volume is identical on both boxes. Withdrawn.
+- **"~22,000 launches per step"** ceiling — not measured, withdrawn.
+- **"Collectives are ~44% of a step"** — an artifact of `profiler.py`'s `scope()`, which
+  synchronizes on both entry and exit, so every scope absorbs its predecessors' undrained work
+  and reads high. The tell was two byte-identical `[1,1,10240]` reductions reporting 28.2% and
+  3.5%. Withdrawn; see the measured ~1.4% above.
+- **"Attention is 38.9% of a 4090 decode layer"** — same artifact. Re-measured with
+  `attention.py`'s own self-timer (`POCKETLLM_QWEN4_ATTN_PHASE_PROFILE=1`, `time.perf_counter`
+  between explicit syncs), attention is **~21.5%** (core 12.9 / projection 3.3 / output 2.4 /
+  indexer 1.6 / conv 1.3). Withdrawn.
+- **"Prefill is capped at ~7 tok/s, a low-arithmetic-intensity artifact"** — superseded:
+  prefill is 19x more *efficient* per token than decode within a box (2.34 vs 45.38 ms/token),
+  which is the healthy shape, but that does not explain a **cross-box** prefill gap at
+  identical prompt length. The two comparisons are different and only the first was healthy.
+- **"The 4090's load is 145 s vs the 3090's 21.7 s"** — `load_s` varied 82 / 120.8 / 145.0 s
+  across three identical-config 4090 runs. **Neither box's load time should be quoted.**
+
+### Open confound
+
+There is **no apples-to-apples cross-box pair.** The 3090's figures are on **torch 2.6.0+cu124**
+and its resident-mode run has not been taken at all; the 4090's are on **2.11.0+cu130**. Since
+torch 2.11 is measurably 13-15% slower here, the two boxes are not on a common baseline. The
+operator requires 2.11 on all legs. **Until the 3090 is re-baselined on 2.11 and run in
+resident mode, the 6.0x is a real observation but not a clean experiment.**
+
+### What would settle it
+
+A per-expert marginal-cost instrument on the **real** path — cost as a function of expert count
+at fixed rows, separating per-expert overhead from per-call overhead, with a **count and a time
+per expert**. Two outcomes, both publishable:
+
+- If the 4090 issues more launches per expert, the count explains it and the ~6.4 us flat
+  per-launch law transfers.
+- If the counts are **identical** and it is still 6x, the law does **not** transfer across
+  architectures — "same op count, higher cost per launch on sm_89" — which is a different
+  result and must be reported as such rather than forced onto the law.
+
+Timing must not come from a `profiler.py` scope (see *Withdrawn claims*). The gate must be
+printed into the log and asserted, so a stale `.so` aborts the run rather than silently
+measuring a different graph.
+
+## Steady-state single-request decode on RTX 3090: what the 150 ms step is made of
+
+**Date:** 2026-10-19. **Box:** 8 x RTX 3090 (`ts-208`), TP8, expert-resident, FP8 checkpoint.
+**Target this was measured against:** 50 tok/s on *one* request, which needs a 20 ms step.
+
+The step is **146-151 ms**, so 6.6-6.8 tok/s. It is not the MoE, not the collectives, and not the
+host's Python: it is **8,139 CUDA ops a step**, and at B=1 each of them is a GPU-blocking launch.
+
+| | per decode step |
+|---|---|
+| CUDA ops (torch profiler) | **8,139** |
+| `F.linear` calls alone | 911 |
+| device time, summed over all ops | 104.3 ms |
+| host `tolist()` / `.item()` syncs | 97 / 0, **1.6 ms total** |
+| wall / GPU-observed | 146.2 / 146.2 ms (no host gap) |
+
+The op count is the same for 8 ranks as for one, because every rank runs all 48 layers with no
+tokens to parallelise. At ~18 us a launch (measured, `cudaLaunchKernel` 176 ms over 3,339 launches)
+the launches alone are the step: 8,139 x 18 us = 146 ms.
+
+**Eliminated this round, with the measurement that eliminated each:**
+
+- *Routing read back to the host* (`unique.tolist()` twice an expert lists). 97 syncs a step and
+  1.6 ms of the 146 -- worth removing for a capture, not worth a step. The device-side variant of
+  the scan was written and removed on that number.
+- *Batching.* A batch of 16/32/64 rows costs 251/277/309 ms a step against 151 at one, so the
+  throughput path exists (`generate_batch`) but a request's own rate is unchanged. Not the target.
+- *What the kernels are.* 783 D2D copies, 694 bfloat16 copy kernels, 326 sigmoid, 244 rsqrt, 220
+  reductions -- the elementwise glue of PLE, hyper-connections, the router and the norm/activation
+  pairs, each its own launch at [1, 2560], where a launch is ~64x the arithmetic.
+- *The GDN kernel at decode.* It is gated to `seq_len > 1`; lifting the gate measured 6.64 -> 7.26
+  tok/s but changed the emitted tokens (kernel vs the fp32 reference differ by 2e-4, enough to flip
+  a greedy choice), so it was reverted rather than shipped silently.
+- *The whole decode graph on one card.* 213.9 ms a step single-GPU against 146 on eight, so TP is
+  already a win; the capture itself fails on the host reads the PLE and router make.
+
+## Split reduce groups: 96 collectives at 10.5 ms, 2.2 ms in four strided groups
+
+**Date:** 2026-10-19, 8 x RTX 3090, torch 2.6 / NCCL 2.21.5, `ts-208`.
+
+A decode step's collective cost is **fixed latency per collective, not bytes**: 96 reduces of
+`[1, 1, 2560]`, `[1, 1, 8192]` and `[1, 1, 22528]` each measure 121.5 / 116.2 / 125.0 us, and one
+`[96, 1, 2560]` reduce of the same total bytes measures 449 us against 425 us for the 96 separate
+ones. So the lever is the number of collectives *issued at once*, not their size.
+
+Splitting the process group into **strided** sub-groups (`rank % k`) and issuing a subset each --
+every rank creates the same group lists in the same order, and each reduces its own stride -- cuts
+the wall time almost in proportion:
+
+| groups | 96 reduces take | per collective |
+|---|---|---|
+| 1 | 10.5 ms | 109 us |
+| 2 strided | 4.4 ms | 92 us |
+| 4 strided | 2.2 ms | 92 us |
+
+**What this does not do.** A TP all-reduce sums *across all eight ranks*; a sub-group sums within
+itself. Splitting is not a way to reduce faster -- it is a measurement of what is left once the
+per-collective latency is amortised, and the reason a true intranode implementation (one-shot or
+two-shot over the PCIe topology, or a ring whose steps are smaller than a reduction latency) is the
+term worth replacing. At four groups a step's 96 collectives would cost 2.2 ms.
+
+**Not implemented in the runtime.** It needs an all-reduce that replaces the NCCL ring for this
+topology, and a way to keep the layer dependencies intact; the probe above establishes the ceiling,
+not a change.
+
+## The all-reduces, measured
+
+The same step, with events around each `all_reduce`: **73.1 ms of the ~150 ms step**, from **192
+collectives** (two a layer) at **381 us each**. That is the single largest term after the launch
+count, and it is a cross-rank latency that no graph can remove -- only fewer collectives can.
+
+**Deferring them is not a local rewrite.** The hyper-connection streams are replicated, so a
+reduced value is needed before the streams are *read* again, and the second reduce (the MLP block)
+writes into those streams: the split `A = A_L + A_R` is consumed by the stream reads that follow.
+So the first reduce must land before `mlp_hc` reads the streams -- one collective a layer is the
+floor without moving the hyper-connection mix itself onto the device, which is a redesign rather
+than a flag. A draft that deferred every reduce to the end of the step was written and reverted
+unshipped: it would have produced wrong logits, silently.
+
+**Two removals measured and rejected this round:**
+
+- `torch.compile` on every layer's attention: **145.4 -> 145.2 ms a step.** The attention module is
+  the largest single term (47 ms of compute) but compiling it fuses little, because the step's
+  launches are spread over the whole graph and most of them are in the parts Triton will not take --
+  the hyper-connection GEMMs, the router, the resident expert loop. There is no per-module win here.
+- The resident path's per-expert weight *reads*: `rows()` builds two `FP8Tensor` views per expert per
+  step, and those are 4 refcounted stores -- no launch. The step's CPU profile is 7,399 launches,
+  4,637 `as_strided`, 1,550 `copy_`, 1,508 `reshape`: view bookkeeping, not something a faster read
+  removes.
+
+**What 20 ms a step requires, in order of how much of the step each removes:**
+
+1. **One collective a layer, not two** (~36 ms), by making `mlp_hc` read the already-reduced
+   streams and reducing only its block output.
+2. **A step-wide CUDA graph** (up to ~100 ms of launches -> one replay), which needs the PLE n-gram
+   hash and the router's selection on the device first.
+3. **Fused glue kernels** (the 783 copies + 694 casts, ~15% of the device time) for the replay to
+   be worth it.
+
+The budget a step has to fit into is **20 ms**, and the terms measured above add to ~146: launches
+~100, all-reduces 73, MoE 29. They overlap -- the collectives and the launches are not in series --
+which is why the step is 146 and not 200, and why removing any one of them alone leaves the step
+well above 20 ms.
+
+None of these is a flag; each is a change to this model's decode path, and 2 needs 1 to be a single
+stream of work a graph can hold.
+
+## Where a decode actually stands on 8xRTX 3090
+
+Measured on `ts-208` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
+`--expert-resident --expert-fused-fp8`:
+
+```
+decode  8.1 tok/s     122 ms a step
+prefill 59 tok/s
+```
+
+That is the only configuration that answers correctly, and every number below is measured against
+it.
+
+### The step is bound by the host, not the card
+
+A decode step issues **24,775 aten calls** -- about 516 a layer -- and dispatch alone is 3.72 us
+each, so 92.7 ms of the 122 ms a step takes is the host queueing work. Device time is 42 ms. A
+breakdown of the host side:
+
+```
+24,775 aten calls   92.7 ms   (mm 773, mul 1257, copy_ 1224, empty_strided 1107, to 1403 ...)
+10,066 other        40.0 ms   (cudaLaunchKernel 6938 at 3.8 us)
+```
+
+There is no hot spot: the largest single entry, `cudaLaunchKernel`, is 26.5 ms, and 9,532 of the
+calls are metadata-only (`as_strided`, `view`, `transpose`, `reshape`) that launch nothing at all.
+Removing any one of them changes the step by a fraction of a percent.
+
+### What each option was worth
+
+| Attempt | Result |
+|---|---|
+| act kernel vectorised reads | device time halved; device was never the bound |
+| `blocks_per_expert` 32 -> 48 | small gain, kept |
+| NCCL protocol (LL / LL128 / Simple) | within 3%, noise |
+| NCCL algorithm (Ring / Tree), channel count | no measurable change |
+| dense FP16 linear path | **slower** than the default |
+| `torch.compile` on the attention half | **53% slower**; on the whole model it fails -- triton 3.6 cannot bitcast e4m3 |
+| RMSNorm gain precomputed | 0.4% |
+| batching | see below: correct, and the only throughput lever there is |
+
+### Batching: the one lever, and the caveat
+
+The step is host-bound, so its cost barely moves with the number of rows: one row is 122 ms, eight
+are 210 ms, twelve are 212 ms. Measured on identical rows, which decode the same tokens as a single
+request does:
+
+```
+rows  1   122 ms/step    8.1 tok/s
+rows  8   210 ms/step   38.1 tok/s
+rows 12   212 ms/step   56.7 tok/s
+```
+
+That is throughput and not one request's latency -- each row still advances at about 4.8 tok/s when
+there are eight of them -- but it is the only thing measured here that reaches 30 tok/s at all, and
+it comes from the same fact that blocks the single-request target: the cards are idle while the
+host queues work, so filling them with more rows is free.
+
+The batched path used to crash outright: `_pinned_ids` allocated a one-row buffer and a two-row
+batch failed writing into it. It follows the batch now.
+
+**It is not yet correct, and the number above should be read with that.** Identical rows do not
+all decode what a single sequence decodes: the answer goes off by one position at the sixth token,
+and which rows are affected depends on the batch width -- with two rows both are wrong, with four
+the first two agree and the last two do not. It is deterministic, and the top-1/top-2 margin at
+that step is 5.0, so it is state rather than a near-tie in the logits. Making the id copy blocking
+did not change it.
+
+A batch does not take the fused path: `Fp8SlotExpertMoE`'s decode predicate is
+`hidden_states.numel() == hidden`, true for one token and false for a batch, and the fast path
+itself ends in `slot_rows.sum(0)`, which folds every row into one. So a batch is routed to
+`_prefill` and grouped dispatch.
+
+That route is not the cause, which was checked rather than assumed: the decoder hands the MoE
+`flat = mixed.reshape(-1, hidden)`, so the dispatch's `token_idx = slot // top_k` indexes flattened
+tokens and every row is kept apart. Where the divergence actually comes from is still open; it is
+not the id copy (blocking it changed nothing) and not a near-tie in the logits (the margin is 5.0).
+
+Until then, treat the batched throughput as an upper bound measured on a path that is not verified.
+
+### The one thing that would get there, and why it does not
+
+A captured decode step replays in **30 ms** -- 33 tok/s, which is the target -- so a CUDA graph is
+the only mechanism that removes 90 ms of host queueing at once. Two shapes of it were built and
+neither produced a correct token:
+
+* **one graph per position.** A graph freezes the `past_len` it was recorded at, so a generation of
+  N tokens needs N graphs, and every one of them records against the same mutable cache. Cloning
+  the cache per position gets the first answer right and no others; the layers' recurrent state is
+  advanced by the recording itself, so a replay applies it twice.
+* **one step-major layout for the whole generation.** This is the right shape -- slot `p` holds
+  position `p`, each step narrows to its own slot, the linear layers get one recurrent entry a
+  position. It was built far enough to find real defects (the KV prefix was being copied along
+  `head_dim` instead of the sequence axis; the recurrence was seeded from zero; a per-position view
+  wrote through to the layout's own layers) and not far enough to be correct.
+
+What the eager path needs if someone picks this up: the KV write and the selection index have to
+become device-side, so one recording serves every position, and the n-gram window has to be a
+per-position buffer filled between replays. `feature/qwen4exp-pipeline-parallel` carries a partial
+`spec_decode.py` that starts from the same premise.
+
+### What a single capture would need, concretely
+
+The measured replay is 30 ms a step, so this is not a question of whether it would be fast enough.
+It is a question of what has to change for one capture to serve every position, and that came down
+to four things -- each of them identified by a failed attempt, none of them speculative:
+
+1. **The KV write is a Python slice.** `cache.k[:, :, past_len : past_len + seq_len] = key` bakes the
+   offset into the recording, so a graph recorded at position 53 writes position 53 forever. The
+   write has to become `index_copy_`/`scatter_` against a device-side position tensor.
+2. **The KV read is a Python slice too.** `key = cache.k[:, :, : cache.length]` fixes the key length
+   in the graph, which is also what fixes the attention kernel's shapes. Reading a fixed-width arena
+   and masking past `length` makes the shapes position-independent -- `cuda_qsa_attention` takes no
+   `past_len` of its own, it infers everything from tensor shapes, so a constant-shape call is
+   enough and no kernel change is needed.
+3. **The recurrent state of the linear layers has to be indexed by position**, not advanced in
+   place. Advancing in place is what made a replay apply the state update twice; a per-position
+   array that each step reads and the next writes is the shape that works.
+4. **The n-gram window is per position**, `ngram_size` ids ending in the token that step embeds. It
+   cannot be computed during the recording, because the tokens do not exist yet, so it is a buffer
+   filled between replays -- pinned, because a pageable crossing is refused inside a capture.
+
+The head is vocabulary-sharded, so the argmax cannot be in the recording either: each position
+records its logits and the choice is made on the gathered row outside, one sync a step.
+
+### Where the capture actually stops
+
+The four prerequisites above are in place and each is verified on its own: the KV write and read
+take a device position, the linear state lives one entry a position, and the rope table can be
+built before a recording. A whole step can now be captured and replayed in **30.4 ms** -- 32.9
+tok/s, measured with the window fill, the replay, the token choice and the id copy all counted.
+
+It decodes the wrong thing. The output is what says so, and nothing narrower does:
+
+```
+generate [1596, 1144, 310, 5707, 310, 1156, 328, 12675, ...]
+capture  [1144, 310, 5707, 13, 271, 248069, 271, 248069, ...]
+```
+
+A layer-by-layer comparison was attempted and **did not measure what it claimed**: it read the
+intermediate tensors of the capture itself rather than of a replay, so the numbers it produced were
+of a pass that never ran. They are not recorded here as a finding. What the same harness did measure
+reliably is the QSA kernel alone, which is bit-identical under a capture, so the attention kernel is
+not the explanation.
+
+The rest -- the slot index, the arena width, the n-gram window, TF32 -- was each changed and the
+end-to-end output compared, and none of them changed it. That is a real exclusion, but a coarse one:
+any of them could still matter in a way this comparison could not see.
+
+What is left is that a replay and an eager step of the same input differ inside the operators, and
+the error compounds until a token goes wrong. A working probe was eventually built -- layer 0's
+returned tensor, eager against replayed, with no buffer in between -- and it measured:
+
+```
+diff max 0.352, mean 0.0038, 1276 of 10240 elements over 1e-2
+```
+
+The bad elements are spread evenly over the 10240 channels: split by residue over 4, 8 and 16 they
+are 307/315/336/318, 160/159/152/152/147/156/184/166, 82/84/81/79/67/81/88/77. Two structural
+readings that looked convincing in the moment -- "the last two hyper-connection streams are broken"
+and "the eighth is a rank boundary" -- were both wrong, and the even spread is what killed them.
+
+A large max with a small mean over the whole tensor is the shape of a different summation order
+rather than of a wrong answer: the same arithmetic, accumulated in a different sequence. That is
+not something a graph can be argued out of at this layer of the stack; matching it would mean
+pinning the kernels' reduction order.
+
+So the honest state of this one: eager decode is 8.1 tok/s and correct, a captured step replays in
+30.4 ms and does not agree with it, and the disagreement is last-bits-wide and accumulating rather
+than structural. Both numbers are measured. The 30 tok/s single-request target is not met.
+
+Over a generation the difference flips an argmax where two tokens are close: the first five agree
+with eager and the sixth does not. So the honest position is that the speed is reachable and the
+agreement is not, and both of those are measurements rather than expectations.
+
+### A bug that invalidated a great deal of measurement
+
+The fused expert backend answered `nan` for every decode step for a long time, because `ShardedMoE`
+masks another rank's expert with `num_experts` as a sentinel and `encode_route` tested ownership
+with `index % world_size == rank`: for the sentinel that is true on rank 0, and `512 // 8` is row 64
+of a 64-row table. The weight is zero, but zero times garbage is nan, and `argmax` over a nan logit
+is index 0 -- so the model emitted `!` forever, and any throughput measured on that path was the
+speed of a decoder that was not decoding.
+
+
+
+Measured on `ts-208` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
+`--expert-resident --expert-fused-fp8`:
+
+```
+decode  8.00 tok/s    122 ms a step
+prefill 59 tok/s
+```
+
+It is the only configuration that produces a correct answer, and everything below is measured
+against it.
+
+**The step is bound by the host, not the card.** A decode step issues about 7,000 kernels;
+`cudaLaunchKernel` alone accounts for 6,938 of them, and the CPU profile is 148 ms against 86 ms of
+device time. The largest single device term is the collective: 96 all-reduces (two a layer) of
+5 KB each, 15.3 ms of a step.
+
+**Two things this box makes worse than they need to be.** The eight cards sit on two PCIe switches
+across NUMA with no NVLink between them, so `NCCL_PROTO=LL` cuts a 5 KB all-reduce from 91.5 to
+74.5 us; `Simple` and `LL128` are both worse for this payload. And the resident experts hold 14 GiB
+a card, which is what limits how much a captured step could ever be sized to.
+
+**What was tried for the host cost, and what it cost to try.** A decode step can be captured as a
+CUDA graph and replayed -- `--graph-window N`. One position replays correctly and is 3x faster.
+Two do not, and the reason is structural rather than a missing fix:
+
+* a graph records the position it was captured at, so a decode of N tokens needs N graphs;
+* every graph is recorded against the same mutable KV cache, and captures write it;
+* so the second capture's writes are what the first graph's replay reads back.
+
+Restoring the cache between positions was tried in several forms -- snapshot and restore of the KV,
+of each layer's `length`, of the linear layers' recurrent state and `initialized` flag, of the PLE
+history, plus pre-growing the rotary table so the graphs' recorded addresses survive, plus blanking
+the tail past each position. With one position the answer is right; with two it is not, and with
+all graphs sharing a pool it is a segfault.
+
+Cloning the cache per position is the closest this got: three positions then replay correctly
+(`[1144, 1144, 1144]`, matching eager), which is what named the shared cache as the cause. It is
+still not a decode. A clone seeded from the window's opening state is missing every position the
+window has already decoded, and the answer repeats itself (`'We!!"! I am Qwen is Qwen is Qwen'`);
+seeding each clone from the previous one instead makes it worse (`'WeWeWeWeWeWe...'`), because the
+capture has to freeze the token at each position and the token is what the step before it has yet
+to produce.
+
+That is the shape of the problem: an autoregressive decode's step reads a history its own
+predecessor writes, and a graph freezes the addresses it read. The versions that work in the field
+put the position on the device -- `past_len` as a tensor rather than a Python int -- so one graph
+serves every position. Here the rope and the causal mask already accept a tensor
+(`attention.py:557`), but the KV cache is written and read by slicing to `past_len`
+(`attention.py:502`, `:660`), and a slice needs an int. Moving that is a change to the cache's
+addressing, not a flag.
+
+`--graph-window` therefore stays at 0 and is marked experimental. The pieces it needed -- the
+warmup that keeps cuBLAS's algorithm selection out of the capture, the cache save/restore, and a
+logits selector because the head is vocab-sharded and argmax has to follow the gather -- are in
+`graph_window.py` and are the part of it that is right.
+
+**And one bug that invalidated a great deal of measurement.** The fused expert backend answered
+`nan` for every decode step for a long time, because `ShardedMoE` masks another rank's expert with
+`num_experts` as a sentinel and `encode_route` tested ownership with `index % world_size == rank`:
+for the sentinel that is true on rank 0, and `512 // 8` is row 64 of a 64-row table. The weight is
+zero, but zero times garbage is nan. `argmax` over a nan logit is index 0, so the model emitted `!`
+forever -- and any throughput measured on that path was the speed of a decoder that was not
+decoding. The fix is one predicate; the lesson is that a perf number needs a correctness check
+beside it before it means anything.
+
+## The captured decode, and what a capture costs
+
+The three prerequisites above were built and measured on 8×RTX 3090 (`ts-208`, TP8, `/dev/shm`
+checkpoint, 128 tokens from a 53-token prompt). Two numbers matter, and they are different numbers.
+
+**The step itself: 36.5 tok/s (27.4 ms).** A decode step captured as a CUDA graph and replayed,
+with the fused expert kernel, reads 15× faster than the 2.84 tok/s the fused path started at. The
+terms, each measured on the device timeline:
+
+| Change | Effect |
+|---|---|
+| `fp8_expert_act_kernel` splitting an expert's rows over the grid, not one block a slot | 2.84 → 7.03 |
+| reading the hidden width off the plane shape instead of unpacking the layer for it | → 7.90 |
+| the act phase addressing the packed plane directly (no unpack at all) | device time a step 168.9 → 74.9 ms |
+| a lane reading a whole 16-byte plane chunk, so a warp's loads are contiguous | 25 → 28.3 GB/s of code reads |
+| `blocks_per_expert` retuned for the captured step (32 → 48) | plateau, 24 is measurably worse |
+| `NCCL_PROTO=LL` for the 5 KB all-reduces | 91.5 → 74.5 µs each, 33.2 → 27.1 ms a step |
+
+That last one is this box, not the model: the eight cards sit on two PCIe switches across NUMA with
+no NVLink between them, so a ring of 5 KB blocks is a latency problem, and the low-latency protocol
+is the one that fits. On a machine with a real fabric it will not matter.
+
+**The generation: about 2.6 tok/s for a 128-token request.** A graph records the position it was
+captured at -- `past_len` picks a rope slice and a KV cache slice on the host -- so one capture
+serves one position, and a decode of N tokens needs N captures. A capture costs **0.30 s a
+position**: 124 ms of warmup (one full forward, because cuBLAS selects its algorithm on first sight
+of a shape and doing that inside a capture voids it) and 176 ms of recording. Sixty-four positions
+is what the resident experts leave room for, so a 128-token decode captures in rounds.
+
+Three hundred milliseconds a position against the 13 ms a position it saves means the capture pays
+for itself only past about **2700 generated tokens**. Shorter requests are slower on the captured
+path than eager, and that is the whole of the gap between the two numbers above.
+
+The capture cost was attacked and did not come down:
+
+- **Sharing one pool and one stream across the window** removed an out-of-memory at 80 positions
+  and returns the memory at `release()`, but leaves the 0.30 s.
+- **Reusing windows across requests** works when the caller brings its own KV arena (the second
+  request's `build()` returns in 0.000 s against 5.89 s) and fails in practice: a window is filed
+  under a fixed size to be reusable, and spending a whole window on a tail that has fewer tokens
+  left overruns the card.
+- **`torch.compile` before the capture** does not survive this model's decode path.
+
+What would collapse it is one graph serving every position, which needs `past_len` off the host:
+the rope and the causal mask already take it as a tensor (`attention.py:557`), but the KV cache is
+written and read by slicing to it (`attention.py:502`, `:660`), and a slice needs an int. That is a
+change to the cache's addressing, not a flag.
+
+So: the step is fast enough, the setup is not, and the setup is the open problem.

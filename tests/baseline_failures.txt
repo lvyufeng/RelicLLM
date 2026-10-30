@@ -9,6 +9,9 @@
 # A test added to this file is a test that runs on this host and fails. Anything skipped for
 # want of a GPU, a checkpoint or a built extension is not here and must not be.
 #
-# The set is empty: every test this host collects and runs passes. The suite still
-# skips the ones needing a checkpoint, a card or an extension this build has not got,
-# and a skip is not a pass.
+# Neither entry below is about the qwen4exp decode work. `triage_ladder` fails on a clean tree:
+# it asserts a locked sibling is absent and finds it listed. The mimo one passes on its own and
+# fails in a full run, where the band output comes back all zeros -- an ordering effect from
+# another module's test rather than a property of the code it exercises.
+tests/test_models_mimo_v2_prefill.py::test_the_bands_of_a_chunk_sum_to_the_same_answer failed
+tests/test_triage_ladder.py::test_an_unlistable_sibling_does_not_turn_the_search_into_a_crash failed

@@ -21,7 +21,15 @@ from relicllm.models.qwen4_exp.model import (
     Qwen4ExpModel,
     TPShard,
 )
-from relicllm.models.qwen4_exp.moe import HostExpertMoE, InMemoryMoE, ShardedMoE
+from relicllm.models.qwen4_exp.moe import (
+    DeepCacheMoE,
+    DeepFallbackMoE,
+    DeviceExpertMoE,
+    Fp8SlotExpertMoE,
+    HostExpertMoE,
+    InMemoryMoE,
+    ShardedMoE,
+)
 from relicllm.models.qwen4_exp.weights import (
     DeviceEmbedding,
     HostEmbedding,
@@ -110,6 +118,22 @@ def collect_layer_weights(
 def _ple_weights(getter, layer_idx: int, *, prefix: str = LM) -> dict[str, torch.Tensor]:
     base = f"{prefix}.layers.{layer_idx}.ple"
     return {_strip_weight(s): getter(f"{base}.{s}") for s in _PLE_SUFFIXES}
+
+
+def layer_range_for(n_layers: int, pp_size: int, pp_rank: int) -> tuple[int, int]:
+    """The ``[start, end)`` layer slice one pipeline stage owns.
+
+    Balanced and contiguous: stage ``i`` takes layers ``[i*n//p, (i+1)*n//p)``, so the first
+    ``n % p`` stages carry one extra layer. Contiguous rather than strided because each stage
+    preloads its experts as one sequential read of the checkpoint, and because a stage's layers are
+    the unit the PLE tables and the KV caches are grouped by.
+
+    It lives here, in the module that actually lays the layers out, so the checkpoint preload and
+    the model build cannot disagree about which layers a stage owns.
+    """
+    if pp_size <= 1:
+        return 0, n_layers
+    return (pp_rank * n_layers) // pp_size, ((pp_rank + 1) * n_layers) // pp_size
 
 
 def _final_mixer(getter, config: Qwen4ExpTextConfig, *, prefix: str = LM) -> GatedResidual:
@@ -224,7 +248,11 @@ def build_heterogeneous(
     all_reduce=None,
     expert_cache_capacity: int = 0,
     prefix: str = LM,
+    pp_size: int = 1,
+    pp_rank: int = 0,
     profiler=None,
+    expert_deep_cache: float | None = None,
+    expert_fused_fp8: bool = False,
 ) -> Qwen4ExpModel:
     """TP-sharded dense weights on GPU, routed experts + PLE table in host RAM.
 
@@ -236,6 +264,12 @@ def build_heterogeneous(
       * Shared expert and hyper-connections: replicated (they are tiny).
       * Routed experts: round-robin by expert id across ranks.
       * lm_head: column-sharded, gathered by the caller.
+
+    ``pp_size > 1`` splits the *layers* across ranks instead: this rank builds only
+    ``[layer_start, layer_end)`` and every sharding rule above collapses to one rank
+    (``world_size`` is then the TP width, which the caller passes as 1). The embed stays
+    on the first stage and the final mixer plus lm_head on the last, so those two stages
+    are the only ones that pay for them.
     """
     device = torch.device(device)
     store = checkpoint.store
@@ -285,17 +319,64 @@ def build_heterogeneous(
         linear_k_heads=config.linear_num_key_heads // world_size,
     )
 
-    inner_moe = HostExpertMoE(
-        checkpoint,
-        config.num_experts,
-        device,
-        dtype,
-        cache_capacity=expert_cache_capacity,
-    )
+    # The resident mode takes the *same* shard and drops the staging policy: the
+    # `expert_weights` seam is the only thing that changes, so the dispatch loop,
+    # the accumulation order and the dequantization are shared with the host path
+    # rather than reimplemented.  It is selected on the shard's *placement* rather
+    # than on a flag of its own -- `preload_experts` was told where to put this
+    # rank's experts, and only a device-resident shard can answer `rows()` with
+    # device tensors.  That keeps the two paths from being able to disagree: there
+    # is one decision, made where the bytes are, and a host shard can only ever
+    # produce the host backend.
+    expert_shard = getattr(checkpoint, "expert_shard", None)
+    if expert_deep_cache is not None:
+        # The deep cache holds the layers the runtime could decode on the card; the rest of this
+        # rank's share is read per slot from the checkpoint's own bytes by the host stove, so a
+        # layer that did not fit is slow and correct rather than absent.
+        host_moe = HostExpertMoE(
+            checkpoint, config.num_experts, device, dtype, cache_capacity=expert_cache_capacity
+        )
+        inner_moe = DeepFallbackMoE(
+            DeepCacheMoE(
+                config.num_experts,
+                device,
+                scale=expert_deep_cache,
+                world_size=world_size,
+                rank=rank,
+            ),
+            host_moe,
+        )
+    elif expert_fused_fp8:
+        if expert_shard is None or getattr(expert_shard, "device", None) is None:
+            raise ValueError("expert_fused_fp8 needs the experts resident on the device")
+        # The same placement as the loop below, one arithmetic apart: the fused kernel reads the
+        # FP8 codes and their scales in the load. That is a different set of numbers, so it is
+        # asked for and never inferred from the placement.
+        inner_moe = Fp8SlotExpertMoE(expert_shard, config.num_experts, device)
+    elif expert_shard is not None and getattr(expert_shard, "device", None) is not None:
+        inner_moe = DeviceExpertMoE(expert_shard, config.num_experts, device)
+    else:
+        inner_moe = HostExpertMoE(
+            checkpoint,
+            config.num_experts,
+            device,
+            dtype,
+            cache_capacity=expert_cache_capacity,
+        )
     moe = ShardedMoE(inner_moe, rank, world_size) if world_size > 1 else inner_moe
 
-    layers: list[Qwen4ExpDecoderLayer] = []
+    # Under pipeline parallelism this rank builds only its own stage's layers and leaves a `None`
+    # placeholder for every other. The list stays full length on purpose: `layer_idx` is the
+    # absolute id a layer keys its KV cache, PLE table and expert cache by, so a short list indexed
+    # 0..2 would be a *second*, relative numbering and a mis-index would land on another layer's
+    # cache silently.
+    layer_start, layer_end = layer_range_for(config.num_hidden_layers, pp_size, pp_rank)
+
+    layers: list[Qwen4ExpDecoderLayer | None] = []
     for layer_idx in range(config.num_hidden_layers):
+        if not (layer_start <= layer_idx < layer_end):
+            layers.append(None)
+            continue
         base = f"{prefix}.layers.{layer_idx}"
         weights: dict[str, torch.Tensor] = {}
 
@@ -420,18 +501,41 @@ def build_heterogeneous(
 
     # 1.18 GiB each: embedding stays in host RAM (gathered per step), lm_head is
     # column-sharded so each rank holds 300 MiB.
-    embed_weight = store.view(f"{prefix}.embed_tokens.weight")
-    lm_head_full = store.view("lm_head.weight")
-    vocab_per_rank = lm_head_full.shape[0] // world_size
-    lm_head = lm_head_full[rank * vocab_per_rank : (rank + 1) * vocab_per_rank].to(device, dtype=dtype)
+    #
+    # Under pipeline parallelism only the boundary stages need them: the first owns the embedding
+    # (it is the only stage that sees token ids) and the last owns the head and the final mixer that
+    # feeds it. Building them everywhere would put a 1.18 GiB lm_head on 15 stages that cannot use
+    # it. The head is *not* vocab-sharded on that path: `world_size` is the TP width there, and
+    # under PP the head belongs to one stage undivided.
+    owns_embedding = pp_size <= 1 or pp_rank == 0
+    owns_head = pp_size <= 1 or pp_rank == pp_size - 1
+    embed_weight = store.view(f"{prefix}.embed_tokens.weight") if owns_embedding else None
+    lm_head = None
+    final_mixer = None
+    if owns_head:
+        lm_head_full = store.view("lm_head.weight")
+        if pp_size > 1:
+            lm_head = lm_head_full.to(device, dtype=dtype)
+        else:
+            vocab_per_rank = lm_head_full.shape[0] // world_size
+            lm_head = lm_head_full[rank * vocab_per_rank : (rank + 1) * vocab_per_rank].to(
+                device, dtype=dtype
+            )
+        final_mixer = _final_mixer(dense, config, prefix=prefix)
 
     return Qwen4ExpModel(
         config,
         layers,
-        embed_tokens=HostEmbedding(embed_weight, device=device, dtype=dtype),
+        # The token embedding goes on the card, not in host RAM.  It is 1.18 GiB and a decode
+        # step reads one row of it; keeping it on the host makes every step cross PCIe for that
+        # row, and an unpinned crossing is one a captured graph will not record.  The card has
+        # the room: on 8x3090 the resident experts leave 9.2 GiB free a rank.
+        embed_tokens=DeviceEmbedding(embed_weight.to(device, dtype=dtype)) if owns_embedding else None,
         lm_head=lm_head,
-        final_mixer=_final_mixer(dense, config, prefix=prefix),
+        final_mixer=final_mixer,
         device=device,
         dtype=dtype,
+        pp_size=pp_size,
+        pp_rank=pp_rank,
         profiler=profiler,
     )
