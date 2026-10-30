@@ -878,6 +878,9 @@ def generate(
     t1 = time.perf_counter()
     t_first = None
     next_id = next_token_from_logits(logits, ctx, batch_size=input_ids.shape[0])
+    # The ids decoded so far, on the host: the PLE term hashes a window of them and the table it
+    # indexes is host-resident, so the window is assembled here rather than on the device.
+    prompt_ids = [int(v) for v in input_ids[0].tolist()]
 
     # A run of captured steps, when the caller asked for one.  Everything below treats it as
     # optional: an unusable window leaves the loop eager, which is the path it is checked against.
@@ -991,10 +994,17 @@ def generate(
                 # A replay returns nothing, so the token it produced is read from the buffer the
                 # graph writes.  `past` advances because this position is spent either way.
                 _t_a = time.perf_counter()
+                # The PLE term hashes a window of ids that ends in the token this step embeds.
+                # Those ids live on the host and the window's graphs read one shared row, so it is
+                # refilled here, between replays, rather than assembled inside the step -- which
+                # would be a device-to-host copy and is what a capture refuses.
+                # Every rank, not rank 0 alone: the PLE table is host-resident and each rank
+                # hashes the window into its own copy of it.  `produced` is the same list on
+                # every rank because the token is gathered before it is appended.
+                # The window ends in the token this step embeds, which is `next_id` -- `produced`
+                # is what came out of the previous steps and does not include it yet.
+                window.fill_history(prompt_ids + produced + [int(next_id.reshape(-1)[0])])
                 next_id = window.replay(past, next_id.to(ctx.device))
-                # The position's cache clone is what the next one is cloned from, so it has to be
-                # handed back before the generation moves on.
-                window.commit(past)
                 _step_s += time.perf_counter() - _t_a
                 past += 1
                 continue
