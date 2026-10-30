@@ -174,6 +174,22 @@ def _fixed_kv_width() -> int:
         return 0
 
 
+def _kv_width_of(cache) -> int:
+    """The arena width this cache's reads use: its own if it has one, else the environment's.
+
+    The cache is the right scope for it. A capture needs the arena and an eager step does not, and
+    one process can be asked for both -- a server that captured one request's decode and then
+    serves another eagerly would otherwise charge the eager request the arena's ~24 ms a step for
+    the rest of the process's life, because the environment is process-wide and `_fixed_kv_width`
+    is read once a layer.
+
+    `kv_width` is set on the cache before the first step that needs it, which for a capture is
+    before the probe that sizes the logits buffer -- see `graph_window.DecodeGraph`.
+    """
+    width = getattr(cache, "kv_width", 0) if cache is not None else 0
+    return int(width) if width else _fixed_kv_width()
+
+
 def cuda_qsa_attention(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -654,7 +670,7 @@ class QSAIndexer:
                 offsets = past_len.reshape(()) + torch.arange(seq_len, device=hidden_states.device)
                 for row in range(batch_size):
                     cache.index_k[row].index_copy_(0, offsets, new_raw_keys[row])
-                width = _fixed_kv_width()
+                width = _kv_width_of(cache)
                 if width > 0:
                     raw_keys = cache.index_k[:, :width]
                 else:
@@ -664,7 +680,7 @@ class QSAIndexer:
                     raw_keys = cache.index_k[:, : int(past_len.reshape(())) + seq_len]
             else:
                 cache.index_k[:, past_len : past_len + seq_len] = new_raw_keys
-                width = _fixed_kv_width()
+                width = _kv_width_of(cache)
                 raw_keys = (cache.index_k[:, :width] if width > 0
                             else cache.index_k[:, : past_len + seq_len])
         elif raw_keys_override is not None:
@@ -825,7 +841,7 @@ class QSAAttention:
         if cache is not None:
             _write_kv(cache, key, value, past_len, seq_len)
             cache.length = past_len + seq_len
-            width = _fixed_kv_width()
+            width = _kv_width_of(cache)
             if width > 0:
                 key = cache.k[:, :, :width]
                 value = cache.v[:, :, :width]

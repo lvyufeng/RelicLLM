@@ -36,8 +36,6 @@ token-for-token agreement with the eager loop has to ask for the eager loop.
 """
 from __future__ import annotations
 
-import os
-
 import torch
 
 from .attention import GatedDeltaNetCache, slot_layout
@@ -74,6 +72,18 @@ class DecodeGraph:
             self.slot = torch.zeros((), dtype=torch.long, device=device)
         #: How wide the KV arena is; the recording bakes it into the key shapes.
         self.width = self._arena_len()
+        # Put it on the cache here, not in `_prepare`: the probe below runs a step, and a capture
+        # is only correct when everything that step reads already agrees on the arena.  On the
+        # cache rather than in the environment, because an eager request served by the same
+        # process must not inherit it -- see `_kv_width_of`.
+        # Every layer *and* the top-level cache: `_forward_by_layer` hands each layer its own
+        # `cache.layers[idx]`, so a width set only on the top-level object is never seen by the
+        # attention that reads it.  The environment variable this replaced worked because it
+        # reached both -- which is the whole difficulty of moving it here.
+        self.cache.kv_width = self.width
+        for layer in self.cache.layers:
+            if layer is not None:
+                layer.kv_width = self.width
         #: The n-gram window's width, and the host row the PLE term reads.
         self._ngram = int(model.config.ngram_size)
         self.history = torch.full(
@@ -90,15 +100,24 @@ class DecodeGraph:
         self._capture()
 
     def _arena_len(self) -> int:
-        """How long the caller's KV arena is; the recording bakes this into its key shapes."""
+        """The width the recording reads, which has to cover every position it replays at.
+
+        The caller's cache is the floor, not the answer: `generate` sizes it for the generation it
+        was asked for, and that is one number for one request.  A recording replayed at a later
+        position needs an arena at least as wide as that position, so the window's own reach is
+        taken into account too -- a width taken from the cache alone would be as narrow as the
+        first request's context and would clip the key the step just wrote.
+        """
+        reach = self.start + self.steps + 2
         for layer in self.cache.layers:
             if layer is None:
                 continue
             for name in ("k", "index_k"):
                 tensor = getattr(layer, name, None)
                 if tensor is not None:
-                    return int(tensor.shape[2] if tensor.dim() == 4 else tensor.shape[1])
-        return self.start + self.steps + 2
+                    width = int(tensor.shape[2] if tensor.dim() == 4 else tensor.shape[1])
+                    return max(width, reach)
+        return reach
 
     def _logits_width(self) -> int:
         """How wide one step's logits are on this rank.
@@ -107,7 +126,25 @@ class DecodeGraph:
         into the position the caller is about to decode at.
         """
         with torch.inference_mode():
-            scratch = self.model.make_cache(1, self.start + self.steps + 2)
+            # The same arena the recording will use, not one sized for the window: the step reads
+            # `cache.k[:, :, :width]` and the selection mask is built for that width, so a scratch
+            # cache narrower than the arena would have its keys truncated under a mask that still
+            # names positions past the end -- and the step fails on the mismatch rather than
+            # answering something wrong, which is how this was found.
+            #
+            # The cost is one whole arena of free memory for the length of the probe, where a
+            # window-sized scratch was smaller. On the cards this runs on that is a couple of GiB
+            # held for a single step and given back immediately; the arena has to be sized for the
+            # context the generation will reach either way, so it is not room the capture would
+            # have kept.
+            scratch = self.model.make_cache(1, self.width)
+            scratch.kv_width = self.width
+            scratch.rope_width = self.width
+            if scratch.cos is None or scratch.cos.shape[1] < self.width:
+                positions = torch.arange(self.width, device=self.position.device).view(1, 1, -1)
+                scratch.cos, scratch.sin = self.model.rope(
+                    positions.expand(3, 1, -1), self.model.dtype
+                )
             probe = self.model.forward(
                 self.inputs, cache=scratch, past_len=self.start, last_token_only=True
             )
@@ -117,10 +154,6 @@ class DecodeGraph:
 
     def _prepare(self) -> None:
         """Lay the generation out before the recording: arena, rope table, slots, n-gram row."""
-        # The arena width has to be set before the first step runs: the layers read it while the
-        # step does, and the recording bakes the shape it produces.
-        if os.environ.get("POCKETLLM_QWEN4_QSA_FIXED_WIDTH", "0") in ("0", ""):
-            os.environ["POCKETLLM_QWEN4_QSA_FIXED_WIDTH"] = str(self.width)
         with torch.inference_mode(False):
             self.cache.rope_width = self.width
             if self.cache.cos is None or self.cache.cos.shape[1] < self.width:
