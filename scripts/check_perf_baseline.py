@@ -9,9 +9,10 @@ The design is deliberately the test baseline's (`scripts/check_test_baseline.py`
 substitution. That script's unit is a **node id** because the failure set is a set: three tests fixed
 and one broken is a net improvement in a count and a regression in the tree. This script's unit
 cannot be a set, because a metric is a *number* and every good number moves a little every run; the
-unit is a **(runtime, scenario, metric) key** and the comparison is a ratio against a threshold.
+unit is a **key** of the runtime, the card, the scenario and the metric, and the comparison is a ratio
+against a threshold.
 
-Three properties that are the reason this is a script and not a `diff`:
+Four properties that are the reason this is a script and not a `diff`:
 
 - **A threshold, not equality.** Two identical runs do not produce identical numbers -- the v41 record
   in ``tests/fixtures/perf/`` has a 4.8x spread on the eager path and 1.1x on the graphed one. A
@@ -23,6 +24,11 @@ Three properties that are the reason this is a script and not a `diff`:
   one; a record that cannot be compared (no committed baseline, a runtime the baseline does not
   cover) is reported and not enforced. The same rule the P0.1 runner uses: absent is absent, and
   never a zero standing in for it.
+- **The card is in the key.** The record's ``cuda`` block names the device it was measured on, and the
+  key is ``runtime@card/scenario/metric``. Without the card, an 8x RTX 4090 reading and a 4x RTX 2080
+  Ti reading are both ``v41/decode/tpot.median``, and the gate reported the first as a 2.6x
+  regression against the second. Absence is still absence: a record with no ``cuda`` block, and a
+  baseline entry with no card, keep the unqualified key and the comparison they have always had.
 
 Usage::
 
@@ -30,6 +36,9 @@ Usage::
     python scripts/check_perf_baseline.py --observed run.json    # diff a specific run
     python scripts/check_perf_baseline.py --update --observed run.json   # record it as the baseline
     python scripts/check_perf_baseline.py --threshold 0.10       # 10% either way (the default is 15%)
+
+One record per runtime **and per card**, all in the one ``--update``: a second card's numbers are keys
+of their own, so the two sets live side by side in one file rather than replacing each other.
 """
 
 from __future__ import annotations
@@ -101,13 +110,15 @@ def _dig(record: Mapping[str, Any], dotted: str) -> float | None:
 
 
 def observations(record: Mapping[str, Any]) -> dict[str, float]:
-    """One run as ``runtime/scenario/metric -> value``.
+    """One run as ``runtime[@card]/scenario/metric -> value``.
 
     Keyed by everything needed to know what the number is about. The runtime comes from
     ``launch.argv`` rather than from a filename, because the record is the thing being compared and a
-    moved or renamed file must not change what it says.
+    moved or renamed file must not change what it says; the card comes from the record's ``cuda``
+    block, for the same reason and one more -- a latency is a property of the box as much as of the
+    code, so a number measured elsewhere is not a number this one moved from.
     """
-    runtime = _runtime_of(record)
+    token = _token_of_record(record)
     scenarios = record.get("scenarios")
     if not isinstance(scenarios, Mapping):
         return {}
@@ -121,7 +132,7 @@ def observations(record: Mapping[str, Any]) -> dict[str, float]:
         for metric in _METRICS:
             value = _dig(metrics, metric)
             if value is not None:
-                found[f"{runtime}/{scenario}/{metric}"] = value
+                found[f"{token}/{scenario}/{metric}"] = value
     return found
 
 
@@ -140,6 +151,70 @@ def _runtime_of(record: Mapping[str, Any]) -> str:
         if token.startswith("--backend="):
             return token.split("=", 1)[1]
     return "unknown"
+
+
+#: What separates a runtime from the card its numbers were measured on, inside a key's first field.
+_CARD_SEPARATOR = "@"
+
+
+def _card_of(record: Mapping[str, Any]) -> str | None:
+    """The card a record was measured on, from the envelope's ``cuda.devices``, or ``None``.
+
+    The device names as the probe spelled them, joined when a box is not uniform. Absent is absent:
+    a record with no ``cuda`` block -- the probe is best-effort and writes nothing when neither
+    ``torch`` nor ``nvidia-smi`` answers (``relicllm/bench/metadata.py``) -- names no card, and its
+    keys keep the unqualified form they have always had rather than gaining a made-up one.
+    """
+    cuda = record.get("cuda")
+    if not isinstance(cuda, Mapping):
+        return None
+    devices = cuda.get("devices")
+    if not isinstance(devices, (list, tuple)):
+        return None
+    names = [str(name).strip() for name in devices if str(name).strip()]
+    unique = list(dict.fromkeys(names))
+    return " + ".join(unique) if unique else None
+
+
+def _token_of_record(record: Mapping[str, Any]) -> str:
+    """``runtime`` or ``runtime@card``: what a record's keys are headed by."""
+    card = _card_of(record)
+    runtime = _runtime_of(record)
+    return f"{runtime}{_CARD_SEPARATOR}{card}" if card else runtime
+
+
+def _split_token(token: str) -> tuple[str, str | None]:
+    """A key's first field as ``(runtime, card)``; the card is ``None`` when none was recorded."""
+    runtime, separator, card = token.partition(_CARD_SEPARATOR)
+    return runtime, (card if separator else None)
+
+
+def _card_conflict(one: str | None, other: str | None) -> bool:
+    """Whether two cards are *known* to be different.
+
+    Absence is not a difference: a baseline recorded before the card was read, or a record from a box
+    with neither torch nor nvidia-smi, has no card to disagree with, and forcing them apart would be
+    the suite gaining a failure from a missing field. Two named cards that are not the same are the
+    one thing this refuses -- TPOT 1.09 s on a 4090 and 0.41 s on a 2080 Ti are both
+    ``v41/decode/tpot.median``, and the second is not a baseline the first moved from.
+    """
+    return bool(one) and bool(other) and one != other
+
+
+def _key_parts(key: str) -> tuple[str, str, str] | None:
+    """A metric key as ``(token, scenario, metric)``, or ``None`` when it is not one.
+
+    A device name carries no slash, so a card in the token does not change this split.
+    """
+    parts = key.split("/")
+    if len(parts) != 3:
+        return None
+    return parts[0], parts[1], parts[2]
+
+
+def _token_of_key(key: str) -> str:
+    """The runtime token a metric key is headed by, card and all."""
+    return key.split("/", 1)[0]
 
 
 @dataclass(frozen=True)
@@ -195,6 +270,11 @@ def compare(
     ordinary case -- but it is printed, because "the gate is green" and "the gate compared nothing"
     must not look the same. The reverse (a key the run produced that no baseline holds) is ignored:
     a new metric, or a new scenario, is not a regression and is recorded by the next ``--update``.
+
+    Two keys meet on their text, with one exception: a baseline entry that names no card is answered
+    by the run's key for the same runtime, scenario and metric whatever card *it* names (see
+    ``_comparable_key``). Two keys that name different cards never meet, which is the whole point of
+    the card being in the key -- see the module docstring.
     """
     regressions: list[Delta] = []
     improvements: list[Delta] = []
@@ -203,10 +283,11 @@ def compare(
     missing: list[str] = []
 
     for key in sorted(baseline):
-        if key not in observed:
+        answered = key if key in observed else _comparable_key(key, observed)
+        if answered is None:
             missing.append(key)
             continue
-        delta = Delta(key=key, before=baseline[key], after=observed[key])
+        delta = Delta(key=key, before=baseline[key], after=observed[answered])
         if delta.before == _ZERO:
             unenforced.append(delta)
         elif not delta.moved(threshold):
@@ -222,6 +303,39 @@ def compare(
         missing=tuple(missing),
         unenforced=tuple(unenforced),
     )
+
+
+def _comparable_key(key: str, observed: Mapping[str, float]) -> str | None:
+    """The observed key that answers a baseline key the two runs do not spell identically.
+
+    Only the card can differ here, and only by one side not naming one: two named cards have already
+    been kept apart by the key, and a record that was measured on the same card always spells the key
+    the same way. This is the tolerance for a baseline recorded before the card was read, or for a
+    record from a box that could not read it -- those keep the comparison they have always had.
+
+    Several observed cards for one card-less baseline key is not a comparison this script can make:
+    which of them is the number the entry recorded? It is left to be reported as missing, which is a
+    statement about what could not be compared rather than a guess.
+    """
+    wanted = _key_parts(key)
+    if wanted is None:
+        return None
+    token, scenario, metric = wanted
+    runtime, card = _split_token(token)
+    candidates: list[str] = []
+    for other in observed:
+        parts = _key_parts(other)
+        if parts is None:
+            continue
+        other_runtime, other_card = _split_token(parts[0])
+        if (
+            other_runtime == runtime
+            and parts[1] == scenario
+            and parts[2] == metric
+            and not _card_conflict(card, other_card)
+        ):
+            candidates.append(other)
+    return candidates[0] if len(candidates) == 1 else None
 
 
 def load(path: Path) -> dict[str, Any]:
@@ -266,10 +380,15 @@ def _shape_of(record: Mapping[str, Any]) -> str:
 
 
 def shapes_of(records: Iterable[Mapping[str, Any]]) -> dict[str, str]:
-    """``runtime -> launch shape``, one line per runtime, for the baseline's `runs` block."""
+    """``runtime[@card] -> launch shape``, one line per runtime and card, for the baseline's `runs`.
+
+    Keyed the way the metrics are, because the shape is a property of the same pair: a TP4 reading on
+    a 4090 and a TP1 reading on a 2080 Ti are two different claims, and a `runs` block that named
+    only the runtime could hold one of them.
+    """
     shapes: dict[str, str] = {}
     for record in records:
-        shapes[_runtime_of(record)] = _shape_of(record)
+        shapes[_token_of_record(record)] = _shape_of(record)
     return shapes
 
 
@@ -293,7 +412,9 @@ def render_baseline(
         "note": (
             "Recorded from `relicllm bench serve`; regenerate with "
             "scripts/check_perf_baseline.py --update --observed <run.json> (repeat --observed, one "
-            "run per runtime). Keyed runtime/scenario/metric. Compare with "
+            "run per runtime and per card). Keyed runtime[@card]/scenario/metric, the card being the "
+            "device name the record's `cuda` block reports: numbers taken on another card are keys of "
+            "their own and are never diffed against these. Compare with "
             "scripts/check_perf_baseline.py. `runs` is the launch shape each runtime's numbers were "
             "measured at -- they are not the same width, so it is not a detail."
         ),
@@ -320,6 +441,50 @@ def _resolve_records(args: argparse.Namespace) -> list[Mapping[str, Any]]:
         "  relicllm bench serve --scenario decode --scenario prefill-8k \\\n"
         "      --json-out /tmp/run.json -- --model /ckpt --backend <name> --tensor-parallel-size 4"
     )
+
+
+def _is_covered(token: str, covered: Iterable[str]) -> bool:
+    """Whether a record's token is one the baseline holds numbers for.
+
+    Same rule as the keys themselves: the runtime has to match, and a card on both sides has to be the
+    same card. A baseline token with no card covers any card, because it makes no claim about one.
+    """
+    runtime, card = _split_token(token)
+    return any(
+        other_runtime == runtime and not _card_conflict(card, other_card)
+        for other_runtime, other_card in (_split_token(other) for other in covered)
+    )
+
+
+def _skip_reason(token: str, covered: Iterable[str]) -> str:
+    """Why a record was not compared, in the terms the reader needs to act on it.
+
+    A runtime the baseline does not hold at all is the ordinary case -- a checkpoint this host does
+    not have. A runtime it holds *on another card* is the one this script exists to refuse, and which
+    card, on both sides, is the whole of the explanation.
+    """
+    runtime, _ = _split_token(token)
+    others: set[str] = set()
+    for other in covered:
+        other_runtime, other_card = _split_token(other)
+        if other_runtime == runtime:
+            others.add(other_card or "no recorded card")
+    if not others:
+        return "the baseline does not cover this runtime"
+    return (
+        f"the baseline's numbers for {runtime} were measured on {', '.join(sorted(others))}, and a "
+        f"number from one box is not a number from another"
+    )
+
+
+def _recorded_tokens(path: Path) -> set[str]:
+    """The runtime tokens a baseline file already holds, or none when there is nothing to read."""
+    try:
+        document = load(path)
+        keys = document.get("metrics", document)
+        return {_token_of_key(key) for key in keys}
+    except (OSError, ValueError, AttributeError):
+        return set()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -365,6 +530,8 @@ def main(argv: list[str] | None = None) -> int:
                 f"{named} carries no comparable metric: the record's `scenarios` block is empty or "
                 f"has no `metrics` -- nothing was measured, so there is nothing to record"
             )
+        replaced = _recorded_tokens(args.baseline)
+        tokens = sorted({_token_of_key(key) for key in observed})
         args.baseline.write_text(
             render_baseline(
                 observed,
@@ -373,12 +540,20 @@ def main(argv: list[str] | None = None) -> int:
             ),
             encoding="utf-8",
         )
-        runtimes = sorted({key.split("/", 1)[0] for key in observed})
         scenarios = sorted({key.split("/")[1] for key in observed})
         print(
             f"{args.baseline}: {len(observed)} metrics from "
-            f"{', '.join(runtimes)} x {', '.join(scenarios)}"
+            f"{', '.join(tokens)} x {', '.join(scenarios)}"
         )
+        # `--update` replaces the file rather than merging into it, which was already true of a second
+        # runtime and is now true of a second card. Saying which tokens the file used to hold is the
+        # difference between recording the 4090 numbers and losing the 2080 Ti ones.
+        dropped = sorted(replaced - set(tokens))
+        if dropped:
+            print(
+                f"note: {args.baseline} no longer holds {', '.join(dropped)} -- a baseline is "
+                f"replaced, not merged; pass every runtime and card you mean to keep"
+            )
         return 0
 
     if not args.baseline.exists():
@@ -392,21 +567,25 @@ def main(argv: list[str] | None = None) -> int:
         document.get("threshold", DEFAULT_THRESHOLD)
     )
 
-    covered = sorted({key.split("/", 1)[0] for key in baseline})
+    covered = sorted({_token_of_key(key) for key in baseline})
     # A record whose runtime the baseline does not cover is reported and not compared -- a run
     # against an already-running server (which carries no --backend to read) or against a runtime
     # this host cannot serve has nothing to be compared with. Exit 0, the same rule as a missing
-    # checkpoint; only a runtime the baseline *does* cover is allowed to move a metric.
+    # checkpoint; only a runtime the baseline *does* cover is allowed to move a metric. The same rule
+    # applies to the card: a 4090 run is not a 2080 Ti baseline that moved, and the two are kept apart
+    # here rather than being compared and reported as a regression.
     comparable: dict[str, float] = {}
     skipped: list[str] = []
     for record in records:
-        runtime = _runtime_of(record)
-        if runtime not in covered:
-            skipped.append(runtime)
+        token = _token_of_record(record)
+        if not _is_covered(token, covered):
+            skipped.append(token)
             continue
         comparable.update(observations(record))
     if skipped:
-        print(f"skipped: measured {', '.join(sorted(set(skipped)))}, and the baseline covers {', '.join(covered)}")
+        for token in sorted(set(skipped)):
+            print(f"skipped: measured {token} -- {_skip_reason(token, covered)}")
+        print(f"the baseline covers {', '.join(covered)}")
     if not comparable:
         print("\nnothing was compared -- no named run measured a runtime the baseline covers")
         return 1
