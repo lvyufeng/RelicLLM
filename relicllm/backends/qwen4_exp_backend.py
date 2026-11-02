@@ -385,6 +385,53 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             "qwen4_exp_expert_cache_capacity": float(getattr(inner, "cache_capacity", 0) or 0),
         }
 
+    def _host_bank(self) -> Any:
+        """This run's ``HostExpertMoE``, or None where the experts are device-resident.
+
+        ``moe`` belongs to the decoder layer and the model keeps those in ``layers``
+        (``models/qwen4_exp/model.py``), so the counters sit one level below where a model-level
+        lookup would find them. ``ShardedMoE`` wraps the bank when the world size is above one and
+        is unwrapped here too. Every layer shares one bank, so the first layer that has one answers
+        for the run.
+        """
+        candidates: list[Any] = []
+        model = self._model
+        if model is not None:
+            direct = getattr(model, "moe", None)
+            if direct is not None:
+                candidates.append(direct)
+            for layer in getattr(model, "layers", ()) or ():
+                layer_moe = getattr(layer, "moe", None)
+                if layer_moe is not None:
+                    candidates.append(layer_moe)
+                    break
+        for candidate in candidates:
+            inner = getattr(candidate, "inner", candidate)
+            if inner is not None and hasattr(inner, "stage_bytes"):
+                return inner
+        return None
+
+    def _expert_stage_metrics(self) -> dict[str, float]:
+        """The routed-expert staging counters, or nothing where the experts are resident.
+
+        These are the numbers that tell a *resident* bank from a *cached* one, and a decode rate
+        cannot be read without them: a deployment that holds every expert it owns stops staging
+        after the first pass and one that does not keeps paying the PCIe cost every step. Two runs
+        with the same tokens a second and different ``stage_bytes`` are not the same result -- one
+        is bounded by the card and the other by the link, and the next request's rate depends on
+        which. Nothing else publishes them.
+        """
+        bank = self._host_bank()
+        if bank is None:
+            return {}
+        return {
+            # `_total` is the convention for a counter the server does not own; the rest are gauges.
+            "qwen4_exp_expert_stage_bytes_total": float(bank.stage_bytes),
+            "qwen4_exp_expert_stage_calls_total": float(bank.stage_calls),
+            "qwen4_exp_expert_cache_hits_total": float(bank.cache_hits),
+            "qwen4_exp_expert_cache_capacity": float(getattr(bank, "cache_capacity", 0) or 0),
+        }
+
     def metrics(self) -> dict[str, float]:
         """What one engine holds between requests, for ``/metrics``.
 
@@ -406,6 +453,7 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             #: string is where that is said to a caller.
             "qwen4_exp_context_positions": float(self._max_seq_len),
             "qwen4_exp_world": float(self._world),
+            **self._expert_stage_metrics(),
         }
 
     def _kv_capacity(self) -> KVCapacity:
