@@ -1028,6 +1028,17 @@ def generate(
     if ctx.rank == 0:
         print(f"[qwen4exp] replayed {_replay_count}/{len(produced)} steps", flush=True)
 
+    # Give the recording back before returning. A live graph holds captured NCCL work, and
+    # destroying the process group under one hangs: the teardown barrier is reached by every rank
+    # and then never completes, and the watchdog aborts the job after the answer has already been
+    # printed. The rotation above releases a window when it is spent; this is the one still
+    # serving when the generation ends, and it used to be dropped on the floor.
+    if window is not None:
+        window.release()
+        window = None
+    if ctx.device.type == "cuda":
+        torch.cuda.synchronize()
+
     stats = {
         "prompt_tokens": float(prompt_len),
         "generated_tokens": float(len(produced)),
