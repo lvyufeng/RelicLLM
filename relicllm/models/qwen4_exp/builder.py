@@ -11,6 +11,8 @@ Two entry points:
 
 from __future__ import annotations
 
+import os
+
 import torch
 
 from relicllm.models.qwen4_exp.config import Qwen4ExpTextConfig
@@ -21,6 +23,7 @@ from relicllm.models.qwen4_exp.model import (
     Qwen4ExpModel,
     TPShard,
 )
+from relicllm.models.qwen4_exp.cpu_moe import CpuDecodeMoE, CpuExpertMoE
 from relicllm.models.qwen4_exp.moe import (
     DeepCacheMoE,
     DeepFallbackMoE,
@@ -253,6 +256,10 @@ def build_heterogeneous(
     profiler=None,
     expert_deep_cache: float | None = None,
     expert_fused_fp8: bool = False,
+    expert_cpu: bool = False,
+    expert_cpu_threads: int | None = None,
+    expert_resident_layers: bool = False,
+    expert_reserve_bytes: int = 3 << 30,
 ) -> Qwen4ExpModel:
     """TP-sharded dense weights on GPU, routed experts + PLE table in host RAM.
 
@@ -346,6 +353,27 @@ def build_heterogeneous(
             ),
             host_moe,
         )
+    elif expert_cpu:
+        # The experts are never copied: they are read in host RAM and multiplied there. This is
+        # the box whose link, not whose compute, is the bottleneck -- see `cpu_moe`.
+        # Decode on the CPU, prefill on the card: the CPU covers one token a step, and a prefill
+        # visits every expert with many tokens a visit, where the card wins even paying the copy.
+        inner_moe = CpuDecodeMoE(
+            CpuExpertMoE(
+                checkpoint,
+                config.num_experts,
+                dtype,
+                owns=(expert_shard.owns if expert_shard is not None else None),
+                threads=expert_cpu_threads,
+            ),
+            HostExpertMoE(
+                checkpoint,
+                config.num_experts,
+                device,
+                dtype,
+                cache_capacity=expert_cache_capacity,
+            ),
+        )
     elif expert_fused_fp8:
         if expert_shard is None or getattr(expert_shard, "device", None) is None:
             raise ValueError("expert_fused_fp8 needs the experts resident on the device")
@@ -363,7 +391,10 @@ def build_heterogeneous(
             dtype,
             cache_capacity=expert_cache_capacity,
         )
+
     moe = ShardedMoE(inner_moe, rank, world_size) if world_size > 1 else inner_moe
+    # How many leading layers have their experts on the device and therefore no H2D in a step.
+    # A capture has to stop there; the caller reads this rather than re-deriving the boundary.
 
     # Under pipeline parallelism this rank builds only its own stage's layers and leaves a `None`
     # placeholder for every other. The list stays full length on purpose: `layer_idx` is the
@@ -522,6 +553,25 @@ def build_heterogeneous(
                 device, dtype=dtype
             )
         final_mixer = _final_mixer(dense, config, prefix=prefix)
+
+    if expert_resident_layers:
+        # Budgeted against what the card has left once the dense half is on it: pinning the experts
+        # first spent the room the embedding was going to need, and the model died on
+        # `embed_weight.to(device)` with 27 layers already held.
+        free, _total = torch.cuda.mem_get_info(device)
+        reserve = int(expert_reserve_bytes)
+        budget = max(0, int(free) - reserve)
+        pinned = inner_moe.pin_layers(range(config.num_hidden_layers), budget)
+        if device.type == "cuda" and torch.distributed.is_initialized() and rank == 0:
+            print(
+                f"[qwen4exp] pinned {pinned}/{config.num_hidden_layers} layers' experts "
+                f"on the device ({budget / (1 << 30):.1f} GiB of room, "
+                f"{reserve / (1 << 30):.1f} GiB held back)",
+                flush=True,
+            )
+        # After the pinning, not before: the capture boundary is the count this decided.
+        moe.resident_layer_prefix = int(getattr(inner_moe, "_resident_layers", 0) or 0)
+
 
     return Qwen4ExpModel(
         config,
