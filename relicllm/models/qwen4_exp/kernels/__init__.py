@@ -17,15 +17,38 @@ deliberately does **not** decide:
 
 * **What is fastest.** `supports_fp8_tensor_core` says the card can take an FP8 operand; it does
   not say the FP8 path beats the bf16 one at this shape. On a decode step ``M`` is the token count
-  -- 64 on this model -- and at that size a `_scaled_mm` can be slower than dequantize-then-GEMM.
-  A caller that picks by capability alone is choosing on the wrong evidence; the measured numbers
-  belong in the call site.
+  -- 64 on this model -- and a caller that picks by capability alone is choosing on the wrong
+  evidence; the measured numbers belong in the call site.
 * **What relic-core exports.** A capability predicate answers what the card has. Whether the
   extension built on this host exports the kernel for it is a separate question, and a call site
   still has to check what it loaded.
 
 The predicates come from `relicllm.runtime.device`, which already names the fork relic-core itself
 takes; this module only groups the decisions that fork implies.
+
+## Why an sm_89 card still cannot use `_scaled_mm` here
+
+The obvious use of this plan -- route `_expert_matrix` through `torch._scaled_mm` on a card that
+reports an FP8 tensor core -- **does not work, and the reason is the weights, not the card.**
+
+`_scaled_mm` accepts a per-tensor scale. This checkpoint carries a **128x128 block grid**, one bf16
+scale a tile, and torch refuses that layout outright::
+
+    per-tensor   OK
+    block grid   rejects: RuntimeError: Invalid scaling configuration.
+    2D scale_b   rejects: RuntimeError: Invalid scaling configuration.
+
+What does reach the tensor core is the fused kernel (`--expert-fused-fp8`, relic-core's
+`qwen4_exp_fp8_expert.cu`): it applies the block scale as it widens each code in registers, so the
+weight is never materialised in bf16, and it takes `__nv_cvt_fp8x2_to_halfraw2` on Ada and a field
+shift elsewhere. That kernel is already what runs on a 4090, and it reaches the decode step
+**without `_expert_matrix` in the path** -- which is why this module has no call site yet rather
+than an unfinished one.
+
+Measured numbers were reported for this at various points and **none of them should be quoted**:
+one pass compared dequantize-then-GEMM against `_scaled_mm` with `torch.ones(1)` as the scale, i.e.
+a layout the checkpoint does not have, and reported 7-10%. The layout decides this question, not
+the card, and a benchmark that does not carry the block grid is not measuring the decision.
 
 ## Why a capability plan and not a file per architecture
 
