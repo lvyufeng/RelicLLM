@@ -197,3 +197,68 @@ def test_the_details_do_not_claim_the_context_is_the_caches_size():
 
     assert "8192 positions at most" in text
     assert "each request" in text
+
+class _Bank:
+    """Just the counters `_expert_stage_metrics` reaches for."""
+
+    def __init__(self, stage_bytes=0, stage_calls=0, cache_hits=0, cache_capacity=0):
+        self.stage_bytes = stage_bytes
+        self.stage_calls = stage_calls
+        self.cache_hits = cache_hits
+        self.cache_capacity = cache_capacity
+
+
+class _Layer:
+    def __init__(self, moe):
+        self.moe = moe
+
+
+class _Wrapper:
+    """What `ShardedMoE` looks like from outside: the bank is one level down."""
+
+    def __init__(self, inner):
+        self.inner = inner
+
+
+def _backend_with_model(model):
+    backend = object.__new__(qwen4_exp_backend.Qwen4ExpBackend)
+    backend._model = model
+    return backend
+
+
+def test_a_resident_run_publishes_no_staging_counters() -> None:
+    """A device-resident run has no host bank at all, so `/metrics` keeps the body it had before
+    these existed -- absent, rather than four zeroes that would read as "staged nothing"."""
+    backend = _backend_with_model(object())
+    assert backend._host_bank() is None
+    assert backend._expert_stage_metrics() == {}
+
+
+def test_the_counters_are_found_one_level_down() -> None:
+    """`moe` belongs to the decoder layer and the model holds those in `layers`; a lookup on the
+    model alone finds nothing, which is the defect this publishes around."""
+    bank = _Bank(stage_bytes=2048, stage_calls=7, cache_hits=3, cache_capacity=64)
+    model = type("M", (), {"moe": _Wrapper(bank), "layers": [_Layer(None)]})()
+    backend = _backend_with_model(model)
+    assert backend._host_bank() is bank
+
+
+def test_the_wrapper_is_unwrapped() -> None:
+    """At world size above one the bank sits inside `ShardedMoE`."""
+    bank = _Bank(stage_calls=1)
+    model = type("M", (), {"moe": None, "layers": [_Layer(_Wrapper(bank))]})()
+    assert _backend_with_model(model)._host_bank() is bank
+
+
+def test_the_counters_reach_the_metrics_body() -> None:
+    bank = _Bank(stage_bytes=1024, stage_calls=7, cache_hits=3, cache_capacity=64)
+    model = type("M", (), {"moe": _Wrapper(bank), "layers": []})()
+    backend = _backend_with_model(model)
+    backend._device = None
+    backend._max_seq_len = 8192
+    backend._world = 1
+    published = backend._expert_stage_metrics()
+    assert published["qwen4_exp_expert_stage_bytes_total"] == 1024.0
+    assert published["qwen4_exp_expert_stage_calls_total"] == 7.0
+    assert published["qwen4_exp_expert_cache_hits_total"] == 3.0
+    assert published["qwen4_exp_expert_cache_capacity"] == 64.0
