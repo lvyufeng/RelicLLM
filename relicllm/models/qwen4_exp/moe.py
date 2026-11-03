@@ -300,6 +300,12 @@ class HostExpertMoE:
         self.wide_bank = os.environ.get("POCKETLLM_QWEN4_PIN_BF16", "0").lower() in {
             "1", "true", "yes"
         }
+        #: Batch the routed experts of *staged* layers too. Those need a temporary bf16 stack,
+        #: which is why this is asked for rather than assumed: a stack a layer is 94 MiB and the
+        #: card may have none to spare.
+        self.batch_staged = os.environ.get("POCKETLLM_QWEN4_BATCH_STAGED", "0").lower() in {
+            "1", "true", "yes"
+        }
         #: Per pinned layer, its experts stacked once: `(order, gate_up [E, ...], down [E, ...])`.
         self._stack_cache: dict[int, tuple] = {}
         self._position_map: dict[int, torch.Tensor] = {}
@@ -456,11 +462,12 @@ class HostExpertMoE:
         back to the host, which is what the per-expert loop does and what makes it the slow path
         at decode.
         """
-        # Pinned layers only. A staged layer has to come through the cache to keep its hit rate,
-        # and the cache holds FP8 pairs while this arithmetic wants bf16: widening beside a cached
-        # pair is the copy that OOM'd. Bypassing the cache to make room for it measured 3.69
-        # against 4.50 with the cache, so the per-expert loop keeps those layers.
-        if layer_idx not in self._resident and layer_idx not in self._wide_keys:
+        # A wider bank is held only in `_wide_keys`, with `_resident` deliberately emptied, so the
+        # test is "is this layer pinned". A layer that is not pinned still takes the batched
+        # arithmetic; `_stacked_bank` stages it through the cache first and frees the stack after,
+        # so 48 layers do not hold 48 stacks at once.
+        if not self.batch_staged and layer_idx not in self._resident \
+                and layer_idx not in self._wide_keys:
             return None
         ids = indices.reshape(-1)
         gate_up, down = self._stacked_bank(layer_idx, ids)
@@ -469,6 +476,11 @@ class HostExpertMoE:
         out = _batched_experts(
             hidden_states.reshape(-1).to(self.dtype), gate_up, down, ids, weights.reshape(-1)
         )
+        if layer_idx not in self._resident and layer_idx not in self._wide_keys:
+            # A staged layer's stack is this step's alone; dropping the reference here lets the
+            # allocator reuse the block for the next layer instead of growing the cache by one
+            # stack a layer.
+            del gate_up, down
         self.cache_hits += int(ids.numel())
         return out.reshape_as(hidden_states)
 
@@ -489,7 +501,7 @@ class HostExpertMoE:
         """
         bank = self._resident.get(layer_idx)
         if not bank and layer_idx not in self._wide_keys:
-            return None, None
+            return self._stage_routed(layer_idx, ids)
         lookup = self._position_map.get(layer_idx)
         if lookup is None:
             order = sorted(bank)
@@ -532,18 +544,22 @@ class HostExpertMoE:
         return gate.to(self.dtype), down.to(self.dtype)
 
     def _stage_routed(self, layer_idx: int, ids: torch.Tensor):
-        """The routed experts of an unpinned layer, staged straight into one stack.
+        """The routed experts of an unpinned layer, staged into one stack through the cache.
 
-        The per-expert loop stages a copy, runs it, and keeps the copy in the cache. Here the
-        stack is allocated once and each expert's rows are written into it, so the only widened
-        copy that exists is the row just written -- not ten live temporaries, which is what OOM'd
-        when this path first widened each expert into its own tensor.
+        The cache is what makes a staged layer worth having -- without it every step re-reads the
+        same experts over PCIe -- so this goes through `_fetch` and keeps its hit rate.
+
+        One widened row is live at a time rather than ten: widening each expert into its own
+        tensor first is what OOM'd when this path was first tried. Widening the whole stack in one
+        `dequantize_block_fp8` call was also tried and measured slower (4.44 against 4.72) -- the
+        call count fell by half but each call handled a `[k, ...]` grid, and the total time went
+        up, so the per-expert widen is what stays.
         """
         slots = ids.reshape(-1).tolist()
         live = [int(s) for s in slots if int(s) < self.num_experts]
         if not live:
             return None, None
-        probe_g, probe_d = self._direct_rows(layer_idx, live[0])
+        probe_g, probe_d = self._fetch(layer_idx, live[0])
         gate = torch.empty((len(slots), *probe_g.shape), dtype=self.dtype, device=self.device)
         down = torch.empty((len(slots), *probe_d.shape), dtype=self.dtype, device=self.device)
         gate.zero_()
@@ -557,7 +573,7 @@ class HostExpertMoE:
             expert_id = int(slot)
             if expert_id >= self.num_experts:
                 continue
-            g, d = self._direct_rows(layer_idx, expert_id)
+            g, d = self._fetch(layer_idx, expert_id)
             gate[row] = self._wide(g)
             down[row] = self._wide(d)
             del g, d
