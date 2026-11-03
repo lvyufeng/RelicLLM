@@ -976,3 +976,124 @@ written and read by slicing to it (`attention.py:502`, `:660`), and a slice need
 change to the cache's addressing, not a flag.
 
 So: the step is fast enough, the setup is not, and the setup is the open problem.
+
+## Steady-state decode on 4x2080 Ti: 3.81 to 4.74 tok/s, and the τ that caps it
+
+**Date:** 2026-11-03
+
+**Hardware:** 4 x RTX 2080 Ti (21.48 GiB each), TP4, PCIe Gen3
+**Model:** Qwen3.8-Flash-Next, FP8 checkpoint
+
+The pages above stop at prefill for this box. This one is the single-request decode, and the point
+of writing it down is that the ceiling is a number rather than a feeling.
+
+### The step, measured three ways
+
+A decode step of this model on this box is **210 ms** at the end of the work below. Three independent
+measurements agree on what it is made of, and each one contradicted a plausible guess:
+
+| probe | says | contradicts |
+|---|---|---|
+| CPU clock around the forward vs. a CUDA event pair over it | issue **273 ms**, GPU span **275 ms** | that the GPU is under-used |
+| the same step with `all_reduce` stubbed to identity | removes **22 ms** of 210 | that the 96 collectives dominate |
+| `torch.profiler` kernel totals | 2170 kernels, of which ~1300 are the FP8 dequantise's elementwise ops | that the experts' GEMV is the cost |
+
+The profiler's `ncclDevKernel_AllReduce` row reads 111–175 ms, which is **its occupancy, not its
+cost** — the kernel sits resident waiting for the slowest rank. The stub probe is the honest
+number: 22 ms. Prefer a structural probe to a roofline read on a launcher-bound step.
+
+What that leaves is a step whose wall clock is set by how long the host takes to issue it. At batch
+1 the expert loop is ~50 small kernels a layer, and 48 layers do that 48 times.
+
+### What was worth having
+
+Two changes, both on `perf/qwen4exp-resident-layers` (#224 and its follow-up):
+
+* **`--expert-resident-layers`** pins as many whole layers' experts as the free memory allows after
+  the dense weights are loaded — **23 of 48** here — and gives a pinned layer's whole top-k to one
+  bmm pair. The write-down is the checkpoint's own FP8 codes, not a bf16 expansion: 4.69 MiB an
+  expert against 9.38.
+* **`POCKETLLM_QWEN4_BATCH_STAGED=1`** gives the *staged* layers the same batch. It reads through
+  the cache rather than around it; bypassing the cache to make room measured 3.69 against 4.60,
+  because the hit rate is the whole reason a staged layer is worth having.
+
+| configuration | 48 new tokens, alternate-run means |
+|---|---:|
+| baseline | 3.81 |
+| `--expert-resident-layers --expert-cache 384` | 4.60 |
+| `+ POCKETLLM_QWEN4_BATCH_STAGED=1`, reserve 5.5 GiB, cache 256 | **4.74** |
+
+Every arm checked its output text, not only its rate. Cache capacity and the pinning draw on the
+same memory: 448 or 512 entries OOM with the staged batches in place, and a 256-entry cache with
+5.5 GiB reserved was the best of the combinations swept.
+
+### Rejected, with the number that rejected it
+
+| attempt | result |
+|---|---:|
+| routed experts computed on the CPU (`CpuExpertMoE`) | 0.13–0.97 |
+| pinned layers widened to bf16 up front (halves the layers) | 4.30 |
+| the whole stack widened in one `dequantize_block_fp8` (half the calls, `[k,...]` grids) | 4.44 |
+| staged layers batched *around* the cache | 3.69 |
+| `POCKETLLM_QWEN4_SCHEDULE=by_phase` | 6.9 — **and wrong**; see below |
+| `NCCL_ALGO=Tree` / `PROTO=Simple` / `P2P_DISABLE=1` | 3.08–3.89 |
+
+Two of these deserve their reason in words.
+
+**`by_phase` is fast and incorrect on this model.** Its `dec_ple_hc` block adds every layer's PLE to
+one running `h` and then runs `attn_hc(h)` for all of them, but a layer's PLE applies to *that
+layer's* input, which is the previous layer's output. 6.9 tok/s against 3.8 is the size of the
+mistake, not of the optimisation. It ships off and should stay off until the PLE dependency is
+expressed per layer.
+
+**`NCCL_ALGO=Tree` does not run here** — `ncclInvalidUsage` — on a box whose topology is
+`GPU0-1 PHB / GPU2-3 NV2 / {0,1}<->{2,3} SYS`.
+
+### The ceiling, as a number
+
+Strata's formulation for a step of this shape is `τ = max_r W_r/B_r + Σ_serial`, the largest
+weight-read term plus everything serialised behind it. On this box, at the end of the work:
+
+```text
+W_r = 0.55 GiB a rank a step   (the 25 layers that are not pinned)
+B_r ≈ 6 GB/s                   (PCIe Gen3 x16, effective)
+max_r W_r/B_r = 98 ms          against a 100 ms budget for 10 tok/s
+```
+
+**The staging term alone fills the budget.** No schedule reaches 10 tok/s on this box while those
+experts have to cross PCIe each step, because there is nothing left for the arithmetic, the
+dequantise, or the collectives. That is what caps this at 4.74 and not at what the kernel counts
+suggest.
+
+Strata reports the same shape of evidence for the same reason on its streaming-MoE models: a
+register-fed FP4 kernel measured **0.98×** on DeepSeek V4 (whose decode is host-side expert compute
+at a ~2% GPU matmul share), and it publishes a **1.066× ceiling** for Laguna S 2.1 before building
+anything. A faster kernel on a relay-bound step buys nothing.
+
+Two ways past it, both of which leave the FP8 premise this page is scoped to:
+
+* **four-bit experts** — halves `W_r` to ~49 ms;
+* **more VRAM so the experts stay resident** — 8 cards puts 14 GiB a rank, which fits, and is what
+  would also make `--expert-fused-fp8` reachable (it needs the experts resident, and the FP8
+  kernel needs sm_89+'s packed plane).
+
+Neither is built. This box does 4.74 tok/s on 4x2080 Ti, and that number now has a reason.
+
+### The three cards, side by side
+
+| box | configuration | decode | status |
+|---|---|---:|---|
+| 4 x 2080 Ti, TP4 | `--expert-resident-layers --expert-cache 384` | **4.74** | measured here, 3 runs, output checked |
+| 8 x 4090, TP8 | `--expert-resident --expert-fused-fp8 --graph-window 48` | **50.20** | re-measured 2026-11-03, `exit=0`, output checked |
+| 8 x 3090, TP8 | expert-resident + fused + capture | 33.8 | from the session that produced this page; **not re-measured here** — the box reachable as `ts-208` today has neither the checkpoint nor a checkout |
+
+The 4090 figure was re-run against this branch because the page above records **0.9185 tok/s** for
+that box under the *old* configuration (resident, no fused kernel, no capture). The three flags are
+what close the gap: without them the step runs a per-expert `_expert_matrix` that materialises
+~4.39 GiB of bf16 a step, and the same box measures sub-1 tok/s. **The 6.0x "gap" in the section
+above is a configuration artefact, not silicon** — 8 x 4090 at 50.20 against 8 x 3090 at 33.8 is
+1.5x in the direction a faster card should be.
+
+The 2080 Ti number is not comparable to either eight-card box: 21.48 GiB a card cannot hold
+28.13 GiB of experts, so 25 of 48 layers stage every step, and `--expert-fused-fp8` needs those
+experts resident. That is the whole of the difference, and it is why the τ above is 98 ms.
