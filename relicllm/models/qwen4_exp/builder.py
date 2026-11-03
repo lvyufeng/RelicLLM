@@ -23,7 +23,6 @@ from relicllm.models.qwen4_exp.model import (
     Qwen4ExpModel,
     TPShard,
 )
-from relicllm.models.qwen4_exp.cpu_moe import CpuDecodeMoE, CpuExpertMoE
 from relicllm.models.qwen4_exp.moe import (
     DeepCacheMoE,
     DeepFallbackMoE,
@@ -256,8 +255,6 @@ def build_heterogeneous(
     profiler=None,
     expert_deep_cache: float | None = None,
     expert_fused_fp8: bool = False,
-    expert_cpu: bool = False,
-    expert_cpu_threads: int | None = None,
     expert_resident_layers: bool = False,
     expert_reserve_bytes: int = 3 << 30,
 ) -> Qwen4ExpModel:
@@ -352,27 +349,6 @@ def build_heterogeneous(
                 rank=rank,
             ),
             host_moe,
-        )
-    elif expert_cpu:
-        # The experts are never copied: they are read in host RAM and multiplied there. This is
-        # the box whose link, not whose compute, is the bottleneck -- see `cpu_moe`.
-        # Decode on the CPU, prefill on the card: the CPU covers one token a step, and a prefill
-        # visits every expert with many tokens a visit, where the card wins even paying the copy.
-        inner_moe = CpuDecodeMoE(
-            CpuExpertMoE(
-                checkpoint,
-                config.num_experts,
-                dtype,
-                owns=(expert_shard.owns if expert_shard is not None else None),
-                threads=expert_cpu_threads,
-            ),
-            HostExpertMoE(
-                checkpoint,
-                config.num_experts,
-                device,
-                dtype,
-                cache_capacity=expert_cache_capacity,
-            ),
         )
     elif expert_fused_fp8:
         if expert_shard is None or getattr(expert_shard, "device", None) is None:
