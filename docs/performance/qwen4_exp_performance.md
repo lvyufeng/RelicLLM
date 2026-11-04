@@ -1097,3 +1097,74 @@ above is a configuration artefact, not silicon** — 8 x 4090 at 50.20 against 8
 The 2080 Ti number is not comparable to either eight-card box: 21.48 GiB a card cannot hold
 28.13 GiB of experts, so 25 of 48 layers stage every step, and `--expert-fused-fp8` needs those
 experts resident. That is the whole of the difference, and it is why the τ above is 98 ms.
+
+## NVFP4 experts whole-device on 4x2080 Ti: 5.82 tok/s, and the one scalar that hid the bug
+
+`--expert-nvfp4` reads the routed experts from NVIDIA's ModelOpt NVFP4
+checkpoint (`nvidia/Qwen3.8-Flash-Next-NVFP4`) instead of the FP8 one. A
+rank's 48 layers are 14.9 GiB against 21.5 GiB of card, so every layer is
+resident and a decode step stages nothing — the staging term that caps the FP8
+path at 4.74 tok/s is not in the step at all.
+
+| Path | Decode | Expert residency |
+|---|---|---|
+| FP8, pinned + batched staging | 4.74 tok/s | 256 of 1536 experts per layer |
+| **NVFP4** | **5.82 tok/s** | **48/48 layers, 14.9 GiB** |
+
+Three measurements on the same box, same prompt (`What is the capital of
+France?`), output checked each time:
+
+```
+5.97 / 5.63 / 5.83   mean 5.81, then 5.96 and 5.82 after the last cleanup
+```
+
+### What the format is, and the two things that are easy to get wrong
+
+Each projection stores E2M1 nibbles with an E4M3 scale every 16 elements, plus
+a scalar `weight_scale_2`. Everything below was measured against the FP8
+checkpoint of the same model, not assumed:
+
+- **`weight_scale_2` is per expert.** At layer 0 the gate values run
+  `2.65e-5 … 1.02e-4`, a factor of 3.9. Using the first expert's value for the
+  bank leaves most experts scaled by a number several times too large or too
+  small. It presents as a model that is *fluent and wrong* — pronouns and
+  connectives in the right places, no content — so it reads like a numerical
+  wobble rather than a missing index. Once the kernel indexes it by the route's
+  expert, the same prompt answers correctly.
+
+- **It belongs before the SwiGLU for gate/up, after the projection for down.**
+  On one expert, against the FP8 expert's own output: split placement is 0.14
+  relative, folding both onto the output is 0.97. `silu` sits between the two
+  projections and is not linear, so the two are different functions.
+
+- **The activation side is W4A16.** vLLM runs this format on sm75 through
+  Marlin in exactly that regime, and it is the one with no activation-side
+  error: `input_scale` never enters the forward pass. The checkpoint's own W4A4
+  grid measures 0.86 on the same expert, because the recorded calibration range
+  is `6 × input_scale ≈ 8.3e-3` while the residual stream at layer 0 runs
+  1.6e-2 and reaches ~1 by layer 47. `POCKETLLM_NVFP4_A4=1` selects it for
+  comparison.
+
+### Where the time went
+
+The first version that produced correct text ran at 1.86 tok/s, *slower* than
+the FP8 path it replaces. Per layer, one MoE call:
+
+| Change | ms/layer | tok/s |
+|---|---|---|
+| First correct version | 6.04 | 1.86 |
+| Unrolled nibbles, two accumulator chains per projection | 3.24 | 2.45 |
+| Split into gate/up and down launches, one block per column range | 1.00 | 3.16 |
+| One warp per column, 32 lanes over the contiguous bytes | ~0.30 | 5.82 |
+
+Two structural mistakes were behind the 6 ms. The kernel ran as `<<<1, 256>>>`
+on a card with 68 SMs, and it split the two projections into separate launches
+so each could use the grid — `down` reads every SwiGLU column, so a single
+launch cannot split by column. Then the memory access: each thread owned a
+column and strode by `hidden/2 = 1280` bytes, so every 8-byte read was its own
+transaction. A column is contiguous, so one warp per column walking it 32 lanes
+at a time turns the same traffic into coalesced loads.
+
+For reference, the weights a layer actually streams are ~8.2 MB a rank, which
+at the card's 616 GB/s is 13 µs. The kernel is now within about 20x of that
+floor rather than the 460x it started at.
