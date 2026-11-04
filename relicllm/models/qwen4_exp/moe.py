@@ -118,6 +118,37 @@ def _run_experts_fixed(
     return out
 
 
+
+def _batched_experts(
+    x: torch.Tensor,
+    gate_up: torch.Tensor,
+    down: torch.Tensor,
+    indices: torch.Tensor,
+    weights: torch.Tensor,
+) -> torch.Tensor:
+    """Every routed expert of one token in one batched pass, with no host read.
+
+    The per-expert loop visits `top_k` experts with ~5 kernels each and, at decode, that loop is
+    the step: measured on 4x2080Ti a layer's MoE phase was 2.46 ms while the weights it touched
+    were 65 MiB, which at the card's bandwidth is 0.11 ms -- the rest was launch and index work.
+    Stacking the experts into one `[k, ...]` bmm turns about 50 small kernels into 6.
+
+    This is the decode shape only: one token, so every expert is a GEMV and the batch axis is
+    the expert. A prefill visits an expert with many tokens and keeps the grouped path.
+
+    `gate_up`/`down` are already on the device, `[k, 2*inter, hidden]` / `[k, hidden, inter]`,
+    and `indices` names which expert each row is. No `.tolist()`: the reason the per-expert loop
+    reads the routing back to the host is to index a Python list of weights, and a stack does not
+    need that -- which is also what lets this run inside a capture.
+    """
+    xb = x.expand(indices.numel(), -1).unsqueeze(1)          # [k, 1, hidden]
+    gate_up_x = torch.bmm(xb, gate_up.transpose(1, 2))        # [k, 1, 2*inter]
+    gate, up = gate_up_x.chunk(2, dim=-1)
+    act = torch.nn.functional.silu(gate) * up                 # [k, 1, inter]
+    per_expert = torch.bmm(act, down.transpose(1, 2))         # [k, 1, hidden]
+    return (per_expert.squeeze(1).to(x.dtype) * weights.reshape(-1, 1).to(x.dtype)).sum(0)
+
+
 def _dispatch_experts(
     hidden_states: torch.Tensor,
     indices: torch.Tensor,
@@ -251,12 +282,40 @@ class HostExpertMoE:
         dtype: torch.dtype,
         *,
         cache_capacity: int = 0,
+        resident_layers: int = 0,
     ) -> None:
         self.reader = reader
         self.num_experts = num_experts
         self.device = device
         self.dtype = dtype
         self.cache_capacity = cache_capacity
+        #: How many layers' experts are held on the device for the whole run, from layer 0 up.
+        #: A cache answers "this expert was used recently"; this answers "this layer never
+        #: leaves", and on a box that cannot hold all 48 layers it is the difference between
+        #: staging 100% of the layer set every step and staging the tail of it. Filled by
+        #: `pin_layers`, which is what decides how many actually fit.
+        self._resident: dict[int, dict[int, tuple]] = {}
+
+        #: An `nvfp4_moe.NvFp4ExpertBank` when the checkpoint's experts are NVFP4, or None. When
+        #: it is set it answers for the layers it holds and this class never stages anything from
+        #: them -- the FP8 codes a ModelOpt checkpoint does not have.
+        self._nvfp4 = None
+        self._resident_layers = int(resident_layers)
+        #: Hold the pinned experts widened to bf16 rather than as the checkpoint's FP8 codes.
+        self.wide_bank = os.environ.get("POCKETLLM_QWEN4_PIN_BF16", "0").lower() in {
+            "1", "true", "yes"
+        }
+        #: Batch the routed experts of *staged* layers too. Those need a temporary bf16 stack,
+        #: which is why this is asked for rather than assumed: a stack a layer is 94 MiB and the
+        #: card may have none to spare.
+        self.batch_staged = os.environ.get("POCKETLLM_QWEN4_BATCH_STAGED", "0").lower() in {
+            "1", "true", "yes"
+        }
+        #: Per pinned layer, its experts stacked once: `(order, gate_up [E, ...], down [E, ...])`.
+        self._stack_cache: dict[int, tuple] = {}
+        self._position_map: dict[int, torch.Tensor] = {}
+        #: Per pinned layer with a widened bank, `(order, [E, 2I, H] bf16, [E, H, I] bf16)`.
+        self._wide_keys: dict[int, tuple] = {}
         self._cache: OrderedDict[tuple[int, int], tuple[torch.Tensor | FP8Tensor, torch.Tensor | FP8Tensor]] = OrderedDict()
         self.stage_bytes = 0
         self.stage_calls = 0
@@ -314,6 +373,17 @@ class HostExpertMoE:
             weight.record_stream(stream)
 
     def _fetch(self, layer_idx: int, expert_id: int):
+        # A pinned layer never reads the host again: no key, no eviction, no counter. It is the
+        # cheapest hit there is and it does not compete for cache capacity.
+        pinned = self._resident.get(layer_idx)
+        if os.environ.get("POCKETLLM_QWEN4_TRACE_PIN"):
+            print(f"[pin] fetch layer {layer_idx} expert {expert_id}: bank "
+                  f"{'hit' if pinned is not None else 'miss'}, id={id(self)}", flush=True)
+        if pinned is not None:
+            held = pinned.get(expert_id)
+            if held is not None:
+                self.cache_hits += 1
+                return held
         key = (layer_idx, expert_id)
         hit = self._cache_get(key)
         if hit is not None:
@@ -324,6 +394,212 @@ class HostExpertMoE:
         self.stage_bytes += self._weight_nbytes(gate_up) + self._weight_nbytes(down)
         self.stage_calls += 1
         self._cache_put(key, (gate_up, down))
+        return gate_up, down
+
+    def use_nvfp4(self, bank) -> None:
+        """Answer from a whole-device NVFP4 expert bank instead of the host shard."""
+        self._nvfp4 = bank
+
+    def pin_layers(self, layer_indices, budget_bytes: int) -> int:
+        """Hold as many of `layer_indices` on the device as `budget_bytes` allows.
+
+        Layers are taken in the order given until the next one does not fit, so the set is a
+        prefix and a caller can reason about it. Returns how many were pinned.
+
+        Resident experts are held in the checkpoint's own form -- FP8 codes and scales, never a
+        bf16 expansion -- because that is what the staging path would have copied anyway; widening
+        them here would trade 4.69 MiB for 9.38 MiB a expert and halve how many layers fit.
+
+        A layer is all-or-nothing. Half a layer pinned would leave the other experts of that layer
+        staging, which is the case this exists to avoid, and the caller's budget is what decides
+        the boundary rather than a per-expert approximation of it.
+        """
+        expert_ids = list(range(self.num_experts))
+        if self.reader.expert_shard is not None:
+            owns = self.reader.expert_shard.owns
+            expert_ids = [e for e in expert_ids if owns(e)]
+        if not expert_ids:
+            return 0
+        used = 0
+        pinned = 0
+        for layer_idx in layer_indices:
+            rows = {}
+            layer_bytes = 0
+            for expert_id in expert_ids:
+                gate_up_cpu, down_cpu = self.reader.expert_rows(layer_idx, expert_id)
+                gate_up = gate_up_cpu.to(self.device, non_blocking=False)
+                down = down_cpu.to(self.device, non_blocking=False)
+                if self.wide_bank:
+                    # Widened once here instead of every step: a decode routes to ten experts and
+                    # `_wide` on each is the elementwise pass the batched path would otherwise pay
+                    # 48 times a step. The cost is the bank itself, 2x the FP8 bytes a layer.
+                    gate_up = self._wide(gate_up)
+                    down = self._wide(down)
+                layer_bytes += self._weight_nbytes(gate_up) + self._weight_nbytes(down)
+                rows[expert_id] = (gate_up, down)
+            if used + layer_bytes > budget_bytes:
+                # This layer is over the line; drop what it just moved and stop.
+                del rows
+                torch.cuda.empty_cache()
+                break
+            self._resident[layer_idx] = rows
+            if self.wide_bank:
+                # A whole widened bank, stacked once, so a step's routing is an `index_select`
+                # with no host read anywhere in it -- which is what a capture needs. This is the
+                # expensive shape: 1.17 GiB a layer against 0.59, so it halves the layers that fit.
+                order = sorted(rows)
+                gate_all = torch.stack([rows[e][0] for e in order])
+                down_all = torch.stack([rows[e][1] for e in order])
+                self._wide_keys[layer_idx] = (order, gate_all, down_all)
+                # The per-expert bank is the same memory the stack just copied, so drop it and
+                # keep only the stack for the gather.
+                self._resident[layer_idx] = {}
+            used += layer_bytes
+            pinned += 1
+            torch.cuda.synchronize()
+        self._resident_layers = pinned
+        if os.environ.get("POCKETLLM_QWEN4_TRACE_PIN"):
+            print(f"[pin] pinned {pinned} layers, resident dict has {len(self._resident)} "
+                  f"entries, id={id(self)}", flush=True)
+        return pinned
+
+    def _batched_from_bank(self, layer_idx: int, hidden_states, indices, weights):
+        """The routed experts of a pinned layer, batched, or None if this layer is not pinned.
+
+        A pinned layer holds all of its experts in one place, so the batch is an `index_select`
+        on the device and the arithmetic is `_batched_experts`. Nothing here reads the routing
+        back to the host, which is what the per-expert loop does and what makes it the slow path
+        at decode.
+        """
+        # A wider bank is held only in `_wide_keys`, with `_resident` deliberately emptied, so the
+        # test is "is this layer pinned". A layer that is not pinned still takes the batched
+        # arithmetic; `_stacked_bank` stages it through the cache first and frees the stack after,
+        # so 48 layers do not hold 48 stacks at once.
+        if not self.batch_staged and layer_idx not in self._resident \
+                and layer_idx not in self._wide_keys:
+            return None
+        ids = indices.reshape(-1)
+        gate_up, down = self._stacked_bank(layer_idx, ids)
+        if gate_up is None:
+            return None
+        out = _batched_experts(
+            hidden_states.reshape(-1).to(self.dtype), gate_up, down, ids, weights.reshape(-1)
+        )
+        if layer_idx not in self._resident and layer_idx not in self._wide_keys:
+            # A staged layer's stack is this step's alone; dropping the reference here lets the
+            # allocator reuse the block for the next layer instead of growing the cache by one
+            # stack a layer.
+            del gate_up, down
+        self.cache_hits += int(ids.numel())
+        return out.reshape_as(hidden_states)
+
+    def _wide(self, weight):
+        """One banked expert projection as a dense bf16 tensor."""
+        if isinstance(weight, FP8Tensor):
+            return dequantize_block_fp8(weight.code, weight.scale, weight.block, self.dtype)
+        return weight if weight.dtype is self.dtype else weight.to(self.dtype)
+
+    def _stacked_bank(self, layer_idx: int, ids: torch.Tensor):
+        """The routed experts of a pinned layer as two `[k, ...]` bf16 stacks.
+
+        Gathered per step rather than stacked once: a whole layer is 128 experts and 1.15 GiB in
+        bf16, which is what the pinning budget is spent on holding, so keeping a second bf16 copy
+        of the layer does not fit. A decode routes to ten of them, and ten `index_select`s plus a
+        widen is what the per-expert loop was doing anyway -- the difference is that the arithmetic
+        afterwards is one bmm pair instead of ten GEMV triples.
+        """
+        bank = self._resident.get(layer_idx)
+        if not bank and layer_idx not in self._wide_keys:
+            return self._stage_routed(layer_idx, ids)
+        lookup = self._position_map.get(layer_idx)
+        if lookup is None:
+            order = sorted(bank)
+            width = max(max(order) if order else 0, self.num_experts) + 1
+            lookup = torch.full((width,), -1, dtype=torch.long, device=self.device)
+            lookup[torch.tensor(order, dtype=torch.long, device=self.device)] = torch.arange(
+                len(order), dtype=torch.long, device=self.device
+            )
+            self._position_map[layer_idx] = lookup
+            self._stack_cache[layer_idx] = order
+        order = self._stack_cache[layer_idx]
+        if self.wide_bank and layer_idx in self._wide_keys:
+            # The bank is already widened and whole on the device, so the routing is an index and
+            # nothing crosses to the host: this is the shape a capture needs.
+            order_g, gate_all, down_all = self._wide_keys[layer_idx]
+            slots = lookup.index_select(0, ids.reshape(-1).to(torch.long))
+            empty = slots < 0
+            slots = torch.where(empty, torch.zeros_like(slots), slots)
+            keep = (~empty).to(gate_all.dtype).reshape(-1, *([1] * (gate_all.dim() - 1)))
+            return gate_all.index_select(0, slots) * keep, down_all.index_select(0, slots) * keep
+        slots_host = lookup.index_select(0, ids.reshape(-1).to(torch.long)).tolist()
+        # Row `i` of the batch is routing slot `i`, always: a rank that owns fewer than all ten
+        # still returns ten rows, zeroed where it owns nothing, because the all-reduce sums the
+        # owners and `_batched_experts` multiplies row `i` by weight `i`. Dropping the rows it
+        # does not own would shift every later row onto the wrong expert.
+        grid, dgrid = [], []
+        for pos in slots_host:
+            if pos < 0:
+                grid.append(None)
+                dgrid.append(None)
+                continue
+            grid.append(self._wide(bank[order[pos]][0]))
+            dgrid.append(self._wide(bank[order[pos]][1]))
+        donor_g = next((t for t in grid if t is not None), None)
+        donor_d = next((t for t in dgrid if t is not None), None)
+        if donor_g is None:
+            return None, None
+        gate = torch.stack([t if t is not None else torch.zeros_like(donor_g) for t in grid])
+        down = torch.stack([t if t is not None else torch.zeros_like(donor_d) for t in dgrid])
+        return gate.to(self.dtype), down.to(self.dtype)
+
+    def _stage_routed(self, layer_idx: int, ids: torch.Tensor):
+        """The routed experts of an unpinned layer, staged into one stack through the cache.
+
+        The cache is what makes a staged layer worth having -- without it every step re-reads the
+        same experts over PCIe -- so this goes through `_fetch` and keeps its hit rate.
+
+        One widened row is live at a time rather than ten: widening each expert into its own
+        tensor first is what OOM'd when this path was first tried. Widening the whole stack in one
+        `dequantize_block_fp8` call was also tried and measured slower (4.44 against 4.72) -- the
+        call count fell by half but each call handled a `[k, ...]` grid, and the total time went
+        up, so the per-expert widen is what stays.
+        """
+        slots = ids.reshape(-1).tolist()
+        live = [int(s) for s in slots if int(s) < self.num_experts]
+        if not live:
+            return None, None
+        probe_g, probe_d = self._fetch(layer_idx, live[0])
+        gate = torch.empty((len(slots), *probe_g.shape), dtype=self.dtype, device=self.device)
+        down = torch.empty((len(slots), *probe_d.shape), dtype=self.dtype, device=self.device)
+        gate.zero_()
+        down.zero_()
+        gate[0] = self._wide(probe_g)
+        down[0] = self._wide(probe_d)
+        del probe_g, probe_d
+        for row, slot in enumerate(slots):
+            if row == 0:
+                continue
+            expert_id = int(slot)
+            if expert_id >= self.num_experts:
+                continue
+            g, d = self._fetch(layer_idx, expert_id)
+            gate[row] = self._wide(g)
+            down[row] = self._wide(d)
+            del g, d
+        return gate, down
+
+    def _direct_rows(self, layer_idx: int, expert_id: int):
+        """One expert's rows from the reader, without the cache.
+
+        `_fetch` exists to keep a staged expert resident across steps; this path widens what it
+        gets and keeps only the widened stack, so a cached FP8 pair beside it is memory the card
+        does not have.
+        """
+        gate_up_cpu, down_cpu = self.reader.expert_rows(layer_idx, expert_id)
+        gate_up = gate_up_cpu.to(self.device, non_blocking=False)
+        down = down_cpu.to(self.device, non_blocking=False)
+        self.stage_bytes += self._weight_nbytes(gate_up) + self._weight_nbytes(down)
+        self.stage_calls += 1
         return gate_up, down
 
     def _dequantized_layer_tensors(self, layer_idx: int):
@@ -462,8 +738,21 @@ class HostExpertMoE:
         stream = movement.copy_stream(self.device)
         current = torch.cuda.current_stream(self.device)
         pending: list[_PendingExpert] = []
+        pinned = self._resident.get(layer_idx)
+        if os.environ.get("POCKETLLM_QWEN4_TRACE_PIN") and layer_idx < 2:
+            print(f"[pin] prefetch layer {layer_idx}: bank {'hit' if pinned is not None else 'miss'}",
+                  flush=True)
         with torch.cuda.stream(stream):
             for expert_id in expert_ids:
+                # A pinned layer is already on the device: no copy, no event to wait on. This is
+                # the path a decode actually takes -- `_prefetch` is what the sharded call uses,
+                # and the `_fetch` shortcut alone left every pinned layer staging anyway.
+                if pinned is not None:
+                    held = pinned.get(expert_id)
+                    if held is not None:
+                        self.cache_hits += 1
+                        pending.append(_PendingExpert(held[0], held[1], None))
+                        continue
                 key = (layer_idx, expert_id)
                 hit = self._cache_get(key)
                 if hit is not None:
@@ -496,6 +785,12 @@ class HostExpertMoE:
         indices: torch.Tensor,
         weights: torch.Tensor,
     ) -> torch.Tensor:
+        if hidden_states.shape[0] == 1 and getattr(self, "_resident", None):
+            # One token and this layer is pinned: the batch is on the device, so the step can be
+            # a handful of kernels instead of the per-expert loop's fifty.
+            batched = self._batched_from_bank(layer_idx, hidden_states, indices, weights)
+            if batched is not None:
+                return batched
         if (
             self.grouped_enabled
             and self.phase_stats is None
@@ -513,6 +808,10 @@ class HostExpertMoE:
         fp16_compute_enabled = os.environ.get(
             "POCKETLLM_QWEN4_MOE_FP16_COMPUTE", "0"
         ).lower() in {"1", "true", "yes"}
+        if self._nvfp4 is not None:
+            held = self._nvfp4(layer_idx, hidden_states, indices, weights)
+            if held is not None:
+                return held
         compute_dtype = (
             torch.float16
             if fp16_compute_enabled
