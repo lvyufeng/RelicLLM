@@ -295,6 +295,11 @@ class HostExpertMoE:
         #: staging 100% of the layer set every step and staging the tail of it. Filled by
         #: `pin_layers`, which is what decides how many actually fit.
         self._resident: dict[int, dict[int, tuple]] = {}
+
+        #: An `nvfp4_moe.NvFp4ExpertBank` when the checkpoint's experts are NVFP4, or None. When
+        #: it is set it answers for the layers it holds and this class never stages anything from
+        #: them -- the FP8 codes a ModelOpt checkpoint does not have.
+        self._nvfp4 = None
         self._resident_layers = int(resident_layers)
         #: Hold the pinned experts widened to bf16 rather than as the checkpoint's FP8 codes.
         self.wide_bank = os.environ.get("POCKETLLM_QWEN4_PIN_BF16", "0").lower() in {
@@ -390,6 +395,10 @@ class HostExpertMoE:
         self.stage_calls += 1
         self._cache_put(key, (gate_up, down))
         return gate_up, down
+
+    def use_nvfp4(self, bank) -> None:
+        """Answer from a whole-device NVFP4 expert bank instead of the host shard."""
+        self._nvfp4 = bank
 
     def pin_layers(self, layer_indices, budget_bytes: int) -> int:
         """Hold as many of `layer_indices` on the device as `budget_bytes` allows.
@@ -799,6 +808,10 @@ class HostExpertMoE:
         fp16_compute_enabled = os.environ.get(
             "POCKETLLM_QWEN4_MOE_FP16_COMPUTE", "0"
         ).lower() in {"1", "true", "yes"}
+        if self._nvfp4 is not None:
+            held = self._nvfp4(layer_idx, hidden_states, indices, weights)
+            if held is not None:
+                return held
         compute_dtype = (
             torch.float16
             if fp16_compute_enabled
