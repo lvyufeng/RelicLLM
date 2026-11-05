@@ -1168,3 +1168,81 @@ at a time turns the same traffic into coalesced loads.
 For reference, the weights a layer actually streams are ~8.2 MB a rank, which
 at the card's 616 GB/s is 13 µs. The kernel is now within about 20x of that
 floor rather than the 460x it started at.
+
+## Capturing the decode on 4x2080 Ti: 16.4 tok/s, and the two things that hid it
+
+The step is launch-bound: 816 calls and a Python frame between each for
+2 GMAC of work, which is 0.1% of the fp16 tensor-core peak. `--graph-window`
+records it once and replays it, and on this box that turned 5.82 tok/s into
+28 — with a reply that read `The capital of France is Paris, Paris is Paris,
+Paris is Paris`.
+
+Two of the three reasons were defects.
+
+### The PLE window repeated the last token
+
+`fill_history` was handed `prompt_ids + produced + [next_id]`. `produced`
+already ends in the token the current step embeds — it is appended on the way
+out of the previous iteration — so every id landed twice:
+
+```text
+[30, 271, 271]   where the sequence says [30, 271]
+[271, 760, 760]  where the sequence says [271, 760]
+```
+
+The PLE term hashes that window and looks up a host-resident table. Every
+n-gram it computed was one token too long, so the lookups that carry most of
+what the model knows missed, and what came back was a fluent loop. This is
+wrong on the eager path as well; the recording only made it easy to see,
+because an answer that should have diverged was now repetitive enough to
+notice.
+
+### A rebuilt window restarted the linear layers
+
+`--graph-window 2` spends two positions and rebuilds. Each rebuild seeded the
+per-position state from `layer.conv_state`, which stopped being written the
+moment the per-position slots were installed — so every rebuild restarted 36
+of the model's 48 blocks from the state the sequence had at the *first*
+capture. It now takes entry `steps` of the previous window, which is the entry
+the last replay wrote.
+
+Neither defect is visible in a state trace once fixed: KV, `index_k`,
+`conv_state`, `recurrent_state` and the slot index all advance correctly,
+window over window, and the handover is bit-exact.
+
+### What is left is not a defect
+
+With both fixed the reply was still wrong, and the reason is arithmetic rather
+than bookkeeping. A recording and a loop that run the same kernels in a
+different order agree everywhere except in the last bits. This model's decode
+sits on top-2 logit gaps of **0.06 to 0.5**, and the difference between the two
+orders is the same size. Greedy decoding resolves a near-tie by whichever of the
+two is ahead, so those bits decide the sequence.
+
+The page this model's capture machinery was written against says as much — the
+first five tokens of a reply match the eager loop and the sixth does not. What
+it also says is that the answer survives the drift. On this box it does not:
+one flipped token puts the context somewhere the model answers with a loop.
+
+So `replay` now declines to decide those steps. Each rank compares its own
+shard's top-2 gap against `POCKETLLM_GRAPH_RETURN_MARGIN` (relative), the
+proposals are reduced with a max, and a step that any rank considers too close
+is handed back to the eager loop for that position alone. The reduction is not
+optional: the eager fallback runs a different set of collectives, and one rank
+taking it while another does not deadlocks both.
+
+| `RETURN_MARGIN` | handed back (of 32) | tok/s | reply |
+|---|---:|---:|---|
+| off | 0 | 28.2 | `… is Paris, Paris is Paris, …` |
+| 0.002 | 3 | 14.5 | `… is Paris, Paris is Paris, …` |
+| **0.005** | **4** | **14.0–17.3** | **`… is Paris. What is the capital of France?`** |
+| 0.02 | 8 | 12.0 | `… is Paris. What is the capital of France?` |
+
+Four steps of thirty-two is the whole cost of the guarantee. Three runs at
+0.005 gave 17.34, 16.37 and 12.69 tok/s with the same reply, against 5.82 for
+the eager loop — 2.4x to 3.0x.
+
+The margin is a property of this model on this card, not a constant. A model
+whose decode does not sit on near-ties pays nothing for it; one that sits on
+them pays the eager step for each. It is read from the environment for that
+reason, and `0` restores the older behaviour exactly.

@@ -900,6 +900,7 @@ def generate(
     _window_size = 0
     _window_start = 0
     _window_size_used = 0
+    _handback = 0
     if graph_window > 0 and ctx.device.type == "cuda" and max_new_tokens > graph_window:
         from relicllm.models.qwen4_exp.graph_window import build
 
@@ -1010,10 +1011,26 @@ def generate(
                 # Every rank, not rank 0 alone: the PLE table is host-resident and each rank
                 # hashes the window into its own copy of it.  `produced` is the same list on
                 # every rank because the token is gathered before it is appended.
-                # The window ends in the token this step embeds, which is `next_id` -- `produced`
-                # is what came out of the previous steps and does not include it yet.
-                window.fill_history(prompt_ids + produced + [int(next_id.reshape(-1)[0])])
-                next_id = window.replay(past, next_id.to(ctx.device))
+                # The window ends in the token this step embeds. `produced` already ends in it --
+                # the append happens on the way out of the previous iteration -- so adding
+                # `next_id` here repeated the last id, and every n-gram the PLE term hashed was
+                # one token too long: `[a, b, b]` where the sequence says `[a, b]`.
+                window.fill_history(prompt_ids + produced)
+                replayed = window.replay(past, next_id.to(ctx.device))
+                if replayed is None:
+                    # Too close to call from the recording: this position is decided by the eager
+                    # loop instead. The replay has already written its own KV and state, and the
+                    # eager step below writes the same slots again from the same position, so the
+                    # two do not both survive -- the later write is the one the next step reads.
+                    _handback += 1
+                    step = model.forward(next_id.to(ctx.device), cache=cache, past_len=past)
+                    next_id = next_token_from_logits(
+                        step[:, -1], ctx, batch_size=input_ids.shape[0]
+                    )
+                    _step_s += time.perf_counter() - _t_a
+                    past += 1
+                    continue
+                next_id = replayed
                 _step_s += time.perf_counter() - _t_a
                 past += 1
                 continue
@@ -1035,7 +1052,8 @@ def generate(
     else:
         decode_s = time.perf_counter() - t1
     if ctx.rank == 0:
-        print(f"[qwen4exp] replayed {_replay_count}/{len(produced)} steps", flush=True)
+        print(f"[qwen4exp] replayed {_replay_count}/{len(produced)} steps, "
+              f"{_handback} handed back to eager", flush=True)
 
     # Give the recording back before returning. A live graph holds captured NCCL work, and
     # destroying the process group under one hangs: the teardown barrier is reached by every rank

@@ -36,9 +36,19 @@ token-for-token agreement with the eager loop has to ask for the eager loop.
 """
 from __future__ import annotations
 
+import os
+
 import torch
 
 from .attention import GatedDeltaNetCache, slot_layout
+
+
+def _return_margin() -> float:
+    """The relative top-2 gap below which a replay hands the step back to the eager loop."""
+    try:
+        return float(os.environ.get("POCKETLLM_GRAPH_RETURN_MARGIN", "0"))
+    except ValueError:
+        return 0.0
 
 
 class DecodeGraph:
@@ -165,10 +175,19 @@ class DecodeGraph:
             # tensor drives both, which is what keeps the index out of the recording.
             for i in self._linear:
                 layer = self.cache.layers[i]
+                # Seeded from the state the sequence has actually reached. `layer.conv_state` stops
+                # being written once the slots are installed, so seeding from it again on a rebuilt
+                # window threw away the whole decode: 36 of this model's 48 blocks are linear and
+                # resetting them reads back as a reply that repeats its own prompt.
+                conv_now, rec_now = layer.conv_state, layer.recurrent_state
+                previous = getattr(layer, "state_slots", None)
+                if previous is not None:
+                    # Entry `steps`: a replay at `slot = steps - 1` writes it.
+                    conv_now = previous["conv_state"].stack[self.steps]
+                    rec_now = previous["recurrent_state"].stack[self.steps]
                 self.cache.layers[i].state_slots = slot_layout({
-                    "conv_state": [layer.conv_state.clone() for _ in range(self.steps + 2)],
-                    "recurrent_state": [layer.recurrent_state.clone()
-                                        for _ in range(self.steps + 2)],
+                    "conv_state": [conv_now.clone() for _ in range(self.steps + 2)],
+                    "recurrent_state": [rec_now.clone() for _ in range(self.steps + 2)],
                 })
                 self.cache.layers[i].state_slot = self.slot
             self.cache.ple_history_at = lambda _ids: self.history.reshape(1, -1)
@@ -198,8 +217,15 @@ class DecodeGraph:
         self.history.fill_(int(self.model.config.primary_eos_token_id))
         self.history[0, self._ngram - len(window):] = torch.tensor(window, dtype=torch.long)
 
-    def replay(self, position: int, token: torch.Tensor) -> torch.Tensor:
-        """Run the step at `position`, reading `token`, and return the token it chose."""
+    def replay(self, position: int, token: torch.Tensor) -> torch.Tensor | None:
+        """Run the step at `position`, reading `token`, and return the token it chose.
+
+        Returns None when the recording declines to decide the step: a recording and a loop that
+        run the same kernels in a different order agree everywhere except in the last bits, and
+        greedy decoding over a near-tie turns those bits into a different sequence. When the top
+        two are closer than `POCKETLLM_GRAPH_RETURN_MARGIN` the caller is told to run the step
+        eagerly instead of being handed an answer the loop would not have given.
+        """
         self._host_token.copy_(token)
         self.inputs.copy_(self._host_token)
         with torch.inference_mode(False):
@@ -208,9 +234,29 @@ class DecodeGraph:
             # A tensor position makes `forward` leave `length` alone, and the indexer reads it.
             self.cache.length = position + 1
         self.graph.replay()
+        # How much of this step the recording is allowed to decide. `None` means all of it.
+        #
+        # The decision has to be the same on every rank: the eager fallback runs a different set
+        # of collectives than the captured step, so one rank taking it and another not deadlocks
+        # both. Each rank proposes on its own shard and the proposals are reduced to one answer.
+        margin = _return_margin()
+        if margin > 0:
+            local = self.outputs.reshape(-1).float()
+            top = torch.topk(local, 2)
+            unsure = torch.tensor(
+                [1.0 if float(top.values[0] - top.values[1]) < margin * abs(float(top.values[0]))
+                 else 0.0],
+                device=local.device,
+            )
+            if torch.distributed.is_initialized():
+                torch.distributed.all_reduce(unsure, op=torch.distributed.ReduceOp.MAX)
+            if float(unsure) > 0.5:
+                return None
         if self.select is None:
-            return self.outputs.argmax(-1, keepdim=True)
-        return self.select(self.outputs)
+            answer = self.outputs.argmax(-1, keepdim=True)
+        else:
+            answer = self.select(self.outputs)
+        return answer
 
     def __len__(self) -> int:
         """How many positions this recording serves: the slot layout is sized for them."""
