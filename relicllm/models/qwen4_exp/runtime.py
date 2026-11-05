@@ -1054,6 +1054,16 @@ def generate(
     if ctx.rank == 0:
         print(f"[qwen4exp] replayed {_replay_count}/{len(produced)} steps, "
               f"{_handback} handed back to eager", flush=True)
+        if graph_window > 0 and _replay_count == 0:
+            # Said out loud because the guard above is silent: asking for a window wider than the
+            # generation is a mistake that otherwise reads as "the graph was measured here and
+            # bought nothing", when in fact it was never built. Three runs were reported that way
+            # before this line existed.
+            why = ("no CUDA device" if ctx.device.type != "cuda"
+                   else f"the generation is {max_new_tokens} tokens and the window is "
+                        f"{graph_window}")
+            print(f"[qwen4exp] no window was built ({why}); these steps ran eagerly",
+                  flush=True)
 
     # Give the recording back before returning. A live graph holds captured NCCL work, and
     # destroying the process group under one hangs: the teardown barrier is reached by every rank

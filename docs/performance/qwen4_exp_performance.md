@@ -465,11 +465,31 @@ which measures 8.05 ms. Only the kernel number is used above.
 
 **Date:** 2026-10-17
 **Hardware:** 8 x RTX 4090 (sm_89), TP8, torch 2.11.0+cu130, against 8 x RTX 3090 (sm_86), TP8.
-**Status:** unexplained. Every cause proposed so far has been eliminated by measurement.
+**Status:** explained — see *What it was* at the end of this section. The cause is launch
+latency on this host, not the card and not the byte traffic.
 
 This section exists so the next person does not re-run the eliminations. It records what has
 been ruled out, with the evidence; what is still standing; the claims that were **withdrawn**;
 and the one open confound. Read the retractions before trusting the table.
+
+### What it was
+
+Measured 2026-11-05 on ts-134, same host as the observation below, with the extension up to
+date. An empty elementwise kernel streamed on GPU 0 costs **41.4–41.8 µs host-side per launch**,
+against the **18 µs** the 3090 host (`ts-208`) was measured at in the table below. A bf16 M=1
+matmul of the model's own expert shape (2560 → 1280) costs **113.6 µs**, of which 45 µs is the
+arithmetic at 145 TFLOPS — the rest is launch. So the same 8,139 CUDA ops a decode step that cost
+146 ms of launches on the 3090 cost **~0.92 s** here, which is the whole of the 6.0x.
+
+The card is not the problem, and each of these was measured rather than assumed: persistence mode
+on, 450 W cap, clocked to 2520 MHz under load, 917 GB/s device-to-device copy, 145 TFLOPS bf16.
+The host is not saturated either: 192 vCPUs, load about 34 with eight ranks running. Expert
+residency and staging are identical on both hosts (`64 experts/layer x 48 layers resident, 14.06
+GiB`, `staging: 0 misses / 0 hits`).
+
+**The consequence is that this host's eager decode has no headroom at all** — it is 1.08 tok/s,
+slower than the 3090's 8.16, on a faster card — and that capturing the step is worth 44x here
+against 4.1x there. See the graph section for those numbers.
 
 ### The observation
 
@@ -1246,3 +1266,76 @@ The margin is a property of this model on this card, not a constant. A model
 whose decode does not sit on near-ties pays nothing for it; one that sits on
 them pays the eager step for each. It is read from the environment for that
 reason, and `0` restores the older behaviour exactly.
+
+## The captured decode, across the cards
+
+**Date:** 2026-11-05. Three boxes, three answers to the same question. Every row states its
+quantisation and its card count, because the rows are not comparable across them: the 2080 Ti
+run holds 4-bit experts and decodes them in software (sm_75 has no FP4 tensor cores), while the
+3090 and 4090 runs are FP8 with a native fused kernel. What *is* comparable is the ratio within
+a row.
+
+| Box | experts | eager | graph | graph + handback |
+|---|---|---:|---:|---:|
+| 4 x RTX 2080 Ti (sm_75) | NVFP4, software decode | 5.82 | — | **15.5** |
+| 8 x RTX 3090 (sm_86) | FP8, fused | 8.16 | **33.2** | 16.6 |
+| 8 x RTX 4090 (sm_89) | FP8, fused | 1.08 | **46.7** | 3.80 |
+
+Medians of three runs each, 32 new tokens, prompt `What is the capital of France?`. The 2080 Ti
+is 4 cards because that box has 4; the other two are 8. Text was correct in every cell — the
+answer is `The capital of France is Paris` in all of them.
+
+### Reading the table
+
+**The graph is the win on all three, and the size of it is the launch overhead made visible.**
+The 4090 gains 44x, the 3090 4.1x, the 2080 Ti 2.7x. That ordering is not a property of the
+cards: it is the inverse of each host's per-launch cost. The 4090 issues the same 8,139 launches
+at ~41 µs each, the 3090 at ~18 µs, and the 2080 Ti's step was already bound by something other
+than launches by the time the experts were resident. A capture deletes the launches, so the host
+that pays the most for them gains the most.
+
+**The 2080 Ti has no plain-graph number** and that is a real gap, not an omission: on that box
+the plain graph produced a fluent loop (`The capital of France is Paris, Paris is Paris, Paris is
+Paris`) and only the handback version answered correctly. Its 4-bit expert path sits on
+top-2 logit gaps closer to the noise floor than either FP8 box does, so the near-tie problem
+that is theoretical on the 3090 and 4090 is routine there. It is worth a measurement with a more
+permissive margin to see how much of the 28 tok/s plain graph is recoverable while keeping the
+answer.
+
+**Handback is a correctness switch, and its price is set by the eager step.** It guarantees
+token-for-token agreement with the eager loop — verified on the 3090 and the 4090, where the
+handback text is byte-identical to the baseline while the plain graph text differs in the
+thinking preamble. What it costs is one eager step per near-tie: 4 of 32 positions on the 2080
+Ti, 6 on the 3090, 8 on the 4090. On the 2080 Ti, where a replay is 40 ms and an eager step is
+172 ms, that is 2.7x to 1.5x and still a win. On the 4090, where a replay is 21 ms and an eager
+step is 920 ms, it is 47 tok/s to 3.8 — *below* the 3090's plain graph, and below what the 4090
+does eager on a host that is not launch-bound.
+
+**So the recommendation is per-box, not universal**: take the plain graph where the answer is
+correct without help, and take the handback only where the near-ties actually reach the answer.
+
+### A stale extension is a loud failure; a wrong window is a silent one
+
+Two ways to measure the wrong thing, both found while taking these numbers.
+
+The 4090 first reported 0.65 tok/s with a fluent loop. The extension on that host was at
+`fcb8b07`, twelve commits before `b86fa05`, which is the commit that adds
+`qwen4_exp_fp8_slots_swiglu` — the fused expert kernel. `--expert-fused-fp8` failed with
+`RuntimeError: Fp8SlotExpertMoE needs the relic_core CUDA extension` rather than falling back,
+which is the right behaviour, but the earlier runs without the flag had gone through the slow
+path silently. After rebuilding, the same host gives 1.08 eager and 46.7 captured. **A 70x
+difference between two runs of "the same" configuration is a deployment question before it is a
+performance question.**
+
+`--graph-window` has a quieter failure mode. The window is only built when
+
+```python
+if graph_window > 0 and ctx.device.type == "cuda" and max_new_tokens > graph_window:
+```
+
+so `--graph-window 48` against a 32-token generation builds nothing and the run is eager,
+wearing a graph label, with no message. Three such runs were initially reported as graph
+measurements at 8.2 tok/s — indistinguishable from the baseline, which is exactly what they
+were. The guard now prints `no window was built (the generation is 32 tokens and the window is
+48); these steps ran eagerly`, and the `replayed N/M` line is the check that a graph run actually
+replayed: if N is 0, no capture happened.
