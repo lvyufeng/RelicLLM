@@ -316,6 +316,17 @@ class HostExpertMoE:
         self._position_map: dict[int, torch.Tensor] = {}
         #: Per pinned layer with a widened bank, `(order, [E, 2I, H] bf16, [E, H, I] bf16)`.
         self._wide_keys: dict[int, tuple] = {}
+        #: Stacks built from an FP8 bank for a capture: same bytes as the bank, device-side gather.
+        self._fp8_stacks: dict[int, tuple] = {}
+        #: Expert ids in stack order, and the id -> stack-row table for the gather.
+        self._fp8_order: dict[int, list] = {}
+        self._fp8_lookup: dict[int, torch.Tensor] = {}
+        #: Block geometry kept alongside a stack, since the bank that carried it is dropped.
+        self._fp8_blocks: dict[int, tuple] = {}
+        #: Whether a graph may be recorded over this backend's step.  Off unless asked for,
+        #: because building these stacks costs a layer's worth of pinned memory per layer.
+        self._capture_safe = os.environ.get("POCKETLLM_QWEN4_CAPTURE_BANK", "0").lower() in {
+            "1", "true", "yes", "on"}
         self._cache: OrderedDict[tuple[int, int], tuple[torch.Tensor | FP8Tensor, torch.Tensor | FP8Tensor]] = OrderedDict()
         self.stage_bytes = 0
         self.stage_calls = 0
@@ -475,8 +486,9 @@ class HostExpertMoE:
         # test is "is this layer pinned". A layer that is not pinned still takes the batched
         # arithmetic; `_stacked_bank` stages it through the cache first and frees the stack after,
         # so 48 layers do not hold 48 stacks at once.
-        if not self.batch_staged and layer_idx not in self._resident \
-                and layer_idx not in self._wide_keys:
+        if (not self.batch_staged and layer_idx not in self._resident
+                and layer_idx not in self._wide_keys
+                and layer_idx not in self._fp8_stacks):
             return None
         ids = indices.reshape(-1)
         gate_up, down = self._stacked_bank(layer_idx, ids)
@@ -499,6 +511,94 @@ class HostExpertMoE:
             return dequantize_block_fp8(weight.code, weight.scale, weight.block, self.dtype)
         return weight if weight.dtype is self.dtype else weight.to(self.dtype)
 
+    def _fp8_block(self, layer_idx: int):
+        """The block geometry every expert of a layer shares."""
+        if layer_idx in self._fp8_blocks:
+            return self._fp8_blocks[layer_idx]
+        bank = self._resident.get(layer_idx) or {}
+        for weight in bank.values():
+            for w in weight:
+                if isinstance(w, FP8Tensor):
+                    return w.block
+        raise RuntimeError(f"layer {layer_idx} has no FP8 expert bank to stack")
+
+    def _from_fp8_stack(self, layer_idx: int, ids: torch.Tensor):
+        """Gather this step's experts out of the layer's FP8 stack, or `None` if there is none.
+
+        Built lazily on first use, which is what keeps a run that was never captured from paying
+        for it.  The gather and the widen both happen on device, so a graph can record this step;
+        the alternative here is a `tolist()` to pick rows out of a Python dict, which cannot.
+        """
+        stacked = self._fp8_stacks.get(layer_idx) or self._fp8_stack(layer_idx)
+        if stacked is None:
+            return None
+        gate_code, gate_scale, down_code, down_scale = stacked
+        order = self._fp8_order[layer_idx]
+        flat = ids.reshape(-1).to(torch.long)
+        # A routing table can hand out an id this rank does not hold, and a capture makes any
+        # out-of-range gather a device-side assert rather than a Python IndexError -- so the
+        # lookup is clamped and the "not mine" rows are zeroed after, same as the host path.
+        valid = (flat >= 0) & (flat < self._fp8_lookup[layer_idx].numel())
+        slots = self._fp8_lookup[layer_idx].index_select(0, torch.where(valid, flat, 0))
+        slots = torch.where(valid, slots, torch.full_like(slots, -1))
+        empty = slots < 0
+        safe = torch.where(empty, torch.zeros_like(slots), slots)
+        gate = dequantize_block_fp8(
+            gate_code.index_select(0, safe), gate_scale.index_select(0, safe),
+            self._fp8_block(layer_idx), self.dtype,
+        )
+        down = dequantize_block_fp8(
+            down_code.index_select(0, safe), down_scale.index_select(0, safe),
+            self._fp8_block(layer_idx), self.dtype,
+        )
+        keep = (~empty).to(gate.dtype).reshape(-1, *([1] * (gate.dim() - 1)))
+        return gate * keep, down * keep
+
+    def _fp8_stack(self, layer_idx: int):
+        """One layer's FP8 experts stacked `[experts, ...]`, built once and kept.
+
+        `None` when the layer is not a plain FP8 bank, which leaves the caller on the host-read
+        path -- a capture then declines rather than recording a step that reads the host.
+        """
+        cached = self._fp8_stacks.get(layer_idx)
+        if cached is not None:
+            return cached
+        bank = self._resident.get(layer_idx)
+        if not bank:
+            return None
+        order = sorted(bank)
+        if not all(isinstance(w, FP8Tensor) for e in order for w in bank[e]):
+            return None
+        try:
+            gate_code = torch.stack([bank[e][0].code for e in order])
+            gate_scale = torch.stack([bank[e][0].scale for e in order])
+            down_code = torch.stack([bank[e][1].code for e in order])
+            down_scale = torch.stack([bank[e][1].scale for e in order])
+        except RuntimeError:
+            return None
+        # The per-expert dict held the same bytes; keeping both would double the layer.  The
+        # block geometry goes with it, because the dict was where `_fp8_block` read it from.
+        bank = self._resident[layer_idx]
+        for weight in bank.values():
+            for w in weight:
+                if isinstance(w, FP8Tensor):
+                    self._fp8_blocks[layer_idx] = w.block
+                    break
+            else:
+                continue
+            break
+        self._resident[layer_idx] = {}
+        self._position_map.pop(layer_idx, None)
+        self._stack_cache.pop(layer_idx, None)
+        self._fp8_stacks[layer_idx] = (gate_code, gate_scale, down_code, down_scale)
+        self._fp8_order[layer_idx] = order
+        lookup = torch.full((self.num_experts,), -1, dtype=torch.long, device=self.device)
+        lookup[torch.tensor(order, dtype=torch.long, device=self.device)] = torch.arange(
+            len(order), dtype=torch.long, device=self.device
+        )
+        self._fp8_lookup[layer_idx] = lookup
+        return self._fp8_stacks[layer_idx]
+
     def _stacked_bank(self, layer_idx: int, ids: torch.Tensor):
         """The routed experts of a pinned layer as two `[k, ...]` bf16 stacks.
 
@@ -508,8 +608,17 @@ class HostExpertMoE:
         widen is what the per-expert loop was doing anyway -- the difference is that the arithmetic
         afterwards is one bmm pair instead of ten GEMV triples.
         """
+        if self._capture_safe and layer_idx not in self._wide_keys:
+            # Served entirely from a device-side stack: no host read, so a capture can record it.
+            served = self._from_fp8_stack(layer_idx, ids)
+            if served is not None:
+                return served
         bank = self._resident.get(layer_idx)
-        if not bank and layer_idx not in self._wide_keys:
+        # A layer that has been stacked is still this rank's resident layer: the dict is empty
+        # because the stack holds the same bytes, not because the layer was never pinned.  Left
+        # unmentioned here, every stacked layer would fall through to staging after its first
+        # step -- which is what turned a working capture into wrong output.
+        if not bank and layer_idx not in self._wide_keys and layer_idx not in self._fp8_stacks:
             return self._stage_routed(layer_idx, ids)
         lookup = self._position_map.get(layer_idx)
         if lookup is None:
@@ -972,6 +1081,68 @@ class Fp8SlotExpertMoE:
         hidden = int(self.shard.gate_up_planes(layer_idx).shape[-3]) * 16
         return hidden_states.numel() == hidden
 
+    def _grouped_prefill(
+        self,
+        layer_idx: int,
+        hidden_states: torch.Tensor,
+        indices: torch.Tensor,
+        weights: torch.Tensor,
+    ) -> torch.Tensor | None:
+        """The many-token path through the *decode* kernel, one row a slot.
+
+        The fused kernel already walks slots on an axis of its grid, so the only thing that made it
+        a decode kernel was that its `x` was one row shared by every slot.  Give each
+        (token, expert) pair its own row and the same launch is a grouped GEMM: the routes are the
+        slot axis, the arithmetic is per row, and the per-expert Python loop -- which measured at
+        42% of a prefill -- never runs.
+
+        The rows come back one a slot, so the fold is a weighted sum over the top-k axis, in the
+        same order the loop accumulates in.
+        """
+        if os.environ.get("POCKETLLM_QWEN4_MOE_SLOTS_PREFILL", "1") != "1":
+            return None
+        if hidden_states.device.type != "cuda" or self.ops is None:
+            return None
+        try:
+            planes, plane_scale, down = self._table(layer_idx)
+        except Exception:
+            return None
+        if planes is None or down is None:
+            return None
+
+        shape = hidden_states.shape
+        rows = hidden_states.reshape(-1, shape[-1])
+        tokens = rows.shape[0]
+        top_k = indices.shape[-1]
+        routed = encode_route(indices, self.world_size, self.rank, self.num_experts).reshape(-1)
+        if routed.numel() != tokens * top_k:
+            return None
+        empty = routed < 0
+        wts = torch.where(
+            empty,
+            torch.zeros((), dtype=weights.dtype, device=weights.device),
+            weights.to(torch.bfloat16).reshape(-1),
+        )
+        # A row a slot: the kernel strides `x` by its hidden width when it is handed more than one.
+        x = rows.repeat_interleave(top_k, dim=0).reshape(-1)
+        slot_rows = self.ops.qwen4_exp_fp8_slots_swiglu(
+            x,
+            routed,
+            wts,
+            planes,
+            plane_scale,
+            planes,
+            down.code,
+            down.scale,
+            self.blocks_per_expert,
+        )
+        hidden = rows.shape[-1]
+        # No weight here: the kernel's down phase already multiplies each slot by `wts`, which is
+        # why the decode path can sum its slots as they come back.  Applying it again squares the
+        # routing weight and the answer diverges from the first token on.
+        folded = slot_rows.view(tokens, top_k, hidden).to(rows.dtype).sum(1)
+        return folded.reshape(shape)
+
     def _prefill(
         self,
         layer_idx: int,
@@ -1036,6 +1207,9 @@ class Fp8SlotExpertMoE:
         weights: torch.Tensor,
     ) -> torch.Tensor:
         if not self._is_decode_step(hidden_states, layer_idx):
+            grouped = self._grouped_prefill(layer_idx, hidden_states, indices, weights)
+            if grouped is not None:
+                return grouped
             return self._prefill(layer_idx, hidden_states, indices, weights)
         routed = encode_route(indices, self.world_size, self.rank, self.num_experts)
         empty = routed < 0

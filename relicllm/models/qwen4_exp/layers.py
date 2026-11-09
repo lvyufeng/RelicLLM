@@ -361,6 +361,28 @@ class GatedResidual:
         self.mix_down = mix_down
         self.mix_up = mix_up
         self.block_inject = block_inject
+        #: The fp16 copies of the three mixer weights, made on first use and kept.
+        #:
+        #: The fp16 path used to convert them on every call, which is a per-token cast of every
+        #: layer's mixer -- 96 mixers a step on this model, about 1.9 GB of traffic a token for
+        #: weights that never change.  They are built during the first step, which runs before any
+        #: capture, so the recording sees a stable address and no allocation happens mid-replay.
+        self._fp16_weights: dict[int, torch.Tensor] = {}
+
+    def _weight_fp16(self, tensor: torch.Tensor) -> torch.Tensor:
+        """The fp16 view of a mixer weight, optionally kept between steps.
+
+        Off by default: the copies are 1.9 GiB across the model's 96 mixers, and on a card that is
+        already holding every expert in VRAM that is enough to turn a run into an OOM.  On when
+        asked, so the saving can be measured against the same binary.
+        """
+        if os.environ.get("POCKETLLM_QWEN4_HC_FP16_CACHE") != "1":
+            return tensor.to(torch.float16)
+        cached = self._fp16_weights.get(id(tensor))
+        if cached is None or cached.device != tensor.device:
+            cached = tensor.to(torch.float16)
+            self._fp16_weights[id(tensor)] = cached
+        return cached
 
     def __call__(self, hyper_input: torch.Tensor):
         normed = self.hc_norm(hyper_input)
@@ -398,7 +420,7 @@ class GatedResidual:
                 down = F.silu(
                     F.linear(
                         compute_input_fp16,
-                        self.mix_down.to(torch.float16),
+                        self._weight_fp16(self.mix_down),
                     )
                     / self.hc_count
                 )
@@ -427,7 +449,7 @@ class GatedResidual:
                     else down.to(torch.float16)
                 )
                 w = torch.sigmoid(
-                    F.linear(up_input, self.mix_up.to(torch.float16))
+                    F.linear(up_input, self._weight_fp16(self.mix_up))
                 ).to(normed.dtype)
         else:
             up_input = (
@@ -435,10 +457,16 @@ class GatedResidual:
                 if down.dtype is normed.dtype
                 else down.to(normed.dtype)
             )
-            w = torch.sigmoid(F.linear(up_input, self.mix_up))
+            fused = _hc_up_mix_fused(up_input, self.mix_up, normed, self.hc_count, self.hidden_size)
+            if fused is not None:
+                mixed = fused
+                w = None
+            else:
+                w = torch.sigmoid(F.linear(up_input, self.mix_up))
 
-        w = w.unflatten(-1, (self.hc_count, self.hidden_size))
-        mixed = (w * normed.unflatten(-1, (self.hc_count, self.hidden_size))).mean(dim=-2)
+        if w is not None:
+            w = w.unflatten(-1, (self.hc_count, self.hidden_size))
+            mixed = (w * normed.unflatten(-1, (self.hc_count, self.hidden_size))).mean(dim=-2)
         if self.block_inject is None:
             return mixed
         if fp16_inject:
@@ -452,7 +480,7 @@ class GatedResidual:
                 inject = 2 * torch.sigmoid(
                     F.linear(
                         compute_input_fp16,
-                        self.block_inject.to(torch.float16),
+                        self._weight_fp16(self.block_inject),
                     )
                     / self.hc_count
                 )
@@ -467,6 +495,39 @@ class GatedResidual:
             if inject is None:
                 inject = 2 * torch.sigmoid(raw_inject / self.hc_count)
         return mixed, hyper_input, inject
+
+
+def _hc_up_mix_fused(down, mix_up, normed, hc_count: int, hidden: int):
+    """The up projection, its sigmoid gate and the stream fold as one kernel, or None.
+
+    The tensor form materialises `hc_count * hidden` weights a mixer and then reads them back
+    twice, and there are 96 mixers a token.  Returning None keeps a checkout without the extension
+    on the tensor path.
+    """
+    if (
+        down.device.type != "cuda"
+        or down.dtype is not torch.bfloat16
+        or mix_up.dtype is not torch.bfloat16
+        or normed.dtype is not torch.bfloat16
+        or not (down.is_contiguous() and mix_up.is_contiguous() and normed.is_contiguous())
+        or mix_up.shape != (hc_count * hidden, down.shape[-1])
+    ):
+        return None
+    ext = load_ops()
+    fused = getattr(ext, "qwen4_exp_hc_up_mix", None) if ext is not None else None
+    if fused is None:
+        return None
+    # The kernel works one row a block, so the leading axes are folded into rows here and put back
+    # after: a mixer is called on `[batch, seq, hc * hidden]` and answers `[batch, seq, hidden]`.
+    lead = normed.shape[:-1]
+    out = fused(
+        down.reshape(-1, down.shape[-1]),
+        mix_up,
+        normed.reshape(-1, normed.shape[-1]),
+        hc_count,
+        hidden,
+    )
+    return out.reshape(*lead, hidden)
 
 
 def inject_into_streams(

@@ -139,6 +139,164 @@ def cuda_gated_delta_rule(
     return output, state
 
 
+def _run_table(selection: torch.Tensor):
+    """The selection as sorted runs: fixed shapes all the way, no host read.
+
+    The block indexer picks whole blocks of `compress_ratio`, so the 2048 positions it names arrive
+    as a couple of hundred runs of eight-odd rows -- measured at 248 runs over 2051 rows at 8K.
+    Staging a run at a time is what turns 2048 transfers a layer into 248, and the measured
+    difference is the DMA engine's per-transfer cost: 7.7 ms of staging a token against the 1.8 ms
+    the bytes alone account for.
+
+    Everything is sized by the row count, which is the worst case -- one run a row -- so the table
+    never has to grow and the live count stays on the device where a capture can use it.
+    """
+    flat = selection.clamp_min(0)
+    ordered, _ = torch.sort(flat)
+    breaks = torch.ones_like(ordered, dtype=torch.bool)
+    breaks[1:] = (ordered[1:] - ordered[:-1]) != 1
+    run_id = (torch.cumsum(breaks.to(torch.int64), dim=0) - 1).to(torch.int64)
+    capacity = ordered.numel()
+    device = ordered.device
+    sentinel = torch.iinfo(torch.int32).max
+    slots = torch.arange(capacity, dtype=torch.int32, device=device)
+    run_start = torch.full((capacity,), sentinel, dtype=torch.int32, device=device)
+    run_start.scatter_reduce_(0, run_id, ordered.to(torch.int32), reduce="amin")
+    run_dst = torch.full((capacity,), sentinel, dtype=torch.int32, device=device)
+    run_dst.scatter_reduce_(0, run_id, slots, reduce="amin")
+    run_rows = torch.zeros((capacity,), dtype=torch.int32, device=device)
+    run_rows.scatter_add_(0, run_id, torch.ones(capacity, dtype=torch.int32, device=device))
+    run_count = (run_id[-1] + 1).reshape(1).to(torch.int32)
+    return ordered, run_start, run_rows, run_dst, run_count
+
+
+def _gather_runs(arena: torch.Tensor, table):
+    """Stage whole runs of a host arena, laid out in sorted order."""
+    ext = load_ops()
+    gather = getattr(ext, "qwen4_exp_gather_runs_bf16", None) if ext is not None else None
+    if gather is None:
+        return None
+    ordered, run_start, run_rows, run_dst, run_count = table
+    rows = int(ordered.numel())
+    heads = arena.shape[1]
+    staged = [
+        gather(
+            arena.data_ptr() + head * arena.stride(1) * arena.element_size(),
+            run_start, run_rows, run_dst, run_count, rows,
+        )
+        for head in range(heads)
+    ]
+    return torch.stack(staged, dim=0).unsqueeze(0)
+
+
+def _gather_host_rows(arena: torch.Tensor, rows: torch.Tensor, device) -> torch.Tensor:
+    """Copy `rows` of a host-resident `[1, heads, positions, 256]` arena onto the device.
+
+    Falls back to a host-side gather when the extension that does it in one launch is not built:
+    the fallback has to read the index list back, which is the slow path this exists to avoid, but
+    it keeps a source checkout without the kernel usable.
+    """
+    from relic_core.kernels.cuda_loader import load_cuda_kernel
+
+    native = load_cuda_kernel()
+    gather = getattr(native, "qwen4_exp_gather_rows_bf16", None) if native is not None else None
+    heads = arena.shape[1]
+    if gather is None:
+        picked = arena.index_select(2, rows.to("cpu"))
+        return picked.to(device, non_blocking=True)
+    staged = [
+        gather(arena.data_ptr() + head * arena.stride(1) * arena.element_size(), rows)
+        for head in range(heads)
+    ]
+    # `[rows, 256]` a head, so the head axis goes back in front of the position axis.
+    return torch.stack(staged, dim=0).unsqueeze(0)
+
+
+def _scatter_host_rows(arena: torch.Tensor, rows: torch.Tensor, at: torch.Tensor) -> None:
+    """Write `rows` into a host-resident `[1, heads, positions, 256]` arena at `at`."""
+    from relic_core.kernels.cuda_loader import load_cuda_kernel
+
+    native = load_cuda_kernel()
+    scatter = getattr(native, "qwen4_exp_scatter_rows_bf16", None) if native is not None else None
+    batch, heads = arena.shape[0], arena.shape[1]
+    if scatter is None:
+        arena[:, :, at.to("cpu").tolist()] = rows.to("cpu", non_blocking=True)
+        return
+    row_bytes = arena.stride(2) * arena.element_size()
+    for b in range(batch):
+        for head in range(heads):
+            offset = b * arena.stride(0) * arena.element_size() + head * row_bytes
+            scatter(rows[b, head].contiguous(), arena.data_ptr() + offset, at)
+
+
+def _stage_selected(cache, selected: torch.Tensor, device):
+    """Bring just the positions this call reads back onto the device.
+
+    `selected` is `[b, q, w]` of positions with `-1` marking unused slots, and the layers below
+    index `key`/`value` with it.  With the arena in host memory that indexing cannot happen where
+    it used to, so the rows it names are copied across -- the union of every query in the call, so
+    a chunk of queries shares one transfer -- and `selected` is rewritten to address the copy.
+    """
+    if selected.shape[1] == 1:
+        # A decode step has one query, so its own selection list *is* the staging order and the
+        # rewrite is the identity.
+        #
+        # The rows come across in a kernel rather than through `index_select`, because the index
+        # list lives on the device and reading it back to slice a host tensor is a synchronous
+        # device-to-host copy on every layer -- measured at 12% of a decode step, and fatal to a
+        # capture, which cannot contain one.  Under UVA the arena's host address is one a kernel
+        # can dereference, so the gather runs on the card and the traffic is the rows themselves.
+        # Measured at par with the per-row gather and not better: the sort and the three scatter
+        # reductions the table costs are the DMA transactions it saves.  Kept behind a flag because
+        # the reasoning is right and the balance may differ on a card whose per-transfer cost is
+        # higher, but it is not the default while it buys nothing here.
+        table = (
+            _run_table(selected[0, 0])
+            if os.environ.get("POCKETLLM_QWEN4_RUN_STAGING") == "1"
+            else None
+        )
+        if table is not None:
+            staged_k = _gather_runs(cache.k, table)
+            staged_v = _gather_runs(cache.v, table)
+            if staged_k is not None:
+                # Runs are staged in sorted order, so a selected position addresses the slot it
+                # sorted into; `-1` still marks a slot the mask drops.
+                remapped = torch.searchsorted(table[0], selected.clamp_min(0))
+                return staged_k, staged_v, remapped.masked_fill(selected < 0, -1)
+        rows = selected[0, 0].clamp_min(0).to(torch.int32)
+        staged_k = _gather_host_rows(cache.k, rows, device)
+        staged_v = _gather_host_rows(cache.v, rows, device)
+        width = selected.shape[-1]
+        remapped = torch.arange(width, device=selected.device, dtype=selected.dtype)
+        remapped = remapped.view(1, 1, -1).masked_fill(selected < 0, -1)
+        return staged_k, staged_v, remapped
+    live = selected[selected >= 0]
+    if live.numel() == 0:
+        raise RuntimeError("a host-resident KV cache needs at least one live position to stage")
+    # A position past the arena is an `index_select` on the host that faults on the *device*, an
+    # assert whose message names IndexKernel rather than the caller.  Naming it here is the
+    # difference between a one-line fix and a bisect: the arena is sized for the request, and a
+    # selection that reaches past it means the caller and the cache disagree about how long the
+    # context is.
+    width = int(cache.k.shape[2])
+    if int(live.max()) >= width:
+        raise RuntimeError(
+            f"QSA selection reaches position {int(live.max())} but the arena holds {width}; "
+            f"cache.length={int(cache.length)}, selected={tuple(selected.shape)}"
+        )
+    union = torch.unique(live)                      # sorted, on the device
+    rows = union.to("cpu")
+    if int(union.max()) >= int(cache.k.shape[2]):
+        raise RuntimeError(
+            f"staged position {int(union.max())} is past the arena ({int(cache.k.shape[2])})"
+        )
+    staged_k = cache.k.index_select(2, rows).to(device, non_blocking=True)
+    staged_v = cache.v.index_select(2, rows).to(device, non_blocking=True)
+    # `searchsorted` is exact because `union` is sorted and every live index is in it.
+    remapped = torch.searchsorted(union, selected.clamp_min(0))
+    return staged_k, staged_v, remapped.masked_fill(selected < 0, -1)
+
+
 def _write_kv(cache, key: torch.Tensor, value: torch.Tensor, past_len, seq_len: int) -> None:
     """Put this step's keys and values at `past_len`.
 
@@ -147,6 +305,35 @@ def _write_kv(cache, key: torch.Tensor, value: torch.Tensor, past_len, seq_len: 
     an error rather than a slow path -- so it goes through `index_copy_` against the position, which
     is the form a recording can replay at any offset.
     """
+    # Pinned, not merely "on the host": a model that is running on the CPU has its arena there
+    # too, and that is the ordinary path, not an offload -- it has no card to gather into.
+    if (
+        cache is not None
+        and getattr(cache, "host_kv", False)
+        and getattr(cache, "k", None) is not None
+        and cache.k.device.type == "cpu"
+    ):
+        # A host-resident arena, written through a kernel rather than a slice.
+        #
+        # A slice would bake the offset into a recording: the Python integer becomes a fixed address
+        # in the captured graph, so every replay would write its rows to the position the capture
+        # happened at.  The offset therefore has to be a device value the recording reads, which is
+        # what the position tensor already is -- it just has to travel with the data.
+        if isinstance(past_len, torch.Tensor):
+            at = (past_len.reshape(()) + torch.arange(seq_len, device=key.device)).to(torch.int32)
+        else:
+            at = torch.arange(
+                past_len, past_len + seq_len, dtype=torch.int32, device=key.device
+            )
+        # Only the integer position can be checked here: reading a position tensor back to compare
+        # it would be a host read, which a capture refuses.  The kernel writes where the tensor
+        # says, and the arena is sized for the generation the caller laid out.
+        width = int(cache.k.shape[2])
+        if not isinstance(past_len, torch.Tensor) and int(past_len) >= width:
+            raise RuntimeError(f"writing KV at {past_len} is past the arena ({width})")
+        _scatter_host_rows(cache.k, key, at)
+        _scatter_host_rows(cache.v, value, at)
+        return
     if isinstance(past_len, torch.Tensor):
         # One row at a time: `index_copy_` takes a 1-D index, and the position is a fact about the
         # step rather than about a row, so the same offsets serve every row.
@@ -240,6 +427,7 @@ def chunk_gated_delta_rule(
     beta: torch.Tensor,
     initial_state: torch.Tensor | None,
     chunk_size: int = 64,
+    state_log: list | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Chunked (WY-representation) delta rule for prefill.
 
@@ -315,6 +503,12 @@ def chunk_gated_delta_rule(
         last_recurrent_state = (
             last_recurrent_state * g_last + (k_i * decay_k[..., None]).transpose(-1, -2) @ v_new
         )
+        if state_log is not None and i < total_len // chunk_size:
+            # One entry per chunk, which is one entry per position when the caller asks for
+            # `chunk_size=1`.  A speculative verify needs exactly that: it consumes K drafts in a
+            # single forward and then has to put these layers back to whichever position the trunk
+            # accepted, and the rolling state has no other way to be rewound.
+            state_log.append(last_recurrent_state)
 
     core_attn_out = core_attn_out.reshape(batch_size, num_heads, total_len, v_dim)
     core_attn_out = core_attn_out[:, :, :seq_len]
@@ -468,9 +662,24 @@ class GatedDeltaNetCache:
             dtype=torch.float32,
         )
         self.initialized = False
+        #: When set to a list, the layer appends its post-position recurrent state here instead of
+        #: only keeping the last one.  A speculative verify turns this on so a partially accepted
+        #: round can be rewound; `None` everywhere else, and the step is then bit-identical.
+        self.state_log = None
 
 
 class GatedDeltaNet:
+    def _fp32_weight(self, name: str) -> torch.Tensor:
+        """A weight of this layer widened to float32 once, not once a step."""
+        weight = getattr(self, name)
+        cache = self.__dict__.setdefault("_fp32_weights", {})
+        held = cache.get(name)
+        if held is None or held[0] is not weight or held[1] != weight.device:
+            widened = weight.float()
+            cache[name] = (weight, weight.device, widened)
+            return widened
+        return held[2]
+
     def __init__(
         self,
         config: Qwen4ExpTextConfig,
@@ -556,7 +765,13 @@ class GatedDeltaNet:
 
         beta = b.sigmoid()
         # float32 on A_log: in bf16 exp() of a large magnitude saturates to inf.
-        g = -self.A_log.float().exp() * F.softplus(a.float() + self.dt_bias.float())
+        #
+        # The widening is of a *weight*, so it is the same value every step: done here it was two
+        # conversions a layer, seventy-two a token, of tensors that never change.  It is kept per
+        # device so a model that is moved still widens the tensor it is holding.
+        g = -self._fp32_weight("A_log").exp() * F.softplus(
+            a.float() + self._fp32_weight("dt_bias")
+        )
 
         initial_state = _state_at(cache, "recurrent_state")
         cuda_result = (
@@ -569,8 +784,32 @@ class GatedDeltaNet:
             if repeat > 1:
                 query = query.repeat_interleave(repeat, dim=2)
                 key = key.repeat_interleave(repeat, dim=2)
-            rule = recurrent_gated_delta_rule if seq_len == 1 else chunk_gated_delta_rule
-            core_attn_out, last_state = rule(query, key, value, g, beta, initial_state)
+            # A verify round has to be able to put these layers back to a *position*, not to the
+            # end of the forward.  The chunked rule only returns the state at each chunk boundary,
+            # so recording per-position states means asking for one position a chunk -- the same
+            # arithmetic, minus the intra-chunk parallelism a 2-3 token sequence never had anyway.
+            log = getattr(cache, "state_log", None) if cache is not None else None
+            if log is not None and seq_len > 1:
+                # Two rolling values have to be recoverable per position, not just one: the
+                # recurrence (returned by the rule) and the depthwise conv's window, which is the
+                # tail of the conv input.  The window is a slice of `padded`, so it is read off
+                # rather than recorded by the rule.
+                log.clear()
+                rec_log: list = []
+                rule = chunk_gated_delta_rule
+                core_attn_out, last_state = rule(
+                    query, key, value, g, beta, initial_state, 1, rec_log
+                )
+                span = self.conv_kernel_size - 1
+                for j in range(seq_len):
+                    end = padded.shape[-1] - seq_len + j + 1
+                    log.append((
+                        padded[:, :, end - span : end],
+                        rec_log[j] if j < len(rec_log) else last_state,
+                    ))
+            else:
+                rule = recurrent_gated_delta_rule if seq_len == 1 else chunk_gated_delta_rule
+                core_attn_out, last_state = rule(query, key, value, g, beta, initial_state)
         else:
             core_attn_out, last_state = cuda_result
         if profile:
@@ -615,8 +854,26 @@ class QSAAttentionCache:
         num_kv_heads: int | None = None,
     ) -> None:
         kv_heads = config.num_key_value_heads if num_kv_heads is None else num_kv_heads
-        self.k = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, device=device, dtype=dtype)
-        self.v = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, device=device, dtype=dtype)
+        #: Keys and values in pinned host memory instead of the card.
+        #:
+        #: A sparse-attention layer reads 2048 positions a query whatever the context is, so the
+        #: arena does not have to be on the device for the *compute* to be fast -- it only has to
+        #: be reachable.  262144 positions of k and v are 3.2 GiB a rank at this model's geometry,
+        #: against the ~3 GiB a fully resident expert bank leaves; the same arena in host memory
+        #: costs a 2 MiB gather a layer a step, which a step hides.
+        host_kv = os.environ.get("POCKETLLM_QWEN4_HOST_KV") == "1"
+        arena = dict(device="cpu" if host_kv else device, dtype=dtype)
+        if host_kv:
+            arena["pin_memory"] = True
+        self.k = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, **arena)
+        self.v = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, **arena)
+        self.host_kv = host_kv
+        #: Where the next write lands, as a plain integer.  A host-resident arena cannot be written
+        #: through the tensor-position path -- that one indexes with a device tensor -- and reading
+        #: the tensor back to get an integer would be a synchronisation, which is exactly what a
+        #: capture cannot contain.  The caller that drives the step already knows the position as
+        #: an integer, so it hands it over here instead.
+        self.host_position = 0
         self.index_k = torch.zeros(
             batch_size, max_seq_len, config.indexer_head_dim, device=device, dtype=dtype
         )
@@ -636,7 +893,11 @@ class QSAIndexer:
         self.n_heads = config.indexer_n_heads if n_heads is None else n_heads
         self.kv_heads = config.indexer_kv_heads
         self.head_dim = config.indexer_head_dim
-        self.budget = config.indexer_budget
+        # The sparse budget is the knob that trades retrieval breadth for a step's cost: the layer
+        # reads `budget` positions whatever the context is, so halving it halves the attention and
+        # the staging.  Overridable so the trade can be priced against quality rather than assumed.
+        override = os.environ.get("POCKETLLM_QWEN4_INDEXER_BUDGET")
+        self.budget = int(override) if override else config.indexer_budget
         self.compress_ratio = config.indexer_compress_ratio
         self.block_topk = self.budget // self.compress_ratio
         self.qk_proj = weights["index_qk_proj"]
@@ -821,7 +1082,14 @@ class QSAAttention:
 
             torch.cuda.synchronize(hidden_states.device)
             started = time.perf_counter()
-        selected = self.indexer(hidden_states, cos, sin, cache, past_len=past_len)
+        # The indexer rotates each pooled block by its *absolute* position, so it needs the whole
+        # table.  What the caller passes is the rows this step computes -- a slice when the
+        # position is an integer, and just the current rows when it is a tensor -- which is right
+        # for the query and wrong for the indexer.  Past the indexer budget that difference is an
+        # out-of-bounds index rather than a wrong phase, which is how it was found.
+        table_cos = cache.cos if cache is not None and getattr(cache, "cos", None) is not None else cos
+        table_sin = cache.sin if cache is not None and getattr(cache, "sin", None) is not None else sin
+        selected = self.indexer(hidden_states, table_cos, table_sin, cache, past_len=past_len)
         if profile:
             torch.cuda.synchronize(hidden_states.device)
             after_indexer = time.perf_counter()
@@ -841,13 +1109,16 @@ class QSAAttention:
         if cache is not None:
             _write_kv(cache, key, value, past_len, seq_len)
             cache.length = past_len + seq_len
-            width = _kv_width_of(cache)
-            if width > 0:
-                key = cache.k[:, :, :width]
-                value = cache.v[:, :, :width]
+            if getattr(cache, "host_kv", False):
+                key, value, selected = _stage_selected(cache, selected, hidden_states.device)
             else:
-                key = cache.k[:, :, : cache.length]
-                value = cache.v[:, :, : cache.length]
+                width = _kv_width_of(cache)
+                if width > 0:
+                    key = cache.k[:, :, :width]
+                    value = cache.v[:, :, :width]
+                else:
+                    key = cache.k[:, :, : cache.length]
+                    value = cache.v[:, :, : cache.length]
         if profile:
             torch.cuda.synchronize(hidden_states.device)
             after_projection = time.perf_counter()

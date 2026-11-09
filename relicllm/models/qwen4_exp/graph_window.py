@@ -55,8 +55,10 @@ class DecodeGraph:
     """One recorded decode step, replayed at whatever position the caller sets."""
 
     def __init__(self, *, model, cache, start: int, steps: int, token: torch.Tensor,
-                 select=None) -> None:
+                 select=None, wants_streams: bool = False) -> None:
         self.model = model
+        #: Whether the caller wants the trunk's pre-mixer state out of this recording.
+        self.wants_streams = bool(wants_streams)
         #: Turns one step's sharded logits into the token the model chose.  It has to run outside
         #: the capture: it gathers the shards, and that is a collective.
         self.select = select
@@ -64,13 +66,18 @@ class DecodeGraph:
         self.start = int(start)
         self.steps = int(steps)
         device = token.device
+        #: Rows decoded together.  A capture fixes every shape it was given, so this is read from
+        #: the token rather than assumed: a batch of B decodes B sequences per replay, and the
+        #: per-replay cost barely moves, which is the whole reason batching is worth doing on a box
+        #: whose steps are dominated by per-kernel overhead rather than by arithmetic.
+        self.batch = int(token.shape[0])
 
         #: The token the step reads.  A graph pins the address, so the caller copies into this
         #: before each replay rather than handing over a new tensor.
         with torch.inference_mode(False):
             self.inputs = token.clone()
         #: The pinned host end of that copy: the transfer and the replay are not otherwise ordered.
-        self._host_token = torch.zeros(1, 1, dtype=torch.long, pin_memory=True)
+        self._host_token = torch.zeros(self.batch, 1, dtype=torch.long, pin_memory=True)
         #: The position the step runs at -- one tensor, refilled before each replay.  This is what
         #: lets a single recording serve every position.
         with torch.inference_mode(False):
@@ -97,7 +104,7 @@ class DecodeGraph:
         #: The n-gram window's width, and the host row the PLE term reads.
         self._ngram = int(model.config.ngram_size)
         self.history = torch.full(
-            (1, self._ngram), int(model.config.primary_eos_token_id),
+            (self.batch, self._ngram), int(model.config.primary_eos_token_id),
             dtype=torch.long, pin_memory=True,
         )
         self._linear = [i for i, layer in enumerate(cache.layers)
@@ -105,7 +112,18 @@ class DecodeGraph:
         #: Where the step leaves its answer.  Written from inside the graph, so the caller reads
         #: it after a replay without the graph having to return anything.
         with torch.inference_mode(False):
-            self.outputs = torch.zeros(1, self._logits_width(), dtype=torch.float32, device=device)
+            self.outputs = torch.zeros(
+                self.batch, self._logits_width(), dtype=torch.float32, device=device
+            )
+            #: The trunk's pre-mixer state at the replayed position, for a draft loop that feeds it
+            #: to the MTP head.  Allocated only when asked for, so a capture taken for plain decode
+            #: carries no extra buffer and no extra copy.
+            self.streams_buf = (
+                torch.zeros(
+                    self.batch, self._streams_width(), dtype=torch.float32, device=device
+                )
+                if wants_streams else None
+            )
         self._prepare()
         self._capture()
 
@@ -128,6 +146,19 @@ class DecodeGraph:
                     width = int(tensor.shape[2] if tensor.dim() == 4 else tensor.shape[1])
                     return max(width, reach)
         return reach
+
+    def _streams_width(self) -> int:
+        """Width of one position's pre-mixer state: `hc_count * hidden`."""
+        cfg = self.model.config
+        return int(getattr(cfg, "hc_count", 1)) * int(cfg.hidden_size)
+
+    def logits_width(self) -> int:
+        """This rank's slice of the vocabulary, in the layout `outputs` holds."""
+        return int(self.outputs.shape[-1])
+
+    def streams(self) -> torch.Tensor:
+        """The trunk's pre-mixer state at the position the last replay wrote."""
+        return self.streams_buf
 
     def _logits_width(self) -> int:
         """How wide one step's logits are on this rank.
@@ -155,11 +186,31 @@ class DecodeGraph:
                 scratch.cos, scratch.sin = self.model.rope(
                     positions.expand(3, 1, -1), self.model.dtype
                 )
+            # The probe takes the position tensor, not the integer: an integer sends the rope
+            # table down the "width is the context length" path while the recording takes the
+            # other one, so the probe would measure a step shaped differently from the one that
+            # gets recorded -- and past the indexer budget that difference is an out-of-bounds
+            # index rather than a number nobody reads.
+            self.position.fill_(self.start)
             probe = self.model.forward(
-                self.inputs, cache=scratch, past_len=self.start, last_token_only=True
+                self.inputs, cache=scratch, past_len=self.position, last_token_only=True
             )
             del scratch
             torch.cuda.empty_cache()
+        if probe is None:
+            # A pipeline stage that is not the last one hands its result to the next stage rather
+            # than returning logits, so there is nothing to measure here.  The width only has to
+            # describe this rank's slice for the buffer to exist: the last stage is the one that
+            # picks the token, and the pick is reduced across ranks either way.
+            config = getattr(self.model, "config", None)
+            for name in ("vocab_size", "hidden_size"):
+                value = getattr(config, name, None)
+                if value:
+                    return int(value)
+            raise RuntimeError(
+                "a pipeline stage returned no logits and the config names no width to use; "
+                "graph capture needs the vocabulary size on the last stage"
+            )
         return int(probe.shape[-1])
 
     def _prepare(self) -> None:
@@ -173,6 +224,7 @@ class DecodeGraph:
                 )
             # One entry a position, so a replay reads its own and writes the next.  The position
             # tensor drives both, which is what keeps the index out of the recording.
+            self.cache.share_rope_table()
             for i in self._linear:
                 layer = self.cache.layers[i]
                 # Seeded from the state the sequence has actually reached. `layer.conv_state` stops
@@ -190,11 +242,22 @@ class DecodeGraph:
                     "recurrent_state": [rec_now.clone() for _ in range(self.steps + 2)],
                 })
                 self.cache.layers[i].state_slot = self.slot
-            self.cache.ple_history_at = lambda _ids: self.history.reshape(1, -1)
+            self.cache.ple_history_at = lambda _ids: self.history.reshape(self.batch, -1)
 
     def _run_step(self) -> None:
-        hidden = self.model.forward(self.inputs, cache=self.cache, past_len=self.position,
-                                    last_token_only=True)
+        # `return_streams` only when a draft loop asked for it: the head is fed the trunk's
+        # pre-mixer state, which is not otherwise part of the step's output, and the extra buffer
+        # is `hc_count * hidden` floats a position.  Off means the captured step is byte for byte
+        # what it was before.
+        if self.streams_buf is not None:
+            hidden, streams = self.model.forward(
+                self.inputs, cache=self.cache, past_len=self.position,
+                last_token_only=True, return_streams=True,
+            )
+            self.streams_buf.copy_(streams[:, -1].float())
+        else:
+            hidden = self.model.forward(self.inputs, cache=self.cache, past_len=self.position,
+                                        last_token_only=True)
         self.outputs.copy_(hidden[:, -1].float())
 
     def _capture(self) -> None:
@@ -215,7 +278,10 @@ class DecodeGraph:
         """Point the PLE window at the last `ngram` ids of `seen`, which ends in this step's token."""
         window = seen[-self._ngram:]
         self.history.fill_(int(self.model.config.primary_eos_token_id))
-        self.history[0, self._ngram - len(window):] = torch.tensor(window, dtype=torch.long)
+        # Every row is filled the same way: the rows are replicas of one prompt here, so they see
+        # one history.  A caller that ever decodes different prompts in one batch has to fill this
+        # row by row instead, which is why the shape is kept batch-major.
+        self.history[:, self._ngram - len(window):] = torch.tensor(window, dtype=torch.long)
 
     def replay(self, position: int, token: torch.Tensor) -> torch.Tensor | None:
         """Run the step at `position`, reading `token`, and return the token it chose.
@@ -226,7 +292,21 @@ class DecodeGraph:
         two are closer than `POCKETLLM_GRAPH_RETURN_MARGIN` the caller is told to run the step
         eagerly instead of being handed an answer the loop would not have given.
         """
-        self._host_token.copy_(token)
+        # Outside the recorded span the slot would index past the layout and write into whatever
+        # follows it, so the step is declined instead.  A caller that advances unevenly -- a draft
+        # loop takes two positions a round on a hit -- needs this to be a refusal, not a wrong
+        # answer two positions later.
+        if not (self.start <= position < self.start + self.steps):
+            return None
+        # A host-resident QSA arena needs the position as an integer before the step runs; taking
+        # it from `self.position` inside the recording would be a host read of a device value.
+        for layer in self.cache.layers:
+            if layer is not None and getattr(layer, "host_kv", False):
+                layer.host_position = int(position)
+        # A pipeline stage hands the token back with a trailing singleton the single-card path
+        # does not carry, so the buffer is filled from a reshaped view rather than the tensor as
+        # given: `copy_` refuses a source that would only broadcast.
+        self._host_token.copy_(token.reshape(self._host_token.shape))
         self.inputs.copy_(self._host_token)
         with torch.inference_mode(False):
             self.position.fill_(position)
@@ -268,7 +348,8 @@ class DecodeGraph:
         torch.cuda.empty_cache()
 
 
-def build(*, model, cache, start: int, steps: int, token: torch.Tensor, select=None):
+def build(*, model, cache, start: int, steps: int, token: torch.Tensor, select=None,
+          wants_streams: bool = False):
     """Capture the step, or None when it will not be captured.
 
     Failure is not fatal and that is the contract: anything that refuses the capture -- an
@@ -278,11 +359,26 @@ def build(*, model, cache, start: int, steps: int, token: torch.Tensor, select=N
     """
     if steps <= 0 or not torch.cuda.is_available():
         return None
+    # A capture is sound only while the context still fits the sparse indexer's budget, where the
+    # selection is the whole prefix and nothing about it is data-dependent.  Past it the indexer
+    # switches to choosing blocks by score, and a recorded step that makes that choice asserts on
+    # an out-of-bounds index -- with the arena on the card as well as in host memory, so this is a
+    # property of the capture rather than of where the kv arena lives.  Refusing is the only
+    # honest answer until the recorded selection is shown to be position-independent.
+    budget = getattr(getattr(model, "config", None), "indexer_budget", None)
+    if (budget is not None and start + steps > int(budget)
+            and os.environ.get("POCKETLLM_QWEN4_GRAPH_PAST_BUDGET") != "1"):
+        raise RuntimeError(
+            f"--graph-window cannot cover positions past the indexer budget: the window would "
+            f"replay at {start + steps} but the sparse indexer only selects the whole prefix up "
+            f"to {int(budget)}.  Its block choice is data-dependent, and a recording of it trips "
+            f"an out-of-bounds index.  Run with a shorter context, or without --graph-window."
+        )
     with torch.inference_mode(False):
         token_buf = token.clone()
     try:
         return DecodeGraph(model=model, cache=cache, start=start, steps=steps, token=token_buf,
-                           select=select)
+                           select=select, wants_streams=wants_streams)
     except Exception as exc:  # noqa: BLE001 - falling back to eager is the contract
         # torchrun routes a child's stdout to the launcher, which drops lines that arrive while it
         # is tearing the group down, so the failure goes to a file as well as to the console.
