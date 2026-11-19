@@ -75,6 +75,81 @@ def _fp16_fp32_linear(
     )
 
 
+def row_invariant_verify_enabled(rows: int) -> bool:
+    """Opt into decode-shaped arithmetic for small BF16 calls, including short prefill chunks.
+
+    This is an arithmetic contract, not a precision change: ordinary one-row BF16 operations
+    are recorded independently for 2..8 rows. The environment switch is explicit and off by
+    default. Larger prefills and ordinary one-row decode keep their existing dispatch.
+    """
+    return 2 <= rows <= 8 and os.environ.get("POCKETLLM_QWEN4_VERIFY_ROW_INVARIANT", "0") == "1"
+
+
+def row_invariant_linear(x: torch.Tensor, weight: torch.Tensor, bias=None) -> torch.Tensor:
+    """Run small BF16 batches through the same one-row `F.linear` shape as greedy decode.
+
+    cuBLAS may choose different arithmetic at M=1 and M=K. Keeping each recorded call at M=1
+    preserves the decode operation without a global torch monkeypatch or FP16 weight mirror.
+    Leading dimensions are restored exactly; no values are read back to the host.
+    """
+    rows = x.numel() // x.shape[-1]
+    if (not row_invariant_verify_enabled(rows) or x.dtype is not torch.bfloat16
+            or weight.dtype is not torch.bfloat16 or x.device != weight.device):
+        return F.linear(x, weight, bias)
+    if os.environ.get("POCKETLLM_QWEN4_LINEAR_OUT", "0") == "1":
+        from relicllm.models.qwen4_exp.linear_out import linear_out_enabled, qwen4_exp_linear_out
+        if linear_out_enabled():
+            output = qwen4_exp_linear_out(x, weight, bias)
+            if output is not None:
+                return output
+    flat = x.reshape(rows, x.shape[-1])
+    single_shape = (1,) * (x.ndim - 1) + (x.shape[-1],)
+    output = torch.cat([
+        F.linear(flat[row:row + 1].reshape(single_shape).contiguous(), weight, bias).reshape(1, -1)
+        for row in range(rows)
+    ], dim=0)
+    return output.reshape(*x.shape[:-1], weight.shape[0])
+
+
+def row_invariant_sequence_sum(x: torch.Tensor) -> torch.Tensor:
+    """Keep PLE's `[batch, seq, hc, hidden]` reduction at the one-query decode geometry.
+
+    The reduction tree may depend on the number of output groups, even with BF16 operands and
+    identical values. Split the sequence axis, not the hc axis: decode reduces four hc groups in
+    one operation. No host values or altered accumulation dtype are introduced.
+    """
+    if (x.ndim != 4 or x.dtype is not torch.bfloat16
+            or not row_invariant_verify_enabled(x.shape[1])):
+        return x.sum(dim=-1, keepdim=True)
+    return torch.cat([
+        x[:, row:row + 1].contiguous().sum(dim=-1, keepdim=True)
+        for row in range(x.shape[1])
+    ], dim=1)
+
+
+def row_invariant_conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
+    """Keep small depthwise causal convolutions on their one-output decode shape.
+
+    The no-padding, stride-one window includes dilation gaps (PLE uses dilation=ngram_size).
+    Every slice is made contiguous, reproducing the per-channel window layout of a decode
+    call instead of handing cuDNN a different K-output width/stride. Other cases are untouched.
+    """
+    step = stride[0] if isinstance(stride, (tuple, list)) else stride
+    pad = padding[0] if isinstance(padding, (tuple, list)) else padding
+    dil = dilation[0] if isinstance(dilation, (tuple, list)) else dilation
+    span = dil * (weight.shape[-1] - 1) + 1 if isinstance(dil, int) and dil > 0 else 0
+    outputs = x.shape[-1] - span + 1 if span else 0
+    if (x.ndim != 3 or weight.ndim != 3 or step != 1 or pad != 0 or not span
+            or groups != x.shape[1] or weight.shape[0] != groups or weight.shape[1] != 1
+            or x.dtype is not torch.bfloat16 or weight.dtype is not torch.bfloat16
+            or x.device != weight.device or not row_invariant_verify_enabled(outputs)):
+        return F.conv1d(x, weight, bias, stride, padding, dilation, groups)
+    return torch.cat([
+        F.conv1d(x[..., row:row + span].contiguous(), weight, bias, 1, 0, dilation, groups)
+        for row in range(outputs)
+    ], dim=-1)
+
+
 def prefill_linear(
     x: torch.Tensor,
     weight: torch.Tensor,
@@ -87,6 +162,9 @@ def prefill_linear(
     """
     rows = x.numel() // x.shape[-1]
     same_device = weight.device == x.device
+    if (row_invariant_verify_enabled(rows) and same_device
+            and x.dtype is torch.bfloat16 and weight.dtype is torch.bfloat16):
+        return row_invariant_linear(x, weight)
     native_fp16 = (
         x.device.type == "cuda"
         and x.dtype is torch.float16
@@ -138,12 +216,29 @@ def _hc_fp16_fp32_output_enabled(rows: int) -> bool:
 
 
 def _hc_cuda_enabled(rows: int) -> bool:
+    """Whether the fused hyper-connection kernels may run, at this row count.
+
+    On by default, and the row floor is 1.  The floor used to be 128 with the switch off, which
+    meant a one-row decode step never reached the fused kernels at all -- the same shape of miss as
+    the sparse-attention dispatch and the completed-prefix pool.
+
+    Priced with three interleaved rounds at 8192 positions, both arms inside one script:
+
+    | arm | tok/s (three rounds) | median | ITL p50 |
+    |---|---|---|---|
+    | elementwise | 37.92, 37.73, 37.65 | 37.73 | 25.89 ms |
+    | fused | 38.31, 38.27, 38.44 | 38.31 | 25.47 ms |
+
+    Identical tokens in all six runs, a within-arm spread of 0.27 tok/s and a between-arm gap of
+    0.58.  A single run had earlier put this at +0.5% and dismissed it; the effect is real at 1.5%,
+    which is the same lesson the fused norm taught -- one throughput run resolves about 3-4%.
+    """
     min_rows = max(
         1,
-        int(os.environ.get("POCKETLLM_QWEN4_HC_CUDA_MIN_ROWS", "128")),
+        int(os.environ.get("POCKETLLM_QWEN4_HC_CUDA_MIN_ROWS", "1")),
     )
     return (
-        _env_enabled("POCKETLLM_QWEN4_HC_CUDA", "0")
+        _env_enabled("POCKETLLM_QWEN4_HC_CUDA", "1")
         and rows >= min_rows
     ) or _hc_fp16_enabled(rows)
 
@@ -173,6 +268,33 @@ def _cuda_hc_activation(
     return getattr(ext, name)(x, groups)
 
 
+def _rms_norm_cuda_enabled(rows: int) -> bool:
+    """Whether the fused norm kernel may run.
+
+    Deliberately *not* `_hc_cuda_enabled`: that predicate exists to decide when the
+    hyper-connection kernels are worth their launch at a given row count, and it defaults off with
+    a 128-row floor, which is a different question from whether this kernel may run.  Split out so
+    the two decisions cannot be conflated again.
+
+    On by default.  An earlier single measurement of this said it was inside the noise and it was
+    left off; three interleaved rounds say otherwise, and the difference is the measurement rather
+    than the kernel.  On eight RTX 4090s at 8192 positions, alternating arms within one script so a
+    change in the box cannot be mistaken for a change in the kernel:
+
+    | arm | tok/s (three rounds) | median | ITL p50 |
+    |---|---|---|---|
+    | torch path | 37.85, 37.56, 37.65 | 37.65 | 25.88 ms |
+    | fused norm | 39.00, 38.77, 38.77 | 38.77 | 25.13 ms |
+
+    Every one of the six runs produced the same tokens.  The within-arm spread is 0.3 tok/s and the
+    between-arm gap 1.1, so a 3% effect that a single run could not resolve is plain here.  The
+    fused kernel replaces about eight dispatches a call with one launch, and while a recorded step
+    has no dispatches to remove, those eight were not all views: the `pow`, `mean`, `rsqrt` and two
+    multiplies are four to six real kernels, several times a layer, forty-eight layers.
+    """
+    return _env_enabled("POCKETLLM_QWEN4_RMS_NORM_CUDA", "1") and rows >= 1
+
+
 def _cuda_grouped_rms_norm(
     x: torch.Tensor,
     weight: torch.Tensor,
@@ -180,7 +302,7 @@ def _cuda_grouped_rms_norm(
     eps: float,
 ) -> torch.Tensor | None:
     if (
-        not _hc_cuda_enabled(x.numel() // x.shape[-1])
+        not _rms_norm_cuda_enabled(x.numel() // x.shape[-1])
         or x.device.type != "cuda"
         or not x.is_contiguous()
         or not weight.is_contiguous()
@@ -211,15 +333,24 @@ class RMSNorm:
         self.group_size = group_size
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        if self.group_size is not None:
-            output = _cuda_grouped_rms_norm(
-                x,
-                self.weight,
-                self.group_size,
-                self.eps,
-            )
-            if output is not None:
-                return output
+        # Packed Q/gate projections leave gaps between heads (or between query rows). A one-query
+        # indexer slice is contiguous and uses the fused norm, while a wider slice can fall back
+        # to torch with another reduction tree. Preserve each decode slice's *original* strides:
+        # copying a gapped Q-head slice would incorrectly select a fused kernel decode never used.
+        if (x.ndim == 4 and x.shape[0] == 1 and x.dtype is torch.bfloat16
+                and not x.is_contiguous() and row_invariant_verify_enabled(x.shape[1])):
+            return torch.cat([self(x[:, row:row + 1]) for row in range(x.shape[1])], dim=1)
+        # An ungrouped norm is one group covering the whole last dimension, which is the same
+        # arithmetic the kernel already does: `gain = 1 + weight` over a single group.
+        group_size = self.group_size if self.group_size is not None else int(x.shape[-1])
+        output = _cuda_grouped_rms_norm(
+            x,
+            self.weight,
+            group_size,
+            self.eps,
+        )
+        if output is not None:
+            return output
         in_dtype = x.dtype
         h = x.to(torch.float32)
         if self.group_size is not None:
@@ -244,6 +375,30 @@ class RMSNorm:
         return gain
 
 
+def _cuda_gated_rms_norm_exact(x, gate, weight, eps: float, activation: str):
+    """Fuse only proven rounding/multiply boundaries; torch retains statistics and activation."""
+    if (os.environ.get("POCKETLLM_QWEN4_GATED_NORM_EXACT", "0") != "1"
+            or x.device.type != "cuda" or x.dtype is not torch.bfloat16
+            or weight.dtype is not torch.bfloat16 or weight.device != x.device
+            or gate.device != x.device or gate.dtype not in (torch.bfloat16, torch.float32)
+            or x.ndim < 2 or x.numel() == 0 or gate.shape != x.shape or weight.ndim != 1
+            or x.shape[-1] != weight.numel() or x.shape[-1] > 8192
+            or not (x.is_contiguous() and gate.is_contiguous() and weight.is_contiguous())
+            or activation not in ("sigmoid", "silu")):
+        return None
+    ext = load_ops()
+    fused = getattr(ext, "qwen4_exp_gated_rms_norm_exact", None) if ext is not None else None
+    if fused is None:
+        return None
+    # Keep the reduction tree, rsqrt and CUDA activation exactly as the existing path. The
+    # independent native entry preserves norm->BF16, BF16 weight multiplication and final BF16.
+    h = x.to(torch.float32)
+    inverse = torch.rsqrt(h.pow(2).mean(-1, keepdim=True) + eps)
+    act = torch.sigmoid if activation == "sigmoid" else F.silu
+    activated = act(gate.to(torch.float32))
+    return fused(x, inverse, weight, activated)
+
+
 class RMSNormGated:
     """Per-head RMSNorm followed by a gate activation (GatedDeltaNet output).
 
@@ -257,6 +412,9 @@ class RMSNormGated:
         self.activation = activation
 
     def __call__(self, x: torch.Tensor, gate: torch.Tensor) -> torch.Tensor:
+        fused = _cuda_gated_rms_norm_exact(x, gate, self.weight, self.eps, self.activation)
+        if fused is not None:
+            return fused
         in_dtype = x.dtype
         h = x.to(torch.float32)
         h = h * torch.rsqrt(h.pow(2).mean(-1, keepdim=True) + self.eps)
@@ -425,7 +583,7 @@ class GatedResidual:
                     / self.hc_count
                 )
         else:
-            raw_down = F.linear(normed, self.mix_down)
+            raw_down = row_invariant_linear(normed, self.mix_down)
             down = _cuda_hc_activation(
                 "qwen4_exp_hc_silu",
                 raw_down,
@@ -462,7 +620,7 @@ class GatedResidual:
                 mixed = fused
                 w = None
             else:
-                w = torch.sigmoid(F.linear(up_input, self.mix_up))
+                w = torch.sigmoid(row_invariant_linear(up_input, self.mix_up))
 
         if w is not None:
             w = w.unflatten(-1, (self.hc_count, self.hidden_size))
@@ -486,7 +644,7 @@ class GatedResidual:
                 )
                 inject = inject.to(normed.dtype)
         else:
-            raw_inject = F.linear(normed, self.block_inject)
+            raw_inject = row_invariant_linear(normed, self.block_inject)
             inject = _cuda_hc_activation(
                 "qwen4_exp_hc_inject_gate",
                 raw_inject,
@@ -514,20 +672,53 @@ def _hc_up_mix_fused(down, mix_up, normed, hc_count: int, hidden: int):
     ):
         return None
     ext = load_ops()
-    fused = getattr(ext, "qwen4_exp_hc_up_mix", None) if ext is not None else None
+    exact = None
+    if os.environ.get("POCKETLLM_QWEN4_HC_UP_MIX_EXACT") == "1":
+        # Experimental: the four stream dot products share one activation load. The lane-strided
+        # FMA sequence, the shuffle tree, the sigmoid and the fold order are the qualified entry's,
+        # so the qualification gate is raw-bit equality against that entry rather than a tolerance.
+        exact = getattr(ext, "qwen4_exp_hc_up_mix_exact", None) if ext is not None else None
+        if exact is None:
+            raise RuntimeError(
+                "POCKETLLM_QWEN4_HC_UP_MIX_EXACT=1 but the loaded native module does not export "
+                "qwen4_exp_hc_up_mix_exact; load the experimental build or unset the switch"
+            )
+    fused = exact
+    if fused is None:
+        fused = getattr(ext, "qwen4_exp_hc_up_mix", None) if ext is not None else None
     if fused is None:
         return None
     # The kernel works one row a block, so the leading axes are folded into rows here and put back
     # after: a mixer is called on `[batch, seq, hc * hidden]` and answers `[batch, seq, hidden]`.
     lead = normed.shape[:-1]
-    out = fused(
-        down.reshape(-1, down.shape[-1]),
-        mix_up,
-        normed.reshape(-1, normed.shape[-1]),
-        hc_count,
-        hidden,
-    )
+    down_rows = down.reshape(-1, down.shape[-1])
+    normed_rows = normed.reshape(-1, normed.shape[-1])
+    if exact is not None:
+        out = exact(
+            down_rows,
+            mix_up,
+            normed_rows,
+            hc_count,
+            hidden,
+            _hc_up_mix_exact_threads(),
+        )
+    else:
+        out = fused(down_rows, mix_up, normed_rows, hc_count, hidden)
     return out.reshape(*lead, hidden)
+
+
+def _hc_up_mix_exact_threads() -> int:
+    """Block width for the experimental up-mix, refused here rather than inside a capture."""
+    raw = os.environ.get("POCKETLLM_QWEN4_HC_UP_MIX_THREADS", "128")
+    try:
+        threads = int(raw)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"POCKETLLM_QWEN4_HC_UP_MIX_THREADS must be an integer, got {raw!r}"
+        ) from exc
+    if threads not in (64, 128, 256, 512):
+        raise RuntimeError("POCKETLLM_QWEN4_HC_UP_MIX_THREADS must be 64, 128, 256 or 512")
+    return threads
 
 
 def inject_into_streams(
@@ -579,6 +770,16 @@ def _splitmix64(value: int) -> int:
     value = ((value ^ (value >> 30)) * _SPLITMIX_M1) & _MASK64
     value = ((value ^ (value >> 27)) * _SPLITMIX_M2) & _MASK64
     return (value ^ (value >> 31)) & _MASK64
+
+
+_MASK64_BITS = (1 << 64) - 1
+_SIGN64_BIT = 1 << 63
+
+
+def _signed64(value: int) -> int:
+    """`value` as the int64 the tensor path would hold, wrapping exactly as it does."""
+    value &= _MASK64_BITS
+    return value - (1 << 64) if value >= _SIGN64_BIT else value
 
 
 def build_layer_multipliers(unigram_vocab_size: int, ngram_size: int, ple_layer_index: int, seed: int) -> torch.Tensor:
@@ -638,9 +839,60 @@ class NGramHasher:
         valid = (position_in_segment >= shift) & (source_positions.unsqueeze(0) >= 0)
         return torch.where(valid, shifted, token_ids.new_full((), self.eos_token_id))
 
+    def _row_ids_one_token(self, token_history: torch.Tensor) -> torch.Tensor:
+        """``row_ids(history, 1)`` for a history that is exactly one n-gram window.
+
+        The tensor path builds a full shifted copy of the history per n-gram order -- a cummax, a
+        concatenate, two gathers and a select each -- to then read a single element out of each.
+        At a decode step the window is `ngram_size` columns wide and one row is wanted, so the same
+        answer is a handful of integer operations in CPython, and it costs about a tenth as much.
+
+        The arithmetic is int64 with wraparound because that is what the tensor path does, and the
+        wraparound is load-bearing: a product that overflows changes the sign, and ``remainder``
+        takes the floor, so a "mathematically equal" big-integer product would differ in the row
+        it selects.  As a result the Python product and XOR are re-signed to int64 exactly as the
+        tensor arithmetic would be, and the modulo is Python's floor modulo, which is what
+        ``torch.remainder`` computes for a positive divisor.
+        """
+        rows = token_history.tolist()
+        eos = self.eos_token_id
+        multipliers = [int(value) for value in self.layer_multipliers.tolist()]
+        sizes = [int(value) for value in self.head_vocab_sizes.tolist()]
+        offsets = [int(value) for value in self.head_offsets.tolist()]
+        heads = self.heads_per_ngram
+        span = self.ngram_size
+        last = span - 1
+        answer = []
+        for row in rows:
+            # `shifted[s]` at the last position: the token `s` places back, provided that token is
+            # in the same document -- an EOS between the two makes it an EOS instead.
+            shifted = []
+            for shift in range(span):
+                source = last - shift
+                if source < 0:
+                    shifted.append(eos)
+                    continue
+                crossed = eos in row[source + 1:last]
+                shifted.append(eos if crossed else row[source])
+            head_ids = []
+            for ngram in range(2, span + 1):
+                start = (ngram - 2) * heads
+                mixed = _signed64(multipliers[0] * shifted[0])
+                for position in range(1, ngram):
+                    mixed = _signed64(mixed ^ _signed64(multipliers[position] * shifted[position]))
+                for head in range(start, start + heads):
+                    head_ids.append(mixed % sizes[head] + offsets[head])
+            answer.append(head_ids)
+        # `[batch, out_len, heads]`, the shape the tensor path returns.
+        return torch.tensor(answer, dtype=torch.long).unsqueeze(1)
+
     def row_ids(self, token_history: torch.Tensor, out_len: int) -> torch.Tensor:
         """token_history: (batch, context_len + out_len) -> (batch, out_len, ngram_heads)."""
         token_history = token_history.to("cpu", dtype=torch.long)
+        if out_len == 1 and token_history.shape[1] == self.ngram_size:
+            # The whole history is one window and one row is wanted: the tensor path would build
+            # `ngram_size` shifted copies to read one element from each.
+            return self._row_ids_one_token(token_history)
         shifted = [self._shift_right_ignore_eos(token_history, s) for s in range(self.ngram_size)]
         blocks = []
         for ngram in range(2, self.ngram_size + 1):
@@ -669,7 +921,7 @@ class TopKRouter:
         self.norm_topk_prob = norm_topk_prob
 
     def __call__(self, hidden_states: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        logits = F.linear(hidden_states, self.weight)
+        logits = row_invariant_linear(hidden_states, self.weight)
         probs = F.softmax(logits, dim=-1, dtype=torch.float32)
         top_value, indices = torch.topk(probs, self.top_k, dim=-1)
         if self.norm_topk_prob:
@@ -696,5 +948,5 @@ def swiglu_expert(
     x: torch.Tensor, gate_up_proj: torch.Tensor, down_proj: torch.Tensor
 ) -> torch.Tensor:
     """One expert's fused-gate SwiGLU: gate_up is [2*inter, hidden] row-packed."""
-    gate, up = F.linear(x, gate_up_proj).chunk(2, dim=-1)
-    return F.linear(F.silu(gate) * up, down_proj)
+    gate, up = row_invariant_linear(x, gate_up_proj).chunk(2, dim=-1)
+    return row_invariant_linear(F.silu(gate) * up, down_proj)

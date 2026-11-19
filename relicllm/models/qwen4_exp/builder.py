@@ -28,6 +28,7 @@ from relicllm.models.qwen4_exp.moe import (
     DeepFallbackMoE,
     DeviceExpertMoE,
     Fp8SlotExpertMoE,
+    NvFp4SlotExpertMoE,
     HostExpertMoE,
     InMemoryMoE,
     ShardedMoE,
@@ -40,6 +41,10 @@ from relicllm.models.qwen4_exp.weights import (
 )
 
 LM = "model.language_model"
+
+#: Room the MTP pin leaves on a card for everything else.  The pin is a copy of one layer's
+#: experts, but building it needs the source rows and the target buffer at once.
+_MTP_PIN_HEADROOM_BYTES = 3 << 30
 
 # Layer-local tensor suffixes, grouped by the sub-module that consumes them.
 _HC_SUFFIXES = ("hc_norm", "input_mix_weight_down", "input_mix_weight_up", "block_inject_weight")
@@ -138,6 +143,175 @@ def layer_range_for(n_layers: int, pp_size: int, pp_rank: int) -> tuple[int, int
     return (pp_rank * n_layers) // pp_size, ((pp_rank + 1) * n_layers) // pp_size
 
 
+def _tp_shard(
+    config: Qwen4ExpTextConfig, world_size: int, rank: int
+) -> tuple[TPShard, dict[str, int]]:
+    """This rank's heads, and the kv window that binds them.
+
+    Pulled out of `build_heterogeneous` so the MTP head is divided by the same rule rather than by a
+    copy of it: the head's output goes through the same lm_head, so a rank that took a different
+    slice of q heads would contribute a differently-sharded partial to the same all-reduce.
+
+    GQA: a q head is bound to the kv head `q // num_kv_groups`, so slicing q heads dictates which kv
+    heads this rank needs.  With 24 q / 2 kv on 4 ranks each rank owns 6 q heads that all share one
+    kv head, so kv is sliced (not replicated) and the group count stays consistent.
+    """
+    q_per_rank = config.num_attention_heads // world_size
+    global_groups = config.num_attention_heads // config.num_key_value_heads
+    kv_start = (rank * q_per_rank) // global_groups
+    kv_end = ((rank + 1) * q_per_rank - 1) // global_groups + 1
+    kv_per_rank = kv_end - kv_start
+    if q_per_rank % kv_per_rank != 0:
+        raise ValueError(
+            f"TP world_size={world_size} splits {config.num_attention_heads} q heads into "
+            f"{q_per_rank} per rank, which does not group evenly onto {kv_per_rank} kv heads"
+        )
+    shard = TPShard(
+        attn_heads=q_per_rank,
+        attn_kv_heads=kv_per_rank,
+        # The indexer's score is a sum over its heads and its mask must be
+        # identical on every rank, so it is replicated rather than sharded.
+        indexer_heads=config.indexer_n_heads or 0,
+        linear_v_heads=config.linear_num_value_heads // world_size,
+        linear_k_heads=config.linear_num_key_heads // world_size,
+    )
+    return shard, {"kv_start": kv_start, "kv_end": kv_end}
+
+
+def _shard_layer_dense(
+    store_view,
+    base: str,
+    config: Qwen4ExpTextConfig,
+    dtype: torch.dtype,
+    device: torch.device,
+    rank: int,
+    world_size: int,
+    kv: dict[str, int],
+    *,
+    is_linear: bool,
+) -> dict[str, torch.Tensor]:
+    """One decoder layer's non-expert tensors, sharded for `rank` of `world_size`.
+
+    `store_view(name)` returns the checkpoint's tensor.  Shared by the main stack and the MTP head:
+    the dense half of an MTP layer is an ordinary QSA layer, and two spellings of its sharding is
+    exactly how the head would end up reading a different slice of q/o than the layers whose state
+    it drafts from.
+    """
+    key_dim = config.key_dim
+    v_dim = config.value_dim
+    k_per = key_dim // world_size
+    v_per = v_dim // world_size
+
+    def dense(name: str) -> torch.Tensor:
+        return store_view(name).to(device, dtype=dtype)
+
+    def shard_rows(name: str, groups: int, group_size: int) -> torch.Tensor:
+        """Split a [out, in] weight's output rows into `groups` head-groups and keep this rank's."""
+        full = store_view(name)
+        per_rank = groups // world_size
+        start = rank * per_rank * group_size
+        end = start + per_rank * group_size
+        return full[start:end].to(device, dtype=dtype)
+
+    def shard_cols(name: str, groups: int, group_size: int) -> torch.Tensor:
+        """Split a [out, in] weight's input columns to match a row-sharded input."""
+        full = store_view(name)
+        per_rank = groups // world_size
+        start = rank * per_rank * group_size
+        end = start + per_rank * group_size
+        return full[:, start:end].to(device, dtype=dtype)
+
+    weights: dict[str, torch.Tensor] = {}
+    for hc in ("attn_hyper_connection", "mlp_hyper_connection"):
+        for suffix in _HC_SUFFIXES:
+            weights[f"{hc}.{suffix}"] = dense(f"{base}.{hc}.{suffix}.weight")
+
+    if is_linear:
+        # qkv is packed [k_dim, k_dim, v_dim]; shard each section by heads.
+        qkv = store_view(f"{base}.linear_attn.in_proj_qkv.weight")
+        weights["linear_attn.in_proj_qkv"] = torch.cat(
+            [
+                qkv[rank * k_per : (rank + 1) * k_per],
+                qkv[key_dim + rank * k_per : key_dim + (rank + 1) * k_per],
+                qkv[2 * key_dim + rank * v_per : 2 * key_dim + (rank + 1) * v_per],
+            ],
+            dim=0,
+        ).to(device, dtype=dtype)
+        weights["linear_attn.in_proj_z"] = shard_rows(
+            f"{base}.linear_attn.in_proj_z.weight",
+            config.linear_num_value_heads,
+            config.linear_value_head_dim,
+        )
+        weights["linear_attn.in_proj_b"] = shard_rows(
+            f"{base}.linear_attn.in_proj_b.weight", config.linear_num_value_heads, 1
+        )
+        weights["linear_attn.in_proj_a"] = shard_rows(
+            f"{base}.linear_attn.in_proj_a.weight", config.linear_num_value_heads, 1
+        )
+        # conv1d is depthwise over the packed conv_dim, so it shards the same way as in_proj_qkv.
+        conv = store_view(f"{base}.linear_attn.conv1d.weight")
+        weights["linear_attn.conv1d"] = torch.cat(
+            [
+                conv[rank * k_per : (rank + 1) * k_per],
+                conv[key_dim + rank * k_per : key_dim + (rank + 1) * k_per],
+                conv[2 * key_dim + rank * v_per : 2 * key_dim + (rank + 1) * v_per],
+            ],
+            dim=0,
+        ).to(device, dtype=dtype)
+        v_head_per_rank = config.linear_num_value_heads // world_size
+        weights["linear_attn.dt_bias"] = store_view(f"{base}.linear_attn.dt_bias")[
+            rank * v_head_per_rank : (rank + 1) * v_head_per_rank
+        ].to(device, dtype=dtype)
+        weights["linear_attn.A_log"] = store_view(f"{base}.linear_attn.A_log")[
+            rank * v_head_per_rank : (rank + 1) * v_head_per_rank
+        ].to(device, dtype=dtype)
+        # norm is per-head-dim (shared across heads), so it stays whole.
+        weights["linear_attn.norm"] = dense(f"{base}.linear_attn.norm.weight")
+        weights["linear_attn.out_proj"] = shard_cols(
+            f"{base}.linear_attn.out_proj.weight",
+            config.linear_num_value_heads,
+            config.linear_value_head_dim,
+        )
+    else:
+        # q_proj packs [value, gate] per head, so its head stride is 2*head_dim.
+        weights["self_attn.q_proj"] = shard_rows(
+            f"{base}.self_attn.q_proj.weight", config.num_attention_heads, config.head_dim * 2
+        )
+        # Slice the kv heads this rank's q heads actually attend to.
+        kv_lo = kv["kv_start"] * config.head_dim
+        kv_hi = kv["kv_end"] * config.head_dim
+        weights["self_attn.k_proj"] = store_view(f"{base}.self_attn.k_proj.weight")[kv_lo:kv_hi].to(
+            device, dtype=dtype
+        )
+        weights["self_attn.v_proj"] = store_view(f"{base}.self_attn.v_proj.weight")[kv_lo:kv_hi].to(
+            device, dtype=dtype
+        )
+        weights["self_attn.o_proj"] = shard_cols(
+            f"{base}.self_attn.o_proj.weight", config.num_attention_heads, config.head_dim
+        )
+        weights["self_attn.q_norm"] = dense(f"{base}.self_attn.q_norm.weight")
+        weights["self_attn.k_norm"] = dense(f"{base}.self_attn.k_norm.weight")
+        # The indexer's scores are a sum over its heads, so sharding heads would need its own
+        # reduce. Keep it replicated: 640x2560 per layer.
+        weights["self_attn.index_qk_proj"] = dense(f"{base}.self_attn.indexer.index_qk_proj.weight")
+        weights["self_attn.q_layernorm"] = dense(f"{base}.self_attn.indexer.q_layernorm.weight")
+        weights["self_attn.k_layernorm"] = dense(f"{base}.self_attn.indexer.k_layernorm.weight")
+
+    weights["mlp.gate"] = dense(f"{base}.mlp.gate.weight")
+    weights["mlp.shared_expert_gate"] = dense(f"{base}.mlp.shared_expert_gate.weight")
+    # Shared expert: column-parallel gate/up, row-parallel down, so its partial sums fold into the
+    # same all-reduce as the routed experts.
+    inter_per_rank = config.shared_expert_intermediate_size // world_size
+    gp = store_view(f"{base}.mlp.shared_expert.gate_proj.weight")
+    up = store_view(f"{base}.mlp.shared_expert.up_proj.weight")
+    dn = store_view(f"{base}.mlp.shared_expert.down_proj.weight")
+    lo, hi = rank * inter_per_rank, (rank + 1) * inter_per_rank
+    weights["mlp.shared_expert.gate_proj"] = gp[lo:hi].to(device, dtype=dtype)
+    weights["mlp.shared_expert.up_proj"] = up[lo:hi].to(device, dtype=dtype)
+    weights["mlp.shared_expert.down_proj"] = dn[:, lo:hi].to(device, dtype=dtype)
+    return weights
+
+
 def _final_mixer(getter, config: Qwen4ExpTextConfig, *, prefix: str = LM) -> GatedResidual:
     base = f"{prefix}.hyper_connection_mixer"
     return GatedResidual(
@@ -146,6 +320,160 @@ def _final_mixer(getter, config: Qwen4ExpTextConfig, *, prefix: str = LM) -> Gat
         getter(f"{base}.input_mix_weight_down.weight"),
         getter(f"{base}.input_mix_weight_up.weight"),
         None,
+    )
+
+
+def _mtp_shard_config(config: Qwen4ExpTextConfig) -> Qwen4ExpTextConfig:
+    """`config`, with layer 0 declared as the MTP block's attention flavour.
+
+    Only `_tp_shard` and `_shard_layer_dense` read the flavour, and both are asked about layer 0.
+    A shallow copy with its own one-entry `layer_types` is the whole of the override.
+    """
+    import copy
+
+    out = copy.copy(config)
+    out.layer_types = list(getattr(config, "mtp_layer_types", None) or ["qwen_sparse_attention"])
+    return out
+
+
+def _mtp_dense_weights(
+    checkpoint: Qwen4ExpCheckpoint,
+    config: Qwen4ExpTextConfig,
+    dtype: torch.dtype,
+    device: torch.device,
+    rank: int,
+    world_size: int,
+    kv_window: dict[str, int],
+    prefix: str,
+) -> dict[str, torch.Tensor]:
+    """The MTP block's dense tensors, sharded by the main layers' rules, in a layer's short keys."""
+    is_linear = _mtp_shard_config(config).is_linear_layer(0)
+    weights = _shard_layer_dense(
+        checkpoint.store.view,
+        f"{prefix}.layers.0",
+        config,
+        dtype,
+        device,
+        rank,
+        world_size,
+        kv_window,
+        is_linear=is_linear,
+    )
+    # The two fusion projections and the mixer that feeds lm_head.  Replicated rather than sharded:
+    # `pre_fc_norm_hidden` normalizes whole streams that every rank already holds in full, and the
+    # mixer's output is reduced by the same all-reduce the layer's MLP block was.  Together they are
+    # 3 x 2560 x 2560 bf16 plus the low-rank mixer, 40 MiB a rank.
+    for name in ("pre_fc_norm_hidden", "pre_fc_norm_embedding"):
+        weights[name] = checkpoint.store.view(f"{prefix}.{name}.weight").to(device, dtype=dtype)
+    for name in ("fc_hidden", "fc_embedding"):
+        weights[name] = checkpoint.store.view(f"{prefix}.{name}.weight").to(device, dtype=dtype)
+    mixer = f"{prefix}.hyper_connection_mixer"
+    for suffix in ("hc_norm", "input_mix_weight_down", "input_mix_weight_up"):
+        weights[f"hyper_connection_mixer.{suffix}"] = checkpoint.store.view(
+            f"{mixer}.{suffix}.weight"
+        ).to(device, dtype=dtype)
+    return weights
+
+
+class _MTPExpertReader:
+    """Serves the MTP layer's routed experts to a `HostExpertMoE` as if they were layer 0's.
+
+    The MTP block is one layer and it is not `model.language_model.layers.0`, so its expert rows do
+    not live where every other reader looks. Rather than teach `HostExpertMoE` a second naming
+    scheme -- which would put a checkpoint layout decision inside the staging policy -- this is the
+    reader seam it already takes, with the layer id ignored. That is also what keeps the ownership
+    rule identical to the main layers': the inner `HostExpertMoE` wraps this in the same
+    `ShardedMoE`, which masks by `expert_id % world_size == rank` before the reader is ever asked.
+
+    `mtp_layer_idx` is what the checkpoint's MTP stack numbers its layers by.  The `layer_idx` a
+    caller passes in is ignored: the head has one layer and there is nothing to disambiguate.
+    """
+
+    def __init__(self, checkpoint, *, mtp_layer_idx: int = 0) -> None:
+        self.checkpoint = checkpoint
+        self.mtp_layer_idx = mtp_layer_idx
+        #: `HostExpertMoE.pin_layers` asks the shard which ids this rank owns; answering None makes
+        #: it consider all of them, which is right here because the MTP shard is its own table.
+        self.expert_shard = None
+
+    def expert_rows(self, layer_idx: int, expert_id: int):
+        return self.checkpoint.mtp_expert_rows(self.mtp_layer_idx, expert_id)
+
+
+def build_mtp_head(
+    config: Qwen4ExpTextConfig,
+    checkpoint: Qwen4ExpCheckpoint,
+    *,
+    device: torch.device | str,
+    dtype: torch.dtype = torch.bfloat16,
+    rank: int = 0,
+    world_size: int = 1,
+    all_reduce=None,
+    mtp_layer_idx: int = 0,
+    prefix: str = "mtp",
+    pin_experts: int = 0,
+):
+    """Load the MTP block and its expert backend, sharded the same way the main layers are.
+
+    The dense half is sharded by exactly the rules `build_heterogeneous` uses (q heads, kv heads
+    derived from them, the indexer replicated, the shared expert column/row parallel) and reduced by
+    the same `all_reduce`, because the head's output goes through the same lm_head and therefore has
+    to be the same full-vocabulary quantity on every rank.
+
+    The expert half is deliberately *not* the main stack's backend object.  Those experts live under
+    `mtp.layers.0`, with their own rows and their own format -- on the ModelOpt NVFP4 checkpoint the
+    main experts are NVFP4 and the MTP experts are still FP8 -- so the head gets its own
+    `HostExpertMoE` over `_MTPExpertReader`, wrapped in the same `ShardedMoE`.
+    """
+    from relicllm.models.qwen4_exp.mtp import MTPHead  # noqa: PLC0415 -- avoids a cycle at import
+
+    device = torch.device(device)
+    config_for_layer = _mtp_shard_config(config)
+    shard, kv_window = _tp_shard(config_for_layer, world_size, rank)
+
+    weights = _mtp_dense_weights(
+        checkpoint, config, dtype, device, rank, world_size, kv_window, prefix
+    )
+    reader = _MTPExpertReader(checkpoint, mtp_layer_idx=mtp_layer_idx)
+    inner = HostExpertMoE(reader, config.num_experts, device, dtype)
+    if pin_experts:
+        # The head runs once a round under speculative decoding, and an unpinned head reads its
+        # experts over PCIe on every one of those calls.  It is one layer -- ~0.30 GiB a rank at
+        # TP4, ~0.4 GiB of FP8 codes at TP4 on the NVFP4 checkpoint -- so pinning it is cheap
+        # *relative to a card with room*, and not affordable on one without: the 4x2080 Ti box runs
+        # the trunk's whole NVFP4 bank resident and has ~1.7 GiB left, which the pin plus its load
+        # transient does not fit in.
+        #
+        # So the budget is what the card can actually spare, taken now rather than promised by the
+        # caller, and a head that does not fit is left staging: staging is slower, not wrong, and
+        # `mtp_accuracy` does not care which it got.
+        # The pin has to fit *and* leave the run somewhere to work: on the 4x2080 Ti box the
+        # trunk's NVFP4 bank takes 20.1 of 21.48 GiB, a 0.4 GiB pin lands, and the first
+        # activation afterwards is the 20 MiB that runs out.  So a pin is only taken when the card
+        # has room for its own copy plus a reserve, rather than whenever it has room for the copy.
+        if device.type == "cuda":
+            free = int(torch.cuda.mem_get_info(device)[0]) - _MTP_PIN_HEADROOM_BYTES
+        else:
+            free = 0
+        budget = min(int(pin_experts), max(0, free))
+        if budget > 0:
+            inner.pin_layers([mtp_layer_idx], budget_bytes=budget)
+        elif rank == 0 and torch.distributed.is_initialized():
+            spare = int(torch.cuda.mem_get_info(device)[0]) if device.type == "cuda" else 0
+            print(
+                f"[qwen4exp] mtp experts stay in host RAM: only {spare / (1 << 20):.0f} MiB "
+                f"spare, and pinning needs {_MTP_PIN_HEADROOM_BYTES / (1 << 30):.0f} GiB of "
+                "headroom left over for the run itself",
+                flush=True,
+            )
+    moe = ShardedMoE(inner, rank, world_size) if world_size > 1 else inner
+    return MTPHead(
+        config,
+        weights,
+        moe,
+        device=device,
+        tp_shard=shard,
+        all_reduce=all_reduce,
     )
 
 
@@ -258,6 +586,8 @@ def build_heterogeneous(
     expert_resident_layers: bool = False,
     expert_nvfp4: bool = False,
     expert_reserve_bytes: int = 3 << 30,
+    mtp: bool = False,
+    mtp_pin_bytes: int = 0,
 ) -> Qwen4ExpModel:
     """TP-sharded dense weights on GPU, routed experts + PLE table in host RAM.
 
@@ -282,47 +612,8 @@ def build_heterogeneous(
     def dense(name: str) -> torch.Tensor:
         return store.load(name, device=device, dtype=dtype)
 
-    def shard_rows(name: str, groups: int, group_size: int) -> torch.Tensor:
-        """Split a [out, in] weight's output rows into `groups` head-groups and
-        keep this rank's contiguous slice."""
-        full = store.view(name)
-        per_rank = groups // world_size
-        start = rank * per_rank * group_size
-        end = start + per_rank * group_size
-        return full[start:end].to(device, dtype=dtype)
-
-    def shard_cols(name: str, groups: int, group_size: int) -> torch.Tensor:
-        """Split a [out, in] weight's input columns to match a row-sharded input."""
-        full = store.view(name)
-        per_rank = groups // world_size
-        start = rank * per_rank * group_size
-        end = start + per_rank * group_size
-        return full[:, start:end].to(device, dtype=dtype)
-
-    # GQA: a q head is bound to the kv head `q // num_kv_groups`, so slicing q
-    # heads dictates which kv heads this rank needs.  With 24 q / 2 kv on 4
-    # ranks each rank owns 6 q heads that all share one kv head, so kv is
-    # sliced (not replicated) and the group count stays consistent.
-    q_per_rank = config.num_attention_heads // world_size
-    global_groups = config.num_attention_heads // config.num_key_value_heads
-    kv_start = (rank * q_per_rank) // global_groups
-    kv_end = ((rank + 1) * q_per_rank - 1) // global_groups + 1
-    kv_per_rank = kv_end - kv_start
-    if q_per_rank % kv_per_rank != 0:
-        raise ValueError(
-            f"TP world_size={world_size} splits {config.num_attention_heads} q heads into "
-            f"{q_per_rank} per rank, which does not group evenly onto {kv_per_rank} kv heads"
-        )
-
-    shard = TPShard(
-        attn_heads=q_per_rank,
-        attn_kv_heads=kv_per_rank,
-        # The indexer's score is a sum over its heads and its mask must be
-        # identical on every rank, so it is replicated rather than sharded.
-        indexer_heads=config.indexer_n_heads or 0,
-        linear_v_heads=config.linear_num_value_heads // world_size,
-        linear_k_heads=config.linear_num_key_heads // world_size,
-    )
+    shard, kv_window = _tp_shard(config, world_size, rank)
+    kv_start, kv_end = kv_window["kv_start"], kv_window["kv_end"]
 
     # The resident mode takes the *same* shard and drops the staging policy: the
     # `expert_weights` seam is the only thing that changes, so the dispatch loop,
@@ -350,6 +641,17 @@ def build_heterogeneous(
                 rank=rank,
             ),
             host_moe,
+        )
+    elif expert_fused_fp8 and os.environ.get("POCKETLLM_QWEN4_NVFP4_EXPERTS", "0") == "1":
+        # The same placement and the same seam as the FP8 fused path, one arithmetic apart: the
+        # table is quantized to NVFP4 at load (about 7.85 GiB a rank against 14.06) and the decode
+        # runs the NVFP4 kernel pair. Opt-in because it changes the numbers: the reconstruction
+        # reaches cosine 0.988 at the expert-MLP output, which is a quality decision, not a
+        # performance one, and no token-identity check can gate it.
+        if expert_shard is None or getattr(expert_shard, "device", None) is None:
+            raise ValueError("the NVFP4 expert bank needs the experts resident on the device")
+        inner_moe = NvFp4SlotExpertMoE(
+            expert_shard, config.num_experts, device, num_layers=config.num_hidden_layers
         )
     elif expert_fused_fp8:
         if expert_shard is None or getattr(expert_shard, "device", None) is None:
@@ -386,95 +688,17 @@ def build_heterogeneous(
             layers.append(None)
             continue
         base = f"{prefix}.layers.{layer_idx}"
-        weights: dict[str, torch.Tensor] = {}
-
-        for hc in ("attn_hyper_connection", "mlp_hyper_connection"):
-            for suffix in _HC_SUFFIXES:
-                weights[f"{hc}.{suffix}"] = dense(f"{base}.{hc}.{suffix}.weight")
-
-        if config.is_linear_layer(layer_idx):
-            # qkv is packed [k_dim, k_dim, v_dim]; shard each section by heads.
-            qkv = store.view(f"{base}.linear_attn.in_proj_qkv.weight")
-            k_dim, v_dim = config.key_dim, config.value_dim
-            k_per = k_dim // world_size
-            v_per = v_dim // world_size
-            weights["linear_attn.in_proj_qkv"] = torch.cat(
-                [
-                    qkv[rank * k_per : (rank + 1) * k_per],
-                    qkv[k_dim + rank * k_per : k_dim + (rank + 1) * k_per],
-                    qkv[2 * k_dim + rank * v_per : 2 * k_dim + (rank + 1) * v_per],
-                ],
-                dim=0,
-            ).to(device, dtype=dtype)
-            weights["linear_attn.in_proj_z"] = shard_rows(
-                f"{base}.linear_attn.in_proj_z.weight", config.linear_num_value_heads, config.linear_value_head_dim
-            )
-            weights["linear_attn.in_proj_b"] = shard_rows(
-                f"{base}.linear_attn.in_proj_b.weight", config.linear_num_value_heads, 1
-            )
-            weights["linear_attn.in_proj_a"] = shard_rows(
-                f"{base}.linear_attn.in_proj_a.weight", config.linear_num_value_heads, 1
-            )
-            # conv1d is depthwise over the packed conv_dim, so it shards the same
-            # way as in_proj_qkv.
-            conv = store.view(f"{base}.linear_attn.conv1d.weight")
-            weights["linear_attn.conv1d"] = torch.cat(
-                [
-                    conv[rank * k_per : (rank + 1) * k_per],
-                    conv[k_dim + rank * k_per : k_dim + (rank + 1) * k_per],
-                    conv[2 * k_dim + rank * v_per : 2 * k_dim + (rank + 1) * v_per],
-                ],
-                dim=0,
-            ).to(device, dtype=dtype)
-            v_head_per_rank = config.linear_num_value_heads // world_size
-            weights["linear_attn.dt_bias"] = store.view(f"{base}.linear_attn.dt_bias")[
-                rank * v_head_per_rank : (rank + 1) * v_head_per_rank
-            ].to(device, dtype=dtype)
-            weights["linear_attn.A_log"] = store.view(f"{base}.linear_attn.A_log")[
-                rank * v_head_per_rank : (rank + 1) * v_head_per_rank
-            ].to(device, dtype=dtype)
-            # norm is per-head-dim (shared across heads), so it stays whole.
-            weights["linear_attn.norm"] = dense(f"{base}.linear_attn.norm.weight")
-            weights["linear_attn.out_proj"] = shard_cols(
-                f"{base}.linear_attn.out_proj.weight", config.linear_num_value_heads, config.linear_value_head_dim
-            )
-        else:
-            # q_proj packs [value, gate] per head, so its head stride is 2*head_dim.
-            weights["self_attn.q_proj"] = shard_rows(
-                f"{base}.self_attn.q_proj.weight", config.num_attention_heads, config.head_dim * 2
-            )
-            # Slice the kv heads this rank's q heads actually attend to.
-            kv_lo = kv_start * config.head_dim
-            kv_hi = kv_end * config.head_dim
-            weights["self_attn.k_proj"] = store.view(f"{base}.self_attn.k_proj.weight")[
-                kv_lo:kv_hi
-            ].to(device, dtype=dtype)
-            weights["self_attn.v_proj"] = store.view(f"{base}.self_attn.v_proj.weight")[
-                kv_lo:kv_hi
-            ].to(device, dtype=dtype)
-            weights["self_attn.o_proj"] = shard_cols(
-                f"{base}.self_attn.o_proj.weight", config.num_attention_heads, config.head_dim
-            )
-            weights["self_attn.q_norm"] = dense(f"{base}.self_attn.q_norm.weight")
-            weights["self_attn.k_norm"] = dense(f"{base}.self_attn.k_norm.weight")
-            # The indexer's scores are a sum over its heads, so sharding heads
-            # would need its own reduce. Keep it replicated: 640x2560 per layer.
-            weights["self_attn.index_qk_proj"] = dense(f"{base}.self_attn.indexer.index_qk_proj.weight")
-            weights["self_attn.q_layernorm"] = dense(f"{base}.self_attn.indexer.q_layernorm.weight")
-            weights["self_attn.k_layernorm"] = dense(f"{base}.self_attn.indexer.k_layernorm.weight")
-
-        weights["mlp.gate"] = dense(f"{base}.mlp.gate.weight")
-        weights["mlp.shared_expert_gate"] = dense(f"{base}.mlp.shared_expert_gate.weight")
-        # Shared expert: column-parallel gate/up, row-parallel down, so its
-        # partial sums fold into the same all-reduce as the routed experts.
-        inter_per_rank = config.shared_expert_intermediate_size // world_size
-        gp = store.view(f"{base}.mlp.shared_expert.gate_proj.weight")
-        up = store.view(f"{base}.mlp.shared_expert.up_proj.weight")
-        dn = store.view(f"{base}.mlp.shared_expert.down_proj.weight")
-        lo, hi = rank * inter_per_rank, (rank + 1) * inter_per_rank
-        weights["mlp.shared_expert.gate_proj"] = gp[lo:hi].to(device, dtype=dtype)
-        weights["mlp.shared_expert.up_proj"] = up[lo:hi].to(device, dtype=dtype)
-        weights["mlp.shared_expert.down_proj"] = dn[:, lo:hi].to(device, dtype=dtype)
+        weights = _shard_layer_dense(
+            store.view,
+            base,
+            config,
+            dtype,
+            device,
+            rank,
+            world_size,
+            kv_window,
+            is_linear=config.is_linear_layer(layer_idx),
+        )
 
         ple = None
         ple_index = config.ple_layer_index(layer_idx)
@@ -583,8 +807,42 @@ def build_heterogeneous(
         # After the pinning, not before: the capture boundary is the count this decided.
         moe.resident_layer_prefix = int(getattr(inner_moe, "_resident_layers", 0) or 0)
 
+    head = None
+    if mtp:
+        # Built after the main experts so that on a card that is already tight the head's own
+        # failure is reported against the memory that is actually left rather than against a moment
+        # before the main stack took its share.  Not under pipeline parallelism: the head reads the
+        # backbone's final stream state and feeds the lm_head, so it belongs on the stage that owns
+        # both, and only the last stage does.
+        if pp_size > 1 and pp_rank != pp_size - 1:
+            if rank == 0:
+                print(
+                    f"[qwen4exp] --mtp ignored on pipeline stage {pp_rank}/{pp_size}: the head "
+                    "runs on the stage that owns the last layer",
+                    flush=True,
+                )
+        else:
+            head = build_mtp_head(
+                config,
+                checkpoint,
+                device=device,
+                dtype=dtype,
+                rank=rank,
+                world_size=world_size,
+                all_reduce=all_reduce,
+                # Everything free after the trunk's bank is fair game: the head is one layer,
+                # and a head that has to stage its experts is a draft that costs more than the
+                # step it saves.
+                pin_experts=max(0, int(mtp_pin_bytes)),
+            )
+            if rank == 0:
+                print(
+                    "[qwen4exp] mtp head loaded "
+                    f"({'fp8' if checkpoint.mtp_fp8_experts() else 'packed'} expert rows)",
+                    flush=True,
+                )
 
-    return Qwen4ExpModel(
+    model = Qwen4ExpModel(
         config,
         layers,
         # The token embedding goes on the card, not in host RAM.  It is 1.18 GiB and a decode
@@ -600,3 +858,9 @@ def build_heterogeneous(
         pp_rank=pp_rank,
         profiler=profiler,
     )
+    if head is not None:
+        # The head shares the embedding rather than holding a second copy: it is the same 1.18 GiB
+        # table, and a copy would be the largest single allocation on a card that is already full.
+        head.embed_tokens = model.embed_tokens
+        model.mtp = head
+    return model
