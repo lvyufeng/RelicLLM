@@ -2,7 +2,7 @@
 
 This measures weight reconstruction and expert-MLP output drift, not end-to-end model quality or
 GPU throughput. It contrasts the historical gate-first recipe with the corrected joint-amax recipe.
-Example: python tests/probe_qwen4_exp_nvfp4_scales.py --model /workspace/qwen38-fp8
+Example: python tests/probe_qwen4_exp_nvfp4_scales.py --model <checkpoint>
 """
 from __future__ import annotations
 

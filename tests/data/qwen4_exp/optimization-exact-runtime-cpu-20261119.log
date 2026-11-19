@@ -193,11 +193,11 @@ tests/test_qwen4_exp_tp_sharding.py:374: AssertionError
 [qwen4exp] pinning the expert shard failed (simulated memlock limit); falling back to pageable host memory
 =============================== warnings summary ===============================
 tests/test_qwen4_exp_real_checkpoint.py:199
-  /Users/lvyufeng/Projects/RelicLLM/tests/test_qwen4_exp_real_checkpoint.py:199: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  /Users/<user>/Projects/RelicLLM/tests/test_qwen4_exp_real_checkpoint.py:199: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
     @pytest.mark.slow
 
 tests/test_qwen4_exp_real_checkpoint.py:229
-  /Users/lvyufeng/Projects/RelicLLM/tests/test_qwen4_exp_real_checkpoint.py:229: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  /Users/<user>/Projects/RelicLLM/tests/test_qwen4_exp_real_checkpoint.py:229: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
     @pytest.mark.slow
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

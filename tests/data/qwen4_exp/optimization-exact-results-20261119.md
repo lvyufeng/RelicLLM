@@ -18,14 +18,14 @@ changes were preserved.
 ## 1. Cat-free strict-row projection: accepted
 
 The strict verifier already calls `F.linear` independently at M=1 for each small BF16 row span.
-[The new helper](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/linear_out.py>) writes
+[The new helper](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/linear_out.py>) writes
 those rows into one output allocation through `aten.linear.out`, avoiding the final concatenation.
 It retains M=1 staging, dtype and leading output shape; it is not a bmm, FP16 mirror or TF32 mode.
 
 Higher-rank preserve-shape `linear.out` was rejected by actual CUDA tests. The production helper
-refuses that form before dispatch and the [binding](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py>)
+refuses that form before dispatch and the [binding](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py>)
 requires the explicit two-dimensional staging flag. Bias and no-bias, mutable operands, output
-storage offsets and graph replay are covered by [the tests](</Users/lvyufeng/Projects/RelicLLM/tests/test_qwen4_exp_linear_out.py>).
+storage offsets and graph replay are covered by [the tests](</Users/<user>/Projects/RelicLLM/tests/test_qwen4_exp_linear_out.py>).
 
 ### Native four-arm A/B
 
@@ -40,7 +40,7 @@ Every arm matched the original 512 greedy ids, all callbacks and all eight ranks
 233 verifier rounds and accepted-prefix histogram `[77, 80, 35, 41]`. The final same-host pair gives
 **+1.90%** decode rate. The cold first arm is not used to inflate the gain.
 
-Source: [all native ids and rank/callback records](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-linear-native512-20261119.jsonl>).
+Source: [all native ids and rank/callback records](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-linear-native512-20261119.jsonl>).
 Restored-prefix arms qualify decode arithmetic; their restore times are not fresh prefill speed or
 production prefix-cache latency.
 
@@ -59,7 +59,7 @@ Both requests performed a full prefill; there was **no prefix reuse**. The pool 
 one hit, no address/boundary invalidations, and all rank/callback ids remained exact. The final
 session close cost **0.543735 s**, separately reported rather than hidden in the warm-request rate.
 
-Source: [warm-session lifecycle and all output ids](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-linear-native-warm-20261119.jsonl>).
+Source: [warm-session lifecycle and all output ids](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-linear-native-warm-20261119.jsonl>).
 
 ### How to opt in
 
@@ -73,13 +73,13 @@ export POCKETLLM_QWEN4_LINEAR_OUT_2D=1
 export POCKETLLM_QWEN4_MTP_SESSION=1
 ```
 
-[The reusable baseline environment](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-env-20261119.sh>)
+[The reusable baseline environment](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-env-20261119.sh>)
 keeps experimental dispatches off until a probe explicitly selects an arm. `rank_chunk` reduction
 is hardware-scoped; qualify a new host instead of assuming the stored native reference transfers.
 
 ## 2. NVFP4 compact launch and ordered store: small model gain
 
-[The independent kernel entries](</Users/lvyufeng/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu>)
+[The independent kernel entries](</Users/<user>/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu>)
 retain the original 256-thread implementation. The compact twin uses the same grid, four active
 column-owning warps, dot/FMA order, route accumulation and zeroed buffers, but launches 128 threads.
 
@@ -91,9 +91,9 @@ zero fills. Neither the expert format nor activation precision is changed.
 
 ### Independent operator evidence
 
-- [Compact CUDA run](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-compact-cuda-20261119.log>): **355 passed**, no skips.
-- [Store CUDA run](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-cuda-20261119.log>): **437 passed**, no skips.
-- [Actually unchanged binary versus additive overlay](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-overlay-cuda-20261119.log>): **216 passed**, no skips, plus captured rotating-bank timing.
+- [Compact CUDA run](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-compact-cuda-20261119.log>): **355 passed**, no skips.
+- [Store CUDA run](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-cuda-20261119.log>): **437 passed**, no skips.
+- [Actually unchanged binary versus additive overlay](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-overlay-cuda-20261119.log>): **216 passed**, no skips, plus captured rotating-bank timing.
 
 The last run keeps every baseline operation from the original module and exposes only the two new
 NVFP4 entries from the experimental shared object. Both binary hashes are recorded. The kernel micro
@@ -105,7 +105,7 @@ uses eight banks totaling 1.416 GB and seven samples; it is not measured HBM tra
 | 4 rows | 0.9606 |
 | 512 rows | 0.7413 |
 
-Source: [independent-binary micro samples](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-overlay-micro-20261119.jsonl>).
+Source: [independent-binary micro samples](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-overlay-micro-20261119.jsonl>).
 Compact alone slowed one-row decode and did not improve the real four-row TP8 micro; its default
 minimum is now 128 rows. That threshold is a policy between measured small and large spans, not a
 measured crossover.
@@ -124,10 +124,10 @@ All four arms matched every original greedy id, callback and rank; all used 233 
 decode rate. The first-arm warm-up difference is not a 4% prefill optimization. The approximately
 26% operator saving does **not** become a 26% model saving.
 
-Source: [full-native store proof](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-native512-20261119.jsonl>)
-and [computed final-pair summary](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-native-summary-20261119.json>).
+Source: [full-native store proof](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-native512-20261119.jsonl>)
+and [computed final-pair summary](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-native-summary-20261119.json>).
 Store and compact remain default-off; the sub-one-percent stable model delta does not justify an
-automatic rollout. The additive [overlay installer](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/nvfp4_overlay.py>)
+automatic rollout. The additive [overlay installer](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/nvfp4_overlay.py>)
 and the probe's explicit `--nvfp4-overlay-so` retain the qualified base module rather than silently
 replacing quantization, GDN or QSA bindings.
 
@@ -146,8 +146,8 @@ Every arm matched all 512 original greedy ids, rank-0 callbacks and all eight ra
 233 rounds and the same accepted-prefix histogram `[77, 80, 35, 41]`. The final pair gives **+2.21%**
 decode rate, or +2.54% including request cleanup. The first cold arm is excluded from that comparison.
 
-Source: [combined output, flags and all rank/callback records](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-combined-native512-20261119.jsonl>)
-and [independently checked summary](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-combined-native-summary-20261119.json>).
+Source: [combined output, flags and all rank/callback records](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-combined-native512-20261119.jsonl>)
+and [independently checked summary](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-combined-native-summary-20261119.json>).
 Later arms restore a CPU prefix; they are not a measurement of combination prefill acceleration.
 This run did not use a warm graph session and is not an HTTP-serving qualification. It does not
 establish that the individual linear/store gains add, since they were measured in different runs.
@@ -172,30 +172,30 @@ A different build or host must repeat qualification; do not assume native greedy
 
 ## 3. Hotspot census and rejected evidence
 
-[Full kernel names and family counts](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-kernel-census-20261119.json>)
-replace the old lossy `std::enable_if` bucket; [real projection geometries](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-linear-shapes-20261119.json>)
+[Full kernel names and family counts](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-kernel-census-20261119.json>)
+replace the old lossy `std::enable_if` bucket; [real projection geometries](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-linear-shapes-20261119.json>)
 record shape, dtype, stride and callsite without changing arithmetic. Profiler spans are explicitly
 instrumented and are not an achievable floor. Four rows of one projection are adjacent and may
 reuse L2: multiplying the whole model's dense bytes by four is not measured DRAM traffic.
 
 The build host's unchanged and rebuilt OFF controls both diverged from the other host's stored
-native reference at output index 78. Those [unchanged-control](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-original-native-crosshost_REJECTED-20261119.jsonl>)
-and [rebuilt-control](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-native-crosshost_REJECTED-20261119.jsonl>)
+native reference at output index 78. Those [unchanged-control](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-original-native-crosshost_REJECTED-20261119.jsonl>)
+and [rebuilt-control](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-store-native-crosshost_REJECTED-20261119.jsonl>)
 runs remain rejected. They do not establish a store-kernel defect, a speed result or native
 cross-host parity. Model promotion was re-gated on the already reference-qualified host.
 
 ## 4. Verification and remaining work
 
-[Final CUDA runtime regression](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-runtime-cuda-20261119.log>):
+[Final CUDA runtime regression](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-runtime-cuda-20261119.log>):
 **1828 passed, 34 skipped**; the two unknown `slow` marker warnings predate this round.
 
-[Final Mac/CPU regression](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-runtime-cpu-20261119.log>):
+[Final Mac/CPU regression](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-runtime-cpu-20261119.log>):
 **1744 passed, 146 skipped**, with the same three pre-existing platform failures: two automatic
 backend selections refuse CPU, and the pinned shard clone test assumes CUDA. No failure was added
 to a baseline file. Later overlay teardown and immutable-load guards have **33 CPU contract passes**;
 these are not additional GPU claims.
 
-[The corrected audit](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-audit-20261119.md>)
+[The corrected audit](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-exact-audit-20261119.md>)
 records the rejected preserved-rank mode, timing reconciliation, identity/lifetime rules and host
 scope. The next material gains still have to come from the verifier's dense/communication budget
 or a qualified private-head change. No K2, bmm allowlist, approximate top-k, reduced indexer budget,

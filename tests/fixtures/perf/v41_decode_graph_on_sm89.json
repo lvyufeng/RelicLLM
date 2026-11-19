@@ -9,14 +9,14 @@
   "base_url": "http://127.0.0.1:55959",
   "launch": {
     "argv": [
-      "/workspace/condaenvs/deepseek/bin/python",
+      "<workspace>/condaenvs/deepseek/bin/python",
       "-m",
       "relicllm",
       "serve",
       "--backend",
       "v41",
       "--model",
-      "/workspace/v41-accept-t133/ckpt",
+      "<workspace>/v41-accept-t133/ckpt",
       "--tensor-parallel-size",
       "4",
       "--max-model-len",
@@ -34,7 +34,7 @@
       "--port",
       "55959"
     ],
-    "log": "/workspace/v41-accept-t133/multi-verify/RelicLLM/relicllm-bench-serve.log"
+    "log": "<workspace>/v41-accept-t133/multi-verify/RelicLLM/relicllm-bench-serve.log"
   },
   "scenarios": {
     "decode": {
@@ -61,7 +61,7 @@
         "ttft"
       ],
       "base_url": "http://127.0.0.1:55959",
-      "model": "/workspace/v41-accept-t133/ckpt",
+      "model": "<workspace>/v41-accept-t133/ckpt",
       "warmup_successes": 1,
       "output_tokens_source": "token-bearing chunks",
       "metrics": {

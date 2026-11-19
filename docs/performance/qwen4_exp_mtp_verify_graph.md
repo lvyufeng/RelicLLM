@@ -210,4 +210,4 @@ original greedy ids with all eight ranks and callbacks equal, at 233 rounds and 
 
 The same arithmetic bounds the rest of the remaining single-kernel work: 100 tok/s needs
 +75% from this baseline, which no remaining kernel carries. The
-record is `tests/data/qwen4_exp/optimization-exact-hc-up-mix-results-20261119.md`.
+record is `tests/data/qwen4_exp/optimization-exact-hc-up-mix-resul<host-3090>61119.md`.

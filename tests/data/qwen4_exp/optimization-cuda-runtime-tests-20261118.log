@@ -18,11 +18,11 @@
 ssss................................                                     [100%]
 =============================== warnings summary ===============================
 tests/test_qwen4_exp_real_checkpoint.py:199
-  /home/mseco/qwen4-opt-20261118-tests-final/tests/test_qwen4_exp_real_checkpoint.py:199: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  /home/<user>/qwen4-opt-20261118-tests-final/tests/test_qwen4_exp_real_checkpoint.py:199: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
     @pytest.mark.slow
 
 tests/test_qwen4_exp_real_checkpoint.py:229
-  /home/mseco/qwen4-opt-20261118-tests-final/tests/test_qwen4_exp_real_checkpoint.py:229: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  /home/<user>/qwen4-opt-20261118-tests-final/tests/test_qwen4_exp_real_checkpoint.py:229: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
     @pytest.mark.slow
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

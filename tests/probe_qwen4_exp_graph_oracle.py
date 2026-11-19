@@ -2,7 +2,7 @@
 
 Run on an explicitly leased CUDA host, from the repository root:
   torchrun --nproc_per_node=8 --master_port=60123 \
-    tests/probe_qwen4_exp_graph_oracle.py --model /workspace/qwen38-fp8
+    tests/probe_qwen4_exp_graph_oracle.py --model <checkpoint>
 
 This is a numerical/state oracle, NOT a throughput or task-quality benchmark.
 Both paths share weights and kernels but have independent request caches. It
