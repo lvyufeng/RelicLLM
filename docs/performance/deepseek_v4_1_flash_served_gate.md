@@ -224,19 +224,19 @@ section works through:
 ```bash
 # The server. One process a rank is the CLI's own supervisor.
 export DEEPSEEK_V41_RESIDENT_EXPERTS=1 OMP_NUM_THREADS=22
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -m pocketllm serve \
+/home/<user>/miniconda3/envs/deepseek/bin/python -m pocketllm serve \
   --model /mnt/data3/DeepSeek-V4.1-Flash --backend v41 --tensor-parallel-size 4 \
   --max-model-len 2048 --port 8100 \
   --backend-option expert_pool_rows=288 --backend-option prefill_chunk=4096 \
   --backend-option decode_graphs=true --backend-option threads=22
 
 # The measurement: prompt length in words, or in tokens with the `tok:` prefix.
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/v41_gate.py 1000 1000 1000 1000
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/v41_gate.py 1000 1000 1000 1000
 
 # The longest leg is that command with `--max-model-len 262144` and
 # `--backend-option expert_pool_rows=148` — the reference's own long-context pool, 148 rows because
 # 288 "dies in the second chunk at 262144" — and then
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/v41_gate.py tok:261000 tok:261000 tok:261000
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/v41_gate.py tok:261000 tok:261000 tok:261000
 ```
 
 ## What this page does not claim

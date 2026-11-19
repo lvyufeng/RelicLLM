@@ -390,11 +390,11 @@ arm's 38.5 — so the run that produced these logits is the run this page's tabl
 ```bash
 export DEEPSEEK_V41_RESIDENT_EXPERTS=1
 # the base arm, on the 256K branch
-V41_TREE=/tmp/pr_b /home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+V41_TREE=/tmp/pr_b /home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
     /tmp/probe_v41_chunk_profile_host.py --at 32768 --chunk 4096 --max-seq-len 41024 \
     --pool-rows 148 --buffers 2 --threads 22 --out /tmp/chunk_profile_base
 # the stacked arm, on 98e828f with the three merges
-V41_TREE=/tmp/prefill_all /home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+V41_TREE=/tmp/prefill_all /home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
     /tmp/probe_v41_chunk_profile_host.py --at 32768 --chunk 4096 --max-seq-len 41024 \
     --pool-rows 148 --buffers 2 --threads 22 --out /tmp/chunk_profile_all
 ```
@@ -419,7 +419,7 @@ how an earlier attempt at a back-to-back pair came back `EADDRINUSE` and reporte
 ```bash
 for arm in base:/tmp/pr_b stacked:/tmp/prefill_all; do
     name="${arm%%:*}"; tree="${arm#*:}"
-    V41_TREE="$tree" /home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+    V41_TREE="$tree" /home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
         /tmp/probe_v41_chunk_scaling.py --lengths 262144 --chunk 4096 --pool-rows 148 \
         --buffers 2 --threads 22 --out "/tmp/chunk_scaling_$name.pt"
     sleep 20

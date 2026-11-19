@@ -120,12 +120,12 @@ class Assessment:
         checkpoint = os.path.abspath(self.checkpoint)
         return (
             f"CUDA_VISIBLE_DEVICES=$(seq -s, 0 {self.hardware.gpu_count - 1}) "
-            f"/home/lvyufeng/miniconda3/envs/deepseek/bin/python -m relicllm.cli serve "
+            f"/home/<user>/miniconda3/envs/deepseek/bin/python -m relicllm.cli serve "
             f"--model {checkpoint} --backend {self.reach.adapter} "
             f"--tensor-parallel-size {self.best_fit.min_cards if self.best_fit else 1} "
             f"--max-model-len {max(self.context, self.thresholds.input_len)}"
             " &  then  "
-            f"/home/lvyufeng/miniconda3/envs/deepseek/bin/python tests/bench_serving.py "
+            f"/home/<user>/miniconda3/envs/deepseek/bin/python tests/bench_serving.py "
             f"--random-input-len {self.thresholds.input_len} "
             f"--random-output-len {self.thresholds.output_len} "
             f"--goodput ttft:{self.thresholds.ttft_1k_seconds * 1000:.0f} "

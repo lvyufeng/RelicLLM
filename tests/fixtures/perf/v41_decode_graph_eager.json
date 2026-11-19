@@ -9,7 +9,7 @@
   "base_url": "http://127.0.0.1:42451",
   "launch": {
     "argv": [
-      "/home/lvyufeng/miniconda3/envs/deepseek/bin/python",
+      "/home/<user>/miniconda3/envs/deepseek/bin/python",
       "-m",
       "relicllm",
       "serve",

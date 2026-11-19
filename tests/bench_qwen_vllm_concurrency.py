@@ -24,7 +24,7 @@ not carry across a configuration change.
 
 Example:
     python tests/bench_qwen_vllm_concurrency.py \
-        --python /home/lvyufeng/miniconda3/envs/vllm-2080ti-v015/bin/python \
+        --python /home/<user>/miniconda3/envs/vllm-2080ti-v015/bin/python \
         --mode batch --max-batch-size 8 \
         --json-out /tmp/vllm-http-concurrency-batch.json
 """
@@ -56,7 +56,7 @@ from serve_client import (  # noqa: E402
     run_stream_cases,
 )
 
-VLLM_ENV = "/home/lvyufeng/miniconda3/envs/vllm-2080ti-v015/bin/python"
+VLLM_ENV = "/home/<user>/miniconda3/envs/vllm-2080ti-v015/bin/python"
 DEFAULT_CKPT = "/mnt/data2/Qwen3.8-27B-FP8"
 
 

@@ -78,7 +78,7 @@ Task `903640` on `spec_id` 328 landed on this board, and task `903643` ran the P
 |---|---|
 | Board | `910ProA`, HBM 32768 MiB, `npu-smi` 24.1.0, `NB_ASCEND_VERSION=Ascend910` |
 | Image | `cann8_3_rc1_mindspore2_7` (the platform's verified image for this spec) |
-| Interpreter | `/home/ma-user/anaconda3/envs/PyTorch-2.1.0/bin/python`, CPython 3.10.6 |
+| Interpreter | `/home/<user>/anaconda3/envs/PyTorch-2.1.0/bin/python`, CPython 3.10.6 |
 | torch | 2.1.0, built with no CUDA (`torch.version.cuda is None`) |
 | torch_npu | 2.1.0.post10 |
 | `torch.npu.is_available()` | `True`, `torch.npu.device_count() == 1`, name `Ascend910ProA` |

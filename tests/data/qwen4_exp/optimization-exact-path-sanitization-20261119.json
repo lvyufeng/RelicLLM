@@ -1,43 +1,120 @@
 {
   "schema": "qwen4-path-sanitization-v1",
   "date": "2026-11-19",
-  "reason": "Public repositories must not publish a user home directory, a workstation path or fleet host identifiers. Only absolute-path and host-identifier strings changed; no measured value, token, id or number was edited.",
+  "reason": "These repositories are public. No record may publish a user home directory, a workstation path, a model checkpoint mount, a fleet host identity, a machine address or a network interface name. Only identifiers of that kind changed; no measured value, token id, timing, kernel hash or count was edited.",
   "placeholder_scheme": {
-    "home-directory (Linux fleet user)": "/home/<user>",
-    "home-directory (workstation user)": "/Users/<user>",
+    "home directory": "/home/<user>, /Users/<user>",
     "model checkpoint directory": "<checkpoint>",
-    "active workspace directory": "<workspace>",
-    "fleet 4090 hosts (distinct pair)": "<host-4090-a>, <host-4090-b>",
-    "other fleet 4090 hosts": "<host-4090>",
-    "fleet 3090 hosts": "<host-3090>"
+    "workspace directory": "<workspace>",
+    "fleet host, distinct pair": "<host-4090-a>, <host-4090-b>",
+    "fleet host, other": "<host-4090> or <host-3090>",
+    "machine address": "<ip>",
+    "hardware address": "<mac>",
+    "network interface": "<iface>"
   },
-  "hash_policy": "Hashes recorded in the evidence manifest and summaries still name the bytes that were measured, i.e. the pre-sanitization content. This record maps each changed file from that old hash to the hash it has in the tree now, so both remain checkable.",
-  "files_changed": 59,
+  "kept_addresses": {
+    "reason": "An address that documents the API itself or a standard container network is not an internal host, so it is left as it was.",
+    "loopback": "127.0.0.1 (55 occurrences preserved)",
+    "bind_any": "0.0.0.0",
+    "container_bridge": "172.17.0.0/16"
+  },
+  "field_names": {
+    "replacements": "counts are keyed by a neutral label, never by the replaced string, so this record cannot reintroduce what it documents"
+  },
+  "hash_policy": "Hashes recorded in the evidence manifest and summaries still name the bytes that were measured (pre-sanitization). This record maps each changed file from that old hash to the hash it has now, so both remain checkable.",
+  "matching_rule": "A fleet host identifier is matched with a word boundary on both sides, so an ordinary name such as `tests-20261118.log` is never rewritten as a host.",
+  "files_changed": 73,
   "files": [
+    {
+      "path": "docs/architecture/joining_a_machine_or_a_family.md",
+      "old_sha256": "19a3100e56912eb9d6adce0871299d511299a27cf8e73674e682363ab6430882",
+      "new_sha256": "9cbb41e064afc77f35124ade6a13ab6b67bb39438f0a24e65f9a2a5c5d6d29be",
+      "replacements": {
+        "home_directory_linux": 1
+      }
+    },
+    {
+      "path": "docs/architecture/openi_c2net_roster_and_targets.md",
+      "old_sha256": "d6c0d7b8385283ebf0406258a9cf53ab8936d8e8f1fb93d5b877733cc31488bc",
+      "new_sha256": "61c51b05aa0cb23c6ef7c12d9eb5cc462ae6ba74cc68107b1e7498d8b7a4d741",
+      "replacements": {
+        "home_directory_linux": 1
+      }
+    },
+    {
+      "path": "docs/performance/deepseek_v4_1_flash_chunked_prefill.md",
+      "old_sha256": "2708c9f21d52abb531637f036708cc4c0e9d1af87cbc4fdbd7db57bd2178d45b",
+      "new_sha256": "1c4887e6e3fe7eac5c52d5f39e9fb0a2e080e06836e427b76d8a8f589226aa91",
+      "replacements": {
+        "home_directory_linux": 2
+      }
+    },
+    {
+      "path": "docs/performance/deepseek_v4_1_flash_device_experts.md",
+      "old_sha256": "48172eb2299333b603c997d597d7afc58c3502583912cb73050f7d2bd72eff0e",
+      "new_sha256": "1c2068d2152a275cc941ad5f68fc73feaf4f128f5a33ee7f4648a17c1e0d50da",
+      "replacements": {
+        "home_directory_linux": 35
+      }
+    },
+    {
+      "path": "docs/performance/deepseek_v4_1_flash_host_run.md",
+      "old_sha256": "10d03c67bc7a58d621abb4d515274c1235d377181f34d8bae05825ae7007036c",
+      "new_sha256": "c6c20d622d1de445b136cefc8c99b028930a94c11377f769609739bf80840a09",
+      "replacements": {
+        "home_directory_linux": 11
+      }
+    },
+    {
+      "path": "docs/performance/deepseek_v4_1_flash_prefill_stack.md",
+      "old_sha256": "846f784003872390fbbef9e6302f6aea37d7509d6041af18994d476f3b15314e",
+      "new_sha256": "96823a6711e3016f144342306f1a984c2ad630e48a51b066211f6284f4e7c049",
+      "replacements": {
+        "home_directory_linux": 3
+      }
+    },
+    {
+      "path": "docs/performance/deepseek_v4_1_flash_served_gate.md",
+      "old_sha256": "e3ba2c870e707e6d1fcc0f37ee76cb09bd3100061d6860a0adec2442fa0f3e5d",
+      "new_sha256": "061ce280dcc3ffbebb4201b8ff246e1ffa3f3d6d09a7710934c3016b050b9919",
+      "replacements": {
+        "home_directory_linux": 3
+      }
+    },
+    {
+      "path": "docs/performance/deepseek_v4_1_flash_single_request_capability.md",
+      "old_sha256": "4712de0188c66b229b3b6fed765a6cb4f5a60e0e491def1bc918b03a1de90e40",
+      "new_sha256": "c0eb61b7c4d0be56b5a8d0827f72d9e9cb7b6ff3efa6d12164c7f1d81cb6ff27",
+      "replacements": {
+        "home_directory_linux": 1
+      }
+    },
     {
       "path": "docs/performance/qwen4_exp_4bit_accuracy.md",
       "old_sha256": "bdf3c8052038ac940e1417ead018dbfc043afdd43198abb1347c6e291b54f963",
       "new_sha256": "856f8c461ae7cdc4325e36a7eae7a6f847afb67a1d66f847926e266356225bc5",
       "replacements": {
-        "/workspace/qwen38-fp8": 2
-      }
-    },
-    {
-      "path": "docs/performance/qwen4_exp_mtp_verify_graph.md",
-      "old_sha256": "fb4887627d385bf33217ab13325d786372deda5a2f30945c0c2d4dfd9d428af6",
-      "new_sha256": "beeef3072e8d69066f3bcaa39ef36a3a1aa990d6c308b2644d7823f04542b08a",
-      "replacements": {
-        "ts-2\\d\\d": 1
+        "checkpoint_path": 2
       }
     },
     {
       "path": "docs/performance/qwen4_exp_performance.md",
       "old_sha256": "f23ec3420e7a4ff0ba5fe096ab23c927b51a3d195b3093100944b28375774a6b",
-      "new_sha256": "5394618947a59987c74ec0f497262f2c0bedc61b8063ebc362afeb63ec648c49",
+      "new_sha256": "9b9a611801f5bf0aa4af8784bb7d2e0164e94c1ca1e3e639c3d2f072555c1033",
       "replacements": {
-        "/workspace/qwen38-fp8": 4,
-        "ts-134": 1,
-        "ts-2\\d\\d": 7
+        "home_directory_linux": 10,
+        "checkpoint_path": 4,
+        "workspace_path": 1,
+        "host_4090_a": 1,
+        "host_3090": 7
+      }
+    },
+    {
+      "path": "docs/performance/v41_dense_gemm_dtype.md",
+      "old_sha256": "ad03031475c35e254ffb161eb7e97322b4779c519ee077fb5bce117dfb4ebcdc",
+      "new_sha256": "43677c7c1705b0cd8ddffe0204891e8e6355f4fd59e158c8e90feca56f705abd",
+      "replacements": {
+        "home_directory_linux": 5
       }
     },
     {
@@ -45,7 +122,7 @@
       "old_sha256": "4faf366d8671a6a8c473c874d7465a85b3e4b6712bc7f1e3d2530715d7a1e921",
       "new_sha256": "0d8369b27e9ef34631eff15a1a02e93d06f9faa8feb026d42c2acaf3fe7f517b",
       "replacements": {
-        "ts-133": 2
+        "host_4090_b": 2
       }
     },
     {
@@ -53,7 +130,8 @@
       "old_sha256": "63c5546a73707df67514e0fbecbe70ed53b7deacb8f6bd70654726e92829fb0b",
       "new_sha256": "a3078dbaadb34cc4666b88206f287c128eb2abdb4ef54fa348529bbb3d6b2a4d",
       "replacements": {
-        "/home/mseco": 4
+        "home_directory_linux": 4,
+        "checkpoint_path": 1
       }
     },
     {
@@ -61,9 +139,17 @@
       "old_sha256": "acc52f25758fb5e4a441cb9b7c396b66e92a93ad857337e9da345933fa722e0a",
       "new_sha256": "a1a5026f91bf0c0a3a8d1b57a462f43787f556bf6095cd0ccdf1e403c711ae5b",
       "replacements": {
-        "/home/mseco": 3,
-        "ts-133": 3,
-        "ts-134": 17
+        "home_directory_linux": 3,
+        "host_4090_a": 17,
+        "host_4090_b": 3
+      }
+    },
+    {
+      "path": "relicllm/triage/report.py",
+      "old_sha256": "7a55df6f28b2dc8a260bb62f00f77f3a66ee47dd437f311fcdc20d96846bc92d",
+      "new_sha256": "9bb4443218574b5eb86ae73eb34b5d208358a43f0bcb239d3fc2bf098bbbb3bd",
+      "replacements": {
+        "home_directory_linux": 2
       }
     },
     {
@@ -71,7 +157,15 @@
       "old_sha256": "bedbfabc1ebbfcb94cc4286ea6f368ad5e2fd076352bf703ab455603006604ec",
       "new_sha256": "57d6456652047433c6059db6f43c9311f9a74a6907c4399d29c80a05f253c1c1",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
+      }
+    },
+    {
+      "path": "tests/bench_qwen_vllm_concurrency.py",
+      "old_sha256": "dd4be8acee42f577f71caf97c245c4cbef7c3f6dd833ce9222c4f6108102396d",
+      "new_sha256": "68e23707158500e1c2b7fccd3d20a3ac9f16db17ae0503f72a658c9cde48d0d8",
+      "replacements": {
+        "home_directory_linux": 2
       }
     },
     {
@@ -79,7 +173,7 @@
       "old_sha256": "1f516f2d6399c6536ea13534cda6229f361c202f61c797acd031125b39c71499",
       "new_sha256": "2fc263b7a330998f20192df0dc7866f96bdd9d506abc4438fa91ecf0041ed1e8",
       "replacements": {
-        "/home/mseco": 1
+        "home_directory_linux": 1
       }
     },
     {
@@ -87,7 +181,7 @@
       "old_sha256": "8534626c42be7f224ebf1c2de1b24ce419d739755f6b7f55b5ee45b11e5a3535",
       "new_sha256": "33aed458d716c7ef9b5ddd97b7b710051348e66086bae964a74eb7b85c0c8fb0",
       "replacements": {
-        "/home/mseco": 2
+        "home_directory_linux": 2
       }
     },
     {
@@ -95,7 +189,7 @@
       "old_sha256": "5360154a663d64b36cf65f603c635cca26894bf096634de751387762d874b904",
       "new_sha256": "34418e37c726774a00d849a02bd76155a9173dcb8a22f60cd4d399cc78750bf9",
       "replacements": {
-        "/Users/lvyufeng": 18
+        "home_directory_workstation": 18
       }
     },
     {
@@ -103,7 +197,7 @@
       "old_sha256": "6e4a3b851c28badccb0154ff83d8a3b684f886b5eacfaca78c2071fc7d2c0643",
       "new_sha256": "495682aa546b27e22dac06dc200ea7fb2ec24f9999cf458b0f0d89deef7cae73",
       "replacements": {
-        "/home/mseco": 2
+        "home_directory_linux": 2
       }
     },
     {
@@ -111,7 +205,7 @@
       "old_sha256": "ac178afce89b7dde4097bc2c6f23b5e3fcd58e3f61b50a58d5d416a6bbb07ad5",
       "new_sha256": "7cf9ab86a04d0c07cb52feec87df8abb3a26a2f8e415d990db7868dbeb113038",
       "replacements": {
-        "/home/mseco": 2
+        "home_directory_linux": 2
       }
     },
     {
@@ -119,7 +213,7 @@
       "old_sha256": "c7c8bc2f2f7cdf776ec3542c55be978be2770cad0ec13db88062a61c650f6d14",
       "new_sha256": "5e591fc34c8e5486c2621d685216495a93f4c5f0df10cf6f54325e41e1a9fa86",
       "replacements": {
-        "/home/mseco": 1
+        "home_directory_linux": 1
       }
     },
     {
@@ -127,18 +221,17 @@
       "old_sha256": "7a1cf2349ae94d142785888121bbe90963976093fa113399d8d6362ae7c9ccc5",
       "new_sha256": "16b94976d26eaf0687fc212a21aafbb02e39b75c49a7b2a53e0178cae83f2e2d",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 2
+        "home_directory_linux": 2,
+        "checkpoint_path": 2
       }
     },
     {
       "path": "tests/data/qwen4_exp/optimization-exact-manifest-20261119.json",
       "old_sha256": "d03e1a9676fc2252f2eabc1862d176370261d419be3b86f8085dbe5946dee402",
-      "new_sha256": "8f694d1d0c87b0070dc4385cec6c82e514fc9b33c760d12c92bdc72621d84643",
+      "new_sha256": "1c1301e9e5aa11dac390493f2c6d8a8f4d0a82bea8f48a7dd115dc0149ecf5e5",
       "replacements": {
-        "ts-133": 1,
-        "ts-134": 1,
-        "ts-2\\d\\d": 1
+        "host_4090_a": 1,
+        "host_4090_b": 1
       }
     },
     {
@@ -146,7 +239,7 @@
       "old_sha256": "3ecd72be6939b6571a516d3f0a6208e2c514b19652587e8d8ebadb947faf1f35",
       "new_sha256": "242b9117755cffa13c9ae7f8c7a4097658511433655e303c281e721573adf4b1",
       "replacements": {
-        "/home/mseco": 16
+        "home_directory_linux": 16
       }
     },
     {
@@ -154,7 +247,7 @@
       "old_sha256": "09094cd0d807b898cb3f51976a96764e0bd0e630839040f4ece36c71f1543190",
       "new_sha256": "b2c5b135abace48881057ac467bf47e63527f97c04dd5b6c561f661c18a87914",
       "replacements": {
-        "/home/mseco": 14
+        "home_directory_linux": 14
       }
     },
     {
@@ -162,7 +255,7 @@
       "old_sha256": "927e446ceb788c28e7a8717015979a011502d60a9931a9220ee926103d228cc9",
       "new_sha256": "9087efcbd34386396a949159aebce9af324d86689ef2ad2ff11e7823fd27e040",
       "replacements": {
-        "/Users/lvyufeng": 23
+        "home_directory_workstation": 23
       }
     },
     {
@@ -170,7 +263,7 @@
       "old_sha256": "a00be31ed3263ce14819c3cf02cd36d678f8e2044a978ee97ecb7e68c1596049",
       "new_sha256": "7d8ed048ee6b8226a8c5531653e2dd3ed06a7f047ed40f4fae6ff0294e99cdae",
       "replacements": {
-        "/Users/lvyufeng": 2
+        "home_directory_workstation": 2
       }
     },
     {
@@ -178,7 +271,7 @@
       "old_sha256": "354214bf976e75780deabe5f21ed541d8fdb0f2a9702cffd0d0dc3db6d6d1a73",
       "new_sha256": "be9e5105f348e712759e1d698122efdef8eac03dea723a0f412594cd8ae98a68",
       "replacements": {
-        "/home/mseco": 2
+        "home_directory_linux": 2
       }
     },
     {
@@ -186,7 +279,7 @@
       "old_sha256": "736f9b44a5cd19a62de7bc9dbbc7f9a259790ec5b9d61586a7a60ad2b0b21c43",
       "new_sha256": "2755f2f5b67a4099e83cc9be9d3fa1a9a1b1ef9d7519e188d47c0d7310c622cd",
       "replacements": {
-        "/home/mseco": 2
+        "home_directory_linux": 2
       }
     },
     {
@@ -194,7 +287,7 @@
       "old_sha256": "99db19897adbbaa21d747ef0e456a2599a753a563978e0f06aa1158ee97c2c74",
       "new_sha256": "edfab36145b7aeee8764a9d8bc283deff299aeb7d1ffbadd9287f62e29c49c54",
       "replacements": {
-        "/home/mseco": 2
+        "home_directory_linux": 2
       }
     },
     {
@@ -202,17 +295,17 @@
       "old_sha256": "2c9353b1f286fc05d6606f1f41923d0487aa65846d32f4adef72cd57c9fa38e9",
       "new_sha256": "92aa41554af2fa74c545b8fb991858b8af20ed45225eb6d7db66f0f566e57c9f",
       "replacements": {
-        "/home/mseco": 77,
-        "/workspace/": 140
+        "home_directory_linux": 77,
+        "workspace_path": 140
       }
     },
     {
       "path": "tests/data/qwen4_exp/optimization-implementation-20261118.md",
       "old_sha256": "4060ce25c82ee1028a102fe4fff4c1abb10321e9030d2e297bb0c50f600e36f0",
-      "new_sha256": "7109691fe8a746b6574bdd8ebf0e5143f13624976ffb25d18384847184acfc93",
+      "new_sha256": "a13e9918f5a27358f27c97f120173a725142ab29350bed6d14581d844c4cbeff",
       "replacements": {
-        "/Users/lvyufeng": 15,
-        "ts-2\\d\\d": 2
+        "home_directory_workstation": 15,
+        "checkpoint_path": 1
       }
     },
     {
@@ -220,7 +313,7 @@
       "old_sha256": "6432d17dbedd018e652473ce16c27606ce6155c6daf37513b67dfe0936543bd2",
       "new_sha256": "c3458d4b4cd8feef773019d6efac4fc6396b123bd4117ca07089da6cb479c1c6",
       "replacements": {
-        "/Users/lvyufeng": 16
+        "home_directory_workstation": 16
       }
     },
     {
@@ -228,7 +321,7 @@
       "old_sha256": "e153dc5cf2644c7d2b63f8aa57e09567a0e5ef2a840c91e12397e685b6b6c73c",
       "new_sha256": "0a85ac0a06a8e5349e2033c04687f6ca216d1f979d88d5892bb7abcdfd60bfd5",
       "replacements": {
-        "/Users/lvyufeng": 4
+        "home_directory_workstation": 4
       }
     },
     {
@@ -236,8 +329,8 @@
       "old_sha256": "f110049f180260100a45866c8c4a64296ecbad011e02111da281fb629e3abf30",
       "new_sha256": "f1f3c37057d41450e99990de16f368b5be81ad224683f6ee3a4026434c6f99eb",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -245,8 +338,8 @@
       "old_sha256": "ace56a3ded0b84ae4402d06791bd0869107b8b81657806194453e58a82f61709",
       "new_sha256": "fa789c90f24e0977db3e83a00e86789204cedf3c4be9f5b4505fdbb846b097d7",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -254,8 +347,8 @@
       "old_sha256": "4fd9dd7ef109e1959501839b69a718f70e4467f47c9e5f8f785a725df5038c48",
       "new_sha256": "e35df45d7315bce943f3f8ebea97ee7f0b3b6065fd07f82649b57a8e2e409db7",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -263,8 +356,8 @@
       "old_sha256": "eb64bba8cc0f0a381518da8bcd58f97d30c687f5d78b4d51d09c2bd6535e7ad6",
       "new_sha256": "d3fe73e6ac622a70e7b16074dedd2cc4071b4a8964ac6f213e74245be2f457ea",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -272,8 +365,8 @@
       "old_sha256": "6fb5adf99487a8760aacf066157ce163ba10fcc067f685a8c1ae064ee94ea5d7",
       "new_sha256": "3c99b595238cef1b92e1aa73d64589b0894646bdfd06222c003d9d55023c329e",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -281,8 +374,8 @@
       "old_sha256": "1196dcc9e3e6302cfec6bb91c7648415e75cb30b9cc34ba8b0a6911d31440d97",
       "new_sha256": "e6b0fc4d1cf37fba18e7a6902b3e062fa3327a37b962525e51d4f21e7baba99a",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -290,8 +383,8 @@
       "old_sha256": "6409cd014c063db6b8ea9c7eb2b7471eb9f09ca4b65c13129f8e0b625dbd8c5a",
       "new_sha256": "8a545a1154e1372e198287958639077fda938ab4afbae2bf67b9d5dbe0078835",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -299,8 +392,8 @@
       "old_sha256": "dedbf1df3b22fde4e9d84446acc5ae9e612d8a2b6ca371f1756c1afbdc590da9",
       "new_sha256": "26ca4113bafe62fac53a4c0b1c63eac85b5a6caab6f057a9d8651714b37cf015",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -308,8 +401,8 @@
       "old_sha256": "9739e83e97e026b348bdcc2363adfe27cf1a99b6248b466bcab1169bb2c20e50",
       "new_sha256": "d0f0713c9502bb21fc4ed728971df50421d4279e359783c5d15bc17d0fd6a15c",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -317,7 +410,7 @@
       "old_sha256": "7669dd2bac9a752c97df1548a5827751eb9d7296b4fc5becbe2788659be9c082",
       "new_sha256": "46f69976c379cde796130f92d7aca23876c27479f368693dfb0d3ebdc1f85b90",
       "replacements": {
-        "/home/mseco": 1
+        "home_directory_linux": 1
       }
     },
     {
@@ -325,8 +418,8 @@
       "old_sha256": "f4363840ababc641aabf8b65fa24013c8a00c05cfcaad3b7517f9080eac739d5",
       "new_sha256": "17df82a01006255afe9baf805e76923e96a1e32677ce033983ccce638d30c969",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -334,8 +427,8 @@
       "old_sha256": "5dfb0cf711a0f0c9ce719b8b0176e6bd46de587a1b0f7e69fa6d83efe20cad67",
       "new_sha256": "ca8661bb417592e00035a8ac73bbe7874e6c4d20f18fc8123acb30bff8feba23",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -343,8 +436,8 @@
       "old_sha256": "40f644c3c25c49b030a0b400147d09ef3ac7907057d79b70e2b6c7767e054ef8",
       "new_sha256": "c1dd2b2cdf54f62e79ba3bc1cee9faede2e1d48cfcd6b9c888210f40a38ae764",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -352,8 +445,8 @@
       "old_sha256": "0087633f5b1462acdfae5b5634205d9d2b43a533d2e68d44b3bf54a47aacd211",
       "new_sha256": "bc9aadf3532d9e708a0297a0bd5c38a0af274a94091a5697068f69bd9e9f74e3",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -361,8 +454,8 @@
       "old_sha256": "af0c6727df3db433dafd8221218d47f102e3dafd6923326f7f5caff3adf9b151",
       "new_sha256": "c34f84e4a67bdb9f9cef28a7816f2c01d77d12281fea463882fbb69f65c66334",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -370,8 +463,8 @@
       "old_sha256": "714316a6e3872658a61c750f0495fa3c7397f9b23a0fbbc3260f7ee85c035ad8",
       "new_sha256": "d8d26bb1389cb4af12527c639b186928b15c105bccd5455354477f3b1cd6ef90",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -379,17 +472,21 @@
       "old_sha256": "47802438a368e6fc82cf61188a280b5594ce15c998e6f1991cda557dabedab1f",
       "new_sha256": "a62b7a4584ae865eb625598f442e534850b80685520ef74a576802ef80239210",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
       "path": "tests/data/qwen4_exp/r361_pd_host_network.json",
       "old_sha256": "3a04a34bdbeb9896d8d5c7e25262c6b72ad3203d3dae8a1d894df1090d09d321",
-      "new_sha256": "aab46e5a3fa9ae4a3ff31a8adace8d1dbe5dc512467bb6aaa7a487feb0944a4c",
+      "new_sha256": "24fcdb2b9f1eb39fe9134938f1516dfba54920e26122f3ce1b942c42fbe8d965",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1,
+        "host_4090_a": 1,
+        "host_4090_b": 1,
+        "ipv4": 8,
+        "network_interface": 13
       }
     },
     {
@@ -397,8 +494,8 @@
       "old_sha256": "1596f7c313745c2d854ceccc96f55e1e3067365772048a083a2ccbed458116f4",
       "new_sha256": "e4f1ac68958446e29047c031e7d9d849d5b92a46f01c07f992f21813dd781804",
       "replacements": {
-        "ts-133": 1,
-        "ts-134": 1
+        "host_4090_a": 1,
+        "host_4090_b": 1
       }
     },
     {
@@ -406,8 +503,8 @@
       "old_sha256": "74b3840f4c21549545cd85e4f1342183732c0358e32b288e17824f849d10d0dd",
       "new_sha256": "fddf23fa52b858295c92498efe4c6afe2680cbd2bb34c1f2f79d12515fb254a6",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -415,8 +512,8 @@
       "old_sha256": "d2065aec817124d70fa6774f380382097d313b3f45600c8b11bbd87694eccdea",
       "new_sha256": "57df3d371d6c146e272ddbbfb8d66dab87535d1a014744c9a6b333e31fe5c4d4",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -424,8 +521,8 @@
       "old_sha256": "890a757f489f64436d11cb3d3397c9ec6ad17b723a9bba2b9f2becab00de5e2b",
       "new_sha256": "7e1988ae6acb29a1e894c42d3415ed01d0a379a7a68e38b49e12d863ddbe6b8b",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -433,8 +530,8 @@
       "old_sha256": "ce4934ca49f545228e7d78e4a35f608248609edd4a9e9fcad1d38313d04e5c3a",
       "new_sha256": "73a53428cc69005316015b854417ce412092e71d91318f638136d8a9c98f46fb",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
       }
     },
     {
@@ -442,8 +539,24 @@
       "old_sha256": "c16853f71d571cd76f310ff9bfe1e9121fb31e1f5f65cdce03f8ccfb98c621e0",
       "new_sha256": "d5c475c37315883b538e70668336b5a833602a1b1832b01aabac76403f8dd28d",
       "replacements": {
-        "/home/mseco": 2,
-        "/workspace/qwen38-fp8": 1
+        "home_directory_linux": 2,
+        "checkpoint_path": 1
+      }
+    },
+    {
+      "path": "tests/fixtures/perf/v41_decode_graph_eager.json",
+      "old_sha256": "06854fbfb1d2c6adc0384abc1afa7aede4aa3290829e3d7cb4f2e88875b37767",
+      "new_sha256": "73f2110914f5443466e7e41d3f418cedc98d9c8fabb991850b61335b4a96b362",
+      "replacements": {
+        "home_directory_linux": 1
+      }
+    },
+    {
+      "path": "tests/fixtures/perf/v41_decode_graph_on.json",
+      "old_sha256": "ae290f0cd1bf33a87ac3dd2dcfefe6b5f802e2ed2c8444ad289be673d72d4e1e",
+      "new_sha256": "88f8e8c3e9483ff88be569057367bec7589d5fee53fb5197ae789358aecbb0d6",
+      "replacements": {
+        "home_directory_linux": 1
       }
     },
     {
@@ -451,7 +564,7 @@
       "old_sha256": "f2525e2454679b50834484b27a0beb2a4b99eb8cbaa6404aa96d9c28eb26fc02",
       "new_sha256": "7b54ec1f2eb1e0caa7ea8b1bfb7264b393f6b2b50f726c3b2075adbb9ed1e68f",
       "replacements": {
-        "/workspace/": 4
+        "workspace_path": 4
       }
     },
     {
@@ -459,7 +572,7 @@
       "old_sha256": "f37f523b056c1657085830a9e372d423fec9d8cbfab8f27745819bb5d72ac89a",
       "new_sha256": "f683412e402d2a0ebea04432a80f1f96afd45d83722f0ffa8f538300ee88cf49",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
       }
     },
     {
@@ -467,7 +580,7 @@
       "old_sha256": "044341bc948771a98ad3bf40cbb9d40278f261e70a0024f2230b3311f995246c",
       "new_sha256": "6e8f7432bb7fcfe2b2d8c948c136e4c4e887af8bbd2e21898dcfb78cbf3ee733",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
       }
     },
     {
@@ -475,7 +588,7 @@
       "old_sha256": "2731a9b43fcd1041a75416471de0328807f343e427678c73ba2e8a31fb921cf3",
       "new_sha256": "c48a05f5fd13b3aa90ca8548294f4079efffa167b0c5882154c2fd51f5e5acc7",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
       }
     },
     {
@@ -483,7 +596,7 @@
       "old_sha256": "ff0acfad1165fb9462191e4ac83b2a874a768aeaa1269cb84795b26f715ae96b",
       "new_sha256": "86b002e2a914598e7d7ee153f257c2ea2f1b74c2aebb69b8b5007f61096d16ab",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
       }
     },
     {
@@ -491,7 +604,7 @@
       "old_sha256": "afba5a231a7f422fb1cc7b953d4579ca4f331345b3ad44ee5ed91d89f10c73f7",
       "new_sha256": "bec50edd7d13db15c17675f33fc7a32eae6d7aa56a2d744c9a0892e3fe8735cc",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
       }
     },
     {
@@ -499,7 +612,7 @@
       "old_sha256": "4535ac614b51d66c11155f60c719ff4b56c7f966e9f629b5bb691809c3194c41",
       "new_sha256": "64251326c26640761b2191a1b2752269ba234dc6c5b09edcc0d37ad05666ff38",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
       }
     },
     {
@@ -507,7 +620,7 @@
       "old_sha256": "bd829468dd5ff99088aa7080a6e4c44a78f941f9a642484c5fe014a8d7e5550d",
       "new_sha256": "c29ce7677453b9af9eed3a3aefbb752f21274c646fd96178f63a8e843903e8c8",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
       }
     },
     {
@@ -515,7 +628,23 @@
       "old_sha256": "71d394e95a6a52827b9e56ef3d9df337b50a3c879fdf31d3440682c948ae8ce2",
       "new_sha256": "e3ca319d2cdd4fd532f32c62bfe79074cc815085c610c53fe9102e324b12d16c",
       "replacements": {
-        "/workspace/qwen38-fp8": 1
+        "checkpoint_path": 1
+      }
+    },
+    {
+      "path": "tests/test_qwen4_exp_parity.py",
+      "old_sha256": "21d9d4ce337c7704930d5a5c1195f5a620630d3098946846de5cb75a85234040",
+      "new_sha256": "ec764f805d038a573f197bda7f5f2e8202a72a16234971dcdad5f4283efa5806",
+      "replacements": {
+        "home_directory_linux": 1
+      }
+    },
+    {
+      "path": "tests/test_qwen4_exp_tp_sharding.py",
+      "old_sha256": "b4be081c18cec94ab0b590ad044515cfe58fcc98e8d0a17712f579040ed799ba",
+      "new_sha256": "1e2b30b7430ffe3f0d7b340153ec102179b125b2cd88e4fae421495599bf6bce",
+      "replacements": {
+        "home_directory_linux": 1
       }
     }
   ]
