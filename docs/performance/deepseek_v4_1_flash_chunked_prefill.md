@@ -1672,11 +1672,11 @@ against comes from its own microbenchmark rather than from a profiler that would
 ```bash
 # /tmp/bench_record_function.py: `record_function` in eager Python, 200k iterations an arm.
 # plain 0.077 us a call, one range 15.368 us, two ranges 30.339 us.
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/bench_record_function.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/bench_record_function.py
 
 # /tmp/bench_cprofile_price.py: cProfile's charge by shape, the same work with it off and on.
 # plain call 0.196 us, six-int() listcomp 0.550, four-element listcomp 0.147, keyed sort of six 1.058.
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/bench_cprofile_price.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/bench_cprofile_price.py
 ```
 
 The driver is the code, not the probe — this is the call the 256K number above is a forward of:

@@ -123,7 +123,7 @@ for the box it was written on:
 ```python
 # relicllm/triage/report.py:122-123
 f"CUDA_VISIBLE_DEVICES=$(seq -s, 0 {self.hardware.gpu_count - 1}) "
-f"/home/lvyufeng/miniconda3/envs/deepseek/bin/python -m relicllm.cli serve "
+f"/home/<user>/miniconda3/envs/deepseek/bin/python -m relicllm.cli serve "
 ```
 
 Two things are frozen into it that are true of one machine: the interpreter path, and the

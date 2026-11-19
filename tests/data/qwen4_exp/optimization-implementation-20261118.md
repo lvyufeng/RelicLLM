@@ -59,7 +59,7 @@ The exact entry keeps torch's FP32 statistic/reduction tree and sigmoid/SiLU act
 
 Evidence:
 
-- [CUDA kernel regressions](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-cuda-kernel-tes<host-3090>61118.log>): **270 passed, zero skipped**, including adjacent NVFP4/QSA tests.
+- [CUDA kernel regressions](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-cuda-kernel-tests-20261118.log>): **270 passed, zero skipped**, including adjacent NVFP4/QSA tests.
 - [Real activation oracle](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-real-norm-oracle8k-20261118.jsonl>): **648 calls per rank, zero differing elements on every rank**.
 - [Native 512-output A/B](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-native512-norm-20261118.jsonl>): all four arms matched all original greedy IDs and callbacks/ranks, with the same 233 verification rounds.
 
@@ -102,6 +102,6 @@ python -m relicllm serve --model <checkpoint> --backend qwen4_exp \
 
 The pool currently uses exact arena-width buckets and capacity one. Mixed request lengths/budgets may therefore recapture; no arbitrary-length reuse claim is made. This work qualifies isolated test servers, not an already-running production endpoint.
 
-Validation: [CUDA-host runtime suite](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-cuda-runtime-tes<host-3090>61118.log>) **1226 passed, 34 skipped**, with the checkpoint-dependent/inapplicable skips kept distinct from passes. Latest targeted model, lifecycle, queue and shared-backend contracts passed **181 CPU tests**. Python compilation and scoped diff checks passed. The broad local Mac suite additionally exposed three existing platform-specific routing/pinned-memory failures; the complete target-CUDA suite passed. Existing uncommitted work was preserved; no commits were made.
+Validation: [CUDA-host runtime suite](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-cuda-runtime-tests-20261118.log>) **1226 passed, 34 skipped**, with the checkpoint-dependent/inapplicable skips kept distinct from passes. Latest targeted model, lifecycle, queue and shared-backend contracts passed **181 CPU tests**. Python compilation and scoped diff checks passed. The broad local Mac suite additionally exposed three existing platform-specific routing/pinned-memory failures; the complete target-CUDA suite passed. Existing uncommitted work was preserved; no commits were made.
 
 **Not achieved: 100 tok/s, a new native-context hardware ceiling, cross-host native PD streaming, or a validated batched GEMV kernel.** The next substantial steady-state target remains exact main-verifier GEMV/fusion work; graph reuse has removed a separate request-lifecycle cost.

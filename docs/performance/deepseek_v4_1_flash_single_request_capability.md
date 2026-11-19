@@ -232,7 +232,7 @@ reason that has nothing to do with any rate on this page: the append is 36 and 3
 ## Reproduce
 
 ```bash
-ENV=/home/lvyufeng/miniconda3/envs/deepseek/bin
+ENV=/home/<user>/miniconda3/envs/deepseek/bin
 CKPT=/mnt/data3/DeepSeek-V4.1-Flash
 
 # 1024, A-B-A-B, then the two long lengths. One leg a process.

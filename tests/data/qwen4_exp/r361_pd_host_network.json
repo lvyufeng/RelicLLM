@@ -1,19 +1,19 @@
 [
   {
-    "host": "ts133",
+    "host": "<host-4090-b>",
     "interfaces": [
       {
-        "name": "enp174s0f0",
+        "name": "<iface>",
         "state": "UP",
         "ipv4": [
-          "8.92.7.133"
+          "<ip>"
         ],
         "operstate": "up",
         "mtu": "1500",
         "speed_mbps": "1000"
       },
       {
-        "name": "enp174s0f1",
+        "name": "<iface>",
         "state": "DOWN",
         "ipv4": [],
         "operstate": "down",
@@ -21,7 +21,7 @@
         "speed_mbps": null
       },
       {
-        "name": "enx7a2418eb34c5",
+        "name": "<iface>",
         "state": "DOWN",
         "ipv4": [],
         "operstate": "down",
@@ -29,7 +29,7 @@
         "speed_mbps": null
       },
       {
-        "name": "ens7f0np0",
+        "name": "<iface>",
         "state": "DOWN",
         "ipv4": [],
         "operstate": "down",
@@ -37,7 +37,7 @@
         "speed_mbps": null
       },
       {
-        "name": "ens7f1np1",
+        "name": "<iface>",
         "state": "DOWN",
         "ipv4": [],
         "operstate": "down",
@@ -58,17 +58,17 @@
     "routes": [
       {
         "dst": "default",
-        "gateway": "8.92.7.110",
-        "dev": "enp174s0f0",
+        "gateway": "<ip>",
+        "dev": "<iface>",
         "protocol": "static",
         "flags": []
       },
       {
-        "dst": "8.92.7.0/24",
-        "dev": "enp174s0f0",
+        "dst": "<ip>/24",
+        "dev": "<iface>",
         "protocol": "kernel",
         "scope": "link",
-        "prefsrc": "8.92.7.133",
+        "prefsrc": "<ip>",
         "flags": []
       },
       {
@@ -90,7 +90,7 @@
     }
   },
   {
-    "host": "ts134",
+    "host": "<host-4090-a>",
     "interfaces": [
       {
         "name": "enxa2231c9b3f3e",
@@ -101,17 +101,17 @@
         "speed_mbps": null
       },
       {
-        "name": "enp174s0f0",
+        "name": "<iface>",
         "state": "UP",
         "ipv4": [
-          "8.92.7.134"
+          "<ip>"
         ],
         "operstate": "up",
         "mtu": "1500",
         "speed_mbps": "1000"
       },
       {
-        "name": "enp174s0f1",
+        "name": "<iface>",
         "state": "DOWN",
         "ipv4": [],
         "operstate": "down",
@@ -119,7 +119,7 @@
         "speed_mbps": null
       },
       {
-        "name": "ens7f0np0",
+        "name": "<iface>",
         "state": "DOWN",
         "ipv4": [],
         "operstate": "down",
@@ -127,7 +127,7 @@
         "speed_mbps": null
       },
       {
-        "name": "ens7f1np1",
+        "name": "<iface>",
         "state": "DOWN",
         "ipv4": [],
         "operstate": "down",
@@ -148,17 +148,17 @@
     "routes": [
       {
         "dst": "default",
-        "gateway": "8.92.7.110",
-        "dev": "enp174s0f0",
+        "gateway": "<ip>",
+        "dev": "<iface>",
         "protocol": "static",
         "flags": []
       },
       {
-        "dst": "8.92.7.0/24",
-        "dev": "enp174s0f0",
+        "dst": "<ip>/24",
+        "dev": "<iface>",
         "protocol": "kernel",
         "scope": "link",
-        "prefsrc": "8.92.7.134",
+        "prefsrc": "<ip>",
         "flags": []
       },
       {

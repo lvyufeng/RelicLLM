@@ -30,7 +30,7 @@ def golden():
     if not os.path.exists(FIXTURE):
         pytest.skip(
             f"missing {FIXTURE}; regenerate with "
-            "/home/lvyufeng/miniconda3/envs/vllm-2080ti-v015/bin/python .scratch/mk_tiny_ref.py"
+            "/home/<user>/miniconda3/envs/vllm-2080ti-v015/bin/python .scratch/mk_tiny_ref.py"
         )
     return torch.load(FIXTURE, weights_only=False)
 

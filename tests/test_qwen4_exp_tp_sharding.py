@@ -32,7 +32,7 @@ def checkpoint_dir():
     if not os.path.exists(os.path.join(ROOT, "golden.pt")):
         pytest.skip(
             f"missing {ROOT}; regenerate with "
-            "/home/lvyufeng/miniconda3/envs/vllm-2080ti-v015/bin/python .scratch/mk_tp_ref.py"
+            "/home/<user>/miniconda3/envs/vllm-2080ti-v015/bin/python .scratch/mk_tp_ref.py"
         )
     return ROOT
 

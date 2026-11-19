@@ -413,27 +413,27 @@ about the tree rather than about the patch:
 ```
 # the lever, in process, dtype switched by swapping buffers on every Parameter at that dtype
 DEEPSEEK_V41_RESIDENT_EXPERTS=1 V41_TREE=/tmp/prefill_csr \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+  /home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   /tmp/probe_v41_dense_dtype_abab.py --chunk 4096 --repeats 2 --arms bf16,fp16,fp16,bf16
 
 # the same basis from the dumps -- not the probe's own printed column, which is mis-scaled
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/reduce_abab_sites.py /tmp/abab_seq.pt
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/reduce_abab_sites.py /tmp/abab_seq.pt
 
 # the independent cross-check, one arm a process
 DEEPSEEK_V41_RESIDENT_EXPERTS=1 V41_TREE=/tmp/prefill_csr \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+  /home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   /tmp/probe_v41_dense_cost.py --at 0 --chunk 4096 --repeats 1 --top 6 \
   --logits /tmp/par_bf16.pt --out /tmp/dense_cost.pt
 
 # the patch-free control, same geometry, the tree as it ships
 DEEPSEEK_V41_RESIDENT_EXPERTS=1 V41_TREE=/tmp/baseline_master \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+  /home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   /tmp/probe_v41_dense_dtype_abab.py --chunk 4096 --repeats 2 --arms bf16 \
   --out /tmp/abab_master.pt --logits /tmp/abab_master_logits.pt
 
 # the decode arm: one row, and the check that the lever is zero
 DEEPSEEK_V41_RESIDENT_EXPERTS=1 V41_TREE=/tmp/prefill_csr \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+  /home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   /tmp/probe_v41_dense_dtype_abab.py --chunk 1 --repeats 2 --arms bf16,fp16,fp16,bf16 \
   --out /tmp/abab_dec.pt --logits /tmp/abab_dec_logits.pt
 ```

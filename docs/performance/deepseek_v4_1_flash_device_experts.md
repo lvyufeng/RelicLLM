@@ -1795,7 +1795,7 @@ Reproduce with:
 # the width against a quarter-length pass: A B C D A at `--length 128`, control at both ends so the
 # node's own drift lands on the column it would otherwise be credited to
 /tmp/run_poolshort.sh
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_hot_ab.py --compare \
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_hot_ab.py --compare \
   /tmp/ps_1_p0.pt.r0 /tmp/ps_4_p148.pt.r0
 ```
 
@@ -1917,7 +1917,7 @@ done
 # the prompt-length and step-count sweep behind the second table, one sitting each
 sed -n '1,40p' /tmp/run_pooldepth.sh
 # and the phase split, which is arithmetic off the run's own two counters
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/tab_pool.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/tab_pool.py
 ```
 
 ### A pool hit used to take a staging buffer, and the copy behind it was left uncovered
@@ -1989,13 +1989,13 @@ Reproduce with:
 # swapped under the shipped path between legs and diffed afterwards
 bash /tmp/v41_guard_ab.sh
 # the 501 us decomposed: key strings, the checkpoint lookup, and the copy alone
-DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/lvyufeng/miniconda3/envs/deepseek/bin/python \
+DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/<user>/miniconda3/envs/deepseek/bin/python \
   /tmp/probe_v41_stage_micro.py
 # the same loop solo against four processes on disjoint bands -- the contention measurement
-DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/lvyufeng/miniconda3/envs/deepseek/bin/python \
+DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/<user>/miniconda3/envs/deepseek/bin/python \
   /tmp/probe_v41_stage_contend.py --tag solo
 for i in 0 1 2 3; do DEEPSEEK_V41_RESIDENT_EXPERTS=1 \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_stage_contend.py \
+  /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_stage_contend.py \
   --tag "q$i" --offset "$i" & done; wait
 ```
 
@@ -2125,7 +2125,7 @@ Reproduce with:
 # 512 tokens exactly and re-tokenizes to itself; --threads 22 because torchrun sets OMP_NUM_THREADS=1.
 bash /tmp/v41_default_accept.sh      # default_long and off_long are the two legs of the table above
 bash /tmp/v41_default_accept2.sh     # the third leg, and the decode A-B-A-B at the default's width
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_hot_ab.py --compare \
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_hot_ab.py --compare \
   /tmp/dd_288.pt.r0 /tmp/dd_0.pt.r0
 ```
 
@@ -2238,7 +2238,7 @@ Reproduce with:
 # decode: the shipped CLI, one process a leg, default / off / default / off. The prompt is
 # /tmp/prompt1024.txt and --threads 22 because torchrun sets OMP_NUM_THREADS=1.
 bash /tmp/ab_landed.sh
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/cmp_logits.py \
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/cmp_logits.py \
     /tmp/dump_graph_144706.pt /tmp/dumpland_stock_a.pt /tmp/dumpland_nopin_a.pt \
     /tmp/dumpland_stock_b.pt /tmp/dumpland_nopin_b.pt
 
@@ -2466,47 +2466,47 @@ All of these are separate measurements rather than separate opinions.
 # the kernel against the host expert on real activations, the EP4 decomposition, the same six experts
 # with the segment ids permuted and the weights riding with them, and the 2/2/1/1-against-one-call
 # kernel cost -- needs /tmp/v41_activations.pt from probe_capture.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_capture.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_fp4_parity.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_capture.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_fp4_parity.py
 
 # the class against expert_forward, and world=4 against world=1 on the same activation
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_device_experts.py --world 4
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_device_experts.py --world 1
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_device_experts.py --world 4
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_device_experts.py --world 1
 
 # staging, threading, pinning and H2D, each priced on its own
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_stage.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_h2d.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_stage.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_h2d.py
 
 # a whole step, phase by phase, twice through the same prompt so pass 2 is a warm page cache
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_device_cost.py --world 4
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_device_cost.py --world 1
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_device_cost.py --world 4
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_device_cost.py --world 1
 
 # the same step with `_take_buffer` wrapped as well, which probe_device_cost does not do -- and the
 # one that caught a cold page cache in its first pass, so read its `GiB/s` column before its `stage`
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_launch_cost.py --world 4
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_launch_cost.py --world 4
 
 # one row of four cards, three ways, one change apart, and the three checked against each other
-PYTHONPATH=. /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_launch_split.py --layer 0
+PYTHONPATH=. /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_launch_split.py --layer 0
 
 # the checked-in loop on the device path, which is what the text above is produced by -- the
 # `routed experts:` line it prints is the flag's own report that it did not fall back
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
+/home/<user>/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" \
   --max-new-tokens 4 --expert-device cuda --expert-world 4
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
+/home/<user>/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" \
   --max-new-tokens 4 --expert-device cuda --expert-world 1
 
 # the same flags off, so the host path and the default -- this is what the whole-request comparison
 # above is against, and the check that this work did not move it
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
+/home/<user>/miniconda3/envs/deepseek/bin/python -u -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" --max-new-tokens 4
 
 # the distribution behind the first three tokens, on either path -- this is what says the one token
 # the two disagree about is a half-logit tie rather than a wrong answer
-PYTHONPATH=. /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_first_tokens.py \
+PYTHONPATH=. /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_first_tokens.py \
   --device cuda --world 4
-PYTHONPATH=. /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_first_tokens.py
+PYTHONPATH=. /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_first_tokens.py
 
 # the TP4 configuration: the tree on the four cards, one process per card, the same phase
 # attribution as above so the two tables read line for line
@@ -2524,7 +2524,7 @@ DEEPSEEK_V41_RESIDENT_EXPERTS=1 PYTHONPATH=/mnt/data1/dsv4_inference \
 # the `hc_mixes` row above, taken apart: the fused kernel, the loop it replaced and the six ATen ops
 # around them, on one idle card, no checkpoint and no second rank. The shape is the decode shape -- 1
 # row, hc_mult 4 -- and it also runs 512 to show that neither implementation is arithmetic-bound
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_hc_split_card.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_hc_split_card.py
 
 # how many kernels the step launches: one more decode trajectory under a CUPTI window, the same
 # `torch.profiler` instrument the single-block breakdown uses, rows split on `device_type` so the
@@ -2552,21 +2552,21 @@ DEEPSEEK_V41_RESIDENT_EXPERTS=1 torchrun --nproc_per_node=4 \
 
 # ... and the same step with the page cache deliberately emptied first, which is the 17 s one --
 # `mincore_resident.py` counts resident pages, so run it before and after to see the two states
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/mincore_resident.py /mnt/data3/DeepSeek-V4.1-Flash
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/fadvise_drop.py /mnt/data3/DeepSeek-V4.1-Flash
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/mincore_resident.py /mnt/data3/DeepSeek-V4.1-Flash
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/fadvise_drop.py /mnt/data3/DeepSeek-V4.1-Flash
 torchrun --nproc_per_node=4 /tmp/probe_v41_tp4_e2e.py --lengths 8 --steps 8
 
 # ... and the acceptance: `read_bytes` out of `/proc/self/io` around every phase, plus `/dev/shm`,
 # the process's own RSS and `torch.cuda` host bytes. One process, four cards, a warmup pass before
 # each measured prompt, so the prefill row is the second pass over that prompt by construction
-DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/lvyufeng/miniconda3/envs/deepseek/bin/python \
+DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/<user>/miniconda3/envs/deepseek/bin/python \
   /tmp/probe_v41_resident.py --lengths 128,512 --steps 4 --threads 22
 
 # what that acceptance's zero means as a price: the same segment attached read-only, 12,288 row ids a
 # table drawn uniform over the whole 91.5 GiB, and the gather, the surrounding call, the dequant and
 # a per-row loop each timed. No card, no checkpoint read past the 0.24 s layout scan, and it never
 # fills the segment -- if `bank.ready` is there it attaches in 0.3 s
-DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/lvyufeng/miniconda3/envs/deepseek/bin/python \
+DEEPSEEK_V41_RESIDENT_EXPERTS=1 /home/<user>/miniconda3/envs/deepseek/bin/python \
   /tmp/probe_engram_bank.py
 
 # the checked-in TP4 launcher, which is what `--threads` is about
@@ -2637,18 +2637,18 @@ DEEPSEEK_V41_RESIDENT_EXPERTS=1 torchrun --nproc_per_node=4 \
 # ... and the tie this page used to blame for it. `--report` answers from the gate's own captured
 # `indices` and scores, and prints `redo_mismatch` as the check that it recomputed them the way the
 # gate did; zero rows in 12,288 hold two of the six returned weights at a bitwise-equal score
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_gate_ties.py --report \
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_gate_ties.py --report \
   /tmp/gt_r1.pt.r0 /tmp/gt_r2.pt.r0
 
 # the kernel alone, twenty times: does `prefill_sparse_attn_headpair_forward` repeat itself on frozen
 # arguments? It digests the arguments on every call too, so an instrument that is not in fact holding
 # them fixed says so instead of blaming the kernel. Ten seconds the first time, three minutes after
-PYTHONPATH=. /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_sparse_attn_repeat.py \
+PYTHONPATH=. /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_sparse_attn_repeat.py \
   --repeats 20
 
 # where in the output it disagrees, and against a float64 reference: which rows, which heads, how many
 # of the 512 lanes move inside a pair, and whether the calls straddle the truth or all sit on one side
-PYTHONPATH=. /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_sparse_attn_where.py
+PYTHONPATH=. /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_sparse_attn_where.py
 
 # the same kernel text lifted byte-for-byte out of `src/csrc/cuda_kernel_impl.cu` and compiled
 # standalone, so the answer cannot be a fact about the model: as the source reads today, with the
@@ -2656,29 +2656,29 @@ PYTHONPATH=. /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_spars
 # not a harness that cannot see a race). The `nvcc` on `PATH` is 13.0 while this torch is a 12.4
 # build, so the toolkit has to be pinned the same way the extension build pins it
 PATH=/usr/local/cuda-12.4/bin:$PATH CUDA_HOME=/usr/local/cuda-12.4 TORCH_CUDA_ARCH_LIST=7.5 \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_headpair_standalone.py --repeats 50
+  /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_headpair_standalone.py --repeats 50
 
 # ... and the sanitizer that named the pair in the first place: 16,384 hazards on the max-read against
 # the denominator store with the fence deleted, `0 hazards` and one digest on every call with it in
 # place. `--unfenced` builds the variant; `-lineinfo` is what puts the addresses on source lines
 PATH=/usr/local/cuda-12.4/bin:$PATH CUDA_HOME=/usr/local/cuda-12.4 TORCH_CUDA_ARCH_LIST=7.5 \
   compute-sanitizer --tool racecheck --print-limit 4 \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/run_headpair_once.py --unfenced
+  /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/run_headpair_once.py --unfenced
 PATH=/usr/local/cuda-12.4/bin:$PATH CUDA_HOME=/usr/local/cuda-12.4 TORCH_CUDA_ARCH_LIST=7.5 \
   compute-sanitizer --tool racecheck --print-limit 4 \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/run_headpair_once.py
+  /home/<user>/miniconda3/envs/deepseek/bin/python /tmp/run_headpair_once.py
 
 # the rebuild every model-level leg above needs before it can see the fix. `build_ext` builds *every*
 # extension in `setup.py`, and `pocketllm_cpp` does not survive `TORCH_CUDA_ARCH_LIST=7.5` -- its
 # qwen NVFP4 kernels are sm_80+ -- but `cuda_kernel` is linked and copied before that failure, so
 # read the timestamp on `cuda_kernel.cpython-311-x86_64-linux-gnu.so` rather than the exit code
 PATH=/usr/local/cuda-12.4/bin:$PATH CUDA_HOME=/usr/local/cuda-12.4 TORCH_CUDA_ARCH_LIST=7.5 \
-  /home/lvyufeng/miniconda3/envs/deepseek/bin/python setup.py build_ext --inplace
+  /home/<user>/miniconda3/envs/deepseek/bin/python setup.py build_ext --inplace
 
 # ... and the pair of full legs that closes it, the same configuration twice, compared on the counters
 # and on the logits at every rank: 32/32 in position at `|dlogit| 0.000e+00`, and every counter equal
 WAIT_FOR=0 /tmp/run_quiet_postfix.sh
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_hot_ab.py --compare \
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_v41_hot_ab.py --compare \
   /tmp/pf_p1.pt.r0 /tmp/pf_p2.pt.r0
 ```
 

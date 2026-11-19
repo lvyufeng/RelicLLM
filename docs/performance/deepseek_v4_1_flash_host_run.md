@@ -325,40 +325,40 @@ touching PCIe at all.
 
 ```bash
 # the load report, the phase table, and the three forwards of one token at position 0
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_where.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_where.py
 
 # one expert miss split into its mapping read and its fp4 expansion, and the expansion against the
 # cheapest operation that writes the same output size
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_expand_vs_read.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_dequant_floor.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_expand_vs_read.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_dequant_floor.py
 
 # a generated token, which is the number the expansion actually sets: ~60 s to load, then 15-42 s
 # per token
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python -m relicllm.models.deepseek_v4_1.generate \
+/home/<user>/miniconda3/envs/deepseek/bin/python -m relicllm.models.deepseek_v4_1.generate \
   --checkpoint /mnt/data3/DeepSeek-V4.1-Flash --prompt "The capital of France is" --max-new-tokens 4
 
 # the correctness run: the profile forward, the prefill/stepwise comparison, and the greedy decode
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_accept.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_accept.py
 
 # which prefix length each quoted top-5 belongs to, one prefill per length
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_top5_label.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_top5_label.py
 
 # the byte census, what the tree occupies, and the TP4 per-rank figure
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_footprint.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_footprint.py
 
 # the Engram gather, cold, warm, and out of the copy
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_engram_cost.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_engram_cost.py
 
 # the per-step routes, misses and wall clock that replaced this page's miss arithmetic, and the same
 # prompt through the device path with `--expert-device cuda --expert-world 4`
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_token_cost.py --max-new-tokens 6
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_token_cost.py --max-new-tokens 6
 
 # the routing and the miss rate on their own, one layer at a time
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_capture.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_capture.py
 
 # the PCIe rows of the carrier table and the card's MoE arithmetic -- the only probe here that
 # wants a GPU, and the only one that reads 21 GiB instead of 4.2
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python /tmp/probe_h2d.py
+/home/<user>/miniconda3/envs/deepseek/bin/python /tmp/probe_h2d.py
 ```
 
 Each takes one to fifteen minutes and reads the checkpoint off `/mnt/data3`. The Engram probe's copy

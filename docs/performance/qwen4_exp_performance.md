@@ -2168,7 +2168,7 @@ Accuracy-first 8K A/B:
 PYTHONPATH=. \
 POCKETLLM_QWEN4_DENSE_FP16=1 \
 POCKETLLM_QWEN4_HC_CUDA=1 \
-/home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun \
+/home/<user>/miniconda3/envs/deepseek/bin/torchrun \
   --standalone --nproc_per_node=4 \
   .scratch/bench_qwen4_exp_tp_fp16_matrix.py \
   --prompt-tokens 8192 --chunk-size 8192 \
@@ -2180,7 +2180,7 @@ Throughput-first 8K A/B:
 
 ```bash
 PYTHONPATH=. \
-/home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun \
+/home/<user>/miniconda3/envs/deepseek/bin/torchrun \
   --standalone --nproc_per_node=4 \
   .scratch/bench_qwen4_exp_tp_fp16_matrix.py \
   --prompt-tokens 8192 --chunk-size 8192 \
@@ -2192,7 +2192,7 @@ Forced-token margin matrix:
 
 ```bash
 PYTHONPATH=. \
-/home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun \
+/home/<user>/miniconda3/envs/deepseek/bin/torchrun \
   --standalone --nproc_per_node=4 \
   .scratch/check_qwen4_exp_tp_long_matrix.py \
   --prompt-tokens 512 --decode-tokens 32 --expert-cache 0 \
@@ -2348,17 +2348,17 @@ Decode, in order:
 ### Probes
 
 ```bash
-/home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+/home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   .scratch/probe_h2d_roof.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+/home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   .scratch/probe_compute_roof.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+/home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   .scratch/probe_attn_roof.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
+/home/<user>/miniconda3/envs/deepseek/bin/torchrun --nproc_per_node=4 \
   .scratch/probe_decode_layer.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python .scratch/probe_gdn_and_budget.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python .scratch/ceiling_model.py
-/home/lvyufeng/miniconda3/envs/deepseek/bin/python .scratch/ceiling_breakdown.py
+/home/<user>/miniconda3/envs/deepseek/bin/python .scratch/probe_gdn_and_budget.py
+/home/<user>/miniconda3/envs/deepseek/bin/python .scratch/ceiling_model.py
+/home/<user>/miniconda3/envs/deepseek/bin/python .scratch/ceiling_breakdown.py
 ```
 
 A caveat on one number: an earlier PyTorch loop measured the GDN recurrence at
