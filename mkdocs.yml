@@ -143,6 +143,8 @@ nav:
       - DSpark speculative decoding: performance/dspark.md
       - MiniMax decode bottleneck: performance/minimax_decode_bottleneck_analysis.md
       - Qwen4-Exp expert placement: performance/qwen4_exp_performance.md
+      - Qwen4-Exp MTP verify graph: performance/qwen4_exp_mtp_verify_graph.md
+      - Qwen4-Exp 4-bit expert bank: performance/qwen4_exp_4bit_accuracy.md
       - CPU offload and prefetch ceiling: performance/cpu_offload_profile.md
       - Qwen KV cache at 65K: performance/qwen_kv_cache_65k_tg512.md
       - Qwen drafter acceptance: performance/qwen_drafter_acceptance.md

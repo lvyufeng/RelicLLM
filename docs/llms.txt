@@ -41,6 +41,8 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [DSpark speculative decoding](https://lvyufeng.github.io/RelicLLM/performance/dspark/)
 - [MiniMax decode bottleneck](https://lvyufeng.github.io/RelicLLM/performance/minimax_decode_bottleneck_analysis/)
 - [Qwen4-Exp expert placement](https://lvyufeng.github.io/RelicLLM/performance/qwen4_exp_performance/)
+- [Qwen4-Exp MTP verify graph](https://lvyufeng.github.io/RelicLLM/performance/qwen4_exp_mtp_verify_graph/)
+- [Qwen4-Exp 4-bit expert bank](https://lvyufeng.github.io/RelicLLM/performance/qwen4_exp_4bit_accuracy/)
 - [CPU offload and prefetch ceiling](https://lvyufeng.github.io/RelicLLM/performance/cpu_offload_profile/)
 - [Qwen KV cache at 65K](https://lvyufeng.github.io/RelicLLM/performance/qwen_kv_cache_65k_tg512/)
 - [Qwen drafter acceptance](https://lvyufeng.github.io/RelicLLM/performance/qwen_drafter_acceptance/)
