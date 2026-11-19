@@ -2,7 +2,7 @@
 
 Run on an explicitly leased CUDA host, from the repository root:
   torchrun --nproc_per_node=8 --master_port=60241 \
-    tests/probe_qwen4_exp_decode_bottleneck.py --model /workspace/qwen38-fp8 \
+    tests/probe_qwen4_exp_decode_bottleneck.py --model <checkpoint> \
     --context-tokens 8192 --window 32 --steps 8
 
 CUPTI reports the kernels a graph replay launches, which is the only way to

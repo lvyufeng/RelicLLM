@@ -4,7 +4,7 @@
   "device": "NVIDIA GeForce RTX 4090",
   "torch": "2.11.0+cu130",
   "reference_module": {
-    "path": "/home/mseco/relic-core-norm-opt-20261118/build/extensions/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
+    "path": "/home/<user>/relic-core-norm-opt-20261118/build/extensions/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
     "sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3"
   },
   "candidate_module": {

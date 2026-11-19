@@ -1,7 +1,7 @@
 """Probe RoPE batch-shape invariance and the readiness of CPU token staging.
 
 Run on an explicitly leased CUDA host; no model weights are loaded:
-  python tests/probe_qwen4_exp_rope_invariance.py --model /workspace/qwen38-fp8
+  python tests/probe_qwen4_exp_rope_invariance.py --model <checkpoint>
 
 The token probe deliberately delays the CUDA stream before a GPU-to-host copy.
 It is a correctness diagnostic, not an inference throughput benchmark.

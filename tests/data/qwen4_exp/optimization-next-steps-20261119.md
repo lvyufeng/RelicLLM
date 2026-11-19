@@ -13,7 +13,7 @@ The validated baseline remains TP8 on owned 8×RTX 4090, native `indexer_budget=
 
 ## 1. Where the warm decode time goes
 
-Source: [native cold/warm evidence](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-native512-warm-20261118.jsonl>), second request. The decode numerator is **511**, because the first of 512 emitted tokens comes from prefill.
+Source: [native cold/warm evidence](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-native512-warm-20261118.jsonl>), second request. The decode numerator is **511**, because the first of 512 emitted tokens comes from prefill.
 
 | Component | Seconds | Share of 8.811469 s decode | Scope |
 |---|---:|---:|---|
@@ -27,7 +27,7 @@ Source: [native cold/warm evidence](</Users/lvyufeng/Projects/RelicLLM/tests/dat
 
 `verify_s = 7.490623 s`, or **85.01%** of decode. Steady rate is **57.992599 tok/s**. Setup is only **8.775 ms** on this compatible warm request, so it is no longer a meaningful steady-TPS target.
 
-The saved [instrumented native trace](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-native-trace-20261118.json>) has 9978 kernels/replay and about 29.947 ms summed kernel duration, with 7.173 ms in the collapsed GEMV family. Its 86.105 ms replay span is profiler-perturbed, **not** a hardware lower bound. Kernel durations identify candidates; they are not a substitute for untraced round timing.
+The saved [instrumented native trace](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-native-trace-20261118.json>) has 9978 kernels/replay and about 29.947 ms summed kernel duration, with 7.173 ms in the collapsed GEMV family. Its 86.105 ms replay span is profiler-perturbed, **not** a hardware lower bound. Kernel durations identify candidates; they are not a substitute for untraced round timing.
 
 ### Fixed-output scenarios, not new benchmarks
 
@@ -49,13 +49,13 @@ The saved [instrumented native trace](</Users/lvyufeng/Projects/RelicLLM/tests/d
 
 ### A. Exact main-verifier projection/layout fusion — highest steady-TPS headroom, hardest arithmetic contract
 
-Call site: [row-invariant linear](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L88-L105>). Small BF16 batches deliberately issue independent M=1 `F.linear` calls, followed by concatenation. This protects the decode arithmetic but keeps many GEMV, copy and layout operations in the replay.
+Call site: [row-invariant linear](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L88-L105>). Small BF16 batches deliberately issue independent M=1 `F.linear` calls, followed by concatenation. This protects the decode arithmetic but keeps many GEMV, copy and layout operations in the replay.
 
 The target is an **independently named, decode-shaped grouped operator** or fusion around these calls that preserves each row's FP32 accumulation tree and BF16 rounding. Start with actual hot projection shapes and contiguous/strided layout copies, not an indiscriminate Tensor-Core GEMM replacement.
 
 Important corrections:
 
-- The [old BF16 linear micro evidence](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/r360_bf16_linear_micro.jsonl>) is not an allowlist proof. Some initially equal `bmm` shapes fail when inputs mutate: `[4,10240,320]`, `[4,2560,512]`, and `[4,80,2560]` all contain mutation failures. The recent 2560→2560 bmm micro also differed. A single random tensor equality is inadequate.
+- The [old BF16 linear micro evidence](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/r360_bf16_linear_micro.jsonl>) is not an allowlist proof. Some initially equal `bmm` shapes fail when inputs mutate: `[4,10240,320]`, `[4,2560,512]`, and `[4,80,2560]` all contain mutation failures. The recent 2560→2560 bmm micro also differed. A single random tensor equality is inadequate.
 - It is not valid to infer four DRAM scans from the total model weight size. The code processes the four rows of **one projection immediately together**; a matrix that fits in L2 may already be reused. Many dense matrices are far below the 4090's L2 size. Measure the hot matrix's actual memory traffic and cache hit rate; do not divide whole-model bytes by a profiled family duration to claim measured bandwidth.
 - CUDA Graphs remove repeated host launch calls, not the device-side cost of thousands of dependent kernels. Both launch granularity and arithmetic/memory work remain candidates until measured.
 
@@ -65,7 +65,7 @@ Important corrections:
 
 ### B. NVFP4 launch utilization and single-writer epilogue — low-cost targeted kernel work
 
-Source: [NVFP4 launch geometry](</Users/lvyufeng/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu#L319-L348>) and [down kernel](</Users/lvyufeng/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu#L175-L237>).
+Source: [NVFP4 launch geometry](</Users/<user>/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu#L319-L348>) and [down kernel](</Users/<user>/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu#L175-L237>).
 
 Two concrete opportunities:
 
@@ -78,7 +78,7 @@ Two concrete opportunities:
 
 ### C. MTP catch-up by kept-prefix width — genuine redundant work, bounded whole-request gain
 
-Source: [head catch-up and chain](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/verify_graph.py#L788-L807>).
+Source: [head catch-up and chain](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/verify_graph.py#L788-L807>).
 
 The current draft replay forwards **all four verifier rows**, selects row `kept-1`, then forwards **two**, not three, single-row chain links for K=3. It performs three head forwards/vocab selections per replay, not seven collectives.
 
@@ -90,7 +90,7 @@ Memory/capture growth belongs in the session key and ownership accounting. Build
 
 ### D. Exact query-strided norm/layout fusion — small but well-scoped
 
-Source: [packed norm handling](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L313-L357>). The corrected strict path intentionally evaluates original per-query slices so decode's contiguous-versus-gapped dispatch does not change.
+Source: [packed norm handling](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L313-L357>). The corrected strict path intentionally evaluates original per-query slices so decode's contiguous-versus-gapped dispatch does not change.
 
 A stride-aware query-grid native operator could combine these launches/copies while retaining the old one-query arithmetic. Start with the indexer query case whose per-query slices are contiguous and whose existing fused kernel is the oracle. Do not treat gapped QSA heads as equivalent: their fallback torch mean has a geometry-dependent reduction tree. A combined torch mean is not automatically exact just because each mathematical row reduces separately.
 
@@ -100,7 +100,7 @@ This is lower headroom than dense projection work. The previous gated-norm epilo
 
 Measured K3 prefix survival is `[156,76,41]/233`. Holding that distribution fixed gives expected advances of **2.171674** for K3 versus **1.995708** for K2. K2 only wins if its **entire round cost is at least 8.10% lower**.
 
-The obstacle is explicit: [rank-chunk reduction](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/runtime.py#L401-L420>) allows row spans `(4,5,6,8)`, not three. K2 currently uses three separate row collectives at each reduction rather than K3's one packed collective. For 48 layers × two dependent reductions this changes the verifier from 96 collective calls to **288**. Assuming that all costs scale 4→3 is therefore wrong; K2 can be slower.
+The obstacle is explicit: [rank-chunk reduction](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/runtime.py#L401-L420>) allows row spans `(4,5,6,8)`, not three. K2 currently uses three separate row collectives at each reduction rather than K3's one packed collective. For 48 layers × two dependent reductions this changes the verifier from 96 collective calls to **288**. Assuming that all costs scale 4→3 is therefore wrong; K2 can be slower.
 
 Next test: a three-row cancellation-heavy reduction/layout oracle, then matched-prefix K2/K3 untraced round timing and full native output validation. Do not infer greedy invariance solely from the speculative algorithm: numerical row geometry is why strict qualification exists. K4 has native short-output evidence but still needs matched sustained-output cost/acceptance evidence; old 128-output runs are not a controlled extrapolation to this 512-output workload.
 
@@ -131,7 +131,7 @@ well as survival; a more accurate but slower draft model can lose.
 
 This is different from graph reuse: the current compatible warm request still resets rolling state and redoes **489.854 seconds of prefill**.
 
-There is already exact native prefix-restore evidence in the [controlled native A/B](</Users/lvyufeng/Projects/RelicLLM/tests/data/qwen4_exp/optimization-native512-norm-20261118.jsonl>):
+There is already exact native prefix-restore evidence in the [controlled native A/B](</Users/<user>/Projects/RelicLLM/tests/data/qwen4_exp/optimization-native512-norm-20261118.jsonl>):
 
 - Full source prefill: **485.677 seconds**.
 - Three complete state restores: **53.698–53.843 seconds**; mean **53.776 seconds**.
@@ -150,17 +150,17 @@ Key the cache by exact tokens/prefix length, model/checkpoint/quantized head ide
 
 The full native prefill still takes about 490 seconds, and its current component shares are not established by the decode trace.
 
-A concrete GDN candidate is [column-parallel recurrence geometry](</Users/lvyufeng/Projects/relic-core/relic_core/csrc/qwen4_exp_gated_delta.cu#L88-L109>) and [launch grid](</Users/lvyufeng/Projects/relic-core/relic_core/csrc/qwen4_exp_gated_delta.cu#L278-L300>). With 128 columns, four columns/subgroup, two 16-lane subgroups/warp, default groups-per-CTA=1 and six local value heads, it launches **96 CTAs** for the scan. A 512-token prefill runs the token loop inside those CTAs.
+A concrete GDN candidate is [column-parallel recurrence geometry](</Users/<user>/Projects/relic-core/relic_core/csrc/qwen4_exp_gated_delta.cu#L88-L109>) and [launch grid](</Users/<user>/Projects/relic-core/relic_core/csrc/qwen4_exp_gated_delta.cu#L278-L300>). With 128 columns, four columns/subgroup, two 16-lane subgroups/warp, default groups-per-CTA=1 and six local value heads, it launches **96 CTAs** for the scan. A 512-token prefill runs the token loop inside those CTAs.
 
 Test smaller independent column stripes (two/one columns) to expose 192/384 CTAs and lower per-thread register state, while retaining each column's exact token order, FMA operations and 16-lane reduction. This differs from replacing the recurrent scan with an associative chunked algorithm, which can change arithmetic. Decoder/with-states logs must remain bit-identical; use a separately selected prefill variant and preserve older-architecture paths.
 
-For MoE, the current NVFP4 path already takes the whole chunk in one kernel pair: [rows dispatch](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/moe.py#L1463-L1526>). There is no 512× per-token Python launch loop to remove in the qualified mode. Potential improvement is grouping/reusing **expert weight tiles across token routes**, not merely adding batching that already exists. Preserve each token's inner dot and routed contribution order; an ordinary grouped Tensor-Core GEMM may change the reference.
+For MoE, the current NVFP4 path already takes the whole chunk in one kernel pair: [rows dispatch](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/moe.py#L1463-L1526>). There is no 512× per-token Python launch loop to remove in the qualified mode. Potential improvement is grouping/reusing **expert weight tiles across token routes**, not merely adding batching that already exists. Preserve each token's inner dot and routed contribution order; an ordinary grouped Tensor-Core GEMM may change the reference.
 
 First measure warmed prefill chunks by component at representative early and near-native positions: GDN recurrence, MoE, dense projections, QSA/indexer and PLE. Only then decide whether column stripes or routed weight-tile reuse is worth implementation.
 
 ### H. Prefill indexer memory traffic — possible TTFT gain, high exact-topk risk
 
-Source: [score materialization and ordered selection](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/attention.py#L1403-L1439>). At 65536 blocks, a chunk of 512 queries × four index heads materializes **512 MiB** of FP32 scores before reducing heads. Chunks 1024/2048 would materialize 1/2 GiB, not 256/512 MiB.
+Source: [score materialization and ordered selection](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/attention.py#L1403-L1439>). At 65536 blocks, a chunk of 512 queries × four index heads materializes **512 MiB** of FP32 scores before reducing heads. Chunks 1024/2048 would materialize 1/2 GiB, not 256/512 MiB.
 
 A score-epilogue fusion can retain the existing GEMM outputs and fuse ReLU, exact four-head sum, scale and visibility mask, reducing memory passes without first changing selection arithmetic. A more ambitious blockwise running top-k can avoid the large materialization, but ordinary block top-k + merge does not guarantee the same tied index ordering as torch's sorted top-k. Changing GEMM tile geometry can also change scores. Require score bits plus **ordered indices**, invalid slots, final selections and greedy outputs—not only the selected set.
 
@@ -168,14 +168,14 @@ This primarily targets prefill/TTFT and memory peaks. The full 490-second prefil
 
 ## 5. Small host work and exclusions
 
-PLE staging is only 3.32% of warm decode. A native CPU batch hash/gather could reduce NumPy/Python overhead at [stager](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/verify_graph.py#L582-L634>), without changing integer hash or pinned destination addresses. The impossible all-staging-free bound is only 59.99 TPS.
+PLE staging is only 3.32% of warm decode. A native CPU batch hash/gather could reduce NumPy/Python overhead at [stager](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/verify_graph.py#L582-L634>), without changing integer hash or pinned destination addresses. The impossible all-staging-free bound is only 59.99 TPS.
 
 Do not propose hiding all next-round staging under the current verifier/head by precomputing four kept alternatives: **the next feed also needs the next head's draft tokens**, which are not known then. Only stable history/known accepted-prefix rows can be prefetched; asynchronous staging needs distinct pinned buffers and completion/lifetime fences. Current graph buffer addresses are an ownership contract.
 
 Do not re-open as primary candidates:
 
 - ordinary bmm/FP16 dense mirrors or broad compile rewrites without exact arithmetic gates;
-- merging attention and MLP all-reduces: [the real dependency](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/model.py#L449-L477>) prevents it;
+- merging attention and MLP all-reduces: [the real dependency](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/model.py#L449-L477>) prevents it;
 - previously unhelpful NCCL knobs/argmax exchange, BF16 indexer pools or unsorted top-k;
 - unlimited prefix/KV caches or unverified TP4/TP16 memory/topology claims;
 - using the two 4090 hosts as if they automatically accelerate one decode. Independent replicas/PD phase separation target aggregate workload, not an already implemented 16-GPU low-latency decoder.

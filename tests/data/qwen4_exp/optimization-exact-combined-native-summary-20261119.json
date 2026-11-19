@@ -60,9 +60,9 @@
     "kernel_sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3",
     "native_ops_overlay": {
       "schema": "qwen4-nvfp4-overlay-v1",
-      "base_path": "/home/mseco/relic-core-norm-opt-20261118/build/extensions/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
+      "base_path": "/home/<user>/relic-core-norm-opt-20261118/build/extensions/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
       "base_sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3",
-      "overlay_path": "/home/mseco/qwen4-opt-20261119-store-overlay/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
+      "overlay_path": "/home/<user>/qwen4-opt-20261119-store-overlay/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
       "overlay_sha256": "1e30599d0be2cbaec257e6b379c3ffc43a978589d275af065d91af13fa847254",
       "module_alias": "_qwen4_nvfp4_overlay_1e30599d0be2cbae.cuda_kernel",
       "installed_ops": [

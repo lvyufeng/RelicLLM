@@ -83,10 +83,10 @@
       }
     ],
     "checkpoint_candidates": {
-      "/workspace/qwen38-fp8": false,
+      "<checkpoint>": false,
       "/data/qwen38-fp8": false,
-      "/home/mseco/mtp4090": false,
-      "/home/mseco/relic/relic-core-fused": false
+      "/home/<user>/mtp4090": false,
+      "/home/<user>/relic/relic-core-fused": false
     }
   },
   {

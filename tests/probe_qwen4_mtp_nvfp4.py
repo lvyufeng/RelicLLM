@@ -2,7 +2,7 @@
 
 Example (native total capacity, NOT a 262144-token input prompt):
   torchrun --nproc_per_node=8 tests/probe_qwen4_mtp_nvfp4.py \
-    --model /workspace/qwen38-fp8 --context-tokens 262016 --max-new-tokens 128 \
+    --model <checkpoint> --context-tokens 262016 --max-new-tokens 128 \
     --draft-tokens 3 --arms plain,lag,lagq --reference /tmp/mtp-plain-262016.json
 
 The lookahead runtime requests input + output + 2*K + 4 positions, clamps the arena to the native

@@ -6,13 +6,13 @@ Status: design, awaiting approval.
 
 The V4.1-Flash runtime (`relicllm/models/deepseek_v4_1/`) is validated only on
 **4xRTX 2080 Ti (sm_75)**, where its reference arithmetic runs on the `torch` soft path because
-Turing has no FP8/FP4 tensor core. The two 4090 boxes (ts-133, ts-134) are 8x24 GiB sm_89, with
+Turing has no FP8/FP4 tensor core. The two 4090 boxes (<host-4090-b>, <host-4090-a>) are 8x24 GiB sm_89, with
 FP8 tensor cores, a 72 MB L2 and twice the host RAM of the 2080 Ti box. Nothing in the V4.1 path
 has ever been executed on sm_89.
 
 The first question is not performance; it is **whether the runtime is even correct on a second
 architecture**. On sm_89 `relic_core.kernels.ops._auto_impl` resolves `fp8` and `fp4` to **triton**
-(verified on ts-134: `_resolve_impl("fp8","auto") == "triton"`, `_resolve_impl("fp4","auto") ==
+(verified on <host-4090-a>: `_resolve_impl("fp8","auto") == "triton"`, `_resolve_impl("fp4","auto") ==
 "triton"`), where on sm_75 both resolve to **torch**. A triton/torch disagreement would be a silent
 numeric divergence, not a crash. This spec is the bring-up-and-parity pass that answers that
 question and makes the answer a reproducible check. Optimization on the 4090s is explicitly out of
@@ -20,7 +20,7 @@ scope.
 
 ## Goal and acceptance
 
-Run V4.1-Flash on **ts-134 at TP4** — the same tensor-parallel width the sm_75 reference was taken
+Run V4.1-Flash on **<host-4090-a> at TP4** — the same tensor-parallel width the sm_75 reference was taken
 at, so that the architecture is the only variable — and accept it in two legs:
 
 - **Bit-identical leg.** With `DEEPSEEK_FP8_IMPL=torch` and `DEEPSEEK_FP4_IMPL=torch` (forcing the
@@ -45,16 +45,16 @@ collapses into the bit-identical leg; if they do not, the size of the gap is the
 
 - Any performance work, TP>4, expert residency on the card, EP, or batching. The 8-card advantage
   (192 GiB VRAM, FP8 tensor cores, 72 MB L2) is the subject of a **separate** spec.
-- ts-133. It has no RelicLLM/relic-core checkout and no conda environment for this work; only
-  ts-134 is prepared. ts-133 is left alone.
+- <host-4090-b>. It has no RelicLLM/relic-core checkout and no conda environment for this work; only
+  <host-4090-a> is prepared. <host-4090-b> is left alone.
 - Making V4.1 *fast* on sm_89, or changing any kernel.
 
 ## Preconditions
 
 1. **Checkpoint.** 475 GiB, 48 shards, `deepseek-ai/DeepSeek-V4.1-Flash` on ModelScope. Not present
-   on ts-134. This is the critical path and is started first, in the background. It lands under the
+   on <host-4090-a>. This is the critical path and is started first, in the background. It lands under the
    ModelScope cache, not at the path `tests/fixtures/golden/v41.json` records
-   (`/mnt/data3/DeepSeek-V4.1-Flash`, hardcoded in both `checkpoint` and `argv`), because ts-134 has
+   (`/mnt/data3/DeepSeek-V4.1-Flash`, hardcoded in both `checkpoint` and `argv`), because <host-4090-a> has
    no `/mnt/data3` and no writable `/mnt` at all — the mount is root-owned and the account has no
    passwordless sudo. The fixture is **not** edited to point elsewhere: its recorded paths are
    provenance, and rewriting them would change the thing being tested. Instead the golden harness
@@ -63,21 +63,21 @@ collapses into the bit-identical leg; if they do not, the size of the gap is the
    recorded path stays as
    the record of where the oracle was taken; the env var is how a host that keeps the same bytes
    somewhere else runs the same fixture. This is the mechanism the host-agnostic task below adds.
-2. **Sources.** ts-134's `/home/mseco/relic/RelicLLM` and `/home/mseco/relic/relic-core` are on
+2. **Sources.** <host-4090-a>'s `/home/<user>/relic/RelicLLM` and `/home/<user>/relic/relic-core` are on
    non-master branches. Sync both to merged master (RelicLLM `169f94a`, relic-core `b84ff02`).
-3. **Extension.** ts-134 already builds `cuda_kernel` for sm_89 (`(8,9)`, `relicllm` env, torch
+3. **Extension.** <host-4090-a> already builds `cuda_kernel` for sm_89 (`(8,9)`, `relicllm` env, torch
    2.9.1+cu128) and `relicllm.models.deepseek_v4_1` imports. Confirm the build carries the fp8
    device-guard (`soft_fp8_blockfp8_*` checking `is_cuda`); rebuild if not. The arch list must be
    `7.5;8.9` (SASS, no PTX) per the project's dual-arch rule.
-4. **Environment.** `/home/mseco/miniconda3/envs/relicllm`; `modelscope` installed there.
+4. **Environment.** `/home/<user>/miniconda3/envs/relicllm`; `modelscope` installed there.
 5. **sm_75 oracle access for the numeric record.** The `logits_check` values are recorded *once*
    on the sm_75 box (see "Producing the sm_75 numeric record"); that recording session needs the
    sm_75 box, its checkpoint (`/mnt/data3/DeepSeek-V4.1-Flash`, present) and a free card. It is a
-   distinct step from the ts-134 run and is listed as such below.
+   distinct step from the <host-4090-a> run and is listed as such below.
 6. **`/dev/shm` for the resident expert bank.** The `v41` fixture declares
    `requires.dev_shm_bytes = 504658657280` (~470 GiB). The golden runner treats a short `/dev/shm`
    as a **skip, not a failure**, so a short tmpfs would make the acceptance gate pass vacuously.
-   Verified on ts-134 today: `/dev/shm` is a 1008 GiB tmpfs and empty. Re-confirm before the run,
+   Verified on <host-4090-a> today: `/dev/shm` is a 1008 GiB tmpfs and empty. Re-confirm before the run,
    since another job sharing the box could consume it.
 
 ## Design
@@ -99,7 +99,7 @@ Runs the `v41` fixture's `argv` with `DEEPSEEK_FP8_IMPL=torch DEEPSEEK_FP4_IMPL=
 through the existing `serve` entry point, and asserts `token_ids == expected.token_ids`. The
 existing golden runner (`tests/golden_fixtures.py`, `tests/test_served_path_golden.py`) already
 launches a fixture's argv and compares; this leg is that machinery with the two env vars added. The
-subsequent *tokens* on ts-134 are compared against the record already in `v41.json`; the token
+subsequent *tokens* on <host-4090-a> are compared against the record already in `v41.json`; the token
 oracle is not re-run. (The *numeric* record for the tolerance leg does need one fresh sm_75 pass —
 that is a separate precondition and step, see below; this paragraph is about the token leg only.)
 
@@ -150,10 +150,10 @@ count so a mismatch in what was compared is visible. Not post-softmax, not the f
 ### Producing the sm_75 numeric record
 
 The `logits_check` values are recorded **once on the sm_75 box** (the existing oracle) by the
-recorder, then committed with `card: "cuda 7.5 (Turing / RTX 2080 Ti)"`. ts-134 then compares
+recorder, then committed with `card: "cuda 7.5 (Turing / RTX 2080 Ti)"`. <host-4090-a> then compares
 against them. No second fixture, no second checkpoint path — consistent with the project's
 one-fixture-per-entry-point convention. The sm_75 recording writes **placeholder** `atol`/`rtol`
-(0.0); they are re-frozen into the fixture after the first ts-134 measurement, so nobody treats the
+(0.0); they are re-frozen into the fixture after the first <host-4090-a> measurement, so nobody treats the
 first-written tolerance as authoritative.
 
 ## Components
@@ -172,7 +172,7 @@ checkpoint override are unit testable in-process; the cross-arch check needs a c
 fixture's checkpoint.
 
 **Why the checkpoint override is required:** the fixture names an absolute path that exists only on
-the sm_75 box. A host holding the identical checkpoint elsewhere — ts-134, where the download lands
+the sm_75 box. A host holding the identical checkpoint elsewhere — <host-4090-a>, where the download lands
 in the ModelScope cache and `/mnt` is not writable — can otherwise only run it by editing the
 fixture, which rewrites the record being tested. The override leaves the recorded path intact and
 substitutes it at launch, so the fixture stays one fixture and the comparison stays honest.
@@ -185,14 +185,14 @@ it is the missing piece the tolerance leg hangs on.
 ## Testing / verification
 
 1. Schema test passes for fixtures with and without `logits_check`.
-2. On ts-134, the bit-identical leg reproduces the sm_75 `token_ids` exactly (the acceptance gate).
-3. On ts-134, the tolerance leg reports the triton-vs-torch gap; if zero, it is recorded as zero.
+2. On <host-4090-a>, the bit-identical leg reproduces the sm_75 `token_ids` exactly (the acceptance gate).
+3. On <host-4090-a>, the tolerance leg reports the triton-vs-torch gap; if zero, it is recorded as zero.
 4. The sm_75 box still passes its own full suite (no regression from the schema/env additions).
 
 ## Risks
 
 - **475 GiB download** is the critical path; bandwidth-bound and outside our control. Started first.
-- **ts-134 GPUs may be busy** with another user's job (has happened before). The run needs 4 free.
+- **<host-4090-a> GPUs may be busy** with another user's job (has happened before). The run needs 4 free.
 - **triton/torch may differ enough to change greedy tokens**, in which case the bit-identical leg
   still isolates the port and the tolerance leg carries the quantitative result.
 - **sm_89 extension arch list** must be `7.5;8.9`, no PTX-only; otherwise a rebuild is required.

@@ -7,7 +7,7 @@ answers the question a fusion decision needs: what does the code ask for, per la
 
 Run on an explicitly leased CUDA host, from the repository root:
   torchrun --nproc_per_node=8 --master_port=60251 \
-    tests/probe_qwen4_exp_eager_ops.py --model /workspace/qwen38-fp8 \
+    tests/probe_qwen4_exp_eager_ops.py --model <checkpoint> \
     --context-tokens 8192 --steps 4
 
 Profiling overhead is present, so the times here are not throughput numbers. The counts are the

@@ -18,102 +18,102 @@ W1118 12:20:13.612000 343326 site-packages/torch/distributed/run.py:851] *******
 [qwen4exp] rank 0: thread pools capped at 12
 [qwen4exp] rank 6: GPU 6 bound to CPUs 60,61,62,63,64,65,156,157,158,159,160,161 (12 logical CPUs)
 [qwen4exp] rank 6: thread pools capped at 12
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [rank0]:[W1118 12:20:40.336406725 ProcessGroupNCCL.cpp:5188] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [qwen4exp] rank 7: 64 experts/layer x 48 layers resident, 14.06 GiB (device) in 60.0s
 [qwen4exp] rank 7: resident experts 14.36 GiB, 8.86 GiB left of 23.52 GiB after the fill, 3.0 GiB held back for activations
@@ -132,7 +132,7 @@ W1118 12:20:13.612000 343326 site-packages/torch/distributed/run.py:851] *******
 [qwen4exp] rank 2: 64 experts/layer x 48 layers resident, 14.06 GiB (device) in 60.4s
 [qwen4exp] rank 2: resident experts 14.36 GiB, 8.86 GiB left of 23.52 GiB after the fill, 3.0 GiB held back for activations
 [qwen4exp] mtp head loaded (fp8 expert rows)
-/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [qwen4exp] replayed 127/127 decode steps (127 attempts), 0 handed back to eager
 {"kind": "qwen4_http_start", "schema": "qwen4-http-graph-session-v1", "input_tokens": 7893, "reference_ids": [1596, 1144, 4087, 1156, 579, 1622, 13, 14235, 7936, 1534, 4087, 506, 3140, 220, 16, 20, 15, 15, 4105, 11, 47193, 13753, 11, 10033, 1204, 310, 2790, 54067, 21966, 42903, 27502, 13, 63074, 6297, 14834, 11, 63520, 58377, 11, 17856, 6676, 11, 11436, 43388, 11, 33625, 10206, 11, 1248, 61485, 7262, 13, 2570, 1414, 11173, 1599, 2942, 11, 4222, 11639, 13, 14235, 24224, 13, 14235, 6970, 6088, 874, 1144, 310, 12771, 13, 14235, 5790, 220, 16, 20, 15, 15, 10, 4105, 13, 14235, 4222, 303, 6163, 13, 14235, 7936, 16908, 4087, 13, 14235, 1698, 4105, 30, 14235, 506, 3140, 220, 16, 20, 15, 15, 13, 1165, 628, 3165, 2094, 220, 17, 15, 15, 15, 12, 17, 20, 15, 15, 4105, 13, 14235, 47193, 13753, 13, 28763, 660, 12960], "session_enabled": true, "norm_fusion_enabled": false}
@@ -147,89 +147,89 @@ W1118 12:20:13.612000 343326 site-packages/torch/distributed/run.py:851] *******
 [rank4]:[E1118 12:33:47.524727893 ProcessGroupNCCL.cpp:2303] [PG ID 0 PG GUID 0(default_pg) Rank 4]  failure detected by watchdog at work sequence id: 7355 PG status: last enqueued work: 7355, last completed work: 7354
 [rank6]:[E1118 12:33:47.525285499 ProcessGroupNCCL.cpp:2303] [PG ID 0 PG GUID 0(default_pg) Rank 6]  failure detected by watchdog at work sequence id: 7355 PG status: last enqueued work: 7355, last completed work: 7354
 [rank4]:[E1118 12:33:47.528505431 ProcessGroupNCCL.cpp:733] Stack trace of the failed collective: 
-#0 broadcast from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
-#1 wrapper from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
-#2 agreed from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
-#3 generate_mtp_draft_lookahead from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
-#4 guarded from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
-#5 _run_mtp_active from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
-#6 _run_mtp from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
-#7 measured from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
-#8 _run_payload from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
-#9 _run_worker_request from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
-#10 run_worker from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
-#11 main from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
-#12 <module> from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
+#0 broadcast from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
+#1 wrapper from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
+#2 agreed from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
+#3 generate_mtp_draft_lookahead from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
+#4 guarded from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
+#5 _run_mtp_active from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
+#6 _run_mtp from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
+#7 measured from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
+#8 _run_payload from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
+#9 _run_worker_request from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
+#10 run_worker from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
+#11 main from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
+#12 <module> from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
 
 [rank6]:[E1118 12:33:47.528957985 ProcessGroupNCCL.cpp:733] Stack trace of the failed collective: 
-#0 broadcast from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
-#1 wrapper from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
-#2 agreed from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
-#3 generate_mtp_draft_lookahead from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
-#4 guarded from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
-#5 _run_mtp_active from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
-#6 _run_mtp from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
-#7 measured from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
-#8 _run_payload from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
-#9 _run_worker_request from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
-#10 run_worker from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
-#11 main from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
-#12 <module> from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
+#0 broadcast from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
+#1 wrapper from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
+#2 agreed from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
+#3 generate_mtp_draft_lookahead from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
+#4 guarded from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
+#5 _run_mtp_active from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
+#6 _run_mtp from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
+#7 measured from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
+#8 _run_payload from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
+#9 _run_worker_request from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
+#10 run_worker from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
+#11 main from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
+#12 <module> from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
 
 [rank4]:[E1118 12:33:47.529244502 ProcessGroupNCCL.cpp:2636] [PG ID 0 PG GUID 0(default_pg) Rank 4] First PG on this rank to signal dumping.
 [rank6]:[E1118 12:33:47.529737766 ProcessGroupNCCL.cpp:2636] [PG ID 0 PG GUID 0(default_pg) Rank 6] First PG on this rank to signal dumping.
 [rank2]:[E1118 12:33:47.533135700 ProcessGroupNCCL.cpp:689] [Rank 2] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600017 milliseconds before timing out.
 [rank2]:[E1118 12:33:47.536227380 ProcessGroupNCCL.cpp:2303] [PG ID 0 PG GUID 0(default_pg) Rank 2]  failure detected by watchdog at work sequence id: 7355 PG status: last enqueued work: 7355, last completed work: 7354
 [rank2]:[E1118 12:33:47.540163140 ProcessGroupNCCL.cpp:733] Stack trace of the failed collective: 
-#0 broadcast from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
-#1 wrapper from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
-#2 agreed from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
-#3 generate_mtp_draft_lookahead from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
-#4 guarded from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
-#5 _run_mtp_active from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
-#6 _run_mtp from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
-#7 measured from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
-#8 _run_payload from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
-#9 _run_worker_request from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
-#10 run_worker from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
-#11 main from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
-#12 <module> from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
+#0 broadcast from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
+#1 wrapper from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
+#2 agreed from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
+#3 generate_mtp_draft_lookahead from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
+#4 guarded from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
+#5 _run_mtp_active from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
+#6 _run_mtp from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
+#7 measured from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
+#8 _run_payload from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
+#9 _run_worker_request from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
+#10 run_worker from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
+#11 main from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
+#12 <module> from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
 
 [rank2]:[E1118 12:33:47.541197186 ProcessGroupNCCL.cpp:2636] [PG ID 0 PG GUID 0(default_pg) Rank 2] First PG on this rank to signal dumping.
 [rank1]:[E1118 12:33:47.550650047 ProcessGroupNCCL.cpp:689] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600034 milliseconds before timing out.
 [rank1]:[E1118 12:33:47.553738967 ProcessGroupNCCL.cpp:2303] [PG ID 0 PG GUID 0(default_pg) Rank 1]  failure detected by watchdog at work sequence id: 7355 PG status: last enqueued work: 7355, last completed work: 7354
 [rank1]:[E1118 12:33:47.557394804 ProcessGroupNCCL.cpp:733] Stack trace of the failed collective: 
-#0 broadcast from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
-#1 wrapper from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
-#2 agreed from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
-#3 generate_mtp_draft_lookahead from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
-#4 guarded from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
-#5 _run_mtp_active from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
-#6 _run_mtp from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
-#7 measured from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
-#8 _run_payload from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
-#9 _run_worker_request from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
-#10 run_worker from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
-#11 main from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
-#12 <module> from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
+#0 broadcast from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
+#1 wrapper from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
+#2 agreed from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
+#3 generate_mtp_draft_lookahead from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
+#4 guarded from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
+#5 _run_mtp_active from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
+#6 _run_mtp from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
+#7 measured from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
+#8 _run_payload from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
+#9 _run_worker_request from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
+#10 run_worker from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
+#11 main from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
+#12 <module> from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
 
 [rank1]:[E1118 12:33:47.558480084 ProcessGroupNCCL.cpp:2636] [PG ID 0 PG GUID 0(default_pg) Rank 1] First PG on this rank to signal dumping.
 [rank3]:[E1118 12:33:47.579572988 ProcessGroupNCCL.cpp:689] [Rank 3] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600063 milliseconds before timing out.
 [rank3]:[E1118 12:33:47.583419616 ProcessGroupNCCL.cpp:2303] [PG ID 0 PG GUID 0(default_pg) Rank 3]  failure detected by watchdog at work sequence id: 7355 PG status: last enqueued work: 7355, last completed work: 7354
 [rank3]:[E1118 12:33:47.587281594 ProcessGroupNCCL.cpp:733] Stack trace of the failed collective: 
-#0 broadcast from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
-#1 wrapper from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
-#2 agreed from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
-#3 generate_mtp_draft_lookahead from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
-#4 guarded from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
-#5 _run_mtp_active from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
-#6 _run_mtp from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
-#7 measured from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
-#8 _run_payload from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
-#9 _run_worker_request from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
-#10 run_worker from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
-#11 main from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
-#12 <module> from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
+#0 broadcast from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
+#1 wrapper from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
+#2 agreed from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
+#3 generate_mtp_draft_lookahead from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
+#4 guarded from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
+#5 _run_mtp_active from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
+#6 _run_mtp from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
+#7 measured from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
+#8 _run_payload from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
+#9 _run_worker_request from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
+#10 run_worker from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
+#11 main from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
+#12 <module> from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
 
 [rank3]:[E1118 12:33:47.588428056 ProcessGroupNCCL.cpp:2636] [PG ID 0 PG GUID 0(default_pg) Rank 3] First PG on this rank to signal dumping.
 [rank5]:[E1118 12:33:47.608680115 ProcessGroupNCCL.cpp:689] [Rank 5] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600092 milliseconds before timing out.
@@ -237,35 +237,35 @@ W1118 12:20:13.612000 343326 site-packages/torch/distributed/run.py:851] *******
 [rank5]:[E1118 12:33:47.610751706 ProcessGroupNCCL.cpp:2303] [PG ID 0 PG GUID 0(default_pg) Rank 5]  failure detected by watchdog at work sequence id: 7355 PG status: last enqueued work: 7355, last completed work: 7354
 [rank7]:[E1118 12:33:47.612211977 ProcessGroupNCCL.cpp:2303] [PG ID 0 PG GUID 0(default_pg) Rank 7]  failure detected by watchdog at work sequence id: 7355 PG status: last enqueued work: 7355, last completed work: 7354
 [rank5]:[E1118 12:33:47.614122457 ProcessGroupNCCL.cpp:733] Stack trace of the failed collective: 
-#0 broadcast from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
-#1 wrapper from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
-#2 agreed from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
-#3 generate_mtp_draft_lookahead from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
-#4 guarded from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
-#5 _run_mtp_active from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
-#6 _run_mtp from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
-#7 measured from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
-#8 _run_payload from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
-#9 _run_worker_request from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
-#10 run_worker from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
-#11 main from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
-#12 <module> from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
+#0 broadcast from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
+#1 wrapper from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
+#2 agreed from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
+#3 generate_mtp_draft_lookahead from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
+#4 guarded from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
+#5 _run_mtp_active from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
+#6 _run_mtp from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
+#7 measured from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
+#8 _run_payload from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
+#9 _run_worker_request from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
+#10 run_worker from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
+#11 main from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
+#12 <module> from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
 
 [rank5]:[E1118 12:33:47.614893058 ProcessGroupNCCL.cpp:2636] [PG ID 0 PG GUID 0(default_pg) Rank 5] First PG on this rank to signal dumping.
 [rank7]:[E1118 12:33:47.615725378 ProcessGroupNCCL.cpp:733] Stack trace of the failed collective: 
-#0 broadcast from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
-#1 wrapper from /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
-#2 agreed from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
-#3 generate_mtp_draft_lookahead from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
-#4 guarded from /home/mseco/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
-#5 _run_mtp_active from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
-#6 _run_mtp from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
-#7 measured from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
-#8 _run_payload from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
-#9 _run_worker_request from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
-#10 run_worker from /home/mseco/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
-#11 main from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
-#12 <module> from /home/mseco/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
+#0 broadcast from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:2968
+#1 wrapper from <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83
+#2 agreed from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:93
+#3 generate_mtp_draft_lookahead from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2911
+#4 guarded from /home/<user>/qwen4-opt-20261118-http-final/relicllm/models/qwen4_exp/runtime.py:2430
+#5 _run_mtp_active from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:860
+#6 _run_mtp from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:815
+#7 measured from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:67
+#8 _run_payload from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/qwen4_exp_backend.py:938
+#9 _run_worker_request from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/sharded.py:149
+#10 run_worker from /home/<user>/qwen4-opt-20261118-http-final/relicllm/backends/runtime_engine.py:217
+#11 main from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:81
+#12 <module> from /home/<user>/qwen4-opt-20261118-http-final/tests/probe_qwen4_exp_http_session.py:131
 
 [rank7]:[E1118 12:33:47.616648847 ProcessGroupNCCL.cpp:2636] [PG ID 0 PG GUID 0(default_pg) Rank 7] First PG on this rank to signal dumping.
 [rank7]:[E1118 12:33:47.306856403 ProcessGroupNCCL.cpp:1914] [PG ID 0 PG GUID 0(default_pg) Rank 7] Received a dump signal due to a collective timeout from this local rank and we will try our best to dump the debug info. Last enqueued NCCL work: 7355, last completed NCCL work: 7354.This is most likely caused by incorrect usages of collectives, e.g., wrong sizes used across ranks, the order of collectives is not same for all ranks or the scheduled collective, for some reason, didn't run. Additionally, this can be caused by GIL deadlock or other reasons such as network errors or bugs in the communications library (e.g. NCCL), etc. 
@@ -289,10 +289,10 @@ W1118 12:20:13.612000 343326 site-packages/torch/distributed/run.py:851] *******
 [rank6]:[E1118 12:34:47.894027524 ProcessGroupNCCL.cpp:764] [Rank 6] To avoid data inconsistency, we are taking the entire process down.
 [rank6]:[E1118 12:34:47.902810052 ProcessGroupNCCL.cpp:2119] [PG ID 0 PG GUID 0(default_pg) Rank 6] Process group watchdog thread terminated with exception: [Rank 6] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600007 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7af6b737305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7af602d02ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7af602d07fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7af602d093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7af6b737305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7af602d02ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7af602d07fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7af602d093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7af6878f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7af6b8e949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7af6b8f26860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -300,17 +300,17 @@ frame #6: <unknown function> + 0x126860 (0x7af6b8f26860 in /lib/x86_64-linux-gnu
 terminate called after throwing an instance of 'c10::DistBackendError'
   what():  [PG ID 0 PG GUID 0(default_pg) Rank 6] Process group watchdog thread terminated with exception: [Rank 6] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600007 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7af6b737305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7af602d02ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7af602d07fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7af602d093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7af6b737305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7af602d02ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7af602d07fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7af602d093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7af6878f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7af6b8e949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7af6b8f26860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 Exception raised from run at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2125 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7af6b737305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: <unknown function> + 0x68ef03 (0x7af60248ef03 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7af6b737305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x68ef03 (0x7af60248ef03 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #2: <unknown function> + 0xf6ca6 (0x7af6878f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #3: <unknown function> + 0x949e3 (0x7af6b8e949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #4: <unknown function> + 0x126860 (0x7af6b8f26860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -319,10 +319,10 @@ frame #4: <unknown function> + 0x126860 (0x7af6b8f26860 in /lib/x86_64-linux-gnu
 [rank2]:[E1118 12:34:47.994181697 ProcessGroupNCCL.cpp:764] [Rank 2] To avoid data inconsistency, we are taking the entire process down.
 [rank2]:[E1118 12:34:47.002835977 ProcessGroupNCCL.cpp:2119] [PG ID 0 PG GUID 0(default_pg) Rank 2] Process group watchdog thread terminated with exception: [Rank 2] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600017 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7efbd717305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7efb22b02ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7efb22b07fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7efb22b093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7efbd717305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7efb22b02ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7efb22b07fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7efb22b093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7efba76f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7efbd8c949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7efbd8d26860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -332,27 +332,27 @@ terminate called after throwing an instance of 'c10::DistBackendError'
 [rank4]:[E1118 12:34:47.003306026 ProcessGroupNCCL.cpp:764] [Rank 4] To avoid data inconsistency, we are taking the entire process down.
   what():  [PG ID 0 PG GUID 0(default_pg) Rank 2] Process group watchdog thread terminated with exception: [Rank 2] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600017 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7efbd717305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7efb22b02ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7efb22b07fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7efb22b093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7efbd717305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7efb22b02ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7efb22b07fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7efb22b093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7efba76f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7efbd8c949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7efbd8d26860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 Exception raised from run at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2125 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7efbd717305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: <unknown function> + 0x68ef03 (0x7efb2228ef03 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7efbd717305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x68ef03 (0x7efb2228ef03 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #2: <unknown function> + 0xf6ca6 (0x7efba76f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #3: <unknown function> + 0x949e3 (0x7efbd8c949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #4: <unknown function> + 0x126860 (0x7efbd8d26860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 [rank4]:[E1118 12:34:47.012245657 ProcessGroupNCCL.cpp:2119] [PG ID 0 PG GUID 0(default_pg) Rank 4] Process group watchdog thread terminated with exception: [Rank 4] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600006 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7f166397305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7f15af302ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7f15af307fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7f15af3093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7f166397305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7f15af302ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7f15af307fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7f15af3093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7f1633ef6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7f16654949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7f1665526860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -360,17 +360,17 @@ frame #6: <unknown function> + 0x126860 (0x7f1665526860 in /lib/x86_64-linux-gnu
 terminate called after throwing an instance of 'c10::DistBackendError'
   what():  [PG ID 0 PG GUID 0(default_pg) Rank 4] Process group watchdog thread terminated with exception: [Rank 4] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600006 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7f166397305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7f15af302ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7f15af307fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7f15af3093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7f166397305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7f15af302ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7f15af307fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7f15af3093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7f1633ef6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7f16654949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7f1665526860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 Exception raised from run at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2125 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7f166397305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: <unknown function> + 0x68ef03 (0x7f15aea8ef03 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7f166397305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x68ef03 (0x7f15aea8ef03 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #2: <unknown function> + 0xf6ca6 (0x7f1633ef6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #3: <unknown function> + 0x949e3 (0x7f16654949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #4: <unknown function> + 0x126860 (0x7f1665526860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -379,10 +379,10 @@ frame #4: <unknown function> + 0x126860 (0x7f1665526860 in /lib/x86_64-linux-gnu
 [rank7]:[E1118 12:34:47.021610950 ProcessGroupNCCL.cpp:764] [Rank 7] To avoid data inconsistency, we are taking the entire process down.
 [rank7]:[E1118 12:34:47.030457968 ProcessGroupNCCL.cpp:2119] [PG ID 0 PG GUID 0(default_pg) Rank 7] Process group watchdog thread terminated with exception: [Rank 7] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600093 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7878ccd7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x787818702ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x787818707fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7878187093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7878ccd7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x787818702ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x787818707fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7878187093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x78789d2f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7878cea949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7878ceb26860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -390,17 +390,17 @@ frame #6: <unknown function> + 0x126860 (0x7878ceb26860 in /lib/x86_64-linux-gnu
 terminate called after throwing an instance of 'c10::DistBackendError'
   what():  [PG ID 0 PG GUID 0(default_pg) Rank 7] Process group watchdog thread terminated with exception: [Rank 7] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600093 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7878ccd7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x787818702ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x787818707fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7878187093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7878ccd7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x787818702ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x787818707fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7878187093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x78789d2f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7878cea949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7878ceb26860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 Exception raised from run at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2125 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7878ccd7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: <unknown function> + 0x68ef03 (0x787817e8ef03 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7878ccd7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x68ef03 (0x787817e8ef03 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #2: <unknown function> + 0xf6ca6 (0x78789d2f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #3: <unknown function> + 0x949e3 (0x7878cea949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #4: <unknown function> + 0x126860 (0x7878ceb26860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -409,10 +409,10 @@ frame #4: <unknown function> + 0x126860 (0x7878ceb26860 in /lib/x86_64-linux-gnu
 [rank5]:[E1118 12:34:47.045100545 ProcessGroupNCCL.cpp:764] [Rank 5] To avoid data inconsistency, we are taking the entire process down.
 [rank5]:[E1118 12:34:47.053916459 ProcessGroupNCCL.cpp:2119] [PG ID 0 PG GUID 0(default_pg) Rank 5] Process group watchdog thread terminated with exception: [Rank 5] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600092 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x74ab27b7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x74aa73502ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x74aa73507fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x74aa735093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x74ab27b7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x74aa73502ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x74aa73507fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x74aa735093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x74aaf80f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x74ab296949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x74ab29726860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -420,17 +420,17 @@ frame #6: <unknown function> + 0x126860 (0x74ab29726860 in /lib/x86_64-linux-gnu
 terminate called after throwing an instance of 'c10::DistBackendError'
   what():  [PG ID 0 PG GUID 0(default_pg) Rank 5] Process group watchdog thread terminated with exception: [Rank 5] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600092 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x74ab27b7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x74aa73502ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x74aa73507fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x74aa735093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x74ab27b7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x74aa73502ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x74aa73507fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x74aa735093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x74aaf80f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x74ab296949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x74ab29726860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 Exception raised from run at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2125 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x74ab27b7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: <unknown function> + 0x68ef03 (0x74aa72c8ef03 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x74ab27b7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x68ef03 (0x74aa72c8ef03 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #2: <unknown function> + 0xf6ca6 (0x74aaf80f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #3: <unknown function> + 0x949e3 (0x74ab296949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #4: <unknown function> + 0x126860 (0x74ab29726860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -439,10 +439,10 @@ frame #4: <unknown function> + 0x126860 (0x74ab29726860 in /lib/x86_64-linux-gnu
 [rank1]:[E1118 12:34:47.071782140 ProcessGroupNCCL.cpp:764] [Rank 1] To avoid data inconsistency, we are taking the entire process down.
 [rank1]:[E1118 12:34:47.080637050 ProcessGroupNCCL.cpp:2119] [PG ID 0 PG GUID 0(default_pg) Rank 1] Process group watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600034 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7811a2b7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7810ee502ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7810ee507fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7810ee5093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7811a2b7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7810ee502ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7810ee507fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7810ee5093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7811730f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7811a48949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7811a4926860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -452,27 +452,27 @@ terminate called after throwing an instance of 'c10::DistBackendError'
 [rank3]:[E1118 12:34:47.081586347 ProcessGroupNCCL.cpp:764] [Rank 3] To avoid data inconsistency, we are taking the entire process down.
   what():  [PG ID 0 PG GUID 0(default_pg) Rank 1] Process group watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600034 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7811a2b7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7810ee502ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7810ee507fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7810ee5093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7811a2b7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x7810ee502ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x7810ee507fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x7810ee5093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x7811730f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x7811a48949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x7811a4926860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 Exception raised from run at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2125 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7811a2b7305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: <unknown function> + 0x68ef03 (0x7810edc8ef03 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7811a2b7305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x68ef03 (0x7810edc8ef03 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #2: <unknown function> + 0xf6ca6 (0x7811730f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #3: <unknown function> + 0x949e3 (0x7811a48949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #4: <unknown function> + 0x126860 (0x7811a4926860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 [rank3]:[E1118 12:34:47.090498267 ProcessGroupNCCL.cpp:2119] [PG ID 0 PG GUID 0(default_pg) Rank 3] Process group watchdog thread terminated with exception: [Rank 3] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600063 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x766bbf17305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x766b0ab02ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x766b0ab07fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x766b0ab093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x766bbf17305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x766b0ab02ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x766b0ab07fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x766b0ab093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x766b8f6f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x766bc0e949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x766bc0f26860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -480,17 +480,17 @@ frame #6: <unknown function> + 0x126860 (0x766bc0f26860 in /lib/x86_64-linux-gnu
 terminate called after throwing an instance of 'c10::DistBackendError'
   what():  [PG ID 0 PG GUID 0(default_pg) Rank 3] Process group watchdog thread terminated with exception: [Rank 3] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=7355, OpType=BROADCAST, NumelIn=1, NumelOut=1, Timeout(ms)=600000) ran for 600063 milliseconds before timing out.
 Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:692 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x766bbf17305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x766b0ab02ba7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x766b0ab07fc1 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
-frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x766b0ab093b7 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x766bbf17305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std::ratio<1l, 1000l> > >) + 0x2a7 (0x766b0ab02ba7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::Watchdog::runLoop() + 0x17b1 (0x766b0ab07fc1 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::Watchdog::run() + 0x157 (0x766b0ab093b7 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #4: <unknown function> + 0xf6ca6 (0x766b8f6f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #5: <unknown function> + 0x949e3 (0x766bc0e949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #6: <unknown function> + 0x126860 (0x766bc0f26860 in /lib/x86_64-linux-gnu/libc.so.6)
 
 Exception raised from run at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2125 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x766bbf17305d in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
-frame #1: <unknown function> + 0x68ef03 (0x766b0a28ef03 in /workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x766bbf17305d in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x68ef03 (0x766b0a28ef03 in <workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
 frame #2: <unknown function> + 0xf6ca6 (0x766b8f6f6ca6 in /lib/x86_64-linux-gnu/libstdc++.so.6)
 frame #3: <unknown function> + 0x949e3 (0x766bc0e949e3 in /lib/x86_64-linux-gnu/libc.so.6)
 frame #4: <unknown function> + 0x126860 (0x766bc0f26860 in /lib/x86_64-linux-gnu/libc.so.6)
@@ -502,22 +502,22 @@ W1118 12:34:49.936000 343326 site-packages/torch/distributed/elastic/multiproces
 W1118 12:34:49.937000 343326 site-packages/torch/distributed/elastic/multiprocessing/api.py:1012] Sending process 343421 closing signal SIGTERM
 W1118 12:34:49.938000 343326 site-packages/torch/distributed/elastic/multiprocessing/api.py:1012] Sending process 343422 closing signal SIGTERM
 W1118 12:34:49.938000 343326 site-packages/torch/distributed/elastic/multiprocessing/api.py:1012] Sending process 343423 closing signal SIGTERM
-E1118 12:34:52.273000 343326 site-packages/torch/distributed/elastic/multiprocessing/api.py:986] failed (exitcode: -6) local_rank: 2 (pid: 343418) of binary: /workspace/condaenvs/qwen4-torch211/bin/python3.11
+E1118 12:34:52.273000 343326 site-packages/torch/distributed/elastic/multiprocessing/api.py:986] failed (exitcode: -6) local_rank: 2 (pid: 343418) of binary: <workspace>/condaenvs/qwen4-torch211/bin/python3.11
 Traceback (most recent call last):
-  File "/workspace/condaenvs/qwen4-torch211/bin/torchrun", line 6, in <module>
+  File "<workspace>/condaenvs/qwen4-torch211/bin/torchrun", line 6, in <module>
     sys.exit(main())
              ^^^^^^
-  File "/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+  File "<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
     return f(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^
-  File "/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/run.py", line 990, in main
+  File "<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/run.py", line 990, in main
     run(args)
-  File "/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/run.py", line 981, in run
+  File "<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/run.py", line 981, in run
     elastic_launch(
-  File "/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+  File "<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
     return launch_agent(self._config, self._entrypoint, list(args))
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/workspace/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+  File "<workspace>/condaenvs/qwen4-torch211/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
     raise ChildFailedError(
 torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
 ========================================================

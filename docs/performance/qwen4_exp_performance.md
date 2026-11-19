@@ -2112,7 +2112,7 @@ POCKETLLM_GRAPH_RETURN_MARGIN=0 \
 POCKETLLM_QWEN4_RUN_STAGING=0 \
 POCKETLLM_QWEN4_GRAPH_REUSE=1 \
 torchrun --nproc_per_node=8 --master_port=62500 \
-  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  tests/bench_qwen4_exp_baseline.py --model <checkpoint> \
   --context-tokens 8192 --max-new-tokens 256 --graph-window 32 --chunk-size 512 \
   --warmup-s 3 --order graph --host-kv-order 0 --label 8k
 ```
@@ -2124,7 +2124,7 @@ torchrun --nproc_per_node=8 --master_port=62500 \
 # became a GEMM this same command measured 34.20 and 28.60 on one arm and 32.94 on another; the
 # quoted 33.9 / 28.98 is the post-GEMM pair.
 torchrun --nproc_per_node=8 --master_port=62520 \
-  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  tests/bench_qwen4_exp_baseline.py --model <checkpoint> \
   --context-tokens 262015 --max-new-tokens 128 --graph-window 16 --chunk-size 256 \
   --warmup-s 3 --order graph --host-kv-order 0 --label 256k-128
 ```
@@ -2133,7 +2133,7 @@ torchrun --nproc_per_node=8 --master_port=62520 \
 # 262080 prompt, 32 new tokens. The earlier 256k arms used this shape; 31.5-33.0 tok/s at 29.95 ms.
 # It is tail-pessimistic -- 31 intervals -- and the 128-token arm above is the number to quote.
 torchrun --nproc_per_node=8 --master_port=62522 \
-  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  tests/bench_qwen4_exp_baseline.py --model <checkpoint> \
   --context-tokens 262080 --max-new-tokens 32 --graph-window 16 --chunk-size 256 \
   --warmup-s 3 --order graph --host-kv-order 0 --label 256k-32
 ```
@@ -2141,7 +2141,7 @@ torchrun --nproc_per_node=8 --master_port=62522 \
 ```bash
 # The graph-versus-eager equality check. Both modes, so both toggles need two values.
 torchrun --nproc_per_node=8 --master_port=62540 \
-  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  tests/bench_qwen4_exp_baseline.py --model <checkpoint> \
   --context-tokens 262080 --max-new-tokens 32 --graph-window 16 --chunk-size 256 \
   --warmup-s 2 --order eager,graph --host-kv-order 0,0 --label eg-256k
 ```
@@ -2378,9 +2378,9 @@ and the one open confound. Read the retractions before trusting the table.
 
 ### What it was
 
-Measured 2026-11-05 on ts-134, same host as the observation below, with the extension up to
+Measured 2026-11-05 on <host-4090-a>, same host as the observation below, with the extension up to
 date. An empty elementwise kernel streamed on GPU 0 costs **41.4–41.8 µs host-side per launch**,
-against the **18 µs** the 3090 host (`ts-208`) was measured at in the table below. A bf16 M=1
+against the **18 µs** the 3090 host (`<host-3090>`) was measured at in the table below. A bf16 M=1
 matmul of the model's own expert shape (2560 → 1280) costs **113.6 µs**, of which 45 µs is the
 arithmetic at 145 TFLOPS — the rest is launch. So the same 8,139 CUDA ops a decode step that cost
 146 ms of launches on the 3090 cost **~0.92 s** here, which is the whole of the 6.0x.
@@ -2422,7 +2422,7 @@ number is on the staging path. That asymmetry matters and is addressed under *Op
 | **Silicon** | Clocks 2520-2805 MHz against a 3105 max; power 54-79 W against a 450 W cap; PCIe gen4 x16 full width; `SW Power Cap` and `HW Slowdown` both *Not Active* on all 8 cards; a bare GEMM reaches ~62 TFLOPS. Not throttled, not link-degraded. |
 | **Torch version** | torch 2.11.0+cu130 is **13-15% slower** than 2.9.1+cu128 on this box — the hypothesis was backwards. It is a real regression, not a hidden fast path. |
 | **Collectives** | An uncontended NCCL probe times the exact collective at 0.274 ms; 2 per layer x 48 = ~1.4% of a 4090 step. (The corresponding figure is ~22% of a *3090* step, because that step is 9.7x shorter — the absolute costs agree, the denominators do not. Neither share generalises.) |
-| **Storage** | `/workspace` is local NVMe (`/dev/nvme1n1p1 ext4`) at 1.3 GB/s, 134x the 3090's 9.7 MB/s network path. |
+| **Storage** | `<workspace>` is local NVMe (`/dev/nvme1n1p1 ext4`) at 1.3 GB/s, 134x the 3090's 9.7 MB/s network path. |
 | **NUMA / affinity** | 4 NUMA nodes (not 3), GPUs on nodes 0 and 2, every rank bound to its local 12 logical CPUs — which is the correct 24 physical cores per node over 4 GPUs. Not misfiring. |
 | **Prefill-vs-decode division** | Both boxes use the same 58 prompt tokens, so `prefill_tps` divides by the same constant and is directly comparable. |
 
@@ -2495,7 +2495,7 @@ measuring a different graph.
 
 ## Steady-state single-request decode on RTX 3090: what the 150 ms step is made of
 
-**Date:** 2026-10-19. **Box:** 8 x RTX 3090 (`ts-208`), TP8, expert-resident, FP8 checkpoint.
+**Date:** 2026-10-19. **Box:** 8 x RTX 3090 (`<host-3090>`), TP8, expert-resident, FP8 checkpoint.
 **Target this was measured against:** 50 tok/s on *one* request, which needs a 20 ms step.
 
 The step is **146-151 ms**, so 6.6-6.8 tok/s. It is not the MoE, not the collectives, and not the
@@ -2531,7 +2531,7 @@ the launches alone are the step: 8,139 x 18 us = 146 ms.
 
 ## Split reduce groups: 96 collectives at 10.5 ms, 2.2 ms in four strided groups
 
-**Date:** 2026-10-19, 8 x RTX 3090, torch 2.6 / NCCL 2.21.5, `ts-208`.
+**Date:** 2026-10-19, 8 x RTX 3090, torch 2.6 / NCCL 2.21.5, `<host-3090>`.
 
 A decode step's collective cost is **fixed latency per collective, not bytes**: 96 reduces of
 `[1, 1, 2560]`, `[1, 1, 8192]` and `[1, 1, 22528]` each measure 121.5 / 116.2 / 125.0 us, and one
@@ -2602,7 +2602,7 @@ stream of work a graph can hold.
 
 ## Where a decode actually stands on 8xRTX 3090
 
-Measured on `ts-208` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
+Measured on `<host-3090>` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
 `--expert-resident --expert-fused-fp8`:
 
 ```
@@ -2786,7 +2786,7 @@ speed of a decoder that was not decoding.
 
 
 
-Measured on `ts-208` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
+Measured on `<host-3090>` (8xRTX 3090, TP8, `/dev/shm` checkpoint), 128 tokens from a 53-token prompt,
 `--expert-resident --expert-fused-fp8`:
 
 ```
@@ -2853,7 +2853,7 @@ beside it before it means anything.
 
 ## The captured decode, and what a capture costs
 
-The three prerequisites above were built and measured on 8×RTX 3090 (`ts-208`, TP8, `/dev/shm`
+The three prerequisites above were built and measured on 8×RTX 3090 (`<host-3090>`, TP8, `/dev/shm`
 checkpoint, 128 tokens from a 53-token prompt). Two numbers matter, and they are different numbers.
 
 **The step itself: 36.5 tok/s (27.4 ms).** A decode step captured as a CUDA graph and replayed,
@@ -3010,7 +3010,7 @@ Neither is built. This box does 4.74 tok/s on 4x2080 Ti, and that number now has
 |---|---|---:|---|
 | 4 x 2080 Ti, TP4 | `--expert-resident-layers --expert-cache 384` | **4.74** | measured here, 3 runs, output checked |
 | 8 x 4090, TP8 | `--expert-resident --expert-fused-fp8 --graph-window 48` | **50.20** | re-measured 2026-11-03, `exit=0`, output checked |
-| 8 x 3090, TP8 | expert-resident + fused + capture | 33.8 | from the session that produced this page; **not re-measured here** — the box reachable as `ts-208` today has neither the checkpoint nor a checkout |
+| 8 x 3090, TP8 | expert-resident + fused + capture | 33.8 | from the session that produced this page; **not re-measured here** — the box reachable as `<host-3090>` today has neither the checkpoint nor a checkout |
 
 The 4090 figure was re-run against this branch because the page above records **0.9185 tok/s** for
 that box under the *old* configuration (resident, no fused kernel, no capture). The three flags are

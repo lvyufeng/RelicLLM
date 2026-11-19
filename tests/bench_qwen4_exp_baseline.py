@@ -2,7 +2,7 @@
 
 Run on an explicitly leased CUDA host, from the repository root:
   torchrun --nproc_per_node=8 --master_port=60217 \
-    tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+    tests/bench_qwen4_exp_baseline.py --model <checkpoint> \
     --context-tokens 8192 --max-new-tokens 512 --graph-window 32
 
 The same prompt, checkpoint and budget are used for eager/graph/graph/eager.

@@ -13,7 +13,7 @@ The 256k step leaves 0.87 GiB free per rank, and a correct MTP verify round need
 14.06 GiB a rank: at 4.5 bits a weight it becomes about 7.85 GiB, freeing 6.2 GiB. This records the
 measurement that decides *which* 4-bit format, and the error it costs.
 
-Everything below is measured on the real checkpoint (`/workspace/qwen38-fp8`), layers 0 and 20,
+Everything below is measured on the real checkpoint (`<checkpoint>`), layers 0 and 20,
 eight experts each spanning the shard, three random activations per expert: 48 samples.
 
 ## The formats cost the same, and the first comparison was unfair
@@ -264,7 +264,7 @@ from "the quantization we feed it is good", which are the two questions currentl
 `nvfp4_moe_token_forward` takes `x_scale` and `down_scale` as global float32 scalars and one
 `w_scale` per expert. The kernel comments say these come from `hf_quant_config.json` and that
 `input_scale` was **calibrated**. We do not have that file, and we do not have an NVFP4 checkpoint to
-take it from -- the whole reason for converting is that only `/workspace/qwen38-fp8` exists.
+take it from -- the whole reason for converting is that only `<checkpoint>` exists.
 
 So the honest state of the 4-bit plan is:
 

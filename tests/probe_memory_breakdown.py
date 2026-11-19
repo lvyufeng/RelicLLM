@@ -36,7 +36,7 @@ def main():
     out["before_build"] = {"free_gib": gib(torch.cuda.mem_get_info()[0])}
 
     model, config = load_model(
-        "/workspace/qwen38-fp8", ctx, expert_resident=True, expert_fused_fp8=True,
+        "<checkpoint>", ctx, expert_resident=True, expert_fused_fp8=True,
         graph_window=16, mtp=False,
     )
     torch.cuda.synchronize()

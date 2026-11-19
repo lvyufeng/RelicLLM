@@ -127,7 +127,7 @@ The two directions the measurement points at, in order:
 `scripts/v41_graph_memory.py` captures the emulated GEMM into real `CUDAGraph`s and reads
 `torch.cuda.mem_get_info` around each one, because the cost is *driver* graph memory: the allocator's
 own counters barely move and torch's graph pool stays under 20 MiB, so `memory_allocated` cannot see
-it. Measured on ts-133 (8× RTX 4090, torch 2.9.1+cu128, one card), `M = 1`, `N = 1280`:
+it. Measured on <host-4090-b> (8× RTX 4090, torch 2.9.1+cu128, one card), `M = 1`, `N = 1280`:
 
 | Tree | K blocks | first capture | marginal | 
 | --- | ---: | ---: | ---: |
@@ -206,7 +206,7 @@ the evidence supports:
 A served A/B was run on this box and its numbers are **void**. It is written down because the way it was
 caught is the reusable part.
 
-What was done: both trees served on ts-133 with the recorded argv verbatim, against the same staged
+What was done: both trees served on <host-4090-b> with the recorded argv verbatim, against the same staged
 457.8 GiB bank, with the decode rate read off the server's own `generation_tokens_total` over a fixed
 window. That produced 0.133 tok/s here and 0.100 tok/s for `a0abe9a` — 7.5 s and 10.0 s a token.
 

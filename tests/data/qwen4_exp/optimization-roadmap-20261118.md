@@ -69,7 +69,7 @@ Concrete targets:
 
 1. **GDN gated RMSNorm**: its float32 normalization, cast to the input dtype, weight multiplication,
    gate activation, final multiply and cast are still separate torch operations in
-   [RMSNormGated](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L384-L391>).
+   [RMSNormGated](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L384-L391>).
    Fuse them while retaining every BF16 rounding boundary. Removing intermediate BF16 casts or
    allowing an extra fused multiply-add is not bit-exact merely because the formula is the same.
 2. **Packed/strided Q normalization and RoPE**: the corrected verifier intentionally reproduces
@@ -77,7 +77,7 @@ Concrete targets:
    elementwise passes, but must reproduce that actual fallback/fused path, not silently select a
    different contiguous norm. This was the previous long-output correctness bug.
 3. **Row-shaped projection output placement**: strict projections record multiple M=1 calls and
-   concatenate their results in [row_invariant_linear](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L88-L105>).
+   concatenate their results in [row_invariant_linear](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/layers.py#L88-L105>).
    Retain each M=1 cuBLAS arithmetic/algorithm and place its output into stable request buffers where
    possible; then let consumers read that layout directly. Do not replace this with ordinary M=K
    GEMM: that already changed greedy tokens.
@@ -132,7 +132,7 @@ change the target model or precision.
 
 ### Head catch-up by accepted prefix
 
-[DraftGraph._run](</Users/lvyufeng/Projects/RelicLLM/relicllm/models/qwen4_exp/verify_graph.py#L717-L736>)
+[DraftGraph._run](</Users/<user>/Projects/RelicLLM/relicllm/models/qwen4_exp/verify_graph.py#L717-L736>)
 currently processes all four verification rows, then selects the accepted-prefix endpoint. The
 measured mean kept prefix was only **2.172 of 4 rows** over 232 head replays.
 
@@ -208,7 +208,7 @@ Repeated expert visits can potentially reuse the same weight tiles:
   restoring output order; or introduce a route-slot intermediate with deterministic final fold.
   The latter must preserve route accumulation order, not use arbitrary atomics/scatter.
 - Investigate register accumulation instead of global `atomicAdd` in
-  [the NVFP4 down kernel](</Users/lvyufeng/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu#L175-L237>)
+  [the NVFP4 down kernel](</Users/<user>/Projects/relic-core/relic_core/csrc/qwen4_exp_nvfp4_exact.cu#L175-L237>)
   if each output column has one writer. Preserve route order, rounding, FTZ and signed-zero behavior;
   compare with the unchanged old kernel. Decode's MoE-only budget is relatively small; prefill may
   provide more leverage.

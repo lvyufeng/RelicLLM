@@ -23,7 +23,7 @@ path.
 
 Usage (observation pass, one MTP captured request, 8K in / 128 out)::
 
-    python tests/probe_qwen4_exp_linear_hotspots.py --model /workspace/qwen38-fp8 --out obs.json
+    python tests/probe_qwen4_exp_linear_hotspots.py --model <checkpoint> --out obs.json
 
 Usage (serial-baseline micro from a saved observation; no model load, one card)::
 
