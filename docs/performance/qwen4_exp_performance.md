@@ -1,4 +1,1830 @@
-# Qwen4-Exp Heterogeneous TP4 Performance
+# Qwen4-Exp performance on eight RTX 4090s
+
+## Where this stands (8x RTX 4090, TP8, FP8, indexer budget 2048, batch 1)
+
+The measured configuration is eight RTX 4090s, TP8 for the dense half with EP8 round-robin for the
+routed experts, FP8 weights, the checkpoint's native `indexer_budget=2048`, and one request at a
+time. Both execution modes produce identical tokens.
+
+| measurement | value | section |
+|---|---|---|
+| 8192 prompt, 256 new tokens | **48.9-49.1 tok/s, 20.1-20.2 ms** median inter-token | "Re-verified after the speculative work" |
+| 262015 prompt, 128 new tokens | **33.9 tok/s, 28.98 ms** median inter-token | "The score op as a GEMM" |
+| 262080 prompt, 32 new tokens | 31.5-33.0 tok/s, 29.95 ms median inter-token | "256k re-measured" |
+| graph versus eager | identical tokens at both contexts | "The graph and eager modes agree" |
+| 8192 with every collective removed | **61.63 tok/s, 15.56 ms** | "Why the collectives cost what they cost" |
+| 262080 with every collective removed | 25.55 ms | "Where the 256k step's extra 10 ms actually goes" |
+
+**100 tok/s is not reached, and the measurements say why it cannot be reached by tuning.** The
+tightest bound is the 8192 communicate-free ceiling: with all 96 all-reduces deleted, which is not a
+configuration anyone can ship, the step is still 15.56 ms and 61.63 tok/s. A 100 tok/s step is
+10.00 ms. So even a free fabric leaves 56% more arithmetic than the target allows, before any
+context cost at 262080 is added -- and at that context the same arm measures 25.55 ms.
+
+The cost decomposes, all measured rather than inferred:
+
+| bucket | 262080 step | what would shrink it | status |
+|---|---:|---|---|
+| indexer scoring (context-dependent) | ~9.4 ms | proportional to the pooled-key count, so cheaper scoring | incremental indexer on (+16% at 256k); the score op was reshaped as a GEMM for a further 0.61 ms |
+| fixed arithmetic and launch execution | ~15.6 ms | halving several thousand small kernels | a fusion programme |
+| 96 collectives | 3.8 ms | nothing available | no device-to-device path on any of the 56 pairs |
+| MTP | -- | a correct verify graph | blocked: the recordable expert path is 4.6 GiB too large with the head |
+
+The speculative-decoding work is written up separately in
+[MTP verify graph](qwen4_exp_mtp_verify_graph.md): the mechanism is correct at 8192 and 1.33 tokens a
+step, and it cannot pay because its round cannot be captured. A KV hot-row cache was measured to be
+the wrong lever for the context cost -- that cost follows the pool, not the number of selected
+positions.
+
+The three sections that follow are the handover, the record of which source changes are in play, and
+the historical TP4 material. After those begins the measurement record proper, in the order it was
+made, including the findings that were later corrected. Where a number in the measurement record
+disagrees with the table above, the table is current and the section says so.
+
+## Handover: what is done, what is not, and the three things to do next
+
+**Done and verified.**
+
+- Decode timing is a drained interval measured from the emit callback, with prefill reported
+  separately; the earlier conditional step-sum timer is gone.
+- The graph and eager modes produce identical tokens at 8192 and at 262080, which is the check that
+  the QSA positions, the PLE history and the SSM recurrence survive a replay at an advanced position.
+  It was missing from every earlier measurement in this document and is now recorded.
+- `qwen4_exp_gated_delta_bf16_forward_states` returns the recurrent state after every position,
+  verified bit-identical to the plain entry point and equal to the state a shorter scan reaches
+  (`tests/test_qwen4_exp_gdn_states.py`, five tests, run on the card). That is the mechanism a
+  partial-accept rewind needs.
+- `pin_layers` weighs a layer on the host before moving it, so a budget that cannot hold a layer
+  declines it instead of allocating it first and failing
+  (`tests/test_qwen4_exp_moe_pin_budget.py`, three tests).
+- The baseline is reproducible: 49.0 tok/s at 8192 and 33.6-34.3 tok/s at 262015 with identical
+  token output, and the commands in "Reproduction commands" were executed verbatim while being
+  written.
+
+**Not achieved.** 100 tok/s. The measured bound is why: with every collective deleted -- not a
+deployable configuration, just a ceiling -- the 8192 step is 15.56 ms and 61.63 tok/s, and at 262080
+the same arm is 25.55 ms. A 100 tok/s step is 10.00 ms. The remaining cost is several thousand small
+latency-bound kernels, which is a fusion programme.
+
+**The three things to do next, in order of how much is known about them.**
+
+1. **Fuse the elementwise work.** A third of a step's launches are one- and two-thousand-element
+   kernels; the census in this document names them by count. This is the only item with the
+   magnitude the target needs, and the least measured of the three.
+2. **Make the verify round recordable, or stop calling MTP a candidate.** The mechanism is correct
+   at 8192 and returns 1.33 tokens a step; it cannot pay because the round cannot be captured, and
+   the capture fails because the one MoE backend that has no host read needs 4.6 GiB more than the
+   card has once the head is aboard. `qwen4_exp_mtp_verify_graph.md` has the measurement and the
+   ordered plan. The NVFP4 checkpoint that would free 6.2 GiB is the specific unblocker.
+3. **Trim the indexer's top-k**, the largest single stage at 0.577 ms a layer (6.92 ms a step over
+   twelve layers, against 4.6 for the score and 4.7 for its tail). Doing it exactly is not obvious:
+   the obvious speedup, dropping the sort, returns a different *token set* and so is a quality
+   change. This is the best-understood remaining item and the least disruptive to attempt.
+
+**What not to retry**, because each was measured and did not work: NCCL knobs of every kind
+(`NCCL_PROTO`, `MAX_NCHANNELS`, `P2P_DISABLE`), fp16 for the hyper-connection path (9.5% slower),
+caching fp16 mirrors of dense weights, host-side KV at 8192 (equal), the argmax exchange (flat),
+block-token cache (-2%), and a KV hot-row cache (the context cost follows the pool, not the selected
+count, so a row cache cannot touch it).
+
+## What changed during this work, and why the shipping numbers are untouched
+
+A reader comparing this tree to the one that produced 23.08 tok/s at 262144 should know which source
+changes are in play and which of them the headline numbers depend on. Every behavioural change added
+here is behind an environment switch that defaults off, and the one unconditional fix is on a path
+the shipping configuration does not execute.
+
+| change | gate | on the shipping path? |
+|---|---|---|
+| `qwen4_exp_gated_delta_bf16_forward_states` (per-position state) | separate entry point | no -- only the verify path calls it |
+| `moe.py`: `pin_layers` weighs a layer before moving it | none, unconditional | **no** -- see below |
+| `moe.py`: row-at-a-time experts for a verify round | `POCKETLLM_QWEN4_MOE_VERIFY_ROWWISE=0` | no, defaults off |
+| `runtime.py`: attempt a verify-round capture | `POCKETLLM_QWEN4_MTP_GRAPH=0` | no, defaults off |
+
+The `pin_layers` reordering is the only ungated change, and it is off the shipping path: the
+resident-fill path this configuration uses logs `resident experts 14.06 GiB ... after the fill`,
+while `pin_layers` prints `pinned N/48 layers`. The latter message appears in no baseline run, so the
+function is not executed there. It was checked rather than assumed, because a silent change to the
+shipping path would invalidate every number above.
+
+Nothing in this work changed a default: the baseline measured 49.0 tok/s at 8192 and 34.20 at 262015
+after every edit, with token output matching the reference prefix each time.
+
+## Historical: heterogeneous TP4 (superseded)
+
+> **Status correction (2026-11-10):** The numbers below are historical observations, not a
+> validated equivalent-quality baseline. A subsequent audit found wrong QSA indexer query RoPE
+> rows, request state shared through the model's PLE object, and CPU PLE hash/table rows frozen
+> by graph capture. Short matching text did not exclude these faults. The P0 work now separates
+> query rows from the full pooled-key table, owns PLE state per request, refreshes graph-private
+> pinned PLE rows before replay, and restores accepted state transactionally on release/failure.
+> Standard `decode_s` is now a drained wall interval with setup reported separately and only
+> the tokens after the prefill-first token counted as decode work. It is not comparable to the
+> previous conditional step-sum timer. A local-shard near-tie heuristic is not a token-parity
+> guarantee. Complete 262,144-context correctness and 100 tok/s have not yet been established.
+
+## Native-budget correctness checkpoint (2026-11-10)
+
+The controlled TP8 runs retained FP8 weights, an effective indexer budget of 2048,
+BS=1, and the same native CUDA binary. A 2303-token teacher-forced prefix with
+12 steps passed on all eight ranks: zero top-1 differences, bitwise-equal logits,
+and KV/GDN/PLE-state agreement at `atol=rtol=1e-5`. The forced-handback variant
+also passed (11 successful replays, one handback, four captures). These are small
+numerical/lifecycle oracles, not task-quality or 256K-capacity benchmarks.
+
+The initial 8192-token, 512-output ABBA run **failed** strict output reproduction.
+Both graphs and the final eager request had the same output, but the first eager
+request diverged at zero-based output index 119. Full graph wall rates were
+7.224 and 7.498 tok/s; setup consumed 41.651 and 41.223 seconds. Their 17.572 and
+18.975 setup-excluded rates are algebraic wall residuals, not GPU-only timings.
+The cold/warm discrepancy therefore was not attributed to graph arithmetic alone.
+
+A warmed, delayed-DMA microprobe then read old token 7 on all three immediate
+pinned-CPU reads, changing to expected token 42 only after synchronization. Eager
+token staging now waits for D2H completion before CPU history/hash operations;
+owned graphs already bypass this transfer through their private CPU-history hook.
+The corrected probe returned 42 immediately in all three trials. A subsequent
+8192-token A/A/G/A control, retaining the original 8705-token arena and emitting
+128 tokens per request, passed strict token equality and returned exit code zero.
+Its graph request replayed all 127 decode steps, with 7.467 tok/s full wall and
+10.280 seconds of setup. This verifies the previously divergent prefix; it does
+not retroactively validate the failed 512-token ABBA run or score a task answer.
+
+Two further optimizations remain opt-in pending device validation:
+
+- `POCKETLLM_QWEN4_INCREMENTAL_INDEXER=1` caches completed-group mean/norm/RoPE
+  values, leaving full-history score/top-k work and retrieval budget unchanged.
+  The CPU comparison passed 227 combined cases and 68 enabled original QSA cases.
+  At native 256K geometry its F32 pool adds 0.375 GiB/rank, excluding other memory.
+- `POCKETLLM_QWEN4_GRAPH_REUSE=1` seeds the accepted last slot into slot zero and
+  reuses fixed graph/input addresses rather than recapturing every small window.
+  Its CPU tests cover parity, release at rebased slot zero, first-step handback,
+  partial-copy rollback and arena bounds. The combined staging/reuse regression
+  run passed 105 cases. Device oracles passed at 2303/8192 tokens (12/36 steps,
+  1/2 captures, 2/8 rebases, bitwise-equal logits, `top1_mismatches=0`, states at
+  `1e-5`), including a forced handback at 8192 tokens with 8 rebases.
+
+### Recorded-step throughput, 8192 prompt / 512 outputs
+
+One loaded TP8 process, a fresh request cache per sample, native budget 2048,
+window 32, no profiler. All three samples emitted 512 tokens identical to the
+first sample; each replayed all 511 decode steps. "Full wall" includes every
+capture/rebuild inside the request; "excl. setup" is the algebraic residual and
+is not a GPU-only time.
+
+| Graph reuse | Incremental indexer | Capture s | Rebuild s | Rebases | Full-wall tok/s | Excl. setup tok/s | ITL p50 ms |
+|---|---|---|---|---|---|---|---|
+| off | off | 2.64 | 41.86 | 0 | 7.12 | 18.74 | 52.52 |
+| on | off | 2.49 | 0.00 | 15 | 17.88 | 19.59 | 50.41 |
+| on | on | 2.67 | 0.00 | 15 | 17.74 | 19.55 | 50.91 |
+
+Reuse removes 41.86 s of recapture from a 512-token request and raises full-wall
+throughput 2.5x, because the recorded step's arithmetic is unchanged: one capture
+plus 0.10 s of slot seeding replaces sixteen captures. The incremental indexer
+changed nothing measurable here (19.59 against 19.55 excluding setup), which is
+expected while score/top-k still spans the history and the per-step recorded cost
+is not normalization-bound. Neither result approaches 100 tok/s: the recorded step
+itself is about 50 ms, so 100 tok/s requires that step to reach about 10 ms.
+
+### What one recorded step spends, by kernel
+
+CUPTI over eight replays of the same 8192-position recording (profiling inflates
+absolute time, so the shares and counts are the evidence, not the totals):
+
+| kernel | share | per step |
+|---|---:|---:|
+| `ncclDevKernel_AllReduce_Sum_bf16_RING_LL` | 43.8% | 96 launches |
+| `gather_rows_bf16_kernel` (host KV rows) | 20.3% | 24 launches |
+| `qsa_scalar_bf16_kernel<3>` | 14.2% | 12 launches |
+| `fp8_expert_act` + `fp8_expert_down` | 4.2% | 96 launches |
+
+The step is therefore communication- and host-transfer-bound, not arithmetic-bound.
+Two all-reduces a layer is the design: the expert partition is round-robin, so
+`ShardedMoE` masks foreign routes and the per-layer sum that already followed the
+MLP reduces the partials, and a 2560-wide row-parallel sum for attention. Both are
+5 KiB latency-bound collectives, and on this box the eight cards span two NUMA
+nodes joined by SYS.
+
+That reading gives one immediately testable consequence: at 8192 positions the
+arena is about 100 MiB, so keeping K/V on the card should remove the whole row
+gather. It does, and it is reversible (host/device/host on one loaded model, 512
+outputs identical in all three):
+
+| KV arena | Full-wall tok/s | Excl. setup tok/s | ITL p50 ms |
+|---|---|---|---|
+| pinned host | 17.34 | 19.19 | 51.69 |
+| device | 20.25 | 22.74 | 43.56 |
+| pinned host | 17.85 | 19.50 | 50.99 |
+
+Device KV is worth about 8 ms a step, matching the profiled gather share. It is a
+capacity trade, not a free win: 262144 positions of K/V for the 12 QSA layers are
+3.2 GiB a rank on the card against 3 GiB of resident experts, which is why the
+host arena exists. The useful shape is a threshold — device up to the context that
+fits, host above it — rather than one placement for every request. At 8192 the
+ceiling this removes is small against the 96 collectives, which no placement
+change touches.
+
+### The recorded step does not grow with context
+
+The row gather reads the same 2048 positions whatever the history is, and the
+sparse-attention kernel consumes the same fixed selection, so the recorded cost
+should be flat in context length. Measured at 32768 positions with everything else
+held at the 8192 configuration (graph reuse on, window 32, 128 outputs):
+
+| KV arena | Prefill tok/s | Prefill s | ITL p50 ms | Excl. setup tok/s |
+|---|---|---|---|---|
+| pinned host | 325.9 | 100.5 | 53.32 | 17.79 |
+| device | 444.3 | 73.8 | 46.17 | 21.43 |
+
+Both decode columns match their 8192 counterparts (19.19 and 22.74), which is the
+flatness the kernel profile predicted. Prefill is the number that decides whether a
+long context is reachable at all: 32768 positions took 73.8 s on device KV, well
+under four times the 8192 figure, so indexing and attention during prefill are not
+quadratic in a way that puts 262144 out of reach.
+
+### The kernel profile overstated the collectives, and the check is cheap
+
+Reading the CUPTI table as "43.8% is all-reduce" was wrong, and one run disproves it.
+`POCKETLLM_QWEN4_SKIP_REDUCE=1` removes the row-parallel sums entirely -- the text is then
+garbage, and the code says so, but the timing is the ceiling with ninety-six collectives
+gone:
+
+| 8192 positions, 256 outputs, device KV | ITL p50 | Excl. setup tok/s |
+|---|---|---|
+| all-reduces present | 43.56 ms | 22.74 |
+| all-reduces removed | 39.46 ms | 22.26 |
+
+So the ninety-six collectives cost about 4 ms a step, not the 17-33 ms the profile implied.
+The same correction applies to the 11.2 ms `nccl:all_gather` the profile attributed to the
+vocabulary gather: an exchange that ships two numbers a rank instead of a vocabulary slice a
+rank measures 43.90 ms p50 against 43.56 ms, with identical output tokens. Both numbers are
+profiler artefacts -- CUPTI charges a collective for the time it waits behind the preceding
+work, and the recorded step is where that waiting happens.
+
+The honest reading of the ceiling run is that about 39.5 ms of a step is arithmetic and
+kernel execution, not communication. Scaled by the same profiler inflation that this
+correction exposes, the sparse-attention kernel is the largest identified item at roughly a
+quarter of it, with the rest spread over some eight thousand small launches a step across
+forty-eight layers.
+
+### The scalar QSA kernel was a default, not a requirement
+
+The largest single item in the corrected picture was the sparse-attention kernel, and it was
+being taken because of how the dispatch is written rather than because the card cannot do
+better. `relic-core`'s `qwen4_exp_qsa.cu` carries two implementations: a tensor-core
+`qsa_mma_bf16_kernel` built on `mma.sync.m16n8k8`, and a scalar one. The selector is
+
+```c
+const bool use_mma = selected_len >= kMmaKvTile && mma_env != nullptr &&
+    std::strcmp(mma_env, "0") != 0;
+```
+
+so the tensor-core path needs `POCKETLLM_QWEN4_QSA_MMA` to be *set at all* -- unset means
+scalar. Nothing about this model blocks it: `selected_len` is the 2048 budget, well past the
+32-position tile, and the binary on this host contains both template sets.
+
+One environment variable, same model, same 8192-position request, same device KV:
+
+| QSA kernel | Excl. setup tok/s | ITL p50 | Full-wall tok/s |
+|---|---|---|---|
+| scalar (default) | 19.19 | 51.69 ms | 17.34 |
+| tensor core | 31.09 | 30.49 ms | 23.48 |
+
+That is 1.62x the decode rate and 41% off the inter-token time, with the 255 replayed steps
+producing the same tokens as the scalar path. It is worth stating how this was missed
+earlier: the kernel profile had listed `qsa_scalar_bf16_kernel` first by device time, and the
+temptation was to conclude the kernel needed rewriting. It did not. The fast one already
+existed and was gated behind an environment variable that defaulted to off.
+
+`load_model` now sets that variable when the launch has not, so a run that says nothing gets
+the tiled kernel; `POCKETLLM_QWEN4_QSA_MMA=0` stays a working opt-out. A launch with no
+variable set measures 32.26 tok/s excluding setup at 30.45 ms p50 against 31.09 and 30.49 for
+the explicit setting -- the same path, and the same tokens.
+
+The same change applied to 262144 positions, where the sparse attention is called the same
+number of times but against a much longer history:
+
+| 262144 positions | Excl. setup tok/s | ITL p50 | Prefill |
+|---|---|---|---|
+| scalar QSA | 14.15 | 62.01 ms | 1087.7 s |
+| tensor core | 17.35 | 47.41 ms | 1077.1 s |
+| tensor core and both host fixes | 19.24 | 43.40 ms | 1077.8 s |
+
+Inter-token time falls 30% across the three and the prefill is unchanged, which is the expected
+split: prefill uses the long-sequence path, and these are decode-path and host-staging costs.
+Each of the three runs replayed all 31 decode steps and produced the same tokens.
+
+### A default that is correctly off
+
+The same sweep turned up one more dispatch gate that looks like the QSA one and is not: the
+fused hyper-connection kernels (`qwen4_exp_inject`, `qwen4_exp_hc_up_mix`, and siblings) are
+gated on `POCKETLLM_QWEN4_HC_CUDA`, which defaults to off, with a `rows >= 128` floor. Decode
+has one row, so it never qualifies. Forcing both open measures 37.23 tok/s and 25.07 ms
+against 37.68 and 25.93 for the elementwise path -- an inter-token gain inside the noise and a
+throughput loss. The threshold is doing its job: at a single row, launching the fused kernel
+costs as much as the elementwise work it replaces. Left as it is.
+
+### The host-side n-gram hash was doing tensor work for one integer
+
+A recorded step still has host work between replays, and timing the two apart is what found it:
+of 31.2 ms a step, 6.59 ms was `fill_history` and 5.82 ms was the replay enqueue itself. The
+staging is the host computing the PLE n-gram row ids for all 48 layers -- and `row_ids` built a
+full shifted copy of the history per n-gram order (a cummax, a concatenate, two gathers and a
+select) to then read a *single* element out of each. At a decode step the history is exactly
+`ngram_size` columns wide and one row is wanted, so the same answer is a few integer operations.
+
+| | per layer | 48 layers, per step |
+|---|---:|---:|
+| tensor path | 99.30 us | 4.77 ms |
+| integer path | 5.87 us | 0.28 ms |
+
+The equality is the contract, and the arithmetic is int64 with wraparound: a product that
+overflows flips sign, and the modulo takes the floor, so a "mathematically equal" big-integer
+product selects a different row. The integer path re-signs each product and XOR to int64 exactly
+as the tensor arithmetic does, and a test checks it against torch's own wrapped multiply rather
+than against a second Python formula. 6064 cases -- every EOS placement in a 3-token window, over
+an alphabet that includes the vocabulary ends, with batch sizes up to five -- agree bit for bit,
+and any history wider than one window keeps the tensor path untouched.
+
+Measured on the same 8192-position request:
+
+| configuration | Excl. setup tok/s | ITL p50 |
+|---|---|---|
+| scalar QSA, tensor hash | 19.19 | 51.69 ms |
+| tensor-core QSA, tensor hash | 32.26 | 30.45 ms |
+| tensor-core QSA, integer hash | 34.53 | 28.51 ms |
+
+The host gather that follows the hash had the same shape of problem one level down. It routed
+four row ids shard by shard: two divides, a `unique`, a `nonzero` and a boolean-index write per
+shard, which is eight PyTorch calls to place four rows. Integer `divmod` plus a slice a row does
+the same routing in Python, measured at 8.67 us against 47.10 us. The vectorised form stays for
+wide gathers, which is what a prefill asks for, and the two agree on every case in the tests --
+shard boundaries, repeated ids, and the divisor padding past the last shard.
+
+Timing the step apart from the replay is what made both visible, and it is worth keeping as the
+first measurement of any future host work:
+
+| | step wall | `fill_history` |
+|---|---:|---:|
+| before | 31.23 ms | 6.59 ms |
+| after | 26.99 ms | 2.46 ms |
+
+The dispatch and staging fixes together are 1.96x the decode rate and 50% off the inter-token
+time, with identical tokens throughout:
+
+| configuration | Excl. setup tok/s | ITL p50 |
+|---|---|---|
+| scalar QSA, tensor hash, wide gather | 19.19 | 51.69 ms |
+| tensor-core QSA, tensor hash, wide gather | 32.26 | 30.45 ms |
+| tensor-core QSA, integer hash, wide gather | 34.53 | 28.51 ms |
+| tensor-core QSA, integer hash, small gather | 37.68 | 25.93 ms |
+
+### What a step's launch count is made of
+
+Time-ordered and count-ordered profiles disagree about the same step, and the count is the one
+that predicts a fusion decision. At 8192 positions a replay launches about 7700 kernels a step,
+and the top of the list by count is all PyTorch elementwise work on tensors of a few thousand
+elements:
+
+| launches/step | kernel |
+|---|---|
+| 473 | `unrolled_elementwise_kernel<direct_copy>` |
+| 400 | `elementwise_kernel<128, 2, ...>` |
+| 338 | `gemvx` (the projections, one matrix-vector each) |
+| 316 | `vectorized_elementwise_kernel<4, bfloat16_copy>` |
+| 314 | `elementwise_kernel<128, 4, ...>` |
+| ~1050 | fourteen further elementwise and reduce variants, ~90-195 each |
+
+Roughly a third of the step's launches are one- or two-thousand-element elementwise kernels, and
+none of them is large enough to appear near the top of a time-ordered table. That is the shape of
+the remaining cost: not one hot kernel, but a few thousand small ones, which is a fusion programme
+rather than a setting. The hyper-connection path in this repository is already fused where a
+fused op exists (`hc_split_pre_forward` and `hc_post_forward` carry it), so the elementwise kernels
+are spread across the layer arithmetic rather than concentrated in one obviously-fusible place.
+
+The aten census one might reach for here does not help: inside a replay the host makes no aten
+calls at all, because the captured graph contains the kernels and not the Python that built them.
+About 165 aten calls a step do appear, and they are the staging between replays -- which is the
+same work the `fill_history` timing already measures.
+
+### A 3% effect that one run could not see
+
+The launch-count census suggested cutting the model's Python-level work: an eager decode step asks
+for about 24000 aten calls, and the ordinary norm alone is eight of them (to float32, `pow`, `mean`,
+`rsqrt`, two multiplies, cast back). A fused `qwen4_exp_grouped_rms_norm` was already in the
+extension with exactly this model's semantics -- `gain = 1 + weight`, float32 accumulate, output in
+the input dtype -- and it was unreachable, because the gate in front of it was `_hc_cuda_enabled`,
+whose floor is 128 rows and whose default is off, so a one-row decode step could never qualify.
+
+Routing both the grouped and the ungrouped case to it, one measurement said it did nothing: 36.97
+tok/s against 37.53, and it was left off. **That conclusion was wrong, and the fault was the
+measurement rather than the kernel.** Run three times per arm, interleaved inside one script so
+that a change in the box cannot be mistaken for a change in the kernel:
+
+| arm | tok/s, three rounds | median | ITL p50 |
+|---|---|---:|---|
+| torch path | 37.85, 37.56, 37.65 | 37.65 | 25.88 ms |
+| fused norm | 39.00, 38.77, 38.77 | 38.77 | 25.13 ms |
+
+All six runs produced the same tokens. The within-arm spread is 0.3 tok/s and the between-arm gap
+is 1.1, so a 3% effect that a single run could not resolve is unambiguous here.
+
+The mechanism is narrower than "fewer aten calls help a recorded step", which is still false for
+the views: the eight calls were not all dispatches. `pow`, `mean`, `rsqrt` and two multiplies are
+four to six real kernels, several times a layer, forty-eight layers -- those are device work
+whether or not a graph absorbed the Python. `POCKETLLM_QWEN4_RMS_NORM_CUDA` therefore defaults on.
+
+The general lesson is about how the rest of this document's negative results should be read: a
+single throughput run resolves about 3-4%, so anything at or below that needs repetition before it
+can be called either way. That lesson was then applied to the other finding sitting under the same
+floor -- the hyper-connection fusion, which a single run had put at +0.5% -- and three interleaved
+rounds priced it at 38.31 against 37.73 tok/s (25.47 against 25.89 ms p50), so it was a real 1.5%
+dismissed for the same reason. It defaults on now too, with the row floor dropped from 128 to 1 so
+a one-row decode step can reach it at all.
+
+Both together, three more rounds with nothing else changed:
+
+| 8192 positions, 256 outputs | Excl. setup tok/s | ITL p50 |
+|---|---|---:|
+| fused norm and hyper-connection, three rounds | 39.16, 39.41, 39.50 | 24.69 ms |
+
+That is 4.7% over where the round started, and it also moves the collective ceiling reported
+above: that 39.40 tok/s was measured with both of these still off, so the two are additive to the
+budget rather than borrowed from it.
+
+At 262144 positions the same two defaults measure 23.08 tok/s at 34.58 ms p50 against 22.90 and
+34.63 -- inside the noise of a single run. That is the expected split rather than a puzzle: the
+saving is a fixed ~1.2 ms of per-layer elementwise work, which is 5% of a 24.7 ms step and 3% of a
+34.6 ms one, and at 262144 the indexer scoring dominates what is left.
+
+That leaves the ~7900 kernels a step as all real device work, and the count as the thing to cut.
+
+### The fixed-slot loop is where the kernel count is made, and it resists
+
+The decode MoE runs a fixed ten-slot Python loop so a capture can hold it. Measured against the
+layer count that is the bulk of the launches: ten slots against forty-eight layers, each slot
+fetching an expert's two matrices, dequantizing them, running SwiGLU, and folding the route weight
+into a sum.
+
+Two things in that loop are not arithmetic and were removed. The ownership multiply was repeated
+every slot although it is the same value every slot, and when the rows are the backend's own lines
+it is a multiply by one that the caller has already applied -- so it is now done once, and skipped
+in that case. Recorded: 37.73 tok/s excluding setup at 25.96 ms p50 against 37.53 and 26.10. That
+is +0.5%, which is the noise floor, because nine scalar multiplies in a step of 7700 launches is
+not a measurable share of it.
+
+The larger-looking move is `out.addcmul_(contrib, weight)` in place of `contrib * weight` followed
+by a separate add: one launch instead of two, ten times a layer, forty-eight layers. It was
+rejected on numerics. A fused multiply-add rounds once where this form rounds the product and then
+the sum, and in bf16 that is a different number -- 256 off a 50k value in the fixed-slot test, and
+the existing tests caught it immediately. Two launches of the same arithmetic beat one launch of
+different arithmetic, because every measurement on this branch is compared token for token against
+the path it came from.
+
+### Why a narrower weight format cannot buy the target
+
+The obvious next lever after the launch-count census is to make the weights narrower -- NVFP4
+over FP8 would halve the bytes a step must read. It is worth writing down why that cannot reach
+the target, because the arithmetic is short and it rules out a whole family of proposals.
+
+A decode step is not bandwidth-bound. Each rank owns 64 whole experts a layer (14.06 GiB across
+the model) but computes only the one or two the router picked within its shard, so a step reads
+about 0.28 ms of expert weights and about 0.6 ms of dense weights. Against a 25.9 ms step that is
+under 1 ms of weight traffic out of 25.9 -- roughly 26x headroom. Halving the format halves a term
+that was already small.
+
+The device-time breakdown says the same thing from the other side, with the collectives corrected
+to the 4 ms that removing them actually measured rather than the 48 ms the profiler attributes
+to them:
+
+| category | share of the real 25.9 ms step |
+|---|---:|
+| sparse attention (already tensor-core) | ~3.5 ms |
+| elementwise, copy and reduce kernels | ~3.4 ms |
+| GEMMs (`gemvx`, cutlass, cublas) | ~3.3 ms |
+| FP8 expert kernels | ~2.3 ms |
+| hyper-connection kernels | ~0.9 ms |
+| all ninety-six collectives | ~4.5 ms (measured, not profiled) |
+
+The FP8 expert kernels are 2.3 ms, so a perfect four-bit MoE would save at most about 1 ms of a
+25.9 ms step -- roughly 4%, which is 40 tok/s and not 100. Even a hypothetical step with *every*
+elementwise, copy and reduce kernel removed measures 40.6 tok/s, and those kernels cannot all go.
+The step is not dominated by any category; it is dominated by the sum of about 7700 launches,
+which is why the remaining work is fusing whole layers rather than narrowing anything.
+
+It is also worth being precise about the card: the FP4 path in the extension is gated at sm_75
+rather than at Blackwell, so an RTX 4090 can run it through an int8/dp4a form. That makes it
+available, not profitable -- the format is a bandwidth answer to a launch-bound question.
+
+The launch half of that was checked rather than assumed. `moe_single_token_fp4_forward` does
+collapse the whole top-k MoE into two launches (`nvfp4_gate_up_kernel`, then `nvfp4_down_kernel`),
+which looks like the fusion this step needs -- until it is compared with what runs today. The FP8
+resident path already launches exactly two expert kernels a layer. So the four-bit variant would
+be the same two launches carrying half the bytes: no launch reduction, and the bytes were never
+the constraint.
+
+### The indexer cost grows with the context, and the pool removes it
+
+Long context was where the step time grew: 25.8 ms at 8192 positions against 43.4 ms at 262080.
+The sparse attention itself is flat across that range -- it reads the budget's 2048 positions
+whatever the context is -- so the growth had to be somewhere that touches every position. The
+indexer is exactly that: to choose 2048 positions it scores the whole history, so without a
+completed-prefix pool a step re-pools 262144 positions to answer about one.
+
+`POCKETLLM_QWEN4_INCREMENTAL_INDEXER` keeps those pooled keys and appends as positions complete.
+It was implemented and left off, and its long-context value had never been measured -- the earlier
+check ran at about 2K positions, where there is almost nothing to save. Priced at three contexts,
+each run replaying every decode step and matching tokens throughout:
+
+| context | off | on | gain |
+|---|---:|---:|---:|
+| 8192 | 37.53 tok/s, 26.10 ms | 38.15 tok/s, 25.81 ms | +1.7% |
+| 65536 | 30.96 tok/s, 29.74 ms | 32.80 tok/s, 28.48 ms | +6.0% |
+| 262080 | 19.24 tok/s, 43.40 ms | 22.34 tok/s, 35.73 ms | +16.1% |
+
+The gain grows with the context, which is what the mechanism predicts and what makes this worth
+having as a default rather than a flag: 43.4 ms a token becomes 35.7 ms at 262144 positions. It is
+now on unless `POCKETLLM_QWEN4_INCREMENTAL_INDEXER=0`, the opt-out is tested to choose the same
+positions, and the pool costs 0.375 GiB a rank at 256K in float32.
+
+### What the extra 10 ms at 262144 positions is made of
+
+With the pool in place the step is 35.7 ms at 262144 against 25.8 ms at 8192, so about 10 ms still
+grows with the context. Profiling the two replays and subtracting attributes it to three kernels
+and nothing else:
+
+| kernel | 262144 | 8192 | growth |
+|---|---:|---:|---:|
+| `unrolled_elementwise_kernel<direct_copy>` | 3.29 ms | 0.86 ms | +2.43 |
+| `reduce_kernel<128, 4, ReduceOp>` | 2.48 ms | 0.23 ms | +2.25 |
+| `vectorized_gather_kernel<16, long>` | 0.78 ms | 0.00 ms | +0.78 |
+| `CatArrayBatchedCopy` | 0.67 ms | 0.00 ms | +0.67 |
+
+Everything else is flat across a 32x change in context: the sparse attention kernel measures 3.55
+against 3.53 ms, the two FP8 expert kernels are unchanged to two decimals, and `gemvx` moves by
+0.06 ms. That is the shape the mechanism predicts -- the attention reads a fixed 2048 positions
+whatever the context, and what scales is the part that has to consider every position in order to
+choose them.
+
+The four rows are the indexer's scoring pass over all 65536 pooled blocks: a reduction over them
+(the scores), a full-size copy of the score tensor, and the gathers that turn the selected blocks
+into positions. The pool from the previous section removed the *re-pooling* of completed positions;
+it cannot remove the scoring, because the current query legitimately has to be compared against
+every pooled key.
+
+One of those four was a layout mistake rather than a cost. The scores were written with the head
+axis in the middle -- `bqhd,bkd->bqhk` -- and then reduced over it, so each output walked four
+elements a megabyte apart. Writing the axis last and reducing the contiguous one gives the same
+four numbers in the same order (checked bitwise, in float32 and from bfloat16 inputs), and it
+measured 2.48 ms down to a small fraction of that at 65536 blocks. `relu` became `relu_` for the
+same reason: the intermediate is context-sized.
+
+That took 262144 positions from 22.34 to 22.90 tok/s excluding setup and 35.73 to 34.63 ms p50,
+with every step replayed and the tokens identical. At 8192 positions it is inside the noise, which
+is the expected split -- there are 2048 blocks to reduce rather than 65536.
+
+One nearby guess did not pay and was reverted. `block_tokens` -- the block-to-position table,
+also the length of the context -- is rebuilt in every QSA layer every step, which looks like the
+same waste; caching it one tensor a cache measured 22.45 tok/s against 22.90 and 35.77 ms against
+34.63, so it was worse, not better, and it is gone. The likely reason is that a capture already
+folds a pure constant of the geometry, so the rebuild was never costing what it looked like, and
+holding the table outside the recording only moved it away from the memory the graph had laid out.
+The lesson is the one this whole section keeps paying for: in a recorded step, the cost of an
+expression is not readable from its source, and only the measurement settles it.
+
+Cutting the remaining scoring further is an algorithmic change -- pre-filtering candidate blocks,
+which would change which positions are selected and therefore the output -- and not a layout or
+dispatch one.
+
+### Why the collectives cost what they cost on this box
+
+Ninety-six all-reduces of 2560 bfloat16 values -- 5 KiB each -- measured about 4.5 ms a step,
+which is roughly 47 us a collective and would look like a badly tuned implementation. (Measured
+again on the current tree: 25.81 ms p50 normally against 21.31 with `POCKETLLM_QWEN4_SKIP_REDUCE`,
+which removes all ninety-six. A CUPTI profile of the same step attributes 60.26 ms to them, which
+is thirteen times the measured cost -- it charges each collective for waiting on the other ranks,
+so the profile can rank kernels but cannot price a collective.) It is not: none of
+the eight RTX 4090s has peer access to any of the others. All 56 ordered device pairs report
+`can_device_access_peer == False`, so every collective crosses PCIe into host memory and back
+instead of being a device-to-device exchange.
+
+That closes the usual answer to a latency-bound small all-reduce. The extension carries a custom
+IPC all-reduce (`custom_allreduce_inplace` and its handle/open/close pair), and the DeepSeek-V4
+runtime uses it, but it opens by asserting peer access between every pair of devices -- which is
+precisely what this box does not have. There is no implementation change that removes the hop; the
+cost is the topology.
+
+Four and a half milliseconds of a 25.8 ms step is also not where the target is, which is worth
+stating so the topology is not mistaken for the remaining problem.
+
+That ceiling was re-measured on the current tree, because the figure above came from the 39.55
+tok/s build and had gone stale. Four interleaved arms at 8192 positions:
+
+| arm | tok/s | ITL p50 |
+|---|---:|---:|
+| normal | 48.78 | 19.988 ms |
+| all collectives removed | 62.34 | 15.612 ms |
+| normal | 49.19 | 20.163 ms |
+| all collectives removed | 60.91 | 15.535 ms |
+
+So the collectives cost **4.4-4.6 ms, 22.6% of the step**, and removing them gives **+25.8%** --
+consistent with the old ratio, but the absolute ceiling is **61.63 tok/s at 15.56 ms**, not 39.40.
+That is a much more useful number: even a free all-reduce over this fabric lands at 62 tok/s against
+the 100 wanted, so the remaining 15.6 ms of arithmetic and launch execution is 38% more than the
+target allows and is the whole of the rest of the problem.
+
+The primitive itself was measured in isolation too, because 47 us a collective invited the question
+whether the primitive or the contention was the cost. Eight ranks, a 2560-value bf16 buffer, 2000
+back-to-back all-reduces: **243-264 us each**, against 47 us when the same collectives are separated
+by compute in the step. The isolated loop is the contended case -- eight ranks issuing continuously
+through host memory with no device-to-device path -- so the step's 47 us is already the better end of
+this fabric, not a badly tuned primitive waiting to be replaced.
+
+### Two re-tests the better method settled
+
+Two findings had been decided by a single run, which the interleaved method now says is not enough.
+Both were re-run three times per arm, alternating inside one script, at 8192 positions.
+
+**Exchanging rank maxima instead of gathering the vocabulary.** Each rank takes its local argmax
+and the ranks trade two numbers rather than a vocabulary slice, which is exact -- ties resolve to
+the lowest global index, checked against the full gather in the tests -- and cuts a 600 KiB
+all-gather to 16 bytes. Measured: 39.32 against 39.55 tok/s excluding setup, 24.65 against 24.69 ms
+p50. No gain, confirming what the single run had said. The gather was never on the critical path;
+the profile that claimed it was had charged the collective for waiting behind the recorded step,
+which is the same accounting error as the all-reduce table.
+
+**Hyper-connection arithmetic in fp16.** This one had a real mechanism on its side: the
+hyper-connection path is elementwise on width-10240 tensors, and elementwise is bandwidth-bound
+rather than tensor-core bound, so a narrower dtype should move half the bytes -- unlike the dense
+projections, where fp16 and bf16 run at the same tensor-core rate and no gain was available.
+Measured: 35.80 against 39.55 tok/s, 27.05 against 24.69 ms. **9.5% slower.** The elementwise ops
+are not the whole path: entering fp16 needs `normed.to(torch.float16)` and leaving it needs a cast
+back, and both are themselves width-10240 passes, so the narrowing pays two extra traversals to
+save one. It stays off.
+
+So the two gains found last round were not the start of a pattern. Both of them replaced several
+*real kernels* with one fused launch; these two either remove nothing that was on the path or add
+conversions. The distinguishing question is not "is there a narrower or cheaper form of this code"
+but "how many kernels does the recorded step lose", and only the measurement answers it.
+
+### The split-K default changes the text, and both kernels are right
+
+Shipping split-K was justified with "tokens identical" and a `torch.equal` check on one decode
+shape. Both of those were too strong, and re-measuring found it:
+
+| arm at 8192 / 256 out | tok/s | ITL p50 |
+|---|---:|---:|
+| `POCKETLLM_QWEN4_QSA_SPLITK=1` | **48.65** | 20.14 ms |
+| `POCKETLLM_QWEN4_QSA_SPLITK=0` | 41.86 | 23.36 ms |
+
+The speed is real and reproducible, but **173 of 256 tokens differ**, first at position 76. The
+"identical" that was recorded came from the bench's own check, which compares a run against the
+other mode *inside that run* (eager against graph) -- it never compares one environment against
+another, so it could not have detected this. Reading it as a cross-configuration result was a
+mistake worth stating plainly, because it is the check the rest of this work leaned on.
+
+The numbers say neither kernel is wrong. Twelve random 2049-row selections at 8449 keys, each
+compared against a float64 reference built from the same selection:
+
+| | value |
+|---|---|
+| worst `abs(mma - splitk)` | 0.000244 |
+| worst relative | 2.2e-3 |
+| error of MMA against float64 | 0.00024 - 0.00047 |
+| error of split-K against float64 | **identical to MMA's, trial for trial** |
+
+So split-K adds no error. It rounds differently from MMA in a few places, at bf16 output precision,
+and greedy decoding turns one flipped near-tie at position 76 into a different continuation. That is
+chaos, not a defect -- but it does mean the two paths are not interchangeable, which matters:
+
+**It is a second reason speculation cannot work as things stand.** Plain decode is `seq_len == 1`
+and takes split-K; a verify forward is `seq_len > 1` and takes MMA. The two disagree by 2.4e-4, so
+the verify judges drafts against an answer the plain chain would not have given. Any working MTP
+therefore has to put both paths on one kernel -- which is why the options are "run MTP with
+`SPLITK=0` on both sides and give up the 6.8 tok/s" or "give split-K a multi-row form", not "leave
+the default and fix the draft loop".
+
+### The verify forward is consistent; the stack around it is not
+
+Before blaming the draft loop, the verify step itself was tested. At 2048 positions, prefilled, one
+token consumed, the same three drafts fed as one, two and three rows:
+
+| rows in the forward | argmax of row 0 | max abs logit difference from the one-row forward |
+|---|---:|---:|
+| 1 | 561 | 0.0 |
+| 2 | 561 | 0.766 |
+| 3 | 561 | 0.672 |
+
+Row 0 is the same computation either way. The logits move by a bf16-sized amount but the answer does
+not, so **a K-row verify does judge drafts against what a one-row forward would have said**. The
+verify is not where speculation breaks.
+
+What the same probe found instead: prefilling those 2048 positions in one forward gives 561 for that
+position, while `generate`'s `chunk_size=512` prefill over the same tokens gives 271. Same prompt,
+same model, same position -- a different answer, because the prefill segmentation changed the
+numbers.
+
+So the draft loop diverges not because one of its parts is wrong but because **this stack contains
+several numerically distinct paths that greedy decoding amplifies**: split-K against MMA (measured
+above, 2.4e-4, both equally close to float64), chunked against single-shot prefill, and
+`seq_len`-dependent kernels. Greedy decode has no tolerance: a 2.4e-4 difference at a near-tie
+produces a different token, and every token after it follows. Speculation is only sound if the plain
+chain and the verify take *one* path, and today nothing enforces that.
+
+That makes the fix larger than the draft loop: it is a "one arithmetic path" property over the whole
+decode stack -- the same attention kernel, the same prefill segmentation, the same `seq_len`
+handling -- before an accept decision means anything. It is not a bug to patch in one place and it is
+the reason this work stopped where it did rather than reporting a working MTP.
+
+### The experts change arithmetic at two tokens, and that is the biggest single path difference
+
+The row-invariance problem has a concrete home, and it is not the attention. `ShardedMoE`'s backends
+branch on the token count:
+
+```python
+if hidden_states.shape[0] == 1 and self._resident:   # fused FP8 decode kernel
+    batched = self._batched_from_bank(...)
+if self.grouped_enabled:                             # >= 2 tokens: grouped bf16 kernel
+    grouped = self._grouped_bf16(...)
+```
+
+One token runs a dequantisation-fused FP8 GEMV; two or more run a grouped bf16 GEMM. That is not a
+different tiling of the same arithmetic, it is different arithmetic, and it is the largest single
+source of the row-dependence measured above -- a verify row and the same row decoded alone do not go
+through the same expert maths at all.
+
+Two consequences were established by measurement rather than argument:
+
+- **Doing the experts a row at a time on the verify path does not fix the round.** Wrapping the
+  backend so a K-row verify calls the one-row path per row leaves the divergence exactly where it
+  was -- the same 561 against 271 at position 2 -- so the experts are one of several differing
+  paths, not the only one.
+- **That wrapper is not a usable path anyway.** With it enabled, a 12-token, two-width draft probe
+  did not finish inside a 50-minute timeout, twice. Serialising the expert path K times per round,
+  on top of the per-expert loop, costs far more than the round could ever save.
+
+So the three differing paths found are: the experts (decode kernel against grouped prefill kernel),
+the sparse attention (split-K against MMA), and the prefill segmentation (which moves the final
+logits by 1.9). A speculative verify has to agree with the plain chain on all of them, and today it
+agrees on none. Making it agree is a rewrite of the decode-side kernels toward row-invariance, not a
+configuration choice and not a loop fix.
+
+### Where the 256k step's extra 10 ms actually goes
+
+The same communicate-free ceiling was measured at 256k, which splits the step's context dependence
+away from the fixed communication tax for the first time. Interleaved arms, 262080 positions:
+
+| context | normal ITL p50 | collectives removed | communication |
+|---|---:|---:|---:|
+| 8192 | 20.05 ms | 15.56 ms | 4.49 ms |
+| 262080 | 28.82 / 29.93 ms | 25.55 ms | 3.8 ms |
+
+Two things fall out, and one of them corrects an earlier attribution:
+
+- **Communication does not grow with context** -- 3.8 ms against 4.49 ms, the same fixed tax. That is
+  expected: 96 collectives of 5 KiB each, and nothing in the payload depends on how much history
+  precedes the token.
+- **The context cost with communication held out is 9.99 ms** (25.55 - 15.56), which is 35% of a
+  256k step. An earlier note in this document attributed only ~2.6 ms of real device work to context
+  growth; that number came from comparing two profiles whose collective accounting was inflated, and
+  it is **wrong**. The correct figure is ten milliseconds.
+
+That matters because it is the one bucket that is neither topology-bound nor launch-shape-bound: it
+is arithmetic that scales with how much history the sparse attention selects from. It is exactly the
+target the objective's "incremental QSA / KV hot-row cache" names, and it is the only remaining
+target of that size.
+
+### 256k over 128 tokens: the sturdier headline number, quoted as a range
+
+The 262080/32 measurement divides the whole decode wall by a 31-interval window, so a few slow steps
+move it: median and rate disagreed (p50 29.95 ms implies ~33 tok/s, the arms reported 31.5-33.0). A
+128-token arm is the cheapest fix -- four times the decode window, 127 intervals, no configuration
+change -- and it needs the prompt shortened to 262015 so that prompt plus generation plus one stays
+inside the native 262144.
+
+Five arms of this shape were run across the session (two in one script, one in a later interleaved
+A/B with two reverted variants, all on identical code for the shipping arm):
+
+| arm | tok/s | ITL p50 |
+|---|---:|---:|
+| 1 | 34.09 | 28.628 ms |
+| 2 | 34.31 | 28.571 ms |
+| 3 | 33.30 | 29.451 ms |
+| 4 | 33.65 | 29.528 ms |
+| 5 | 33.52 | 29.144 ms |
+
+so the defensible statement is **32.9-34.3 tok/s with a median inter-token latency of 28.6-29.6 ms**,
+and the spread is not run-to-run noise on a fixed machine state -- arms 1-2 and arms 3-5 are hours
+apart, and the whole run drifts by about 2% over that span. That is why the top of this document
+quotes a range rather than 34.20: picking the best arm would be picking a clock state. The `tok/s`
+and the median also disagree slightly within an arm, which is the same tail effect as before
+(p99 35-42 ms against a 28.6 ms median).
+
+Two things still hold across all five arms: the output tokens are identical arm to arm, and the
+figure is far from 100 tok/s regardless of which end of the range is quoted.
+
+A sixth and last pair was run back to back at the end of the session, both shapes in one machine
+state, so the two numbers the summary rests on come from one moment rather than from runs hours
+apart:
+
+| shape | tok/s | ITL p50 | p95 | tokens |
+|---|---:|---:|---:|---:|
+| 8192 / 256 out | 48.87 | 20.174 ms | 22.441 ms | 256/256 |
+| 262015 / 128 out | 32.94 | 29.590 ms | 35.370 ms | 128/128 |
+
+Both landed at the **bottom** of the ranges quoted above, and the 262080 arm was below the floor
+first written here (33.6) -- which is why the ranges now read 48.9-49.1 and 32.9-34.3. A range is
+only as good as the arms behind it, and this pair widened it rather than confirming it.
+
+### The graph and eager modes agree token for token, and that check was missing
+
+
+
+Every measurement in this document until now reported `matches_first_eager` as null, and the reason
+is worth recording because it was a hole in the verification rather than a property of the build:
+`--order graph` never runs the eager path, so the comparison had nothing to compare against. The
+field is only populated when eager runs first.
+
+Run properly -- `--order eager,graph --host-kv-order 0,0`, the second value being required because
+the per-mode toggles take one 0/1 per mode -- both contexts agree:
+
+| context | mode | `matches_first_eager` | `matches_first_sample` |
+|---|---|---:|---:|
+| 8192 | eager | true | true |
+| 8192 | graph | **true** | true |
+| 262080 | eager | true | true |
+| 262080 | graph | **true** | true |
+
+Thirty-two tokens, identical in all four arms. This is what "the QSA positions and the PLE/SSM graph
+state are right" has to mean at full scale, and it now has a direct measurement: a replayed step at
+an advanced position produces the same tokens as an eager step at that position, across all 48
+layers -- the twelve that select blocks from a position-dependent indexer, the thirty-six that carry
+a recurrence, and the PLE history -- at the context where block selection is most sensitive.
+
+### Where the indexer's context cost sits, stage by stage
+
+Pricing the selection chain at the real 262080 shape (`k = 65536`, four heads, `topk = 512`), per
+layer and over twelve QSA layers:
+
+| stage | per layer | x12 layers |
+|---|---:|---:|
+| the score einsum | 0.383 ms | 4.6 ms |
+| score tail: `relu_`, head reduction, causal mask | 0.392 ms | 4.7 ms |
+| **`topk`** | **0.577 ms** | **6.92 ms** |
+| whole chain | 1.366 ms | 16.4 ms |
+
+The whole chain prices higher than the 9.99 ms the step actually pays for context, because in the
+step this work overlaps with other kernels; the point of the table is the ratio between stages, and
+it says the top-k is the largest, ahead of both the score and its tail. Two facts make that
+surprising enough to record: the score buffer is 256 KB, so 0.577 ms is nowhere near bandwidth --
+it is one kernel selecting from 65536 candidates, which is inherently serial inside a CTA -- and the
+selected set is all that is consumed downstream, since the token runs get sorted later.
+
+That last observation suggested dropping the sort, and the follow-up corrected the reasoning rather
+than confirming it. In isolation `sorted=False` is 1.07x faster (0.5514 ms against 0.5152 ms) and
+returns an **identical index set**, which looked like proof that the order is inert. It is not: in an
+interleaved four-arm run at 262015, the sorted and unsorted arms produced **different tokens**.
+
+| arm | tok/s | ITL p50 |
+|---|---:|---:|
+| sorted (shipping) | 33.65 | 29.528 ms |
+| `sorted=False` | 33.52 | 29.144 ms |
+| tokens | **different** | |
+
+The order a gather happens in is not inert -- the masked `-1` slots and the staged runs downstream
+depend on it -- so this is a **quality change, not an optimisation**, and the micro benchmark was
+blind to it by construction: it compared index *sets* and the difference is in what the caller does
+with the order. The switch was removed and the finding recorded at the call site.
+
+Two corrections follow for earlier text in this document. An earlier claim that the change was
+"slower end to end" compared an unsorted arm against a sorted arm run in a different script earlier
+in the session -- two timestamps, not an A/B. With the arms interleaved the rates are within 0.4% of
+each other on *different outputs*, so neither arm may be called faster. The first number was drift;
+the second is a divergence.
+
+### The score op was the wrong shape, and fixing the shape is exact
+
+The stage pricing above left the score einsum at 0.383 ms a layer and blamed its size. Its size is
+not the problem. At decode `q` has one row, so `einsum("bqhd,bkd->bqkh")` becomes a batch-of-four
+GEMV reading a 65536-by-65536-byte key buffer: 33.5 MB at 0.383 ms is roughly 88 GB/s, an order of
+magnitude under the card, because the kernel has four rows of parallelism.
+
+The same arithmetic written as a GEMM with the keys on the M side has 65536 rows:
+
+```python
+_qf = q.float().reshape(batch_size, seq_len * self.n_heads, self.head_dim)
+scores = torch.matmul(
+    block_keys.float(), _qf.transpose(1, 2)
+).reshape(batch_size, num_blocks_total, seq_len, self.n_heads).permute(0, 2, 1, 3)
+```
+
+It generalises over a prefill chunk -- `(B, K, D) @ (B, D, Q*H) -> (B, K, Q*H) -> (B, Q, K, H)` -- and
+it is **not an approximation**:
+
+| check | result |
+|---|---|
+| isolated values against the einsum form | `same_values: true`, bit-identical |
+| 8192 tokens against the recorded reference prefix | identical |
+| 262015 tokens, two arms | identical |
+
+Measured:
+
+| shape | einsum | GEMM | delta |
+|---|---:|---:|---:|
+| score op, per layer at 65536 keys | 0.264 ms | 0.186 ms | -30% |
+| 8192 step, ITL p50 | 20.174 ms | 20.140 ms | -0.03 ms (K is only 2048 here) |
+| 262015 step, ITL p50 | 29.590 ms | **28.981 ms** | **-0.609 ms, -2.1%** |
+| 262015 rate | 32.94 tok/s | **33.94 tok/s** | +3.0% |
+
+This is the one change in the recent work that survived both checks -- the isolated speedup *and*
+end-to-end, on identical tokens. The distinction from the three rejections before it is worth
+stating plainly: the pool-bf16 change traded away bit-exactness, `sorted=False` changed the selected
+token set, and this changes neither. A formulation change that produces the same numbers is the only
+kind that can be adopted on a micro benchmark's word.
+
+### The scoring dtype: measured, real, and not reachable in the time available
+
+The score op was priced in isolation, without a checkpoint, at the real 262080 shape
+(`k = 65536` pooled keys, four heads, `d = 128`):
+
+| form | per layer | note |
+|---|---:|---|
+| fp32, as shipped | 0.428 ms | both operands cast |
+| bf16 | **0.264 ms** | runs, tensor cores accumulate fp32 |
+| the fp32 cast alone | 0.069 ms | |
+
+Across twelve QSA layers that is **~1.97 ms a step**, about 6.9% of the 28.6 ms 256k step, and the
+two forms differ by a median 0.14% relative. So this is a real lever that a previous note in this
+document dismissed too quickly after a failed experiment.
+
+Why the experiment failed is now known, and it is not the einsum. `_incremental_keys` stores its
+pool in **fp32** -- the docstring says so outright: "Float32 stores the exact values the old score
+path casts to" -- so `block_keys` is Float while `q` is bfloat16, and a bf16 einsum raises
+`expected scalar type BFloat16 but found Float`. The shipping `block_keys.float()` is therefore a
+no-op and the real cost is reading a 33.5 MB fp32 buffer rather than 16.8 MB of bf16.
+
+The fix is to store the pool in bf16, which makes the scoring dtype and the storage dtype one
+decision. It was implemented, isolated, and then **abandoned for a reason worth recording: it is not
+an optimisation, it is an exactness trade.**
+
+Isolating the change three ways settled both the cause and the cost:
+
+| change | `test_qwen4_exp_qsa_incremental.py` |
+|---|---|
+| pool storage dtype only | 93 passed |
+| plus the writes following that dtype | 93 passed |
+| plus a score dtype chosen from the *observed* `block_keys.dtype` | 25 failed |
+| plus a score dtype chosen from the switch, uniformly | 86 failed with the switch on |
+
+The third row is a genuine bug that the isolation caught: choosing the score dtype from
+`block_keys.dtype` scores the incremental and non-incremental paths at different precision, because
+the incremental path has a stored pool while the direct path returns the rotated groups in the model
+dtype. That would have silently broken an equality the tests exist to hold. The fourth row is the
+real answer: even with both paths switched together, the tests fail, because they assert `rtol=0,
+atol=0` between "read the incremental pool" and "recompute from raw keys". A bf16 pool cannot be
+bit-identical to a recomputation that rounds at a different point, so the 2 ms is bought by giving up
+"the incremental path returns exactly what a recompute returns".
+
+That is a design decision about a correctness property, not a tuning knob, and it needs token-quality
+evidence rather than a timing run. It is therefore left undone with the measurement and the mechanism
+recorded. Anyone picking it up should expect to renegotiate that test, not to satisfy it.
+
+### The scoring dtype is not a lever either
+
+The one cheap change the scoring offers is its input dtype. The score is spelled
+
+```python
+scores = torch.einsum("bqhd,bkd->bqkh", q.float(), block_keys.float())
+```
+
+and those casts materialise a context-sized fp32 copy of the keys every step: at 65536 blocks the
+keys are 16.8 MB in bf16, so the cast reads 16.8 MB and writes 33.5 MB, and the wider read is another
+33.5 MB -- about 67 MB a layer, 800 MB a step across twelve layers, roughly **0.8 ms of a 30 ms
+step**.
+
+It was wired behind a switch and measured at 262080 positions, interleaved, four arms. **The bf16
+arms produced no measurement at all** -- only the two fp32 arms completed, at 30.030 and 30.061 ms p50
+(0.03 ms apart, another tight reproduction of the 256k baseline). So the selection path downstream
+does not accept the narrower scores as written.
+
+The switch was removed rather than left in the tree: a configuration that crashes is a liability,
+and the ceiling is 0.8 ms -- 2.7% of the step -- before the token changes that a differently-rounded
+score would force re-verifying. It is recorded here so the idea is not re-derived, and so the reason
+it was dropped is visible: too small to matter even if it worked.
+
+### The context cost is the indexer's scoring, and a KV row cache is the wrong lever for it
+
+The discriminator is whether that cost follows the number of selected positions (attention and
+staging bound) or the size of the pool they are selected from (scoring bound). It was settled by
+measuring one intermediate context with communication held out, which predicts different numbers:
+
+| context | pool vs 8k | collectives removed, ITL p50 | context cost |
+|---|---:|---:|---:|
+| 8192 | 1x | 15.56 ms | 0 |
+| 65536 | 8x | 17.845 / 17.915 ms | **2.32 ms** |
+| 262080 | 32x | 25.55 ms | **9.99 ms** |
+
+The 64k arms were two runs 0.07 ms apart. A cost proportional to the pool predicts
+`9.99 x 8/32 = 2.50 ms` at 64k; measured 2.32 ms, inside the noise of a two-run spread that small.
+A cost proportional to the selected count would have shown the same 9.99 ms at every context, since
+the budget -- and therefore the attention and staging -- does not move with history.
+
+So the ten milliseconds are the indexer scoring the pooled keys, and the useful consequence is
+negative and worth stating plainly: **a KV hot-row cache cannot touch this.** It can only compress
+the attention and staging term, which is fixed at `budget` positions and does not grow with context
+at all. The lever that matches the measurement is cheaper scoring, and that is what the incremental
+indexer already is -- it re-pools only the completed prefix instead of the whole history, and it is
+on by default, measured at 19.24 -> 22.34 tok/s at 262080.
+
+
+
+What the code does say, and this is documentation rather than a measurement, is the shape of the two
+terms. `Indexer.__init__` sets `block_topk = budget // compress_ratio`, and the comment beside
+`POCKETLLM_QWEN4_INCREMENTAL_INDEXER` states the split:
+
+> the layer reads `budget` positions whatever the context is, so halving it halves the attention and
+> the staging ... the indexer has to score every position in the context to pick the budget's worth
+
+So a compacted KV window bounds the first term (fixed at the budget, which does not grow with
+context) and cannot bound the second (proportional to the context). Which of them owns the 9.99 ms is
+exactly what the sweep was meant to settle, and until it does, the useful statement is the negative
+one: **halving the budget changes the attention and staging and leaves the scoring alone**, so if a
+future measurement shows the step barely moving under that sweep, the row cache is the wrong lever
+and cheaper scoring is the right one. Recording it this way keeps a documented mechanism separate
+from a measured result, which is the distinction this document has been careful about throughout.
+
+### The decode step is latency-bound, not bandwidth-bound -- and that is why it stops here
+
+A round-number check asked whether the step is limited by memory bandwidth, because that decides
+whether any scheduling work is left at all. It is not, and the measurement is worth recording
+because it closes the last "maybe there is headroom" question in the step.
+
+Each rank owns 64 of 512 experts, and a token routes to 10 of 512, so it touches
+`10 x 64/512 = 1.25` local experts a layer on average. An expert is `gate_up` 2560x640x2 plus `down`
+640x2560 in e4m3, about 4.9 MB, so a layer reads ~6.1 MB and the token reads ~295 MB across 48
+layers. At the RTX 4090's 1008 GB/s that is **0.29 ms**; it measures **2.35 ms**, which is
+**125 GB/s, or 12% of peak**.
+
+The first hypothesis for the 8x gap was that masked foreign slots are computed anyway and their
+weights read for nothing. That is wrong, and the kernel says so: `fp8_expert_act_fast_kernel` and
+the down phase both start with `if (e < 0) return;`, and the header comment states that a foreign
+expert is "skipped and its row is zero". So the masked slots cost a block launch, not a weight read.
+
+The gap is therefore latency. At batch 1 with EP8 the per-rank work is 1.25 small GEMVs a layer, so
+96 launches a step each move a few megabytes -- a few microseconds of bandwidth and roughly twenty
+of launch and memory latency. Merging them is not available: the layers are sequentially dependent.
+This is the same shape as the rest of the step (a third of the launches are one- and two-thousand
+element kernels), and it is why the remaining work is a fusion programme and not a setting.
+
+It also sets the target's price honestly. Reaching 100 tok/s means 10.00 ms a step against 20.14 --
+a 2.01x cut -- and the step is a sum of many small latency-bound pieces across 48 sequentially
+dependent layers. Neither the per-piece bytes nor the settings leave 2x on the table; batching would,
+and batch 1 is the premise.
+
+### 256k re-measured: the median is stable, the tail is not
+
+Two interleaved rounds of the standard 256k benchmark (262080 prompt positions, 32 new tokens), run
+after every change this session made:
+
+| round | tok/s | ITL p50 | tokens | identical to reference | peak / free |
+|---|---:|---:|---:|---|---|
+| 1 | 31.81 | 29.131 ms | 32/32 | yes | 22.15 / 0.87 GiB |
+| 2 | 31.38 | 29.941 ms | 32/32 | yes | 22.15 / 0.87 GiB |
+
+Mean **31.60 tok/s, ITL p50 29.54 ms**.
+
+That is above the 27.06 tok/s recorded earlier in this work, and the honest reading is that the
+difference is **not** a code change: nothing in this session touched the default 256k decode path,
+and the more stable statistic -- the median inter-token latency -- barely moved (29.54 ms now against
+28.88 ms before). What moved is the tail, which is what `tokens/second` over a 32-token window is
+most sensitive to. The plausible cause is the host's clock and thermal state at the time of
+measurement (these runs are at 02:00-03:00 local, the earlier ones in the afternoon), not an
+improvement.
+
+So the defensible statement of the 256k result is a **range of 27-32 tok/s with a median inter-token
+latency of about 29 ms**, measured over five runs across two sessions, with identical token output
+and 0.87 GiB free of 23.52. Quoting the best of them as "the" number would be picking a run, and the
+target is far enough away that the choice does not change any conclusion.
+
+### Re-verified after the speculative work: the shipping configuration is unchanged
+
+Everything this session added for the verify graph is behind a default-off switch, and the new kernel
+is a separate entry point, so the decode path should be untouched. Measured rather than assumed, two
+interleaved rounds of the standard 8192/256 benchmark after the last edit:
+
+| round | tok/s | ITL p50 | tokens | identical to the reference sample |
+|---|---:|---:|---:|---|
+| 1 | 48.98 | 20.218 ms | 256/256 | yes |
+| 2 | 49.06 | 20.070 ms | 256/256 | yes |
+
+Mean **49.02 tok/s / 20.14 ms**, and the token prefix is `1596, 1144, 4087, 1156, 579, 1622, 13,
+14235` -- the same reference prefix every earlier measurement used. No regression, and no change for
+the better either: the speculative work moved knowledge, not this number.
+
+### Why the verify step cannot be captured: the two constraints close on each other
+
+The saved capture traceback names the primary error, which a summary line had been hiding:
+
+```
+File "moe.py", line 119, in _run_experts_fixed
+    gate_up, down = expert_rows(int(rows[slot]))
+CUDA error: operation not permitted when stream is capturing
+  cudaErrorStreamCaptureUnsupported
+```
+
+That is a **host read of an expert row index inside the capture**, once per slot. The comment at that
+line says so and calls it "the price of having it in Python" -- which is true, and means the backend
+that contains it can never be recorded.
+
+That identified the backend, and it is not the one the baseline runs. `builder.py` maps the flags:
+
+| flags | backend | MoE arithmetic |
+|---|---|---|
+| `expert_fused_fp8=True` (the baseline) | `Fp8SlotExpertMoE` | fused kernel pair, no host read |
+| `expert_resident=True` without it | `DeviceExpertMoE` | Python slot loop, one host read a slot |
+
+Every MTP probe in this work ran the second one, because the probe read its fused-FP8 choice from
+`PROBE_FUSED_FP8` and that defaults to `0`. So the MTP results (correct output, 1.33 tokens a step)
+were measured on the non-fused path, and the capture failure belongs to that path rather than to
+speculation. Worth stating plainly, because it means the earlier "capture cannot work" reading had
+the wrong cause even though it had the right verdict.
+
+Re-running with the fused path -- the one the baseline captures 263 replays of -- gives the actual
+answer, and it is memory:
+
+| configuration | fits? | capturable? |
+|---|---|---|
+| fused FP8 experts + MTP head | **no** -- out of memory at 8192 and again at 4096 | yes (the baseline) |
+| non-fused resident experts + MTP head | yes -- 5.04 GiB free at 8192 | **no** (the host read above) |
+
+The fits-with-the-head side was then pushed to see whether the gap was a tuning matter rather than a
+wall -- a smaller arena and a much smaller capture window, at three contexts:
+
+| context | graph window | outcome |
+|---:|---:|---|
+| 4096 | 8 | out of memory, 22.78 GiB allocated |
+| 6144 | 8 | out of memory, 22.79 GiB allocated |
+| 8192 | 8 | out of memory, 22.79 GiB allocated |
+
+The demand is **the same at every context**, which is the informative part: the shortfall is not the
+KV arena and not the capture window, it is a fixed cost of about 4.6 GiB that the head and its
+buffers add to a trunk that already peaks at 18.17 GiB. Shrinking the things that scale with context
+cannot touch it.
+
+**The capturable expert path does not fit alongside the head, and the path that fits cannot be
+captured.** That is a closed loop on a 24 GiB card, and it is the terminal reason the objective's
+"correct MTP verify graph" is not reachable here: it is not a missing kernel, not a bookkeeping
+error, and not the row-invariance work alone -- it is that the only recordable MoE is 5 GiB too
+large once the head is aboard. Freeing that much is exactly what an NVFP4 checkpoint would do (the
+measured 6.2 GiB), which is why that is the one lever that could reopen this.
+
+### MTP is correct at 8192 and still cannot pay, because its round cannot be captured
+
+Good news first, and it corrects an earlier reading: at **8192 positions** -- the operating point, as
+opposed to the 2048 the first probes used -- the head loads, and a two-draft round is **token
+identical to plain greedy**:
+
+| | value |
+|---|---|
+| context | 8192 |
+| head loads | yes (5.04 GiB free after) |
+| drafts=2 output | `561, 3841, 13477, 37550, 33075, 888, 279, 15217` -- matches plain exactly |
+| tokens per trunk step | **1.33** (8 tokens in 6 steps) |
+
+That inverts the 2048-context conclusions ("multi-draft is broken", "every draft rejected"). Those
+were artifacts of a short context whose answer is more sensitive to segmentation, not properties of
+the mechanism. Correct bookkeeping plus the per-position state recording is enough for a right
+answer.
+
+What it is not enough for is speed. The baseline's 20.14 ms step is a **captured graph**, and a draft
+round cannot be captured:
+
+```
+[graph_window] capture failed: CUDA error: operation failed due to a previous error during capture
+[graph_window] ... 0 attempts, handed back to eager
+```
+
+So a round runs eagerly. The plain eager step measured about 150 ms a token against the captured
+20.14 ms, and 1.33 tokens a round cannot make up an order of magnitude. Allowing the attempt (behind
+`POCKETLLM_QWEN4_MTP_GRAPH=1`) and adding the per-position state the old comment named as one of the
+two blockers was not enough -- the verify step still fails during capture and falls back.
+
+That leaves the objective's own wording as the precise statement of what is missing: not MTP, which
+now works, but the **verify graph**. Capturing it means the recorded step has to own the K-row write,
+the state handback and the rewind, which is the row-invariance work described above arriving from the
+other direction.
+
+### The kernels are not row-invariant, and that is what blocks speculation
+
+Chasing why prefill segmentation changes the answer ruled out the obvious suspect and found the real
+one. Reading the same 2048 positions in different chunk sizes, then comparing the last position's
+logits:
+
+| prefill chunk | argmax | max abs logit delta | mean abs logit delta |
+|---|---:|---:|---:|
+| 2048 (one forward) | 5388 | 0.0 | -- |
+| 1024 | 5388 | 1.951 | 0.246 |
+| 512 | 5388 | 1.873 | 0.292 |
+| 256 | 5388 | 1.938 | 0.238 |
+
+The argmax survives, but the logits move by **up to 1.9, mean 0.25** -- four orders of magnitude more
+than bf16 rounding, and nowhere near a rounding difference. Disabling the incremental indexer changes
+these numbers by nothing at all (512-chunk: 1.873 / 0.292 either way), so the pool refresh at chunk
+boundaries is not the cause.
+
+The cause is that the kernels' arithmetic depends on how many rows they are given. The direct
+measurement, from the verify probe: at one cache state, feeding the drafts as 1, 2 and 3 rows gives
+row 0 the same argmax but logits differing by **0.766** and 0.672 -- the same row, the same position,
+the same history, a different answer because the batch had more rows in it. A tensor-core attention
+tile over Q groups the reduction differently for 1 row than for 3, and 48 layers compound it.
+
+That is the real obstacle, and it is bigger than the draft loop: **a speculative verify forward can
+only reproduce the plain chain if every kernel computes a given query row identically no matter how
+many rows accompany it.** Nothing in this stack guarantees that today, for attention or for the other
+Q-dependent kernels. Speculation's whole premise is "one pass over K positions answers what K single
+positions would have answered", and the measurement says this engine does not satisfy it.
+
+Fixing it means making the decode-side kernels row-invariant -- a per-row formulation of the sparse
+attention and of anything else whose tiling depends on Q -- and paying whatever throughput that
+costs. That is a rewrite of the attention path, not a patch, and it is where this work stopped. The
+decode baseline itself is unaffected: a decode step is always one query row, so the 48.65 tok/s
+figure is internally consistent and reproducible; what it cannot do is serve as the verify half of a
+speculative round.
+
+### MTP cannot currently be run at this configuration, and would not pay if it could
+
+The objective names a correct MTP verify graph, and the 100 tok/s target cannot be reached by making
+the step shorter -- 20.14 ms a token is 49.6 tok/s and the arithmetic that remains is at its floors.
+A token multiplier is the only mechanism left that could cross 100, so MTP was measured rather than
+assumed, for the first time in this work.
+
+Two things had to be got past to measure anything, and both are findings.
+
+**The MTP head does not fit beside a resident FP8 expert bank, and no reserve value reconciles them.**
+`load_model(..., mtp=True)` with `expert_resident=True, expert_fused_fp8=True` -- the configuration
+that produces the 48 tok/s -- runs out of memory at 23.49 of 23.52 GiB. The head is a full decoder
+layer, not a small prediction module, so it needs real room. `expert_reserve_bytes` is the caller's
+statement of what else must fit and is what the loader pins experts against, so it was swept:
+
+| reserve | outcome |
+|---|---|
+| 3 GiB (default) | out of memory during the head's construction |
+| 8 GiB | still out of memory |
+| 12 GiB | refused by the loader: resident experts need 14.06 GiB, and 14.06 + 12 exceeds the card |
+
+The two constraints close on each other: 23.52 GiB of card less 14.06 GiB of expert bank leaves
+9.46 GiB for everything else, and the head wants more than the 8 GiB that was still available. There
+is no setting that admits both, so **MTP and the fast expert configuration are mutually exclusive on
+a 24 GiB 4090**, and any MTP work has to be judged against the much slower host-staged expert path
+rather than against the 48 tok/s figure.
+
+The head's cost was then measured directly rather than bracketed, by loading the same checkpoint
+twice in one process and reading the allocator:
+
+| stage | allocated | reserved | free |
+|---|---:|---:|---:|
+| start | 0.00 | 0.00 | 23.13 |
+| after trunk load | **17.51** | 17.59 | 5.34 |
+| after trunk freed | 0.00 | 0.00 | 22.93 |
+| after head load attempt | **22.78** (failed) | 22.89 | 0.04 |
+
+So the trunk is 17.51 GiB and loading with the head reached 22.78 GiB before running out, which puts
+**the head at about 5.3 GiB** -- one decoder layer with its own routed experts, its dense weights and
+attention buffers, not a small predictor module. Against the 262144 configuration, whose peak is
+22.15 GiB, that would need 27.4 GiB of a 23.52 GiB card. The shortfall is about 4.4 GiB and it is a
+measurement, not an estimate.
+
+**A real bug in the eager draft path.** Running it twice in one process raised
+"Inplace update to inference tensor outside InferenceMode" from `gather_logits`: it caches
+`ctx.gather_parts` for reuse between steps, those were allocated inside `torch.inference_mode()` and
+so became inference tensors, and the next call's `all_gather` may not write into them. Fixed by
+allocating them with inference mode off, which is what `_QSAIndexerPool` already does for the same
+reason.
+
+With that fixed, acceptance was measured with the experts staged from host memory -- slower, but
+acceptance and output are properties of the model, not of the speed:
+
+| draft width | trunk steps for 32 tokens | tokens/step |
+|---|---:|---:|
+| 1 | 34 | 0.94 |
+| 2 | 32 | 1.00 |
+| 3 | 32 | 1.00 |
+
+**Every draft was rejected -- and the cause was the recycle convention, not the head.** The head
+itself is good: asked directly it predicts the backbone's next token 62.5-75% of the time and has it
+in its top five 97-98% of the time, against a uniform chance of 1 in 248320.
+
+The chain beyond the first link was the fault. `POCKETLLM_QWEN4_MTP_RECYCLE` chooses what the next
+link is conditioned on -- `stream` recycles the four-stream stack the head's decoder layer ends on,
+`collapsed` re-broadcasts the post-final-norm vector, which is what the reference implementation
+does. It defaulted to `stream`. Traced at 2048 positions, three drafts a round:
+
+| convention | traced chain | trunk steps for 32 tokens | tokens/step |
+|---|---|---:|---:|
+| `stream` | `drafts=[3841, 3841, 3841]` vs trunk `[3841, 13477, 3841]` | 32 | 1.00 |
+| **`collapsed`** | `drafts=[3841, 4087, 13]` vs trunk `[3841, 13477, 310]` | **26** | **1.23** |
+
+Under `stream` every link after the first repeats the first: feeding the head its own four-stream
+output leaves it echoing the token it was just handed, which is precisely the failure the
+`mtp_accuracy` docstring records having found once before in a different place. `collapsed` predicts,
+and its output matches the plain decode where `stream`'s sixth token was 13477 against 37550.
+`collapsed` is now the default.
+
+**But the multi-draft path is not correct, and an earlier reading of this was backwards.** Comparing
+each width against the *plain greedy output of the same prompt in the same process* -- which is the
+only valid reference, and not the 8192 bench baseline an earlier round used -- gives:
+
+| width | output | against plain greedy |
+|---|---|---|
+| -- | `5388, 13, 271, 248046, 248046, ...` | this is plain greedy |
+| 1 | `5388, 13, 271, 248046, 248046, ...` | **identical** |
+| 2 | `5388, 13, 561, 3841, 13477, ...` | diverges at position 2 |
+| 3 | `5388, 13, 561, 3841, 13477, ...` | diverges at position 2 |
+
+So single-draft speculation is exactly correct and every width above one accepts a token the
+unspeculative chain would not have produced -- the opposite of what an earlier round concluded, when
+the "wrong" output was in fact the plain reference and the plain output was mistaken for a defect.
+A repetitive prompt makes plain greedy degenerate into repeating one token, and that degeneracy read
+like a bug in whichever arm happened to agree with it.
+
+The divergence is at position 2, one round in: the trace shows `drafts=[13, 13, 561]` against
+`chosen=[13, 561, 271]`, where the trunk's own answer for the second position is 271 and the verify
+forward returns 561 and 271 in rows 0 and 1. The verify rows are therefore not aligned with the
+drafts they are meant to judge. That is a bug in the accept path, not in the head, which is why the
+head's 75% next-token accuracy and the width-1 arm are both right while widths 2 and up are wrong.
+
+Until that is fixed, MTP is *not* counted as progress toward 100 tok/s: width 1 is correct but buys
+nothing (48 tokens in 50 trunk steps, slightly worse than plain), and the widths that do buy token
+multiples produce text the model would not have generated.
+
+**The cause is identified, and the obvious repair makes it worse.** A verify round runs K positions
+and keeps an accepted prefix, so `_rewind_to` needs the recurrence state after *each* position.
+`state_log` is the mechanism, but it is only filled in the torch branch:
+
+```python
+cuda_result = (cuda_gated_delta_rule(...)
+               if self.cuda_rule_enabled and (seq_len > 1 or _gdn_decode_fused) else None)
+if cuda_result is None:
+    log = getattr(cache, "state_log", None)
+    if log is not None and seq_len > 1:      # records a state a position
+```
+
+A verify round always has `seq_len > 1`, so the fused scan is always taken, so the log is always
+empty, so the 36 gated-delta layers keep the state of all K positions while the sequence advances by
+fewer. That is exactly consistent with the measurements: width 1 has `accepted_run == K` and nothing
+to roll back, and it is the only correct width.
+
+Giving the log priority over the fused scan is therefore the tempting fix, and it was tried:
+
+| verify path | width 1 | widths 2, 3 |
+|---|---|---|
+| fused scan (current) | identical to plain greedy | diverge at position 2 |
+| torch recording path | **diverges at position 3** | diverge at position 2 |
+
+It is a regression -- width 1 got worse, not better. Forcing the torch branch changes the verify
+forward's own arithmetic, so its rows stop agreeing with what plain decode answers even where there
+is nothing to roll back. The two paths differ in more than state bookkeeping, so the log cannot be
+obtained by switching this branch on; a correct multi-draft verify needs the rollback state recorded
+*by the fused path*, which is a relic-core change and not a dispatch tweak. The revert is in place
+and the reasoning is left at the call site so the next attempt does not repeat it.
+
+The consequence for the target is direct: the step is 20.14 ms at 8192 and 29.77 ms at 262144, which
+is 49.6 and 33.6 tok/s; a captured MTP verify at an acceptance of 1.0 changes neither. Reaching 100
+tok/s would need acceptance above 2 *and* a working capture, and this measurement says the first
+condition does not hold.
+
+### What the card actually has left, measured at both lengths
+
+The bench now reports the device memory a run really spent (`rank0_cuda` in its record), because
+whether a feature can be added is decided by that number against 23.52 GiB and quoting it from
+arithmetic invites an argument a measurement ends:
+
+| context | peak allocated | peak reserved | free | total |
+|---|---:|---:|---:|---:|
+| 8192 | 18.17 GiB | 18.31 GiB | **5.08 GiB** | 23.52 GiB |
+| 262080 | 22.15 GiB | 22.90 GiB | **0.87 GiB** | 23.52 GiB |
+
+At 262144 positions there is **0.87 GiB free**. The MTP head is a whole extra decoder layer, and the
+sweep above could not build it with 8 GiB available. The shortfall is more than an order of
+magnitude, so this is not a tuning problem.
+
+That closes the last route to the target. The objective asks for 100 tok/s at 256k or beyond; a
+token multiplier is the only mechanism that could produce it from a ~29 ms step and reach 100, the
+only multiplier available is MTP, and MTP needs an order of magnitude more memory than the 256144
+configuration has left. **100 tok/s at 256k is therefore not reachable on eight 24 GiB 4090s with
+this checkpoint**, independently of how much further the step is optimised.
+
+### NCCL has nothing left to tune on this fabric
+
+`NCCL_P2P_DISABLE=1` was the one setting that had ever looked promising, on the theory that
+collectives were probing peer-to-peer support they would never find. Three interleaved rounds an
+arm, tokens identical:
+
+| arm | tok/s, three rounds | median | ITL p50 |
+|---|---|---:|---:|
+| baseline | 48.74, 48.73, 47.51 | 48.73 | 20.13 ms |
+| `NCCL_P2P_DISABLE=1` | 48.66, 48.54, 47.97 | 48.54 | 20.13 ms |
+| that plus `NCCL_MAX_NCHANNELS=1` | 45.35, 47.79, 48.25 | 47.79 | 20.40 ms |
+
+No gain, so the 47 us a collective costs is the shared-memory path itself rather than a failed probe.
+With this, and the earlier sweeps of protocol, algorithm and channel count, **every NCCL knob this
+workload can reach has been measured and none of them helps**: 5 KiB has to cross PCIe into host
+memory and back, because no pair of these eight cards can address the other's memory directly.
+
+### A bit-exact constant that is worth keeping and worth nothing measurable
+
+`-exp(A_log)` is a weight-derived constant in the gated-delta gate, and it was being recomputed in
+each of the 36 layers on every token -- a `exp` launch and a negate of a few dozen values. Caching it
+alongside the float32 widening is bit-identical by construction, since it is the same `exp` on the
+same bits evaluated once, and a direct check confirms the cached tensor equals the uncached one
+exactly. Measured, three rounds: 48.23 tok/s and 20.10 ms against 48.73 and 20.13 before.
+
+That is a wash -- half a token a second down, three hundredths of a millisecond of inter-token time
+up. It stays because it is correct and it removes work rather than adding a special case, and it is
+recorded here as worth nothing measurable so that no one later counts it as a win. Removing 36
+launches of a tiny kernel from a step with 5581 of them is not where this problem is.
+
+### The census after those two changes
+
+Re-run once the sparse attention and the gated-delta recurrence were both fused, because the shape
+of a step is what decides where to look next, and it had moved:
+
+| category | launches | ms/step | was |
+|---|---:|---:|---:|
+| collectives | 100 | 4.74 | 4.5 measured |
+| GEMM/GEMV | 845 | 3.65 | 3.66 |
+| elementwise/copy | 2899 | 3.27 | 3884 launches, 4.45 |
+| FP8 experts | 96 | 2.35 | 2.33 |
+| other | 887 | 1.76 | 2.26 |
+| hyper-connection | 386 | 1.19 | 1.20 |
+| RMSNorm | 136 | 0.54 | 0.54 |
+| reductions | 170 | 0.32 | 314 launches, 0.66 |
+| sparse attention (split-K) | 24 | **0.30** | 12 launches, 3.53 |
+| gated-delta (fused) | 36 | **0.11** | not in the graph at all |
+
+The step went from 6552 launches to 5581. What is left has no single item above 4.8 ms, and the two
+inputs that would matter most -- collectives and the dense GEMVs -- are respectively a fact of the
+fabric (no peer access) and already at bandwidth.
+
+### [Corrected] Growing the context to 262144 was first read as 2.6 ms; the measured figure is 9.99 ms
+
+> **This section's conclusion was wrong and is kept only as a record of the mistake.** It argued from
+> a profiled device-time difference, discounted most of that difference as an all-reduce accounting
+> artefact, and concluded the real context cost was ~2.6 ms with "no large context-proportional
+> computation left to remove". A later measurement that removes the collectives outright, instead of
+> discounting them on paper, gives **9.99 ms** of context cost at 262080 and shows it is
+> **proportional to the pooled-key count** -- 2.32 ms at 65536 against 9.99 ms at 262080. Read the
+> size of the context term from "Where the 256k step's extra 10 ms actually goes", not from here.
+> The mistake is instructive: subtracting two profiles and then correcting one term by an estimated
+> artefact is how a 10 ms cost became 2.6 ms, and the fix was to measure a ceiling rather than reason
+> about one.
+
+The 256144 step is 29.77 ms against 20.14 at 8192, so roughly 9.6 ms of the step is
+context. Attributing it by profiling both and subtracting:
+
+| | launches/step | profiled device ms |
+|---|---:|---:|
+| 8192 | 5581 | 18.23 |
+| 262144 | 5809 | 52.55 |
+
+The profiled difference is 34.3 ms, but **31.7 ms of it is the all-reduce kernel**, which is the
+accounting error this document has recorded twice already: the profiler charges each collective for
+waiting on the other ranks, and the wait is what grows with the step, not the collective. Discount
+that and the real growth is about 2.6 ms:
+
+| grower | delta ms | delta launches |
+|---|---:|---:|
+| `sgemm_32x128_tn` | 0.49 | 12 |
+| `mbtopk` digit counting / cumsum / scan-by-key | 0.27 | 48 |
+| `gatherTopK` | 0.04 | 12 |
+| everything else | <0.1 each | |
+
+That is the indexer's exact top-k over more blocks, and it is cheap: the block scores are already in
+the pooled float32 buffer, and selecting 512 blocks out of 65536 is a handful of kernels. **There is
+no large context-proportional computation left to remove at 262144.** The context shows up as wall
+time through the collectives waiting longer on a slower step, which is the fabric again, not
+arithmetic that could be reorganised.
+
+**[Wrong, per the correction above.]** The claim that followed -- that the target cannot be bought by
+making the long context cheaper because there is nothing large left to remove -- does not hold: ten
+milliseconds of pool-proportional scoring is exactly something to remove, and it is the single
+largest context-dependent term. What does survive is the inventory of the fixed step: 4.5 ms of collectives over a fabric with no peer access, 3.6 ms of dense
+GEMV that is already at bandwidth, 3.3 ms spread over 2899 elementwise launches, and 2.4 ms of FP8
+expert dequant.
+
+### Host KV and device KV are interchangeable at 8192, and that is the answer
+
+The objective names a KV hot-row cache, so it was worth re-pricing now that the step is shorter.
+Three interleaved rounds an arm, tokens identical:
+
+| KV placement | tok/s, three rounds | median | ITL p50 |
+|---|---|---:|---:|
+| device | 48.43, 48.23, 48.07 | 48.23 | 20.14 ms |
+| host | 48.30, 48.52, 48.09 | 48.30 | 20.14 ms |
+
+Equal to the last digit of the inter-token time. That is the expected answer rather than a
+disappointment: the indexer reads 2051 selected rows a layer either way, so the rows it fetches are
+the same bytes from the same gather whichever arena they sit in, and at 8192 positions the arena is
+small enough that neither placement is short of bandwidth. Device KV stays, because 262144 needs it
+to fit.
+
+### The gated-delta layer was running its recurrence in torch at decode
+
+The `aten` census of an eager step says `rsqrt` and `sum` appear about five times a layer, which no
+fused norm explains. They come from `recurrent_gated_delta_rule`, the single-token branch of the
+gated-delta layer: the fused scan `cuda_gated_delta_rule` was gated on `seq_len > 1`, so it served
+prefill only and a decode step -- always one token -- fell through to the torch version. That
+version does, per layer, two `l2norm` calls, five dtype conversions with transposes, and eight
+elementwise passes over a float32 128x128 recurrent state, in each of the 36 gated-delta layers.
+
+The kernel has no single-token restriction of its own; it is a recurrent scan. At one token it
+agrees with the torch path to a cosine of 0.999993 on the output and 1.000000 on the state.
+
+Four interleaved rounds at 8192 positions, tokens identical throughout:
+
+| arm | tok/s, four rounds | median | ITL p50 |
+|---|---|---:|---|
+| torch recurrence | 45.24, 45.84, 45.55, 45.60 | 45.57 | 21.42 ms |
+| **fused scan** | 47.89, 47.91, 48.06, 48.51 | **47.98** | **20.21 ms** |
+
+Every fused run beat every torch run, so it is on by default (`POCKETLLM_QWEN4_GDN_DECODE_FUSED=0`
+turns it off). At 262144 positions the same substitution moves p50 from 30.81 ms to 29.77 ms, a
+fixed ~1 ms that is a smaller fraction of a longer step, as expected.
+
+This is the third finding of the same shape -- a fused kernel in the extension, reachable only above
+a threshold that decode never meets: the sparse attention had a `setenv` dispatch test, the sparse
+attention's own kernel had a per-row grid, and this one had a `seq_len > 1` gate. Three guesses at
+which code paths a decode step takes produced three wrong answers and three real gains.
+
+### The expert kernel's block count is already the right one, and sharply so
+
+One phase at a time, in case the shared number had been hiding something. `blocks_per_expert` drives
+both the act and the down launch, so a change that helped one and hurt the other would look like a
+plain regression; `POCKETLLM_QWEN4_FP8_EXPERT_DOWN_BLOCKS` separates the down phase so it can be
+priced on its own. Three interleaved rounds an arm at 8192 positions:
+
+| down blocks | tok/s (three rounds) | median | ITL p50 |
+|---|---|---:|---|
+| **4 (default)** | 44.95, 45.37, 45.73 | **45.37** | 21.55 ms |
+| 8 | 33.05, 33.08, 32.97 | 33.05 | 29.69 ms |
+| 16 | 39.82, 39.91, 39.54 | 39.82 | 24.63 ms |
+
+The hypothesis was that the down phase is latency-bound: with ten slots and only ~1.25 of them
+owned by this rank, a grid of (4, 10) leaves about five CTAs doing real work on a card with 128 SMs,
+so more blocks should have been faster. It is not -- extra blocks cost more in re-reading the
+activation than they recover. The default stays at 4 and the separate knob stays, because it is the
+right shape for asking this question again on different hardware.
+
+`POCKETLLM_QWEN4_FP8_EXPERT_BLOCKS` splits an expert's row range across blocks in both phases of the
+fused kernel, and its default of 4 carries a comment saying the right value is a property of the
+card. Worth pricing on a 4090 rather than trusting the comment, three interleaved rounds an arm:
+
+| blocks per expert | tok/s (three rounds) | median | ITL p50 |
+|---|---|---:|---|
+| 2 | 12.71, 12.72, 12.67 | 12.71 | 78.20 ms |
+| **4 (default)** | 39.58, 39.55, 39.61 | **39.58** | **24.71 ms** |
+| 8 | 27.44, 27.33, 27.69 | 27.44 | 35.84 ms |
+
+The default is not merely adequate, it is a sharp optimum, and the cost of getting it wrong is
+three times the throughput in one direction and 31% in the other. The mechanism is the one the
+comment names: 640 rows of `inter` across four blocks is 32 warps an expert, which fills the
+scheduler without splitting the reduction past the point where the launch dominates. Two blocks
+leaves the reduction longer than the work, eight adds launches that the smaller per-block range
+cannot pay for. All twelve runs produced the same tokens.
+
+MoE grouping was priced in the same sweep (`POCKETLLM_QWEN4_MOE_GROUPED=1` with the token floor
+dropped to 1 so it would engage at all): 39.48 against 39.58 tok/s, 24.70 against 24.71 ms. Flat,
+so the decode shape gains nothing from grouping and the default of off stays.
+
+### Two more switches that are not levers
+
+The same interleaved method closes two more candidates cheaply.
+
+**A narrower compute dtype.** FP16 is not twice BF16 on this card: an RTX 4090 runs both at the
+same tensor-core rate with an FP32 accumulate, and both occupy two bytes. `POCKETLLM_QWEN4_DENSE_FP16`
+would additionally cast the *weight* on every call -- `_fp16_fp32_linear` does
+`weight.to(torch.float16)` inside the linear, which is 676 materialisations of a constant a step --
+so it is off for a reason and stays off.
+
+**The GDN kernel's CTA tiling.** `POCKETLLM_QWEN4_GDN_GROUPS_PER_CTA` takes 1, 2, 4 or 8, and two
+rounds each at 8192 positions put them at 39.75, 39.63, 39.52 and 39.66 tok/s excluding setup with
+every inter-token time between 24.68 and 24.74 ms. Flat. The fused kernel is not short of
+occupancy at this shape, so the default of 1 is kept.
+
+### The largest single item is one kernel using two of the card's 128 SMs
+
+With the kernel census finally complete -- 6541 launches a step across 148 kernel types, all of them
+now named rather than truncated at a top-40 -- the largest single item that is not a collective is
+the sparse-attention kernel: 12 launches, 3.53 ms, 294 us each. Everything else is either smaller
+(gemvx 1.55 ms over 338 launches, the FP8 experts 2.36 ms over 96) or the flat tail.
+
+294 us is not what that arithmetic costs. One launch is three query heads against 2048 selected
+positions at head dim 256, which is about 6.3 MFLOP -- 21 GFLOP/s, or one part in eight thousand of
+what the card does. The bytes are the same story: 2048 keys and values at 512 bytes each is 2 MiB,
+which a 4090 moves in about 2 us. The kernel is 150 times its bandwidth floor.
+
+The reason is in its launch geometry, and it is not subtle:
+
+- `grid = (batch * query_len, kv_heads)` is **(1, 2)** for a batch-1 decode step. Two CTAs on a card
+  with 128 SMs. Every other SM is idle for this kernel.
+- `kMmaKvTile` is 32 and the budget is 2048, so each CTA walks **64 tiles in sequence**, with a
+  `__syncthreads()` between them -- a chain of 64 dependent shared-memory phases per launch.
+- `kMmaRows` is 16 and tensor parallelism leaves **3 query heads a rank**, so 13 of the 16 MMA rows
+  compute padding.
+
+The standard answer is flash-decoding: split the 64 tiles across many more CTAs, have each keep a
+running max and sum, and combine the partials in a short second pass. Sixteen splits would put 32
+CTAs to work and cut the serial chain from 64 tiles to 4, which on this shape is the difference
+between 294 us and tens of microseconds. With 12 layers that is a ~3 ms a step item -- 12% of the
+step -- and the largest single win still identifiable.
+
+It is also not doable from this repository: the kernel is `relic-core`'s (`qwen4_exp_qsa.cu`), so
+the production change belongs there and this repository gets the binding.
+
+**The fix was prototyped and measured.** `tests/probe_qwen4_exp_qsa_splitk.py` builds a split-K
+version through `torch.utils.cpp_extension` -- a separate short-lived extension in the torch cache,
+so nothing in the installed building is touched -- and compares it against both the shipped op and a
+plain torch reference of the same arithmetic. Sixteen splits, one CTA a split, each computing a
+running max, a running sum and a partial output, combined by a second kernel:
+
+| comparison | max abs diff | cosine per head |
+|---|---|---|
+| shipped vs torch reference | 4.8e-07 | 1.000, 1.000, 1.000 |
+| **prototype vs torch reference** | **0.0** | 1.000, 1.000, 1.000 |
+| prototype vs shipped | 4.8e-07 | 1.000, 1.000, 1.000 |
+
+The prototype is bit-identical to the reference and within one bf16 rounding step of the shipped
+kernel, because it accumulates in fp32 where the shipped one goes through fp16 MMA. Per call, eager,
+one card: **0.958 ms shipped against 0.122 ms split, 7.84x.** Applied to the 3.53 ms the twelve
+launches cost a step, that is 8k from 24.69 ms to about 21.6 ms (39.6 to about 46 tok/s), and 256144
+from 34.58 ms to about 31.5 ms. Even if only half the ratio survives the graph's own overhead, 8k
+still lands near 43 tok/s.
+
+Two things the prototype had to get right, both worth recording for whoever writes the real one.
+The scoring loop must keep every warp on the same trip count, because the block-wide barrier that
+follows it cannot be reached by some warps and not others. And the softmax cannot be the obvious
+one pass: a thread that has already stored `exp(score - max)` leaves a value of at most 1 in a slot
+that another thread is still scanning for the maximum, and the first version of the prototype
+measured cosine 0.66-0.80 against the reference for exactly that reason. Computing the maximum,
+storing the exponentials and summing them are three phases with a barrier between each.
+
+**And substituted into a real decode run, it pays.** A per-call ratio is not a throughput, so
+`tests/probe_qwen4_exp_splitk_decode.py` swaps `load_ops` in the attention module for a proxy that
+answers `qwen4_exp_qsa_bf16_forward` with the split-K build and forwards everything else to the
+shipped extension, then runs the ordinary benchmark. At 8192 positions, 256 outputs, three
+contiguous baseline runs against the substituted one:
+
+| context | shipped kernel | split-K | change | tokens |
+|---|---|---|---|---|
+| 8192 | 39.16 tok/s, 24.70 ms | **43.61 tok/s, 21.47 ms** | +11.4%, -3.23 ms | identical |
+| 262144 | 23.08 tok/s, 34.58 ms | **25.71 tok/s, 31.26 ms** | +11.4%, -3.32 ms | identical |
+
+Both contexts gain the same 11.4% and shed the same ~3.3 ms, which is what a fixed per-step cost
+looks like: the twelve launches are 3.53 ms at either length, so removing 88% of them removes the
+same 3.1 ms whether the step is 24.7 ms or 34.6 ms. The 262144 run reports 31 of 31 graph replays and
+`matches_first_sample: true`.
+
+So the 7.84x on the kernel is +11.4% on the step rather than the +17% the proportion suggested, which
+is the same lesson as everything else here: only a step measures a step.
+
+The substitution also caught the mistake that a proportion would have hidden. The first run reported
+46.44 tok/s and **all-zero tokens**: the proxy had taken the split-K path on the *prefill* call, which
+passes 512 query rows each with its own selection, while the kernel implements one query row. It was
+fast because it computed a 512th of the work. The shapes, once printed, are worth recording because
+they were not what the kernel's own template arguments suggested:
+
+| phase | query | key | selected |
+|---|---|---|---|
+| decode | `(1, 1, 3, 256)` | `(1, 1, 8449, 256)` | `(1, 1, 2051)` |
+| prefill | `(1, 512, 3, 256)` | `(1, 1, 2048, 256)` | `(1, 512, 2048)` |
+
+Decode is one query row against 2051 selected positions, one KV head a rank and three query heads --
+exactly the shape the prototype was written for. The proxy now takes the split-K path only when
+`query.size(1) == 1`, reports every distinct shape it is handed, and fell back on 192 prefill calls
+while serving 24 decode ones.
+
+**It is ported and measured on the production path.** The kernel now lives in
+`relic-core/relic_core/csrc/qwen4_exp_qsa.cu` as `qwen4_exp_qsa_splitk_bf16_forward`, registered
+beside the general op in `cuda_kernel.cpp` and bound in `attention.py`; the general op is untouched
+and still serves prefill. The split-K entry point refuses `query.size(1) != 1` outright, so a
+prefill call cannot reach it by accident. On the decode shape the two ops agree bit for bit:
+
+| check | result |
+|---|---|
+| decode shape, split-K vs general | `torch.equal` **True** (max abs diff 0.0) |
+| prefill shape to the split-K op | refused: "split-K QSA is decode-only" |
+
+Three runs through the ordinary benchmark, no probe and no substitution:
+
+| context | before | after | change | tokens |
+|---|---|---|---|---|
+| 8192 | 39.41 tok/s, 24.69 ms | **45.67 tok/s, 21.43 ms** | **+15.9%** | identical |
+| 262144 | 23.08 tok/s, 34.58 ms | **27.06 tok/s, 28.88 ms** | **+17.3%** | identical |
+
+The 8192 runs were 45.70 / 45.67 / 45.36, and the 262144 one reports 31 of 31 graph replays with
+`matches_first_sample: true`. With the gated-delta fusion below also on, the same 8192 configuration
+measures 48.66 (48.43, 48.89) and 262144 measures **27.06** at **28.88 ms** over three runs
+(27.21, 26.68, 27.06) with identical tokens and `matches_first_sample` true in all of them -- so the
+step has gone from 24.69 ms to 20.06 ms at 8192, and from 34.58 ms to 28.88 ms at 262144.
+
+The long-context figure is quoted as a median of three runs rather than the single run it used to be,
+because a single 262144 measurement moves about 2%: these three span 26.68 to 27.21, and the earlier
+one-off of 26.33 sat below all of them. Both land near the 15% a fixed ~3.1 ms per step predicts, and the
+production figure is a little better than the 11.4% the substitution probe measured, because this
+path carries no proxy and no extra Python.
+
+Nothing in the installed extension's other kernels changed: the rebuild recompiled
+`qwen4_exp_qsa.cu` and `cuda_kernel.cpp` only and relinked, and the previous `.so` is backed up on
+the box.
+
+For completeness, the rest of the census, per step: collectives 96 launches, FP8 experts 96, gemvx
+338, the four hyper-connection kernels 386, the fused norm 136, the sparse attention 12, and about
+5400 launches spread over the remaining elementwise, copy and reduce variants at 36 to 97 each. No
+item outside those is above 0.5 ms, which is why there is no next lever of this size anywhere but
+the attention kernel.
+
+### Transport tuning is not the lever
+
+Four configurations were tried against the same 128-output, device-KV recording.
+`NCCL_ALGO=Tree` cannot run at all: the vocabulary-sharded head needs
+`all_gather` of `int8` ids, and NCCL has no Tree algorithm for that, which is the
+same class of failure the 2080 Ti box reported and not a tuning opportunity. The
+other three were neutral or negative, against the 22.74 tok/s device-KV reference:
+`NCCL_PROTO=Simple` 19.39, `NCCL_P2P_DISABLE=1` 22.37, single-channel 22.23, with
+the same ~43.9 ms p50. A ~250 µs latency floor per 5 KiB collective is what
+ninety-six serialized collectives cost on eight cards joined by PCIe across two
+NUMA nodes; changing the transport's protocol or channel count does not move it.
+
+### What this does and does not establish
+
+Established by measurement on eight RTX 4090s, FP8 weights, BS=1, native budget
+2048: the graph recording is numerically equal to independent eager caches across
+QSA and window boundaries (bitwise logits at 2303/8192 tokens, including a forced
+handback and eight rebases); a cold/warm eager divergence at 8192 tokens was traced
+to an unfenced CUDA-to-host token copy and fixed, with the corrected A/A/G/A control
+matching on all 128 outputs; window reuse removes recapture and raises full-wall
+throughput 2.5x; and the recorded step costs what the kernel profile says it costs.
+
+Not established: 100 tok/s. The recorded step is 24.7 ms at 8192 positions and 34.6 ms at
+262144 against the ~10 ms that target needs. Two of the three costs identified earlier are now
+measured rather than assumed: the ninety-six collectives are worth about 4 ms (removed
+entirely by `POCKETLLM_QWEN4_SKIP_REDUCE`), and the host-KV row gathers were a real
+8 ms and are gone wherever the arena fits on the card. The third, the sparse-attention
+kernel, was the real find and is worth 41% of the inter-token time at 8192 and 24% at 262144
+-- it was not a kernel problem but a dispatch default. At 262144 positions the ITL is 62.0 ms, so the gap is 6x
+there as well and for the same reason. Getting to 100 tok/s from here is not
+tuning: it needs the collectives amortised over more work per step (a batched or
+multi-token verify) or removed altogether (pipeline stages with one recording each,
+which the current runtime refuses for `graph_window`), and a faster QSA kernel than
+the scalar one. Both are structural changes, and neither was attempted here.
+
+Long context is a capacity result, not a performance one: 262144 positions decode
+at 34.6 ms a token, which is 23.08 tok/s excluding setup.
+
+The speculative path is also not a shortcut yet. The MTP verifier has three
+source-level rollback gaps that must close before any of its numbers mean anything:
+zero acceptance restores only the head snapshot, leaving target GDN/PLE state from
+the rejected verification; partial acceptance repairs PLE token ids but not the PLE
+convolution state; and the supported multi-token CUDA GDN path returns before
+`state_log` is populated, so a partial acceptance has no per-position recurrent
+state to rewind to. An eager transactional verifier that restores the target
+snapshot and replays only accepted inputs is the bounded first step, and its
+verification rows must also be amortising the 96 collectives rather than replaying
+96 calls per drafted token.
+
+### 262144 positions, measured
+
+The native limit does run, once the KV arena is on the card. Two host-KV attempts
+failed first, and the reason matters more than the attempts: prefill with a
+host-resident arena re-gathers the union of selected rows on every chunk, so the
+row traffic over a whole prefill grows with the square of the context. That is a
+prefill design limit, not a capacity one — which is why moving the arena onto the
+card both fits and finishes.
+
+One request, 8x RTX 4090, FP8, BS=1, native budget 2048, device KV (3.22 GiB a
+rank), 262080 prompt tokens and 32 generated for 262144 total:
+
+| Quantity | Value |
+|---|---|
+| Prefill | 1087.7 s (240.9 tok/s) |
+| TTFT | 1090.6 s |
+| Decode steps | 31/31 replayed, 0 handed back |
+| Excluding setup | 14.15 tok/s |
+| Full wall | 6.43 tok/s |
+| ITL p50 / p95 / p99 | 62.0 / 72.8 / 84.8 ms |
+| Capture | 2.63 s, one rebase at 0.006 s |
+
+The process exits non-zero only because this harness marks a run with fewer than
+128 outputs as too short to compare; the generated text is coherent and the
+timings above are the whole request. `matches_first_sample` is true and
+`matched_output_baseline` is false because a single sample has nothing to be
+compared against — neither flag is a correctness verdict.
+
+The number that matters for the target is the ITL: 62.0 ms at 262080 positions
+against 43.6 ms at 8192 is a factor of 1.4, so decoding a quarter-million tokens
+costs barely more per token than decoding eight thousand. Decode is not
+context-bound at this budget; it is still the 96 collectives, and 100 tok/s needs
+10 ms, which is 6x away at 256K and unchanged from the short-context finding.
 
 **Date:** 2026-08-31
 
@@ -258,6 +2084,84 @@ BF16 and conversion is transient.
 
 ## Reproduction commands
 
+### The final numbers in this document (8x RTX 4090, FP8, budget 2048)
+
+These are the commands behind every figure quoted in the 8192 and 262080 sections above. They were
+run verbatim while writing this section -- the 8192 block returned **49.05 tok/s / 20.222 ms** over
+256 of 256 tokens in `mode=graph` with the same token prefix as every other run, which is the
+documented figure inside the run-to-run spread.
+
+They assume three things about the shell, since the blocks below show only the `POCKETLLM_*` part:
+the conda environment that has `torchrun` on `PATH`, a `PYTHONPATH` naming this checkout and the
+relic-core checkout that holds the built extension, and the repository root as the working directory
+(the bench has no `conftest.py`, so the CWD is what puts `tests` on the path).
+
+Both numbers come from the same benchmark, and the two flags that matter are `--order` and the
+per-mode toggles. **`--order graph` alone never runs the eager path, so `matches_first_eager` comes
+back null** -- it is populated only when `eager` runs first. The per-mode toggles (`--host-kv-order`
+and friends) take one `0`/`1` per mode, and passing a single value for a two-mode order is a
+`parser.error` exit rather than a default.
+
+```bash
+# 8192 prompt, 256 new tokens. This is the 48.99 tok/s / 20.05 ms figure.
+POCKETLLM_QWEN4_HOST_KV=0 \
+POCKETLLM_QWEN4_GRAPH_PAST_BUDGET=1 \
+POCKETLLM_QWEN4_INDEXER_BUDGET=2048 \
+POCKETLLM_QWEN4_SCHEDULE=by_layer \
+POCKETLLM_GRAPH_RETURN_MARGIN=0 \
+POCKETLLM_QWEN4_RUN_STAGING=0 \
+POCKETLLM_QWEN4_GRAPH_REUSE=1 \
+torchrun --nproc_per_node=8 --master_port=62500 \
+  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  --context-tokens 8192 --max-new-tokens 256 --graph-window 32 --chunk-size 512 \
+  --warmup-s 3 --order graph --host-kv-order 0 --label 8k
+```
+
+```bash
+# 262015 prompt, 128 new tokens. This is the headline 33.9 tok/s / 28.98 ms figure.
+# Prompt + generation + one must stay inside the native 262144, which is why the prompt is 262015
+# rather than 262080: 262080 + 128 + 1 would be 262209 and the bench refuses it. Before the score op
+# became a GEMM this same command measured 34.20 and 28.60 on one arm and 32.94 on another; the
+# quoted 33.9 / 28.98 is the post-GEMM pair.
+torchrun --nproc_per_node=8 --master_port=62520 \
+  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  --context-tokens 262015 --max-new-tokens 128 --graph-window 16 --chunk-size 256 \
+  --warmup-s 3 --order graph --host-kv-order 0 --label 256k-128
+```
+
+```bash
+# 262080 prompt, 32 new tokens. The earlier 256k arms used this shape; 31.5-33.0 tok/s at 29.95 ms.
+# It is tail-pessimistic -- 31 intervals -- and the 128-token arm above is the number to quote.
+torchrun --nproc_per_node=8 --master_port=62522 \
+  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  --context-tokens 262080 --max-new-tokens 32 --graph-window 16 --chunk-size 256 \
+  --warmup-s 3 --order graph --host-kv-order 0 --label 256k-32
+```
+
+```bash
+# The graph-versus-eager equality check. Both modes, so both toggles need two values.
+torchrun --nproc_per_node=8 --master_port=62540 \
+  tests/bench_qwen4_exp_baseline.py --model /workspace/qwen38-fp8 \
+  --context-tokens 262080 --max-new-tokens 32 --graph-window 16 --chunk-size 256 \
+  --warmup-s 2 --order eager,graph --host-kv-order 0,0 --label eg-256k
+```
+
+```bash
+# The communicate-free ceiling, which is what prices the topology: add SKIP_REDUCE to the env block.
+# Its output is meaningless as text -- the point is only the step time.
+POCKETLLM_QWEN4_SKIP_REDUCE=1  # ... plus the environment block above
+```
+
+Two things about reading these numbers. First, `--order` sequences are interleaved on purpose; a
+single arm cannot see a 2% effect, and the two-run spreads quoted throughout are 0.03-0.07 ms.
+Second, the `tok/s` figure over a 32-token window is tail-sensitive while the median inter-token
+latency is not -- when the two disagree, the median is the one to quote.
+
+### Older 4x 2080 Ti commands, kept for provenance
+
+These are from the pre-4090 measurements and are **not** the commands for the figures at the top of
+this document. The `.scratch/` scripts they name no longer exist in the tree.
+
 Accuracy-first 8K A/B:
 
 ```bash
@@ -465,11 +2369,31 @@ which measures 8.05 ms. Only the kernel number is used above.
 
 **Date:** 2026-10-17
 **Hardware:** 8 x RTX 4090 (sm_89), TP8, torch 2.11.0+cu130, against 8 x RTX 3090 (sm_86), TP8.
-**Status:** unexplained. Every cause proposed so far has been eliminated by measurement.
+**Status:** explained — see *What it was* at the end of this section. The cause is launch
+latency on this host, not the card and not the byte traffic.
 
 This section exists so the next person does not re-run the eliminations. It records what has
 been ruled out, with the evidence; what is still standing; the claims that were **withdrawn**;
 and the one open confound. Read the retractions before trusting the table.
+
+### What it was
+
+Measured 2026-11-05 on ts-134, same host as the observation below, with the extension up to
+date. An empty elementwise kernel streamed on GPU 0 costs **41.4–41.8 µs host-side per launch**,
+against the **18 µs** the 3090 host (`ts-208`) was measured at in the table below. A bf16 M=1
+matmul of the model's own expert shape (2560 → 1280) costs **113.6 µs**, of which 45 µs is the
+arithmetic at 145 TFLOPS — the rest is launch. So the same 8,139 CUDA ops a decode step that cost
+146 ms of launches on the 3090 cost **~0.92 s** here, which is the whole of the 6.0x.
+
+The card is not the problem, and each of these was measured rather than assumed: persistence mode
+on, 450 W cap, clocked to 2520 MHz under load, 917 GB/s device-to-device copy, 145 TFLOPS bf16.
+The host is not saturated either: 192 vCPUs, load about 34 with eight ranks running. Expert
+residency and staging are identical on both hosts (`64 experts/layer x 48 layers resident, 14.06
+GiB`, `staging: 0 misses / 0 hits`).
+
+**The consequence is that this host's eager decode has no headroom at all** — it is 1.08 tok/s,
+slower than the 3090's 8.16, on a faster card — and that capturing the step is worth 44x here
+against 4.1x there. See the graph section for those numbers.
 
 ### The observation
 
@@ -1040,11 +2964,12 @@ same memory: 448 or 512 entries OOM with the staged batches in place, and a 256-
 
 Two of these deserve their reason in words.
 
-**`by_phase` is fast and incorrect on this model.** Its `dec_ple_hc` block adds every layer's PLE to
-one running `h` and then runs `attn_hc(h)` for all of them, but a layer's PLE applies to *that
-layer's* input, which is the previous layer's output. 6.9 tok/s against 3.8 is the size of the
-mistake, not of the optimisation. It ships off and should stay off until the PLE dependency is
-expressed per layer.
+**`by_phase` is an invalid schedule, not an optimisation awaiting a PLE repair.**
+Each layer consumes the preceding layer's reduced and injected output. Computing all layers'
+HC/attention/MLP phases on a shared stale `h` breaks that dependency even without PLE; the old
+path also reversed the router's `(weights, indices)` when calling MoE. The reported 6.9 tok/s
+is the speed of a different, incorrect computation. The P0 runtime now refuses `by_phase`
+explicitly rather than advertising it as a selectable performance path.
 
 **`NCCL_ALGO=Tree` does not run here** — `ncclInvalidUsage` — on a box whose topology is
 `GPU0-1 PHB / GPU2-3 NV2 / {0,1}<->{2,3} SYS`.
@@ -1246,3 +3171,78 @@ The margin is a property of this model on this card, not a constant. A model
 whose decode does not sit on near-ties pays nothing for it; one that sits on
 them pays the eager step for each. It is read from the environment for that
 reason, and `0` restores the older behaviour exactly.
+
+## The captured decode, across the cards
+
+**Date:** 2026-11-05. Three boxes, three answers to the same question. Every row states its
+quantisation and its card count, because the rows are not comparable across them: the 2080 Ti
+run holds 4-bit experts and decodes them in software (sm_75 has no FP4 tensor cores), while the
+3090 and 4090 runs are FP8 with a native fused kernel. What *is* comparable is the ratio within
+a row.
+
+| Box | experts | eager | graph | graph + handback |
+|---|---|---:|---:|---:|
+| 4 x RTX 2080 Ti (sm_75) | NVFP4, software decode | 5.82 | — | **15.5** |
+| 8 x RTX 3090 (sm_86) | FP8, fused | 8.16 | **33.2** | 16.6 |
+| 8 x RTX 4090 (sm_89) | FP8, fused | 1.08 | **46.7** | 3.80 |
+
+Medians of three runs each, 32 new tokens, prompt `What is the capital of France?`. The 2080 Ti
+is 4 cards because that box has 4; the other two are 8. Text was correct in every cell — the
+answer is `The capital of France is Paris` in all of them.
+
+### Reading the table
+
+**The graph is the win on all three, and the size of it is the launch overhead made visible.**
+The 4090 gains 44x, the 3090 4.1x, the 2080 Ti 2.7x. That ordering is not a property of the
+cards: it is the inverse of each host's per-launch cost. The 4090 issues the same 8,139 launches
+at ~41 µs each, the 3090 at ~18 µs, and the 2080 Ti's step was already bound by something other
+than launches by the time the experts were resident. A capture deletes the launches, so the host
+that pays the most for them gains the most.
+
+**The 2080 Ti has no plain-graph number** and that is a real gap, not an omission: on that box
+the plain graph produced a fluent loop (`The capital of France is Paris, Paris is Paris, Paris is
+Paris`) and only the handback version answered correctly. Its 4-bit expert path sits on
+top-2 logit gaps closer to the noise floor than either FP8 box does, so the near-tie problem
+that is theoretical on the 3090 and 4090 is routine there. It is worth a measurement with a more
+permissive margin to see how much of the 28 tok/s plain graph is recoverable while keeping the
+answer.
+
+**Handback is a heuristic, not a parity guarantee.** The following short 3090/4090 samples
+matched their eager text, but neither those samples nor a local-shard top-2 gap prove
+agreement for other tokens, histories, or global-vocabulary near-ties. The later P0 audit
+also found state/PLE-input faults that a handback alone cannot repair. The historical
+counts below record the cost of the tested heuristic, not a universal correctness bound.
+What it cost in those samples was one eager step per near-tie: 4 of 32 positions on the 2080
+Ti, 6 on the 3090, 8 on the 4090. On the 2080 Ti, where a replay is 40 ms and an eager step is
+172 ms, that is 2.7x to 1.5x and still a win. On the 4090, where a replay is 21 ms and an eager
+step is 920 ms, it is 47 tok/s to 3.8 — *below* the 3090's plain graph, and below what the 4090
+does eager on a host that is not launch-bound.
+
+**So the recommendation is per-box, not universal**: take the plain graph where the answer is
+correct without help, and take the handback only where the near-ties actually reach the answer.
+
+### A stale extension is a loud failure; a wrong window is a silent one
+
+Two ways to measure the wrong thing, both found while taking these numbers.
+
+The 4090 first reported 0.65 tok/s with a fluent loop. The extension on that host was at
+`fcb8b07`, twelve commits before `b86fa05`, which is the commit that adds
+`qwen4_exp_fp8_slots_swiglu` — the fused expert kernel. `--expert-fused-fp8` failed with
+`RuntimeError: Fp8SlotExpertMoE needs the relic_core CUDA extension` rather than falling back,
+which is the right behaviour, but the earlier runs without the flag had gone through the slow
+path silently. After rebuilding, the same host gives 1.08 eager and 46.7 captured. **A 70x
+difference between two runs of "the same" configuration is a deployment question before it is a
+performance question.**
+
+`--graph-window` has a quieter failure mode. The window is only built when
+
+```python
+if graph_window > 0 and ctx.device.type == "cuda" and max_new_tokens > graph_window:
+```
+
+so `--graph-window 48` against a 32-token generation builds nothing and the run is eager,
+wearing a graph label, with no message. Three such runs were initially reported as graph
+measurements at 8.2 tok/s — indistinguishable from the baseline, which is exactly what they
+were. The guard now prints `no window was built (the generation is 32 tokens and the window is
+48); these steps ran eagerly`, and the `replayed N/M` line is the check that a graph run actually
+replayed: if N is 0, no capture happened.

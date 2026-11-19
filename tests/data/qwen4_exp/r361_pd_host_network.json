@@ -1,0 +1,177 @@
+[
+  {
+    "host": "ts133",
+    "interfaces": [
+      {
+        "name": "enp174s0f0",
+        "state": "UP",
+        "ipv4": [
+          "8.92.7.133"
+        ],
+        "operstate": "up",
+        "mtu": "1500",
+        "speed_mbps": "1000"
+      },
+      {
+        "name": "enp174s0f1",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "enx7a2418eb34c5",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "ens7f0np0",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "ens7f1np1",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "docker0",
+        "state": "DOWN",
+        "ipv4": [
+          "172.17.0.1"
+        ],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": "-1"
+      }
+    ],
+    "routes": [
+      {
+        "dst": "default",
+        "gateway": "8.92.7.110",
+        "dev": "enp174s0f0",
+        "protocol": "static",
+        "flags": []
+      },
+      {
+        "dst": "8.92.7.0/24",
+        "dev": "enp174s0f0",
+        "protocol": "kernel",
+        "scope": "link",
+        "prefsrc": "8.92.7.133",
+        "flags": []
+      },
+      {
+        "dst": "172.17.0.0/16",
+        "dev": "docker0",
+        "protocol": "kernel",
+        "scope": "link",
+        "prefsrc": "172.17.0.1",
+        "flags": [
+          "linkdown"
+        ]
+      }
+    ],
+    "checkpoint_candidates": {
+      "/workspace/qwen38-fp8": false,
+      "/data/qwen38-fp8": false,
+      "/home/mseco/mtp4090": false,
+      "/home/mseco/relic/relic-core-fused": false
+    }
+  },
+  {
+    "host": "ts134",
+    "interfaces": [
+      {
+        "name": "enxa2231c9b3f3e",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "enp174s0f0",
+        "state": "UP",
+        "ipv4": [
+          "8.92.7.134"
+        ],
+        "operstate": "up",
+        "mtu": "1500",
+        "speed_mbps": "1000"
+      },
+      {
+        "name": "enp174s0f1",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "ens7f0np0",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "ens7f1np1",
+        "state": "DOWN",
+        "ipv4": [],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": null
+      },
+      {
+        "name": "docker0",
+        "state": "DOWN",
+        "ipv4": [
+          "172.17.0.1"
+        ],
+        "operstate": "down",
+        "mtu": "1500",
+        "speed_mbps": "-1"
+      }
+    ],
+    "routes": [
+      {
+        "dst": "default",
+        "gateway": "8.92.7.110",
+        "dev": "enp174s0f0",
+        "protocol": "static",
+        "flags": []
+      },
+      {
+        "dst": "8.92.7.0/24",
+        "dev": "enp174s0f0",
+        "protocol": "kernel",
+        "scope": "link",
+        "prefsrc": "8.92.7.134",
+        "flags": []
+      },
+      {
+        "dst": "172.17.0.0/16",
+        "dev": "docker0",
+        "protocol": "kernel",
+        "scope": "link",
+        "prefsrc": "172.17.0.1",
+        "flags": [
+          "linkdown"
+        ]
+      }
+    ],
+    "checkpoint_candidates": null
+  }
+]

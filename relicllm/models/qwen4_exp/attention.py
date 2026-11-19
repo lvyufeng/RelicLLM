@@ -19,6 +19,8 @@ from relicllm.models.qwen4_exp.layers import (
     RMSNormGated,
     apply_rotary_pos_emb,
     prefill_linear,
+    row_invariant_conv1d,
+    row_invariant_verify_enabled,
 )
 from relicllm.runtime.ops import load_ops
 
@@ -87,7 +89,9 @@ def cuda_gated_delta_rule(
     g: torch.Tensor,
     beta: torch.Tensor,
     initial_state: torch.Tensor | None,
-) -> tuple[torch.Tensor, torch.Tensor] | None:
+    *,
+    with_states: bool = False,
+) -> tuple | None:
     """SM75 recurrent scan for the real BF16, D=128, batch-one path.
 
     The kernel retains the float32 recurrent state and pre-normalizes Q/K in
@@ -111,7 +115,14 @@ def cuda_gated_delta_rule(
         return None
 
     ext = load_ops()
-    if ext is None or not hasattr(ext, "qwen4_exp_gated_delta_bf16_forward"):
+    if ext is None:
+        return None
+    op = (
+        getattr(ext, "qwen4_exp_gated_delta_bf16_forward_states", None)
+        if with_states
+        else getattr(ext, "qwen4_exp_gated_delta_bf16_forward", None)
+    )
+    if op is None:
         return None
 
     if initial_state is None:
@@ -126,7 +137,7 @@ def cuda_gated_delta_rule(
     groups_per_block = int(os.environ.get("POCKETLLM_QWEN4_GDN_GROUPS_PER_CTA", "1"))
     if groups_per_block not in (1, 2, 4, 8):
         groups_per_block = 1
-    output, state = ext.qwen4_exp_gated_delta_bf16_forward(
+    args = (
         query.contiguous(),
         key.contiguous(),
         value.contiguous(),
@@ -136,7 +147,172 @@ def cuda_gated_delta_rule(
         1e-6,
         groups_per_block,
     )
+    if with_states:
+        # Same scan, also handing back the state after each position. Measured bit-identical to the
+        # plain entry point on the output and the final state, and each recorded state equals what a
+        # shorter scan from the same start produces -- which is what makes a rewind exact.
+        output, state, per_position = op(*args)
+        return output, state, per_position
+    output, state = op(*args)
     return output, state
+
+
+def _run_table(selection: torch.Tensor):
+    """The selection as sorted runs: fixed shapes all the way, no host read.
+
+    The block indexer picks whole blocks of `compress_ratio`, so the 2048 positions it names arrive
+    as a couple of hundred runs of eight-odd rows -- measured at 248 runs over 2051 rows at 8K.
+    Staging a run at a time is what turns 2048 transfers a layer into 248, and the measured
+    difference is the DMA engine's per-transfer cost: 7.7 ms of staging a token against the 1.8 ms
+    the bytes alone account for.
+
+    Everything is sized by the row count, which is the worst case -- one run a row -- so the table
+    never has to grow and the live count stays on the device where a capture can use it.
+    """
+    flat = selection.clamp_min(0)
+    ordered, _ = torch.sort(flat)
+    breaks = torch.ones_like(ordered, dtype=torch.bool)
+    breaks[1:] = (ordered[1:] - ordered[:-1]) != 1
+    run_id = (torch.cumsum(breaks.to(torch.int64), dim=0) - 1).to(torch.int64)
+    capacity = ordered.numel()
+    device = ordered.device
+    sentinel = torch.iinfo(torch.int32).max
+    slots = torch.arange(capacity, dtype=torch.int32, device=device)
+    run_start = torch.full((capacity,), sentinel, dtype=torch.int32, device=device)
+    run_start.scatter_reduce_(0, run_id, ordered.to(torch.int32), reduce="amin")
+    run_dst = torch.full((capacity,), sentinel, dtype=torch.int32, device=device)
+    run_dst.scatter_reduce_(0, run_id, slots, reduce="amin")
+    run_rows = torch.zeros((capacity,), dtype=torch.int32, device=device)
+    run_rows.scatter_add_(0, run_id, torch.ones(capacity, dtype=torch.int32, device=device))
+    run_count = (run_id[-1] + 1).reshape(1).to(torch.int32)
+    return ordered, run_start, run_rows, run_dst, run_count
+
+
+def _gather_runs(arena: torch.Tensor, table):
+    """Stage whole runs of a host arena, laid out in sorted order."""
+    ext = load_ops()
+    gather = getattr(ext, "qwen4_exp_gather_runs_bf16", None) if ext is not None else None
+    if gather is None:
+        return None
+    ordered, run_start, run_rows, run_dst, run_count = table
+    rows = int(ordered.numel())
+    heads = arena.shape[1]
+    staged = [
+        gather(
+            arena.data_ptr() + head * arena.stride(1) * arena.element_size(),
+            run_start, run_rows, run_dst, run_count, rows,
+        )
+        for head in range(heads)
+    ]
+    return torch.stack(staged, dim=0).unsqueeze(0)
+
+
+def _gather_host_rows(arena: torch.Tensor, rows: torch.Tensor, device) -> torch.Tensor:
+    """Copy `rows` of a host-resident `[1, heads, positions, 256]` arena onto the device.
+
+    Falls back to a host-side gather when the extension that does it in one launch is not built:
+    the fallback has to read the index list back, which is the slow path this exists to avoid, but
+    it keeps a source checkout without the kernel usable.
+    """
+    from relic_core.kernels.cuda_loader import load_cuda_kernel
+
+    native = load_cuda_kernel()
+    gather = getattr(native, "qwen4_exp_gather_rows_bf16", None) if native is not None else None
+    heads = arena.shape[1]
+    if gather is None:
+        picked = arena.index_select(2, rows.to("cpu"))
+        return picked.to(device, non_blocking=True)
+    staged = [
+        gather(arena.data_ptr() + head * arena.stride(1) * arena.element_size(), rows)
+        for head in range(heads)
+    ]
+    # `[rows, 256]` a head, so the head axis goes back in front of the position axis.
+    return torch.stack(staged, dim=0).unsqueeze(0)
+
+
+def _scatter_host_rows(arena: torch.Tensor, rows: torch.Tensor, at: torch.Tensor) -> None:
+    """Write `rows` into a host-resident `[1, heads, positions, 256]` arena at `at`."""
+    from relic_core.kernels.cuda_loader import load_cuda_kernel
+
+    native = load_cuda_kernel()
+    scatter = getattr(native, "qwen4_exp_scatter_rows_bf16", None) if native is not None else None
+    batch, heads = arena.shape[0], arena.shape[1]
+    if scatter is None:
+        arena[:, :, at.to("cpu").tolist()] = rows.to("cpu", non_blocking=True)
+        return
+    row_bytes = arena.stride(2) * arena.element_size()
+    for b in range(batch):
+        for head in range(heads):
+            offset = b * arena.stride(0) * arena.element_size() + head * row_bytes
+            scatter(rows[b, head].contiguous(), arena.data_ptr() + offset, at)
+
+
+def _stage_selected(cache, selected: torch.Tensor, device):
+    """Bring just the positions this call reads back onto the device.
+
+    `selected` is `[b, q, w]` of positions with `-1` marking unused slots, and the layers below
+    index `key`/`value` with it.  With the arena in host memory that indexing cannot happen where
+    it used to, so the rows it names are copied across -- the union of every query in the call, so
+    a chunk of queries shares one transfer -- and `selected` is rewritten to address the copy.
+    """
+    if selected.shape[1] == 1:
+        # A decode step has one query, so its own selection list *is* the staging order and the
+        # rewrite is the identity.
+        #
+        # The rows come across in a kernel rather than through `index_select`, because the index
+        # list lives on the device and reading it back to slice a host tensor is a synchronous
+        # device-to-host copy on every layer -- measured at 12% of a decode step, and fatal to a
+        # capture, which cannot contain one.  Under UVA the arena's host address is one a kernel
+        # can dereference, so the gather runs on the card and the traffic is the rows themselves.
+        # Measured at par with the per-row gather and not better: the sort and the three scatter
+        # reductions the table costs are the DMA transactions it saves.  Kept behind a flag because
+        # the reasoning is right and the balance may differ on a card whose per-transfer cost is
+        # higher, but it is not the default while it buys nothing here.
+        table = (
+            _run_table(selected[0, 0])
+            if os.environ.get("POCKETLLM_QWEN4_RUN_STAGING") == "1"
+            else None
+        )
+        if table is not None:
+            staged_k = _gather_runs(cache.k, table)
+            staged_v = _gather_runs(cache.v, table)
+            if staged_k is not None:
+                # Runs are staged in sorted order, so a selected position addresses the slot it
+                # sorted into; `-1` still marks a slot the mask drops.
+                remapped = torch.searchsorted(table[0], selected.clamp_min(0))
+                return staged_k, staged_v, remapped.masked_fill(selected < 0, -1)
+        rows = selected[0, 0].clamp_min(0).to(torch.int32)
+        staged_k = _gather_host_rows(cache.k, rows, device)
+        staged_v = _gather_host_rows(cache.v, rows, device)
+        width = selected.shape[-1]
+        remapped = torch.arange(width, device=selected.device, dtype=selected.dtype)
+        remapped = remapped.view(1, 1, -1).masked_fill(selected < 0, -1)
+        return staged_k, staged_v, remapped
+    live = selected[selected >= 0]
+    if live.numel() == 0:
+        raise RuntimeError("a host-resident KV cache needs at least one live position to stage")
+    # A position past the arena is an `index_select` on the host that faults on the *device*, an
+    # assert whose message names IndexKernel rather than the caller.  Naming it here is the
+    # difference between a one-line fix and a bisect: the arena is sized for the request, and a
+    # selection that reaches past it means the caller and the cache disagree about how long the
+    # context is.
+    width = int(cache.k.shape[2])
+    if int(live.max()) >= width:
+        raise RuntimeError(
+            f"QSA selection reaches position {int(live.max())} but the arena holds {width}; "
+            f"cache.length={int(cache.length)}, selected={tuple(selected.shape)}"
+        )
+    union = torch.unique(live)                      # sorted, on the device
+    rows = union.to("cpu")
+    if int(union.max()) >= int(cache.k.shape[2]):
+        raise RuntimeError(
+            f"staged position {int(union.max())} is past the arena ({int(cache.k.shape[2])})"
+        )
+    staged_k = cache.k.index_select(2, rows).to(device, non_blocking=True)
+    staged_v = cache.v.index_select(2, rows).to(device, non_blocking=True)
+    # `searchsorted` is exact because `union` is sorted and every live index is in it.
+    remapped = torch.searchsorted(union, selected.clamp_min(0))
+    return staged_k, staged_v, remapped.masked_fill(selected < 0, -1)
 
 
 def _write_kv(cache, key: torch.Tensor, value: torch.Tensor, past_len, seq_len: int) -> None:
@@ -147,6 +323,35 @@ def _write_kv(cache, key: torch.Tensor, value: torch.Tensor, past_len, seq_len: 
     an error rather than a slow path -- so it goes through `index_copy_` against the position, which
     is the form a recording can replay at any offset.
     """
+    # Pinned, not merely "on the host": a model that is running on the CPU has its arena there
+    # too, and that is the ordinary path, not an offload -- it has no card to gather into.
+    if (
+        cache is not None
+        and getattr(cache, "host_kv", False)
+        and getattr(cache, "k", None) is not None
+        and cache.k.device.type == "cpu"
+    ):
+        # A host-resident arena, written through a kernel rather than a slice.
+        #
+        # A slice would bake the offset into a recording: the Python integer becomes a fixed address
+        # in the captured graph, so every replay would write its rows to the position the capture
+        # happened at.  The offset therefore has to be a device value the recording reads, which is
+        # what the position tensor already is -- it just has to travel with the data.
+        if isinstance(past_len, torch.Tensor):
+            at = (past_len.reshape(()) + torch.arange(seq_len, device=key.device)).to(torch.int32)
+        else:
+            at = torch.arange(
+                past_len, past_len + seq_len, dtype=torch.int32, device=key.device
+            )
+        # Only the integer position can be checked here: reading a position tensor back to compare
+        # it would be a host read, which a capture refuses.  The kernel writes where the tensor
+        # says, and the arena is sized for the generation the caller laid out.
+        width = int(cache.k.shape[2])
+        if not isinstance(past_len, torch.Tensor) and int(past_len) >= width:
+            raise RuntimeError(f"writing KV at {past_len} is past the arena ({width})")
+        _scatter_host_rows(cache.k, key, at)
+        _scatter_host_rows(cache.v, value, at)
+        return
     if isinstance(past_len, torch.Tensor):
         # One row at a time: `index_copy_` takes a 1-D index, and the position is a fact about the
         # step rather than about a row, so the same offsets serve every row.
@@ -223,12 +428,79 @@ def cuda_qsa_attention(
     ext = load_ops()
     if ext is None or not hasattr(ext, "qwen4_exp_qsa_bf16_forward"):
         return None
-    return ext.qwen4_exp_qsa_bf16_forward(
-        query.transpose(1, 2).contiguous(),
-        key.contiguous(),
-        value.contiguous(),
-        selected_indices.contiguous().to(torch.int32),
-        float(softmax_scale),
+    query_rows = query.transpose(1, 2).contiguous()
+    key_rows = key.contiguous()
+    value_rows = value.contiguous()
+    selection = selected_indices.contiguous().to(torch.int32)
+    # Split-K override, when the extension carries it. The general kernel launches one CTA per
+    # (query row, KV head) and walks the whole selection in tiles, so a decode step -- one query
+    # row, one KV head a rank -- puts a single CTA on 64 dependent tiles and measures ~294 us for
+    # work a 4090 should do in microseconds. The split-K path spreads those tiles over 16 CTAs and
+    # combines them; measured on eight 4090s at 8192 and at 262144 positions it is 11.4% off the
+    # step at either length, with identical tokens.
+    #
+    # Restricted to the decode shape on purpose: the split-K kernel is written for one query row
+    # and has no row loop, and a prefill call has hundreds of rows each with its own selection. An
+    # early measurement that let prefill through reported a large speedup with all-zero output.
+    return _qsa_forward_rows(ext, query_rows, key_rows, value_rows, selection, softmax_scale)
+
+
+def _qsa_forward_rows(ext, query_rows, key_rows, value_rows, selection, softmax_scale):
+    """Dispatch small verify queries through the exact one-query attention entry point.
+
+    Keeping the same selection and split-K decision as decode is required even when every
+    projection already agrees: the general K-query kernel has a different reduction order.
+    KV arenas are shared, not copied per query; every loop bound is a static shape at capture.
+    """
+    splitk = getattr(ext, "qwen4_exp_qsa_splitk_bf16_forward", None)
+
+    def one(query, selected):
+        if splitk is not None and should_use_qsa_splitk(query, selected):
+            return splitk(query, key_rows, value_rows, selected, float(softmax_scale))
+        return ext.qwen4_exp_qsa_bf16_forward(
+            query, key_rows, value_rows, selected, float(softmax_scale)
+        )
+
+    if query_rows.dtype is torch.bfloat16 and row_invariant_verify_enabled(query_rows.shape[1]):
+        splitk_rows = getattr(ext, "qwen4_exp_qsa_splitk_rows_bf16_forward", None)
+        if (os.environ.get("POCKETLLM_QWEN4_QSA_SPLITK_ROWS", "0") == "1"
+                and splitk_rows is not None and splitk is not None
+                and should_use_qsa_splitk(query_rows[:, :1], selection[:, :1])):
+            # The new kernel adds only a query-row grid dimension to the old split-K arithmetic.
+            # Keep it opt-in until exact serial-kernel and full-output device tests pass; a build
+            # without the entry point stays on the already-verified one-query loop below.
+            return splitk_rows(query_rows, key_rows, value_rows, selection, float(softmax_scale))
+        return torch.cat([
+            one(query_rows[:, row:row + 1].contiguous(), selection[:, row:row + 1].contiguous())
+            for row in range(query_rows.shape[1])
+        ], dim=1)
+    return one(query_rows, selection)
+
+
+def _qsa_splitk_enabled() -> bool:
+    """Whether the split-K decode path may be used. Off only if asked."""
+    return os.environ.get("POCKETLLM_QWEN4_QSA_SPLITK", "1").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
+def should_use_qsa_splitk(query_rows: torch.Tensor, selection: torch.Tensor) -> bool:
+    """Whether this call is the decode shape the split-K kernel is written for.
+
+    It is one query row against one selection. The kernel has no query-row loop, so a prefill call
+    -- hundreds of rows, a selection per row -- would compute a fraction of the work; letting one
+    through is what produced a large apparent speedup with all-zero output during development.
+
+    Split out as a predicate over two tensors' shapes so the rule can be tested without a GPU: the
+    dispatch above it is unreachable on a machine with no CUDA device.
+    """
+    return (
+        _qsa_splitk_enabled()
+        and query_rows.shape[1] == 1
+        and selection.shape[1] == 1
+        and selection.shape[2] <= 4096
     )
 
 
@@ -240,6 +512,7 @@ def chunk_gated_delta_rule(
     beta: torch.Tensor,
     initial_state: torch.Tensor | None,
     chunk_size: int = 64,
+    state_log: list | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Chunked (WY-representation) delta rule for prefill.
 
@@ -315,6 +588,12 @@ def chunk_gated_delta_rule(
         last_recurrent_state = (
             last_recurrent_state * g_last + (k_i * decay_k[..., None]).transpose(-1, -2) @ v_new
         )
+        if state_log is not None and i < total_len // chunk_size:
+            # One entry per chunk, which is one entry per position when the caller asks for
+            # `chunk_size=1`.  A speculative verify needs exactly that: it consumes K drafts in a
+            # single forward and then has to put these layers back to whichever position the trunk
+            # accepted, and the rolling state has no other way to be rewound.
+            state_log.append(last_recurrent_state)
 
     core_attn_out = core_attn_out.reshape(batch_size, num_heads, total_len, v_dim)
     core_attn_out = core_attn_out[:, :, :seq_len]
@@ -468,9 +747,41 @@ class GatedDeltaNetCache:
             dtype=torch.float32,
         )
         self.initialized = False
+        #: When set to a list, the layer appends its post-position recurrent state here instead of
+        #: only keeping the last one.  A speculative verify turns this on so a partially accepted
+        #: round can be rewound; `None` everywhere else, and the step is then bit-identical.
+        self.state_log = None
 
 
 class GatedDeltaNet:
+    def _fp32_weight(self, name: str) -> torch.Tensor:
+        """A weight of this layer widened to float32 once, not once a step."""
+        weight = getattr(self, name)
+        cache = self.__dict__.setdefault("_fp32_weights", {})
+        held = cache.get(name)
+        if held is None or held[0] is not weight or held[1] != weight.device:
+            widened = weight.float()
+            cache[name] = (weight, weight.device, widened)
+            return widened
+        return held[2]
+
+    def _neg_exp_a_log(self) -> torch.Tensor:
+        """`-exp(A_log)` in float32, computed once a layer instead of once a step.
+
+        `A_log` is a weight, so this is the same tensor every step, and its exp was being recomputed
+        in each of the 36 gated-delta layers on every token -- a launch and a negate whose value
+        never changes. Deriving it from the cached float32 widening keeps the arithmetic identical:
+        the same `exp` on the same bits, evaluated once.
+        """
+        base = self._fp32_weight("A_log")
+        cache = self.__dict__.setdefault("_derived_weights", {})
+        held = cache.get("neg_exp_a_log")
+        if held is None or held[0] is not base or held[1] != base.device:
+            derived = -base.exp()
+            cache["neg_exp_a_log"] = (base, base.device, derived)
+            return derived
+        return held[2]
+
     def __init__(
         self,
         config: Qwen4ExpTextConfig,
@@ -540,7 +851,7 @@ class GatedDeltaNet:
             conv_in = padded
         else:
             conv_in = F.pad(mixed_qkv, (self.conv_kernel_size - 1, 0))
-        conv_out = F.conv1d(conv_in, conv_weight.unsqueeze(1), None, padding=0, groups=channels)
+        conv_out = row_invariant_conv1d(conv_in, conv_weight.unsqueeze(1), None, padding=0, groups=channels)
         mixed_qkv = F.silu(conv_out[:, :, -seq_len:])
         if profile:
             torch.cuda.synchronize(hidden_states.device)
@@ -556,12 +867,50 @@ class GatedDeltaNet:
 
         beta = b.sigmoid()
         # float32 on A_log: in bf16 exp() of a large magnitude saturates to inf.
-        g = -self.A_log.float().exp() * F.softplus(a.float() + self.dt_bias.float())
+        #
+        # The widening is of a *weight*, so it is the same value every step: done here it was two
+        # conversions a layer, seventy-two a token, of tensors that never change.  It is kept per
+        # device so a model that is moved still widens the tensor it is holding.
+        g = self._neg_exp_a_log() * F.softplus(
+            a.float() + self._fp32_weight("dt_bias")
+        )
 
         initial_state = _state_at(cache, "recurrent_state")
+        # The fused scan used to be prefill-only (`seq_len > 1`), which left a decode step running
+        # `recurrent_gated_delta_rule`: the same recurrence in pure torch float32, two l2norms, five
+        # dtype conversions with transposes and eight elementwise passes over a float32 128x128
+        # state, in each of the 36 gated-delta layers. The kernel has no single-token restriction of
+        # its own -- it is a recurrent scan -- and at one token it agrees with the torch path to a
+        # cosine of 0.999993 on the output and 1.000000 on the state.
+        #
+        # Priced over four interleaved rounds at 8192 positions, tokens identical throughout:
+        # torch 45.24, 45.84, 45.55, 45.60 (median 45.57) against fused 47.89, 47.91, 48.06, 48.51
+        # (median 47.98), with p50 inter-token time 21.42 against 20.21 ms. Every fused run beat
+        # every torch run, so this is on by default. `POCKETLLM_QWEN4_GDN_DECODE_FUSED=0` turns it
+        # off.
+        _gdn_decode_fused = os.environ.get(
+            "POCKETLLM_QWEN4_GDN_DECODE_FUSED", "1").lower() in {"1", "true", "yes"}
+        # Preferring the recording path when a log is open looks like the fix for the rollback
+        # problem below -- `state_log` is unreachable while the fused scan is taken, so `_rewind_to`
+        # rolls back from an empty log and a partial accept leaves the recurrence K positions ahead
+        # of the sequence.  It was tried and it is *not* the fix: forcing the torch path changes the
+        # verify forward's own arithmetic, so its rows stop agreeing with what plain decode would
+        # have answered and even draft width 1 -- where nothing needs rolling back -- started
+        # diverging, at position 3 instead of not at all.  The two arms differ in more than state
+        # bookkeeping, so the log cannot be had by switching this branch; the fused scan stays.
+        # A verify round records the state after each position so a partial accept can be rewound.
+        # Asking the fused scan for them is the whole reason this file no longer has to choose
+        # between "fast" and "recordable": the two used to be exclusive, because forcing the torch
+        # branch to get a log also changed the arithmetic of the verify forward, and its rows then
+        # stopped agreeing with what plain decode would have answered. The fused path can hand the
+        # states over itself, so it is taken either way and the numbers do not move.
+        _state_log = getattr(cache, "state_log", None) if cache is not None else None
+        _want_states = _state_log is not None and seq_len > 1
         cuda_result = (
-            cuda_gated_delta_rule(query, key, value, g, beta, initial_state)
-            if self.cuda_rule_enabled and seq_len > 1
+            cuda_gated_delta_rule(
+                query, key, value, g, beta, initial_state, with_states=_want_states
+            )
+            if self.cuda_rule_enabled and (seq_len > 1 or _gdn_decode_fused)
             else None
         )
         if cuda_result is None:
@@ -569,10 +918,47 @@ class GatedDeltaNet:
             if repeat > 1:
                 query = query.repeat_interleave(repeat, dim=2)
                 key = key.repeat_interleave(repeat, dim=2)
-            rule = recurrent_gated_delta_rule if seq_len == 1 else chunk_gated_delta_rule
-            core_attn_out, last_state = rule(query, key, value, g, beta, initial_state)
+            # A verify round has to be able to put these layers back to a *position*, not to the
+            # end of the forward.  The chunked rule only returns the state at each chunk boundary,
+            # so recording per-position states means asking for one position a chunk -- the same
+            # arithmetic, minus the intra-chunk parallelism a 2-3 token sequence never had anyway.
+            log = getattr(cache, "state_log", None) if cache is not None else None
+            if log is not None and seq_len > 1:
+                # Two rolling values have to be recoverable per position, not just one: the
+                # recurrence (returned by the rule) and the depthwise conv's window, which is the
+                # tail of the conv input.  The window is a slice of `padded`, so it is read off
+                # rather than recorded by the rule.
+                log.clear()
+                rec_log: list = []
+                rule = chunk_gated_delta_rule
+                core_attn_out, last_state = rule(
+                    query, key, value, g, beta, initial_state, 1, rec_log
+                )
+                span = self.conv_kernel_size - 1
+                for j in range(seq_len):
+                    end = padded.shape[-1] - seq_len + j + 1
+                    log.append((
+                        padded[:, :, end - span : end],
+                        rec_log[j] if j < len(rec_log) else last_state,
+                    ))
+            else:
+                rule = recurrent_gated_delta_rule if seq_len == 1 else chunk_gated_delta_rule
+                core_attn_out, last_state = rule(query, key, value, g, beta, initial_state)
         else:
-            core_attn_out, last_state = cuda_result
+            if _want_states and len(cuda_result) == 3:
+                core_attn_out, last_state, per_position = cuda_result
+                # Same entry shape the torch branch writes: (conv window, state after position j).
+                # The window is the tail of the conv input, read off rather than recorded.
+                _state_log.clear()
+                _span = self.conv_kernel_size - 1
+                for j in range(seq_len):
+                    _end = conv_in.shape[-1] - seq_len + j + 1
+                    _state_log.append((
+                        conv_in[:, :, _end - _span : _end],
+                        per_position[j].unsqueeze(0),
+                    ))
+            else:
+                core_attn_out, last_state = cuda_result
         if profile:
             torch.cuda.synchronize(hidden_states.device)
             after_core = time.perf_counter()
@@ -615,12 +1001,127 @@ class QSAAttentionCache:
         num_kv_heads: int | None = None,
     ) -> None:
         kv_heads = config.num_key_value_heads if num_kv_heads is None else num_kv_heads
-        self.k = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, device=device, dtype=dtype)
-        self.v = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, device=device, dtype=dtype)
+        #: Keys and values in pinned host memory instead of the card.
+        #:
+        #: A sparse-attention layer reads 2048 positions a query whatever the context is, so the
+        #: arena does not have to be on the device for the *compute* to be fast -- it only has to
+        #: be reachable.  262144 positions of k and v are 3.2 GiB a rank at this model's geometry,
+        #: against the ~3 GiB a fully resident expert bank leaves; the same arena in host memory
+        #: costs a 2 MiB gather a layer a step, which a step hides.
+        host_kv = os.environ.get("POCKETLLM_QWEN4_HOST_KV") == "1"
+        arena = dict(device="cpu" if host_kv else device, dtype=dtype)
+        if host_kv:
+            arena["pin_memory"] = True
+        self.k = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, **arena)
+        self.v = torch.zeros(batch_size, kv_heads, max_seq_len, config.head_dim, **arena)
+        self.host_kv = host_kv
+        #: Where the next write lands, as a plain integer.  A host-resident arena cannot be written
+        #: through the tensor-position path -- that one indexes with a device tensor -- and reading
+        #: the tensor back to get an integer would be a synchronisation, which is exactly what a
+        #: capture cannot contain.  The caller that drives the step already knows the position as
+        #: an integer, so it hands it over here instead.
+        self.host_position = 0
         self.index_k = torch.zeros(
             batch_size, max_seq_len, config.indexer_head_dim, device=device, dtype=dtype
         )
         self.length = 0
+        # Allocated lazily only for the opt-in indexer path. The score-ready keys
+        # belong to this request, never to the model or its indexer weights.
+        self.indexer_pool: _QSAIndexerPool | None = None
+
+
+def _tensor_version(tensor: torch.Tensor) -> int | None:
+    """Read mutation metadata, not tensor data; inference tensors have no counter."""
+    if tensor.is_inference():
+        return None
+    return tensor._version
+
+
+def _tensor_layout(tensor: torch.Tensor) -> tuple:
+    """Identify an arena/table without a host read of any device value."""
+    return (
+        tensor.data_ptr(), tuple(tensor.shape), tuple(tensor.stride()),
+        tensor.dtype, tensor.device,
+    )
+
+
+class _QSAIndexerPool:
+    """Fixed-capacity, request-owned mean/norm/RoPE results for complete groups.
+
+    Integer writes retain only the completed prefix strictly before their first
+    touched group. Tensor writes refresh every possibly touched group, even while
+    incomplete. Causal visibility hides speculative/fake-current suffixes until
+    their final token is written and their group is refreshed again. Consequently
+    graph warmup and rewind need no snapshot or clone of this position-addressed
+    pool, just as they need none for the raw index/KV arenas.
+    """
+
+    def __init__(self, arena: torch.Tensor, ratio: int) -> None:
+        batch, capacity, dim = arena.shape
+        with torch.inference_mode(False):
+            self.keys = torch.zeros(
+                batch, capacity // ratio, dim, device=arena.device, dtype=torch.float32
+            )
+            self.completed_tensor = torch.zeros((), device=arena.device, dtype=torch.long)
+        self.signature: tuple | None = None
+        self.completed: int | None = 0
+        self.tensor_ready = False
+        self.raw_version: int | None = None
+        self.owner_token = object()
+
+    def invalidate(self) -> None:
+        """Forget validity, without copying or clearing the large key arena."""
+        self.completed = 0
+        self.completed_tensor.zero_()
+        self.tensor_ready = False
+
+
+def indexer_score_row_invariant_enabled(rows: int) -> bool:
+    """Opt into decode-shaped FP32 score geometry for a small verify batch.
+
+    The indexer scores a wide FP32 GEMM whose N dimension is `rows * n_heads`. At decode
+    that is `n_heads`; a wider verify batch makes it `rows * n_heads`, a different cuBLAS
+    problem whose K reduction may be reassociated, so a differently-rounded score can flip
+    which block reaches the top-k. This flag keeps each query row's GEMM at the decode
+    geometry. It is an arithmetic-scope contract, not a precision change: the FP32 keys, the
+    casts and the downstream relu/sum/mask/top-k are untouched, and the ordinary batched GEMM
+    remains the default.
+    """
+    return (
+        row_invariant_verify_enabled(rows)
+        and os.environ.get("POCKETLLM_QWEN4_INDEXER_ROW_INVARIANT", "0") == "1"
+    )
+
+
+def _indexer_score_rows(
+    block_keys: torch.Tensor,
+    query: torch.Tensor,
+    batch_size: int,
+    seq_len: int,
+    n_heads: int,
+    head_dim: int,
+) -> torch.Tensor:
+    """FP32 `(batch, query, blocks, heads)` indexer scores.
+
+    `block_keys` is `(batch, blocks, head_dim)` and `query` is `(batch, seq_len, heads,
+    head_dim)`. The default path is the existing single batched GEMM; the opt-in path runs
+    one GEMM per query row so N stays `heads`. The FP32 key copy is made once either way and
+    shared by every row -- a per-row copy would be both the thing this path exists to avoid
+    and a different operand than the one decode scores against.
+    """
+    if not indexer_score_row_invariant_enabled(seq_len):
+        _qf = query.float().reshape(batch_size, seq_len * n_heads, head_dim)
+        return torch.matmul(
+            block_keys.float(), _qf.transpose(1, 2)
+        ).reshape(batch_size, block_keys.shape[1], seq_len, n_heads).permute(0, 2, 1, 3)
+    keys = block_keys.float()
+    rows = [
+        torch.matmul(
+            keys, query[:, row].float().reshape(batch_size, n_heads, head_dim).transpose(1, 2)
+        )
+        for row in range(seq_len)
+    ]
+    return torch.stack(rows, dim=1)
 
 
 class QSAIndexer:
@@ -636,12 +1137,128 @@ class QSAIndexer:
         self.n_heads = config.indexer_n_heads if n_heads is None else n_heads
         self.kv_heads = config.indexer_kv_heads
         self.head_dim = config.indexer_head_dim
-        self.budget = config.indexer_budget
+        # The sparse budget is the knob that trades retrieval breadth for a step's cost: the layer
+        # reads `budget` positions whatever the context is, so halving it halves the attention and
+        # the staging.  Overridable so the trade can be priced against quality rather than assumed.
+        override = os.environ.get("POCKETLLM_QWEN4_INDEXER_BUDGET")
+        self.budget = int(override) if override else config.indexer_budget
         self.compress_ratio = config.indexer_compress_ratio
         self.block_topk = self.budget // self.compress_ratio
         self.qk_proj = weights["index_qk_proj"]
         self.q_layernorm = RMSNorm(weights["q_layernorm"], config.rms_norm_eps)
         self.k_layernorm = RMSNorm(weights["k_layernorm"], config.rms_norm_eps)
+
+    def _pool_for_write(self, cache, cos, sin, raw_version) -> _QSAIndexerPool | None:
+        """Validate cache/table ownership before using any completed prefix."""
+        pool = getattr(cache, "indexer_pool", None) if cache is not None else None
+        # On by default.  The indexer has to score every position in the context to pick the
+        # budget's worth, so without the completed-prefix pool a step re-pools the whole history
+        # to answer about one position -- a cost that grows with the context even though the
+        # sparse attention itself reads a fixed 2048 positions.  Measured on eight RTX 4090s at
+        # the native budget, all three runs replaying every decode step and matching tokens:
+        # 8192 positions 37.53 -> 38.15 tok/s excluding setup (26.10 -> 25.81 ms p50), 65536
+        # 30.96 -> 32.80 (29.74 -> 28.48 ms), 262080 19.24 -> 22.34 (43.40 -> 35.73 ms).  The
+        # gain grows with the context, which is what the mechanism predicts; 0 turns it off.
+        enabled = os.environ.get("POCKETLLM_QWEN4_INCREMENTAL_INDEXER", "1").lower() in {
+            "1", "true", "yes",
+        }
+        if not enabled or cache is None:
+            if pool is not None:
+                pool.invalidate()
+            return None
+        arena = cache.index_k
+        shape = (arena.shape[0], arena.shape[1] // self.compress_ratio, self.head_dim)
+        if pool is None or pool.keys.shape != shape or pool.keys.device != arena.device:
+            pool = _QSAIndexerPool(arena, self.compress_ratio)
+            cache.indexer_pool = pool
+        signature = (
+            id(self), _tensor_layout(arena), self.compress_ratio,
+            _tensor_layout(cos), _tensor_version(cos),
+            _tensor_layout(sin), _tensor_version(sin),
+        )
+        owner = getattr(arena, "_qsa_indexer_owner", None)
+        if (pool.signature != signature or owner is not pool.owner_token
+                or (raw_version is not None and raw_version != pool.raw_version)):
+            pool.invalidate()
+            pool.signature = signature
+        # Borrowed MTP arenas may have another cache/normalization owner. Such an
+        # eager ownership change rebuilds conservatively. Captured suffix writes
+        # remain safe under the same immutable-prefix/overwrite-before-visible
+        # contract as the raw arena; Python mutation counters do not replay.
+        arena._qsa_indexer_owner = pool.owner_token
+        pool.raw_version = _tensor_version(arena)
+        return pool
+
+    def _rotated_groups(self, grouped, group_starts, cos, sin) -> torch.Tensor:
+        """Keep the original mean -> input dtype -> RMSNorm -> partial RoPE rounding."""
+        pooled = grouped.float().mean(dim=2).to(grouped.dtype)
+        pooled = self.k_layernorm(pooled)
+        # A padded raw arena can be longer than the table's valid prefix. Those
+        # future groups are masked below, and need no unavailable RoPE row yet.
+        starts = group_starts.clamp_max(min(cos.shape[1], sin.shape[1]) - 1)
+        return apply_rotary_pos_emb(
+            pooled.unsqueeze(2), cos.index_select(1, starts), sin.index_select(1, starts),
+            unsqueeze_dim=2,
+        ).squeeze(2)
+
+    def _incremental_keys(self, pool, raw_keys, cos, sin, past_len, seq_len) -> torch.Tensor:
+        """Refresh newly completed eager groups or fixed-size replay-touched groups.
+
+        The buffer capacity follows the raw arena, not its current valid prefix.
+        Full-history scoring/top-k still runs; only historical pool/norm/RoPE work
+        is cached. Float32 stores the exact values the old score path casts to.
+        """
+        batch, raw_len, _ = raw_keys.shape
+        ratio = self.compress_ratio
+        count = raw_len // ratio
+        if isinstance(past_len, torch.Tensor):
+            if not pool.tensor_ready:
+                # First use/table replacement is initialized during uncaptured
+                # warmup. The captured steady step takes only the branch below.
+                grouped = raw_keys[:, :count * ratio].reshape(batch, count, ratio, self.head_dim)
+                starts = torch.arange(count, device=raw_keys.device) * ratio
+                pool.keys[:, :count].copy_(self._rotated_groups(grouped, starts, cos, sin).float())
+                pool.tensor_ready = True
+            # Worst-case group count over every p % ratio; neither a tensor slice
+            # nor a data-dependent unique/nonzero is allowed in a recording.
+            touched_count = 1 + (seq_len + ratio - 2) // ratio
+            groups = past_len.reshape(()) // ratio + torch.arange(
+                touched_count, device=raw_keys.device
+            )
+            # A final incomplete arena group has no pooled slot. Clamping may
+            # duplicate the last complete group, but every duplicate recomputes
+            # identical raw rows, so the fixed-shape writes remain equivalent.
+            safe_groups = groups.clamp(0, count - 1)
+            starts = safe_groups * ratio
+            rows = starts[:, None] + torch.arange(ratio, device=raw_keys.device)
+            grouped = raw_keys.index_select(1, rows.reshape(-1)).reshape(
+                batch, touched_count, ratio, self.head_dim
+            )
+            keys = self._rotated_groups(grouped, starts, cos, sin).float()
+            pool.keys.index_copy_(1, safe_groups, keys)
+            pool.completed_tensor.copy_(((past_len.reshape(()) + seq_len) // ratio).clamp(0, count))
+            # Replay updates the device count, not Python metadata. A later eager
+            # handback may read it once, outside capture, to retain that prefix.
+            pool.completed = None
+        else:
+            completed = pool.completed
+            if completed is None:
+                completed = int(pool.completed_tensor)
+            # Always invalidate at the first written group: this handles p=0,
+            # replay handback, accepted-prefix rewind and nonaligned prefill.
+            first = min(completed, past_len // ratio, count)
+            complete = min((past_len + seq_len) // ratio, count)
+            if complete > first:
+                grouped = raw_keys[:, first * ratio:complete * ratio].reshape(
+                    batch, complete - first, ratio, self.head_dim
+                )
+                starts = torch.arange(first, complete, device=raw_keys.device) * ratio
+                pool.keys[:, first:complete].copy_(
+                    self._rotated_groups(grouped, starts, cos, sin).float()
+                )
+            pool.completed = complete
+            pool.completed_tensor.fill_(complete)
+        return pool.keys[:, :count]
 
     def __call__(
         self,
@@ -650,19 +1267,37 @@ class QSAIndexer:
         sin: torch.Tensor,
         cache: QSAAttentionCache | None,
         *,
-        past_len: int,
+        past_len: int | torch.Tensor,
         raw_keys_override: torch.Tensor | None = None,
+        query_cos: torch.Tensor | None = None,
+        query_sin: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """Return padded selected token indices with ``-1`` marking invalid slots."""
+        """Return padded selected token indices with ``-1`` marking invalid slots.
+
+        ``cos``/``sin`` are absolute-position tables for pooled keys. Query rows
+        can be supplied separately; otherwise they are selected at ``past_len``.
+        """
         batch_size, seq_len, _ = hidden_states.shape
+        if (query_cos is None) != (query_sin is None):
+            raise ValueError("query_cos and query_sin must be supplied together")
+        if query_cos is None:
+            if isinstance(past_len, torch.Tensor):
+                # A fixed-size index keeps tensor positions replayable without a host read.
+                query_rows = past_len.reshape(()) + torch.arange(seq_len, device=cos.device)
+                query_cos = cos.index_select(1, query_rows)
+                query_sin = sin.index_select(1, query_rows)
+            else:
+                query_cos = cos[:, past_len : past_len + seq_len]
+                query_sin = sin[:, past_len : past_len + seq_len]
         qk = prefill_linear(hidden_states, self.qk_proj)
         q, token_k = torch.split(
             qk, [self.n_heads * self.head_dim, self.kv_heads * self.head_dim], dim=-1
         )
         q = self.q_layernorm(q.reshape(batch_size, seq_len, -1, self.head_dim))
-        q = apply_rotary_pos_emb(q, cos[:, -seq_len:], sin[:, -seq_len:], unsqueeze_dim=2)
+        q = apply_rotary_pos_emb(q, query_cos, query_sin, unsqueeze_dim=2)
         new_raw_keys = token_k.reshape(batch_size, seq_len, self.head_dim)
 
+        raw_version = _tensor_version(cache.index_k) if cache is not None else None
         if cache is not None:
             # Same reason as the QSA write: a Python slice pins the offset into anything that
             # records it, so a tensor position goes through `index_copy_` instead.
@@ -688,11 +1323,24 @@ class QSAIndexer:
         else:
             raw_keys = new_raw_keys
 
+        # Overrides retain the conservative recompute path, including when the
+        # caller also supplies a cache. Do not leave stale validity for a later
+        # enabled call after either an override or a feature-toggle write.
+        if raw_keys_override is None:
+            pool = self._pool_for_write(cache, cos, sin, raw_version)
+        else:
+            pool = getattr(cache, "indexer_pool", None) if cache is not None else None
+            if pool is not None:
+                pool.invalidate()
+            pool = None
+
         kv_len = raw_keys.shape[1]
         # Every query at absolute position p sees keys [0, p]; block boundaries
         # are therefore query-dependent only through how many keys are visible.
         num_blocks_total = kv_len // self.compress_ratio
         if kv_len <= self.budget:
+            if pool is not None:
+                pool.invalidate()
             selected_width = kv_len
             key_ids = torch.arange(kv_len, device=hidden_states.device)
             visible_keys = past_len + torch.arange(seq_len, device=hidden_states.device) + 1
@@ -706,6 +1354,8 @@ class QSAIndexer:
             self.budget + self.compress_ratio - 1,
         )
         if num_blocks_total == 0:
+            if pool is not None:
+                pool.invalidate()
             key_ids = torch.arange(kv_len, device=hidden_states.device)
             visible_keys = past_len + torch.arange(seq_len, device=hidden_states.device) + 1
             indices = key_ids.view(1, 1, -1).expand(batch_size, seq_len, -1)
@@ -716,25 +1366,53 @@ class QSAIndexer:
                 indices = F.pad(indices, (0, selected_width - kv_len), value=-1)
             return indices[:, :, :selected_width].to(torch.int32)
 
-        # Pool + RoPE all complete blocks once (shared across queries).
         block_tokens = torch.arange(
             num_blocks_total * self.compress_ratio, device=hidden_states.device
         ).view(num_blocks_total, self.compress_ratio)
-        pooled = raw_keys[:, : num_blocks_total * self.compress_ratio].reshape(
-            batch_size, num_blocks_total, self.compress_ratio, self.head_dim
-        )
-        pooled = pooled.float().mean(dim=2).to(raw_keys.dtype)
-        pooled = self.k_layernorm(pooled)
-        # cos/sin cover every absolute position in the cache, so a block's RoPE
-        # phase comes from its first token's position.
-        group_starts = block_tokens[:, 0]
-        block_keys = apply_rotary_pos_emb(
-            pooled.unsqueeze(2), cos[:, group_starts], sin[:, group_starts], unsqueeze_dim=2
-        ).squeeze(2)  # (batch, blocks, head_dim)
+        if pool is not None:
+            block_keys = self._incremental_keys(pool, raw_keys, cos, sin, past_len, seq_len)
+        else:
+            # The default-off/oracle path still recomputes every arena group.
+            grouped = raw_keys[:, :num_blocks_total * self.compress_ratio].reshape(
+                batch_size, num_blocks_total, self.compress_ratio, self.head_dim
+            )
+            block_keys = self._rotated_groups(grouped, block_tokens[:, 0], cos, sin)
 
         # scores: (batch, seq, blocks) = sum over index heads of relu(q . k)
-        scores = torch.einsum("bqhd,bkd->bqhk", q.float(), block_keys.float())
-        scores = torch.relu(scores).sum(dim=2) / math.sqrt(self.head_dim)
+        #
+        # The head axis is written last and reduced last on purpose. With it in the middle the
+        # reduction walks four elements a megabyte apart for every output, which at 65536 blocks
+        # measured 2.48 ms against 0.23 ms at 8192 -- the second largest term in the whole
+        # context-dependent part of the step. Summing four values is order-independent here and
+        # the two spellings are bitwise equal, so this is a layout change and not an arithmetic
+        # one. `relu_` is in place for the same reason: the intermediate is context-sized.
+        # The fp32 casts are not free -- they materialise a context-sized copy of the keys every
+        # step -- but dropping them does not pay. The bf16 form was wired behind a switch and does
+        # not run: at 262080 positions it produced no measurement at all, while both fp32 arms
+        # completed at 30.030 and 30.061 ms p50, so the selection path downstream does not accept
+        # it as it stands. The ceiling is small anyway: the casts and the wider read are about
+        # 0.8 ms of a 30 ms step, and a differently-rounded score can change which block is
+        # selected, so the tokens would have to be re-verified after. Left as it is.
+        # bf16 scoring would be 1.62x faster on this shape -- 0.264 ms against 0.428 ms a layer at
+        # 65536 blocks, measured in isolation, tensor cores accumulating in fp32 either way -- and the
+        # two forms differ by a median 0.14% relative. It cannot simply be switched on: the pool this
+        # reads stores fp32 (see `_incremental_keys`), so a bf16 einsum meets a Float operand and
+        # raises "expected scalar type BFloat16 but found Float". Making the pool bf16 as well is the
+        # real change, and it broke twenty-five incremental-indexer tests when tried, so it needs its
+        # own investigation rather than being slipped in here.
+        # The same arithmetic as `einsum("bqhd,bkd->bqkh")`, written so the keys occupy the M side of
+        # a GEMM. At decode the einsum is a batch-of-four GEMV over a 65536-row buffer, which puts the
+        # 33.5 MB read at roughly 88 GB/s; the GEMM form has 65536 rows of parallelism instead and
+        # measures 0.186 ms a layer against 0.264, with **bit-identical values** to the einsum form
+        # (`same_values: true` in the probe, and the tokens match the recorded reference prefix). It
+        # generalises over a prefill chunk: (B, K, D) @ (B, D, Q*H) -> (B, K, Q*H) -> (B, Q, K, H).
+        # The N dimension is `seq_len * n_heads`, so widening a verify batch changes the GEMM
+        # geometry; the opt-in helper below keeps each row at the decode N while the default stays
+        # this one call.
+        scores = _indexer_score_rows(
+            block_keys, q, batch_size, seq_len, self.n_heads, self.head_dim
+        )
+        scores = scores.relu_().sum(dim=-1) / math.sqrt(self.head_dim)
 
         query_abs = past_len + torch.arange(seq_len, device=hidden_states.device)
         visible_keys = query_abs + 1  # causal: keys [0, p] inclusive
@@ -744,6 +1422,14 @@ class QSAIndexer:
         scores = scores.masked_fill(~block_ok.unsqueeze(0), float("-inf"))
 
         topk = min(self.block_topk, num_blocks_total)
+        # `sorted` stays on, and the reason is not the timing. Dropping it looked exact -- the set of
+        # blocks is all that is selected, and `_run_table` sorts the token runs afterwards -- and in
+        # isolation the two forms did return identical index sets 1.07x apart in cost. Interleaved
+        # end to end at 262015, the arms produced **different tokens**: the order a gather happens in
+        # is not inert, because the masked `-1` slots and the staged runs downstream depend on it.
+        # So this is a quality change, not an optimisation, and the micro benchmark could not see it.
+        # It measured 33.52 tok/s at 29.144 ms p50 against 33.65 at 29.528 -- faster on the median and
+        # slower on the rate, on different tokens, which is not a comparison at all.
         selected_blocks = scores.topk(topk, dim=-1).indices  # (batch, seq, topk)
         # -inf rows mean "fewer visible blocks than topk"; drop those picks.
         selected_valid = torch.gather(block_ok.unsqueeze(0).expand(batch_size, -1, -1), 2, selected_blocks)
@@ -808,7 +1494,7 @@ class QSAAttention:
         sin: torch.Tensor,
         cache: QSAAttentionCache | None,
         *,
-        past_len: int,
+        past_len: int | torch.Tensor,
     ) -> torch.Tensor:
         batch_size, seq_len, _ = hidden_states.shape
         profile = os.environ.get("POCKETLLM_QWEN4_ATTN_PHASE_PROFILE", "0").lower() in {
@@ -821,7 +1507,16 @@ class QSAAttention:
 
             torch.cuda.synchronize(hidden_states.device)
             started = time.perf_counter()
-        selected = self.indexer(hidden_states, cos, sin, cache, past_len=past_len)
+        # Pooled blocks need absolute-position rows, while the caller has already selected
+        # this step's query rows. The shared table may extend beyond the live context, so its
+        # final rows must never stand in for the current query's RoPE phase.
+        cur_cos, cur_sin = cos[:, -seq_len:], sin[:, -seq_len:]
+        table_cos = cache.cos if cache is not None and getattr(cache, "cos", None) is not None else cos
+        table_sin = cache.sin if cache is not None and getattr(cache, "sin", None) is not None else sin
+        selected = self.indexer(
+            hidden_states, table_cos, table_sin, cache, past_len=past_len,
+            query_cos=cur_cos, query_sin=cur_sin,
+        )
         if profile:
             torch.cuda.synchronize(hidden_states.device)
             after_indexer = time.perf_counter()
@@ -835,19 +1530,21 @@ class QSAAttention:
         ).transpose(1, 2)
         value = prefill_linear(hidden_states, self.v_proj).view(batch_size, seq_len, -1, self.head_dim).transpose(1, 2)
 
-        cur_cos, cur_sin = cos[:, -seq_len:], sin[:, -seq_len:]
         query, key = apply_rotary_pos_emb(query, cur_cos, cur_sin, k=key, unsqueeze_dim=1)
 
         if cache is not None:
             _write_kv(cache, key, value, past_len, seq_len)
             cache.length = past_len + seq_len
-            width = _kv_width_of(cache)
-            if width > 0:
-                key = cache.k[:, :, :width]
-                value = cache.v[:, :, :width]
+            if getattr(cache, "host_kv", False):
+                key, value, selected = _stage_selected(cache, selected, hidden_states.device)
             else:
-                key = cache.k[:, :, : cache.length]
-                value = cache.v[:, :, : cache.length]
+                width = _kv_width_of(cache)
+                if width > 0:
+                    key = cache.k[:, :, :width]
+                    value = cache.v[:, :, :width]
+                else:
+                    key = cache.k[:, :, : cache.length]
+                    value = cache.v[:, :, : cache.length]
         if profile:
             torch.cuda.synchronize(hidden_states.device)
             after_projection = time.perf_counter()

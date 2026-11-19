@@ -74,13 +74,51 @@ def pack_gate_up_plane(codes: torch.Tensor, out: torch.Tensor, *, device=None) -
     target.copy_(source.permute(*range(len(lead)), -2, -3, -1), non_blocking=device is not None)
 
 
-def unpack_gate_up_plane(planes: torch.Tensor) -> torch.Tensor:
-    """`[..., ceil(hidden/16), 2*inter, 16]` planes back to the row layout `[..., 2*inter, hidden]`."""
+def unpack_gate_up_plane(planes: torch.Tensor, *, chunk: int | None = None) -> torch.Tensor:
+    """`[..., ceil(hidden/16), 2*inter, 16]` planes back to the row layout `[..., 2*inter, hidden]`.
+
+    `chunk` bounds the *transient* the permute needs.  The result is unavoidable -- it is the
+    layer's codes in the layout the readers want -- but the gather that builds it allocates a
+    second copy of the whole thing before the copy lands, and on a card whose free memory has
+    already been cut into pieces by a resident expert bank that second copy is what fails.  Asking
+    for `chunk` rows at a time turns a 200 MiB contiguous request into `2 * inter / chunk` of them,
+    which is the difference between "there is 9 GiB free and it still will not fit" and running.
+
+    Left as `None` for the hot paths, which call this once on a freshly measured card.
+    """
     lead = planes.shape[:-3]
     chunks, rows, width = planes.shape[-3:]
-    out = torch.empty(*lead, rows, chunks * width, dtype=torch.uint8, device=planes.device)
-    out.view(*lead, rows, chunks, width).copy_(planes.view(torch.uint8).permute(*range(len(lead)), -2, -3, -1))
-    return out.view(torch.float8_e4m3fn)
+    total = torch.empty(*lead, rows, chunks * width, dtype=torch.uint8, device=planes.device)
+    flat = total.view(*lead, rows, chunks, width)
+    source = planes.view(torch.uint8)
+    if chunk is None or rows <= chunk:
+        flat.copy_(source.permute(*range(len(lead)), -2, -3, -1))
+        return total.view(torch.float8_e4m3fn)
+    # `source` is `[..., chunks, rows, width]` and `flat` is `[..., rows, chunks, width]`, so a
+    # row range is a slice on a different axis of each and the permute happens per piece.
+    for start in range(0, rows, chunk):
+        stop = min(start + chunk, rows)
+        piece = source[..., :, start:stop, :].permute(*range(len(lead)), -2, -3, -1)
+        flat[..., start:stop, :, :].copy_(piece)
+    return total.view(torch.float8_e4m3fn)
+
+
+def _infer_fp8_block(weights, scales) -> tuple[int, int]:
+    """Block geometry of a block-scaled FP8 matrix from its own shapes.
+
+    Needed for the MTP experts of a checkpoint whose *root* `quantization_config` is not fp8: the
+    ModelOpt NVFP4 build quantizes the main stack to NVFP4 and leaves the MTP layer at FP8, and its
+    `quantization_config` therefore describes the former. Deriving the geometry from the grid rather
+    than assuming 128x128 keeps the reader honest if a checkpoint ever uses another block.
+    """
+    rows, cols = weights[0].shape
+    grid_rows, grid_cols = scales[0].shape
+    if rows % grid_rows or cols % grid_cols:
+        raise ValueError(
+            f"an FP8 matrix of {rows}x{cols} has a {grid_rows}x{grid_cols} scale grid, which does "
+            "not tile it"
+        )
+    return (rows // grid_rows, cols // grid_cols)
 
 
 class HostExpertShard:
@@ -347,7 +385,12 @@ class HostExpertShard:
         """
         local = self.local_index(expert_id)
         gate_up = self._gate_up[layer_idx]
-        gate_up = unpack_gate_up_plane(gate_up) if self.packed_gate_up else gate_up
+        # Read one expert out of a packed layer without materializing the whole layer's row layout:
+        # the caller wants one row, and on a card whose free memory is fragmented by a resident
+        # bank the layer-sized transient is exactly what does not fit.
+        gate_up = (
+            unpack_gate_up_plane(gate_up, chunk=1) if self.packed_gate_up else gate_up
+        )
         gate_up = gate_up[local]
         down = self._down[layer_idx][local]
         if self.block_size is None:
@@ -668,6 +711,54 @@ class Qwen4ExpCheckpoint:
         down = self.store.view(self.expert_key(layer_idx, "down_proj"))[expert_id]
         return gate_up, down
 
+    # -- MTP draft head ---------------------------------------------------
+
+    #: `mtp` is a sibling of `model.language_model` in the checkpoint, not a layer of it, so none
+    #: of the `LM_PREFIX` helpers above apply to it.
+    MTP_PREFIX = "mtp"
+
+    def mtp_layer_prefix(self, layer_idx: int = 0) -> str:
+        return f"{self.MTP_PREFIX}.layers.{layer_idx}"
+
+    def mtp_fp8_experts(self, layer_idx: int = 0) -> bool:
+        """Whether the MTP layer's routed experts are stored as block-scaled FP8.
+
+        The two checkpoints disagree here and it is worth stating rather than inferring: the FP8
+        build quantizes every routed expert, and the ModelOpt NVFP4 build quantizes the *main*
+        stack's experts to NVFP4 while leaving the MTP layer's at plain FP8 (its `hf_quant_config`
+        covers `model.language_model.layers.*` only).  So on the NVFP4 host the MTP experts cannot
+        come from the NVFP4 bank, and this is what decides that.
+        """
+        return f"{self.mtp_layer_prefix(layer_idx)}.mlp.experts.0.gate_proj.weight_scale_inv" in self.store
+
+    def mtp_expert_rows(self, layer_idx: int, expert_id: int):
+        """One MTP routed expert's `(gate_up, down)` as host tensors, like `expert_rows`."""
+        shard = self.expert_shard
+        if shard is not None and shard.has_layer(layer_idx) and shard.owns(expert_id):
+            return shard.rows(layer_idx, expert_id)
+        if self.mtp_fp8_experts(layer_idx):
+            base = f"{self.mtp_layer_prefix(layer_idx)}.mlp.experts.{int(expert_id)}"
+            weights = (self.store.entry(f"{base}.gate_proj.weight"), self.store.entry(f"{base}.down_proj.weight"))
+            scales = (
+                self.store.entry(f"{base}.gate_proj.weight_scale_inv"),
+                self.store.entry(f"{base}.down_proj.weight_scale_inv"),
+            )
+            block = self.fp8.block_size if self.fp8 is not None else _infer_fp8_block(weights, scales)
+
+            def read(proj: str) -> FP8Tensor:
+                key = f"{base}.{proj}_proj.weight"
+                return FP8Tensor(
+                    self.store.entry_view(self.store.entry(key)),
+                    self.store.entry_view(self.store.entry(f"{key}_scale_inv")),
+                    block,
+                )
+
+            return pack_gate_up_fp8(read("gate"), read("up")), read("down")
+        base = f"{self.mtp_layer_prefix(layer_idx)}.mlp.experts"
+        return self.store.view(f"{base}.gate_up_proj")[expert_id], self.store.view(f"{base}.down_proj")[
+            expert_id
+        ]
+
     # -- PLE n-gram table -------------------------------------------------
 
     def ngram_shard_keys(self, layer_idx: int) -> list[str]:
@@ -685,6 +776,10 @@ class Qwen4ExpCheckpoint:
         if key not in self.store:
             return None
         return self.store.view(key).reshape(())
+
+
+#: Row counts at or below this take the per-row gather; a decode step names four.
+_SMALL_GATHER_ROWS = 64
 
 
 class HostNGramTable:
@@ -755,7 +850,18 @@ class HostNGramTable:
         return buffer[:rows]
 
     def _gather_into(self, flat: torch.Tensor, out: torch.Tensor) -> None:
-        """Fill `out` with the rows `flat` names, shard by shard."""
+        """Fill `out` with the rows `flat` names, shard by shard.
+
+        A decode step names a handful of rows -- two heads by two n-gram orders -- and the
+        shard-by-shard form below pays eight PyTorch calls to route them: two divides, a
+        ``unique``, a ``nonzero`` and a boolean-index write a shard.  Measured at 29 us a layer
+        against 4 rows, that routing is most of the cost, so a small gather is done by integer
+        arithmetic and per-row slicing instead.  The wide case keeps the vectorised form, which
+        is what a prefill needs.
+        """
+        if flat.numel() <= _SMALL_GATHER_ROWS:
+            self._gather_rows_small(flat.tolist(), out)
+            return
         shard_idx = torch.div(flat, self.rows_per_shard, rounding_mode="floor")
         local_idx = flat - shard_idx * self.rows_per_shard
         for s in shard_idx.unique().tolist():
@@ -766,6 +872,21 @@ class HostNGramTable:
                 out[picks] = 0
                 continue
             out[picks] = self._gather_shards[s].index_select(0, local_idx[picks])
+
+    def _gather_rows_small(self, rows: list[int], out: torch.Tensor) -> None:
+        """Copy a few named rows into `out`, one slice a row.
+
+        Same routing as the vectorised path, done in Python: integer division names the shard,
+        the remainder names the row inside it, and an id past the last shard is the divisor
+        padding, whose rows the initialiser leaves at zero.
+        """
+        shards = self._gather_shards
+        for position, row in enumerate(rows):
+            shard, local = divmod(int(row), self.rows_per_shard)
+            if shard >= len(shards):
+                out[position] = 0
+            else:
+                out[position] = shards[shard][local]
 
     def _to_device(self, out: torch.Tensor) -> torch.Tensor:
         if self.is_fp8:

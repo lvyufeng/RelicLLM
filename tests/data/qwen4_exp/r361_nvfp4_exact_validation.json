@@ -1,0 +1,18 @@
+{
+  "kind": "nvfp4_exact_operand_cuda_validation",
+  "tests_passed": 252,
+  "tests_skipped": 0,
+  "includes": [
+    "test_nvfp4_exact_fast.py",
+    "test_qwen4_exp_qsa_splitk_rows.py",
+    "test_qwen4_exp_qsa_cuda.py"
+  ],
+  "kernel_sha256": "c768c0582f169135fbc75f9d3b2304af606778d00e49cc6ba5dce5cac5203db9",
+  "architectures": [
+    "7.5",
+    "8.6",
+    "8.9"
+  ],
+  "scope": "independent CUDA decoder/rows equality tests, not model TPS",
+  "raw_test_output": "........................................................................ [ 28%]\n........................................................................ [ 57%]\n........................................................................ [ 85%]\n....................................                                     [100%]\n252 passed in 19.34s\n"
+}

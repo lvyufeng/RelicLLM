@@ -20,6 +20,8 @@ from relicllm.models.qwen4_exp.attention import (
     GatedDeltaNetCache,
     QSAAttention,
     QSAAttentionCache,
+    _state_at,
+    _update_state,
 )
 from relicllm.models.qwen4_exp.config import Qwen4ExpTextConfig
 from relicllm.models.qwen4_exp.layers import (
@@ -31,6 +33,9 @@ from relicllm.models.qwen4_exp.layers import (
     TopKRouter,
     inject_into_streams,
     prefill_linear,
+    row_invariant_linear,
+    row_invariant_conv1d,
+    row_invariant_sequence_sum,
 )
 from relicllm.models.qwen4_exp.moe import MoEBackend
 
@@ -46,15 +51,17 @@ def _noop_context():
 _ROPE_GROW = 256
 
 
-# Decode drives the layers in one of three orders; `by_layer` is the reference answer.
-#
-# `by_phase` runs every layer's block `p` before any layer's block `p + 1`, so the stream carries 48
-# partial pieces and a host read is paid once.  Measured on the 8x3090 box at batch 1 it was not
-# faster (0.118 s/step against the loop's 0.198 in a resident-only run that also had the rope table
-# rebuilt every step; once the table was fixed both schedules sat at ~0.198), so the pieces of a
-# phase, not the number of drains, are what the step is made of.  `by_outer` defers only the
-# outermost stream mix, which is the smallest version of the same idea.
+# `by_layer` is the reference schedule. `by_outer` defers only a layer's final injection
+# until the next layer consumes it. Both preserve the full layer-to-layer dependency chain.
+# The cross-layer `by_phase` schedule does not and is explicitly rejected.
 _SCHEDULE = os.environ.get("POCKETLLM_QWEN4_SCHEDULE", "by_layer")
+
+
+@dataclass
+class PLEState:
+    """The PLE short-convolution window owned by one sequence, not the model."""
+
+    conv_state: torch.Tensor | None = None
 
 
 @dataclass
@@ -71,6 +78,125 @@ class Qwen4ExpCache:
     #: The rotary table grown so far -- absolute positions `[0, width)`, so every step reuses it.
     cos: torch.Tensor | None = None
     sin: torch.Tensor | None = None
+    ple_states: dict[int, PLEState] = field(default_factory=dict)
+
+    def share_rope_table(self) -> None:
+        """Publish the table to the layers that index it by absolute position.
+
+        A sparse-attention layer rotates each pooled block by the block's *absolute* position, so
+        what it needs is the whole table -- while what the forward hands it is the rows this step
+        computes, a slice at best and the current rows at worst.  The two agree only while the
+        context still fits the indexer's budget, which is why past it the selection read past the
+        end of a one-row table instead of picking blocks.  A reference, not a copy: the table is
+        rebuilt on the cache when it grows, and the layers follow it.
+        """
+        for layer in self.layers:
+            if layer is not None and getattr(layer, "index_k", None) is not None:
+                layer.cos = self.cos
+                layer.sin = self.sin
+
+
+def snapshot_cache(*caches: Qwen4ExpCache | None) -> tuple:
+    """Freeze the mutable state of one or more decode caches so `restore_cache` can put it back.
+
+    Speculative decoding runs a token the model may have to *un-run*: a rejected draft has already
+    written its own KV row and, on the 36 GatedDeltaNet layers, advanced a recurrence.  The QSA
+    half restores by moving a length back, because its rows are addressed by position and the
+    rejected ones are simply written over.  The linear half cannot: `conv_state` and
+    `recurrent_state` are the *result* of the step, so a rollback needs the value from before it.
+
+    That keeps the snapshot small rather than a copy of the KV arena -- it is the linear layers'
+    two state tensors (13.8 MiB a rank at TP8), the QSA lengths, the PLE convolution/token
+    windows and the cache length, and nothing addressed by position. The values are owned copies, so a later
+    step writing the live buffers cannot reach through it.
+
+    Takes several caches because a speculation round moves the backbone's cache *and* the MTP
+    head's: the head keeps its own keys, and a draft that ran has advanced them.
+
+    A `state_slots` cache (the form a captured decode uses) is refused: its entries are laid out one
+    position per slot, and the caller that laid them out is the one that can rewind them.
+    """
+    return tuple(_snapshot_cache(cache) for cache in caches)
+
+
+def _snapshot_cache(cache: Qwen4ExpCache | None):
+    if cache is None:
+        return None
+    return (
+        tuple(_snapshot_entry(layer_cache) for layer_cache in cache.layers),
+        cache.length,
+        None if cache.ple_token_history is None else cache.ple_token_history.clone(),
+        {idx: _snapshot_entry(state) for idx, state in cache.ple_states.items()},
+    )
+
+
+def _snapshot_entry(layer_cache) -> dict:
+    if layer_cache is None:
+        return {}
+    if getattr(layer_cache, "state_slots", None) is not None:
+        raise RuntimeError("snapshot_cache cannot rewind a state_slots cache")
+    out: dict[str, object] = {}
+    for name in ("conv_state", "recurrent_state"):
+        if hasattr(layer_cache, name):
+            value = getattr(layer_cache, name)
+            out[name] = None if value is None else value.clone()
+    if hasattr(layer_cache, "initialized"):
+        out["initialized"] = bool(layer_cache.initialized)
+    if hasattr(layer_cache, "length"):
+        out["length"] = int(layer_cache.length)
+    return out
+
+
+def _restore_entry(cache_entry, frozen_entry: dict) -> None:
+    """Restore one recurrent or PLE owner, retaining buffers whenever shapes fit."""
+    if cache_entry is None or not frozen_entry:
+        return
+    for name in ("conv_state", "recurrent_state"):
+        if name not in frozen_entry:
+            continue
+        frozen = frozen_entry[name]
+        live = getattr(cache_entry, name, None)
+        if frozen is None:
+            setattr(cache_entry, name, None)
+        elif live is not None and live.shape == frozen.shape:
+            with torch.inference_mode():
+                live.copy_(frozen)
+        else:
+            with torch.inference_mode(False):
+                setattr(cache_entry, name, frozen.clone())
+    for name in ("initialized", "length"):
+        if name in frozen_entry:
+            setattr(cache_entry, name, frozen_entry[name])
+
+
+def restore_cache(snapshot, *caches: Qwen4ExpCache | None) -> None:
+    """Restore layer state, PLE windows and history, keeping compatible buffer addresses.
+
+    The first three tuple fields retain the legacy layout. A fourth field adds
+    request-owned PLE state; legacy three-field snapshots leave that state alone.
+    """
+    if snapshot is None:
+        return
+    for cache, entry in zip(caches, snapshot):
+        if cache is None or entry is None:
+            continue
+        layers, length, ple_history = entry[:3]
+        for layer_cache, layer_entry in zip(cache.layers, layers):
+            _restore_entry(layer_cache, layer_entry)
+        ple_entries = entry[3] if len(entry) > 3 else {}
+        for idx, ple_entry in ple_entries.items():
+            if idx not in cache.ple_states:
+                cache.ple_states[idx] = PLEState()
+            _restore_entry(cache.ple_states[idx], ple_entry)
+        cache.length = length
+        if ple_history is None:
+            cache.ple_token_history = None
+        elif cache.ple_token_history is not None and cache.ple_token_history.shape == ple_history.shape:
+            with torch.inference_mode():
+                cache.ple_token_history.copy_(ple_history)
+        else:
+            with torch.inference_mode(False):
+                cache.ple_token_history = ple_history.clone()
 
 
 class PLELayer:
@@ -110,28 +236,50 @@ class PLELayer:
     def reset_cache(self) -> None:
         self.conv_state = None
 
-    def _short_conv(self, hidden_states: torch.Tensor, *, use_cache: bool) -> torch.Tensor:
+    def _short_conv(
+        self,
+        hidden_states: torch.Tensor,
+        *,
+        use_cache: bool,
+        state_cache: PLEState | None = None,
+    ) -> torch.Tensor:
         seq_len = hidden_states.shape[1]
         x = hidden_states.transpose(1, 2)  # (b, hc_hidden, seq)
-        if use_cache and self.conv_state is not None:
-            x = torch.cat([self.conv_state.to(x.dtype), x], dim=-1)
         if use_cache:
-            # In place when the shape allows: a captured step holds this buffer's address, and
-            # rebinding the attribute every step leaves that address written and unread.
-            state = x[:, :, -self.short_conv_state_len :]
-            live = self.conv_state
-            if live is not None and live.shape == state.shape:
-                # Inside inference mode whatever the caller's context: the buffer was made there,
-                # and an in-place update to an inference tensor is refused outside it.
-                with torch.inference_mode():
-                    live.copy_(state)
-            else:
-                with torch.inference_mode(False):
-                    self.conv_state = state.clone()
+            previous = (
+                _state_at(state_cache, "conv_state")
+                if state_cache is not None else self.conv_state
+            )
+            if previous is not None:
+                x = torch.cat([previous.to(x.dtype), x], dim=-1)
+        # Pad before saving the carry so even a short first chunk keeps the full window.
         x = F.pad(x, (self.short_conv_state_len, 0))
         x = x[..., -(self.short_conv_state_len + seq_len) :]
+        if use_cache and state_cache is not None:
+            # A speculative verify consumes several positions and may keep only a prefix of them.
+            # The window `[carry, x_0 .. x_{seq-1}]` is what the rewind needs: the carry after
+            # keeping `k` positions is `window[..., k : k + state_len]`, so logging it here makes
+            # the rollback a slice instead of a replay. Off (None) outside a verify round.
+            log = getattr(state_cache, "state_log", None)
+            if log is not None:
+                log.append(x)
+        if use_cache:
+            state = x[..., -self.short_conv_state_len :] if self.short_conv_state_len else x[..., :0]
+            if state_cache is not None:
+                # The shared slot protocol reads this position and writes the next, without
+                # rebinding the visible attribute or advancing it during graph warmup.
+                with torch.inference_mode():
+                    _update_state(state_cache, "conv_state", state)
+            else:
+                live = self.conv_state
+                if live is not None and live.shape == state.shape:
+                    with torch.inference_mode():
+                        live.copy_(state)
+                else:
+                    with torch.inference_mode(False):
+                        self.conv_state = state.clone()
         channels = self.conv1d_weight.shape[0]
-        x = F.conv1d(
+        x = row_invariant_conv1d(
             x,
             self.conv1d_weight,
             None,
@@ -148,6 +296,7 @@ class PLELayer:
         out_len: int,
         *,
         use_cache: bool,
+        state_cache: PLEState | None = None,
     ) -> torch.Tensor:
         row_ids = self.hasher.row_ids(token_history, out_len)
         embeddings = self.ngram_table(row_ids).flatten(-2).to(hidden_states.dtype)
@@ -156,13 +305,15 @@ class PLELayer:
         )
         value = prefill_linear(embeddings, self.value_proj)
         query_normed = self.norm_query(hidden_states).unflatten(-1, (self.hc_count, self.hidden_size))
-        gate = (key_normed * query_normed).sum(dim=-1, keepdim=True) / math.sqrt(self.hidden_size)
+        gate = row_invariant_sequence_sum(key_normed * query_normed) / math.sqrt(self.hidden_size)
         # Signed sqrt keeps the gate's sign while compressing its magnitude.
         gate = gate.abs().clamp_min(1e-6).sqrt() * gate.sign()
         gated_value = torch.sigmoid(gate) * value.unsqueeze(-2)
         gated_value_normed = self.norm_conv(gated_value.flatten(-2))
         gated_value = gated_value.flatten(-2)
-        return gated_value + self._short_conv(gated_value_normed, use_cache=use_cache)
+        return gated_value + self._short_conv(
+            gated_value_normed, use_cache=use_cache, state_cache=state_cache
+        )
 
 
 class Qwen4ExpDecoderLayer:
@@ -260,6 +411,7 @@ class Qwen4ExpDecoderLayer:
         use_cache: bool,
         profiler=None,
         defer_final_mix: bool = False,
+        ple_cache: PLEState | None = None,
     ) -> torch.Tensor:
         prof_scope = profiler.scope if profiler else lambda x: _noop_context()
 
@@ -275,7 +427,8 @@ class Qwen4ExpDecoderLayer:
                 assert token_history is not None, "PLE layers need the token id history"
                 with prof_scope("ple"):
                     ple_out = self.ple(
-                        hidden_states, token_history, hidden_states.shape[1], use_cache=use_cache
+                        hidden_states, token_history, hidden_states.shape[1],
+                        use_cache=use_cache, state_cache=ple_cache,
                     )
                 hidden_states = hidden_states + ple_out
 
@@ -385,6 +538,10 @@ class Qwen4ExpModel:
         self.rope = MRoPE(config, device)
         self._cos: torch.Tensor | None = None
         self._sin: torch.Tensor | None = None
+        #: The MTP draft head, when `build_heterogeneous(mtp=True)` loaded one. It stays here rather
+        #: than in `layers` because it is not a layer of the backbone: nothing in the forward pass
+        #: reads it, and a caller has to ask for a draft explicitly.
+        self.mtp: object | None = None
 
     @property
     def local_layers(self) -> list[Qwen4ExpDecoderLayer]:
@@ -400,15 +557,20 @@ class Qwen4ExpModel:
                 if layer is not None
                 else None
                 for layer in self.layers
-            ]
+            ],
+            ple_states={
+                idx: PLEState(torch.zeros(
+                    batch_size, self.config.hc_hidden_size, layer.ple.short_conv_state_len,
+                    device=self.device, dtype=self.dtype,
+                ))
+                for idx, layer in enumerate(self.layers)
+                if layer is not None and layer.ple is not None
+            },
         )
-        for layer in self.layers:
-            if layer is not None and layer.ple is not None:
-                layer.ple.reset_cache()
         cache.ple_token_history = torch.full(
             (batch_size, self.config.ngram_size - 1),
             self.config.primary_eos_token_id,
-            dtype=torch.long,
+            dtype=torch.long, device="cpu",
         )
         return cache
 
@@ -453,15 +615,22 @@ class Qwen4ExpModel:
             # survives the first few tokens on that and then picks a different one.
             start = total_len.reshape(()) - seq_len
             rows = start + torch.arange(seq_len, device=cache.cos.device)
+            # The indexer indexes the table by absolute position, so it needs the whole thing
+            # whatever slice this step computes.
+            cache.share_rope_table()
             return (
                 cache.cos.index_select(1, rows),
                 cache.sin.index_select(1, rows),
             )
-        width = -(-total_len // _ROPE_GROW) * _ROPE_GROW
+        # A reusable recording pins an arena-wide table. Do not round eager prefill up past that
+        # table when its exact request width is not a growth-boundary multiple: that would move
+        # addresses the retained CUDA graph reads on the next decode.
+        width = int(fixed) if fixed and total_len <= fixed else -(-total_len // _ROPE_GROW) * _ROPE_GROW
         if cache.cos is None or cache.cos.shape[0] != batch_size or cache.cos.shape[1] < width:
             width = max(width, fixed, total_len)
             position_ids = torch.arange(width, device=self.device).view(1, 1, -1).expand(3, batch_size, -1)
             cache.cos, cache.sin = self.rope(position_ids, self.dtype)
+        cache.share_rope_table()
         return cache.cos[:, :total_len], cache.sin[:, :total_len]
 
     def forward(
@@ -471,7 +640,8 @@ class Qwen4ExpModel:
         cache: Qwen4ExpCache | None = None,
         past_len: int = 0,
         last_token_only: bool = False,
-    ) -> torch.Tensor | None:
+        return_streams: bool = False,
+    ) -> torch.Tensor | None | tuple[torch.Tensor, torch.Tensor]:
         """Run this rank's layers.
 
         Under pipeline parallelism this is one stage of a chain: the first stage embeds, each stage
@@ -483,18 +653,66 @@ class Qwen4ExpModel:
         layers need the running token history, and on the decode path each step's ids are produced by
         the *last* stage's argmax, so a stage that did not receive them would build a history that
         silently diverges from the one that produced the token.
+
+        `return_streams` also hands back the hyper-connection state *before* `final_mixer`, which is
+        the only point at which the backbone's state is still the `hc_count` streams the MTP head
+        reads.  Asking for it is what keeps the draft path from changing the default one: the mixer
+        is applied to the same tensor either way, and the slice returned is a view of it.
         """
         prof_scope = self.profiler.scope if self.profiler else lambda x: _noop_context()
 
         if self.pp_size > 1:
             return self._forward_stage(
-                input_ids, cache=cache, past_len=past_len, last_token_only=last_token_only
+                input_ids,
+                cache=cache,
+                past_len=past_len,
+                last_token_only=last_token_only,
+                return_streams=return_streams,
             )
         return self._forward_all(
-            input_ids, cache=cache, past_len=past_len, last_token_only=last_token_only
+            input_ids,
+            cache=cache,
+            past_len=past_len,
+            last_token_only=last_token_only,
+            return_streams=return_streams,
         )
 
     # -- pipeline stage helpers -------------------------------------------------
+
+    def forward_stage_from(
+        self,
+        hidden: torch.Tensor,
+        ids: torch.Tensor,
+        *,
+        cache: Qwen4ExpCache | None,
+        past_len,
+    ) -> torch.Tensor:
+        """A stage's compute with the pipeline's plumbing left to the caller.
+
+        `_forward_stage` brackets this with a receive and a send, and both are host calls into
+        NCCL: a capture cannot contain them, and a stage that wanted a graph had no way to ask for
+        just the part that can be one.  Splitting it here is what lets each stage record its own
+        step -- the recording then starts at the tensor the previous stage sent and ends at the
+        tensor this stage sends, and the transfers stay outside it on either side.
+
+        The tensors are the stage's activation layout, `[batch, seq, hc_count * hidden]`, which is
+        what the layers unpack; `ids` is the token block the senders pass along with it, because a
+        stage's PLE lookup needs the ids rather than the hidden state.
+        """
+        prof_scope = self.profiler.scope if self.profiler else lambda x: _noop_context()
+        return self._forward_layers(
+            hidden, ids, cache=cache, past_len=past_len, prof_scope=prof_scope
+        )
+
+    def stage_output(
+        self, hidden: torch.Tensor, *, last_token_only: bool, return_streams: bool = False
+    ):
+        """The last stage's head, split the same way: capture this, send nothing."""
+        if last_token_only:
+            hidden = hidden[:, -1:]
+        with torch.inference_mode(False):
+            logits = row_invariant_linear(self.final_mixer(hidden), self.lm_head)
+        return (logits, hidden) if return_streams else logits
 
     def _activation_shape(self, batch_size: int, seq_len: int) -> tuple[int, int, int]:
         # `[batch, seq, hc_count * hidden]`, the layout the layers themselves take: each unpacks it
@@ -534,6 +752,7 @@ class Qwen4ExpModel:
         cache: Qwen4ExpCache | None,
         past_len: int,
         last_token_only: bool,
+        return_streams: bool = False,
     ) -> torch.Tensor | None:
         prof_scope = self.profiler.scope if self.profiler else lambda x: _noop_context()
 
@@ -544,18 +763,18 @@ class Qwen4ExpModel:
         else:
             hidden, ids = self._recv_activation(input_ids, self.pp_rank - 1)
 
-        hidden = self._forward_layers(hidden, ids, cache=cache, past_len=past_len, prof_scope=prof_scope)
+        # The compute and the head come from the same two methods a stage-local capture records,
+        # so a recorded step and an eager one cannot drift apart.
+        hidden = self.forward_stage_from(hidden, ids, cache=cache, past_len=past_len)
 
         if self.pp_rank + 1 < self.pp_size:
             self._send_activation(hidden, ids, self.pp_rank + 1)
             return None
 
-        if last_token_only:
-            hidden = hidden[:, -1:]
         with prof_scope("final_mixer"):
-            hidden = self.final_mixer(hidden)
-        with prof_scope("lm_head"):
-            return F.linear(hidden, self.lm_head)
+            return self.stage_output(
+                hidden, last_token_only=last_token_only, return_streams=return_streams
+            )
 
     def _forward_all(
         self,
@@ -564,6 +783,7 @@ class Qwen4ExpModel:
         cache: Qwen4ExpCache | None,
         past_len: int,
         last_token_only: bool,
+        return_streams: bool = False,
     ) -> torch.Tensor:
         prof_scope = self.profiler.scope if self.profiler else lambda x: _noop_context()
 
@@ -578,15 +798,14 @@ class Qwen4ExpModel:
         if last_token_only:
             hidden = hidden[:, -1:]
         with prof_scope("final_mixer"):
-            hidden = self.final_mixer(hidden)
-        with prof_scope("lm_head"):
-            return F.linear(hidden, self.lm_head)
+            logits = row_invariant_linear(self.final_mixer(hidden), self.lm_head)
+        return (logits, hidden) if return_streams else logits
 
     def _forward_outer_phased(
         self,
         hidden: torch.Tensor,
         layers: list,
-        cache: Qwen4ExpCache,
+        cache: Qwen4ExpCache | None,
         cos: torch.Tensor,
         sin: torch.Tensor,
         past_len: int,
@@ -609,10 +828,11 @@ class Qwen4ExpModel:
                 (block_output, hyper_input, inject),
                 cos=cos,
                 sin=sin,
-                cache=cache.layers[idx],
+                cache=None if cache is None else cache.layers[idx],
+                ple_cache=None if cache is None else cache.ple_states.get(idx),
                 past_len=past_len,
                 token_history=token_history,
-                use_cache=True,
+                use_cache=cache is not None,
                 profiler=self.profiler,
                 defer_final_mix=True,
             )
@@ -633,67 +853,11 @@ class Qwen4ExpModel:
         token_history: torch.Tensor | None,
         prof_scope,
     ) -> torch.Tensor:
-        """One decode token through every layer, a block at a time across all of them.
-
-        The schedule is the per-layer loop's, flattened: layer `i`'s attention is still run before
-        layer `i`'s hyper-connection output, and layer `i` finishes before layer `i + 1` reads the
-        stream.  What changes is the order *the host issues* its work in.  A block's output is a
-        host-dependent wait -- an expert row read off the host, or a collective -- and in the
-        per-layer loop every such wait is paid before the next layer's independent compute is
-        queued.  Here every layer's row read is issued in one block pass, so the stream drains once
-        instead of once a layer, and the two collectives are issued 48 times and waited on
-        together.  The answer is the loop's: the queue order between independent reads and copies
-        changes, not the arithmetic.  It also removes a per-layer host round trip in this tree,
-        which makes the blocks that run on the host (experts, rope) the whole of what is left.
-        """
-        n = len(layers)
-        h = hidden
-
-        with prof_scope("dec_ple_hc"):
-            for i, (_, layer) in enumerate(layers):
-                if layer.ple is not None:
-                    h = h + layer.ple(h, token_history, 1, use_cache=True)
-                layer._phased_hc = layer.attn_hc(h)
-        with prof_scope("dec_attn"):
-            for i, (idx, layer) in enumerate(layers):
-                mixed = layer._phased_hc[0]
-                if layer.is_linear:
-                    attn = layer.attn(mixed, cache.layers[idx])
-                else:
-                    attn = layer.attn(mixed, cos, sin, cache.layers[idx], past_len=past_len)
-                ar = layer.all_reduce
-                layer._phased_attn = attn if ar is None else ar(attn)
-        with prof_scope("dec_attn_inject"):
-            for _, layer in layers:
-                mixed, hyper_input, inject = layer._phased_hc
-                h = inject_into_streams(layer._phased_attn, hyper_input, inject)
-                mixed, hyper_input, inject = layer.mlp_hc(h)
-                layer._phased_hc = (mixed, hyper_input, inject)
-        with prof_scope("dec_router"):
-            for _, layer in layers:
-                flat = layer._phased_hc[0].reshape(-1, layer._phased_hc[0].shape[-1])
-                layer._phased_route = layer.router(flat)
-        with prof_scope("dec_moe"):
-            for idx, layer in layers:
-                flat = layer._phased_hc[0].reshape(-1, layer._phased_hc[0].shape[-1])
-                layer._phased_moe = layer.moe(idx, flat, *layer._phased_route)
-        with prof_scope("dec_shared"):
-            for _, layer in layers:
-                flat = layer._phased_hc[0].reshape(-1, layer._phased_hc[0].shape[-1])
-                layer._phased_moe = layer._phased_moe + torch.sigmoid(
-                    prefill_linear(flat, layer.shared_expert_gate)
-                ) * layer.shared_expert(flat)
-        with prof_scope("dec_mlp_reduce"):
-            for _, layer in layers:
-                mlp_out = layer._phased_moe.reshape(layer._phased_hc[0].shape)
-                ar = layer.all_reduce
-                layer._phased_moe = mlp_out if ar is None else ar(mlp_out)
-        with prof_scope("dec_mlp_inject"):
-            for _, layer in layers:
-                _, hyper_input, inject = layer._phased_hc
-                h = inject_into_streams(layer._phased_moe, hyper_input, inject)
-                layer._phased_hc = layer._phased_attn = layer._phased_moe = layer._phased_route = None
-        return h
+        """Reject the cross-layer phase schedule: decoder layers are not independent."""
+        raise RuntimeError(
+            "by_phase is unsupported because it violates layer dependencies; "
+            "use by_layer or by_outer"
+        )
 
     def _pinned_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
         """`input_ids` in host memory, through a buffer whose address a graph can keep.
@@ -701,18 +865,25 @@ class Qwen4ExpModel:
         One row a step, so the buffer is sized per call and kept: a token id is 8 bytes and this
         runs once a forward, which is not worth a growing pool to avoid allocating.
         """
+        if input_ids.device.type == "cpu":
+            # Host ids need no transfer buffer or accelerator-specific pinned allocator.
+            return input_ids
         rows, width = int(input_ids.shape[0]), int(input_ids.shape[1])
         buffer = self.__dict__.get("_ids_pinned")
         if buffer is None or buffer.shape[0] < rows or buffer.shape[1] < width:
             # Allocated outside inference mode: a buffer made inside it is an inference tensor,
             # and an inference tensor refuses the in-place update the next call makes.
             with torch.inference_mode(False):
-                buffer = torch.empty(rows, width, dtype=torch.long, pin_memory=True)
+                buffer = torch.empty(rows, width, device="cpu", dtype=torch.long, pin_memory=True)
             self.__dict__["_ids_pinned"] = buffer
         # The rows a batch asks for, not a fixed single row: a decode at batch two used to write
         # a two-row tensor into a one-row buffer and fail on the broadcast.
         pinned = buffer[:rows, :width]
-        pinned.copy_(input_ids, non_blocking=True)
+        # CPU concatenation/hashing consumes the bytes immediately. A nonblocking
+        # D2H copy can leave the previous token in this pinned buffer even though
+        # the preceding decode step has completed. Graphs use ple_history_at and
+        # bypass this helper, so this eager-only readiness wait is not captured.
+        pinned.copy_(input_ids, non_blocking=False)
         return pinned
 
     def _forward_by_layer(
@@ -731,13 +902,38 @@ class Qwen4ExpModel:
                 hidden,
                 cos=cos,
                 sin=sin,
-                cache=cache.layers[idx],
+                cache=None if cache is None else cache.layers[idx],
+                ple_cache=None if cache is None else cache.ple_states.get(idx),
                 past_len=past_len,
                 token_history=token_history,
                 use_cache=cache is not None,
                 profiler=self.profiler,
             )
         return hidden
+
+    # -- MTP draft ---------------------------------------------------------
+
+    @property
+    def has_mtp(self) -> bool:
+        return self.mtp is not None
+
+    def draft_logits(
+        self,
+        streams: torch.Tensor,
+        token_ids: torch.Tensor,
+        *,
+        mtp_cache: "Qwen4ExpCache | None" = None,
+        past_len: int = 0,
+    ) -> torch.Tensor:
+        """The MTP head's logits for the token after `token_ids`.
+
+        `streams` is the backbone's pre-mixer state at those positions (`forward(...,
+        return_streams=True)`), `[b, seq, hc_count * hidden]`.  The head's own KV cache is passed
+        separately because its keys are the draft stream's, not the backbone's.
+        """
+        if self.mtp is None:
+            raise RuntimeError("draft_logits called on a model built without --mtp")
+        return row_invariant_linear(self.mtp.forward(streams, token_ids, mtp_cache, past_len), self.lm_head)
 
     def _forward_layers(
         self,
@@ -754,6 +950,11 @@ class Qwen4ExpModel:
         keeps its ``None`` placeholders: it is what indexes each layer's KV slot and its entry in the
         host expert cache, so a compacted list would silently renumber them.
         """
+        if _SCHEDULE == "by_phase":
+            raise RuntimeError(
+                "by_phase is unsupported because it violates layer dependencies; "
+                "use by_layer or by_outer"
+            )
         batch_size, seq_len = input_ids.shape
         total_len = past_len + seq_len
 
@@ -783,20 +984,17 @@ class Qwen4ExpModel:
                         pad = torch.full(
                             (batch_size, self.config.ngram_size - 1),
                             self.config.primary_eos_token_id,
-                            dtype=torch.long,
+                            dtype=torch.long, device="cpu",
                         )
                         token_history = torch.cat([pad, ids_cpu], dim=1)
 
-        # How the layers are driven. `by_layer` is the per-token loop every call has always run.
-        # `by_phase` runs the same blocks in the same order with the same inputs, but walks the
-        # layers inside each phase, so a host read only has to cross the stream once and a
-        # collective is not waited on before the next layer's compute can be queued. It is what a
-        # decode step of this size wants; prefill keeps the per-layer loop, whose host traffic it
-        # already covers with a chunk.
+        # Both supported schedules complete each layer before the next reads its stream.
+        # Prefill keeps the ordinary per-layer loop; decode may defer only the final injection.
         layers = [(idx, layer) for idx, layer in enumerate(self.layers) if layer is not None]
-        if cache is not None and seq_len == 1 and len(layers) > 1 and _SCHEDULE != "by_layer":
-            run = self._forward_phased if _SCHEDULE == "by_phase" else self._forward_outer_phased
-            hidden = run(hidden, layers, cache, cos, sin, past_len, token_history, prof_scope)
+        if cache is not None and seq_len == 1 and len(layers) > 1 and _SCHEDULE == "by_outer":
+            hidden = self._forward_outer_phased(
+                hidden, layers, cache, cos, sin, past_len, token_history, prof_scope
+            )
         else:
             hidden = self._forward_by_layer(hidden, layers, cache, cos, sin, past_len, token_history)
 

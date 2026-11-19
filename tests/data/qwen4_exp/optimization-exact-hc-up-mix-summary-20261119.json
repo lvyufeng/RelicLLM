@@ -1,0 +1,145 @@
+{
+  "schema": "qwen4-exact-hc-up-mix-summary-v1",
+  "decision": "keep the candidate opt-in; do not enable by default",
+  "reason": "operator is 21% faster and bit-identical, but its whole share of a decode round is 2.7%, so the ceiling is +0.6% TPS -- below this run's own arm-to-arm spread",
+  "identity": {
+    "kernel_sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3",
+    "candidate_so_sha256": "f2280057436d07464a132743d5b79322584b47d10cb6b1759aa95b6747aab8af",
+    "installed_ops": [
+      "qwen4_exp_hc_up_mix_exact"
+    ],
+    "replaced_ops": [],
+    "reference_sha256": "c16853f71d571cd76f310ff9bfe1e9121fb31e1f5f65cdce03f8ccfb98c621e0",
+    "probe_sha256": "98ee1c5b4de61899c6b8747352ef96542e3969dc1498c322203f2167ae9e7f94",
+    "layers_py_sha256": "7b140471ade07daae9b96ad21126ba6b9927e953c3693d37ba6d987cb47d7aa5"
+  },
+  "operator_exactness": {
+    "status": "bit-identical to the qualified qwen4_exp_hc_up_mix",
+    "rows_tested": [
+      1,
+      4,
+      512
+    ],
+    "thread_widths_tested": [
+      64,
+      128,
+      256,
+      512
+    ],
+    "checks": [
+      "raw int16 word equality",
+      "mutated weight tracked identically",
+      "CUDA-graph capture and replay over mutated inputs",
+      "refusals before launch"
+    ],
+    "cpu_tests_passed": 13,
+    "cpu_tests_skipped": 0
+  },
+  "operator_device_time_us": {
+    "qualified_rows4": 10.67520022392273,
+    "candidate_rows4": 8.407040238380432,
+    "ratio": 0.7875299818302767,
+    "reduction_pct": 21.247001816972332,
+    "scope": "graph-captured device time per launch, host dispatch excluded"
+  },
+  "native_composition": {
+    "scope": "native 261632 input + 512 output, budget 2048, BF16 dense/KV, original greedy ids",
+    "arms": [
+      {
+        "trial": 0,
+        "variant": "off",
+        "valid": true,
+        "decode_tps": 52.48347376140523,
+        "graph_rounds": 233.0,
+        "tail_graph_steps": 5.0,
+        "prefix_reused": false
+      },
+      {
+        "trial": 1,
+        "variant": "on",
+        "valid": true,
+        "decode_tps": 55.771490523894165,
+        "graph_rounds": 233.0,
+        "tail_graph_steps": 5.0,
+        "prefix_reused": true
+      },
+      {
+        "trial": 2,
+        "variant": "off",
+        "valid": true,
+        "decode_tps": 56.649301892442644,
+        "graph_rounds": 233.0,
+        "tail_graph_steps": 5.0,
+        "prefix_reused": true
+      },
+      {
+        "trial": 3,
+        "variant": "on",
+        "valid": true,
+        "decode_tps": 56.299271000763916,
+        "graph_rounds": 233.0,
+        "tail_graph_steps": 5.0,
+        "prefix_reused": true
+      },
+      {
+        "trial": 4,
+        "variant": "off",
+        "valid": true,
+        "decode_tps": 57.26576844384151,
+        "graph_rounds": 233.0,
+        "tail_graph_steps": 5.0,
+        "prefix_reused": true
+      },
+      {
+        "trial": 5,
+        "variant": "on",
+        "valid": true,
+        "decode_tps": 57.35843818872784,
+        "graph_rounds": 233.0,
+        "tail_graph_steps": 5.0,
+        "prefix_reused": true
+      }
+    ],
+    "pairs": [
+      {
+        "off_trial": 0,
+        "on_trial": 1,
+        "cold_pair": true,
+        "off_decode_tps": 52.48347376140523,
+        "on_decode_tps": 55.771490523894165,
+        "improvement_pct": 6.264861158841284
+      },
+      {
+        "off_trial": 2,
+        "on_trial": 3,
+        "cold_pair": false,
+        "off_decode_tps": 56.649301892442644,
+        "on_decode_tps": 56.299271000763916,
+        "improvement_pct": -0.6178909183087833
+      },
+      {
+        "off_trial": 4,
+        "on_trial": 5,
+        "cold_pair": false,
+        "off_decode_tps": 57.26576844384151,
+        "on_decode_tps": 57.35843818872784,
+        "improvement_pct": 0.16182397862556375
+      }
+    ],
+    "cold_pair_excluded": "the first arm performs the full prefill and starts from a cold device",
+    "warm_pair_mean_improvement_pct": -0.22803346984160977,
+    "off_arm_spread_pct": 9.112001054230978,
+    "rounds_and_acceptance_unchanged": true
+  },
+  "ceiling_arithmetic": {
+    "launches_per_round": 96,
+    "baseline_decode_tps": 57.26576844384151,
+    "decode_tokens_per_round": 2.1931330472103006,
+    "round_wall_ms": 38.297452506221546,
+    "kernel_total_ms_per_round": 1.0248192214965821,
+    "kernel_share_of_round_pct": 2.675946190755369,
+    "expected_gain_pct": 0.5685583357709953,
+    "expected_tps_if_gain_materialised": 57.59135774387228,
+    "gain_needed_for_100_tps_pct": 74.62439205380859
+  }
+}

@@ -1,0 +1,442 @@
+{
+  "kind": "multi_span_collective_layout_diagnostic",
+  "not_a_general_exactness_proof": true,
+  "not_a_throughput_measurement": true,
+  "records": [
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 1,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 16,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 32,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 64,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 128,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 8814,
+      "different_elements_captured_max_rank": 8814,
+      "max_abs_rank0": 64.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 160,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 256,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 20940,
+      "different_elements_captured_max_rank": 20940,
+      "max_abs_rank0": 64.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 320,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 512,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 47775,
+      "different_elements_captured_max_rank": 47775,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 640,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 44265,
+      "different_elements_captured_max_rank": 44265,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 1280,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 72590,
+      "different_elements_captured_max_rank": 72590,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 2560,
+      "rows": 5,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 102878,
+      "different_elements_captured_max_rank": 102878,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_summary",
+      "exact_block_widths": [
+        1,
+        16,
+        32,
+        64,
+        160,
+        320
+      ],
+      "not_a_general_exactness_proof": true,
+      "not_a_throughput_measurement": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 1,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 16,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 32,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 64,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 128,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 13213,
+      "different_elements_captured_max_rank": 13213,
+      "max_abs_rank0": 64.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 160,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 256,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 29284,
+      "different_elements_captured_max_rank": 29284,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 320,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 512,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 59284,
+      "different_elements_captured_max_rank": 59284,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 640,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 66403,
+      "different_elements_captured_max_rank": 66403,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 1280,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 106504,
+      "different_elements_captured_max_rank": 106504,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 2560,
+      "rows": 6,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 131140,
+      "different_elements_captured_max_rank": 131140,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_summary",
+      "exact_block_widths": [
+        1,
+        16,
+        32,
+        64,
+        160,
+        320
+      ],
+      "not_a_general_exactness_proof": true,
+      "not_a_throughput_measurement": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 1,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 16,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 32,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 64,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 128,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 17619,
+      "different_elements_captured_max_rank": 17619,
+      "max_abs_rank0": 64.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 160,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 256,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 41930,
+      "different_elements_captured_max_rank": 41930,
+      "max_abs_rank0": 64.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 320,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 0,
+      "different_elements_captured_max_rank": 0,
+      "max_abs_rank0": 0.0,
+      "exact_in_this_test": true
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 512,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 84587,
+      "different_elements_captured_max_rank": 84587,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 640,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 88524,
+      "different_elements_captured_max_rank": 88524,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 1280,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 145306,
+      "different_elements_captured_max_rank": 145306,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_diagnostic",
+      "block_width": 2560,
+      "rows": 8,
+      "hidden": 2560,
+      "trials": 32,
+      "different_elements_eager_max_rank": 173965,
+      "different_elements_captured_max_rank": 173965,
+      "max_abs_rank0": 128.0,
+      "exact_in_this_test": false
+    },
+    {
+      "kind": "bf16_collective_layout_summary",
+      "exact_block_widths": [
+        1,
+        16,
+        32,
+        64,
+        160,
+        320
+      ],
+      "not_a_general_exactness_proof": true,
+      "not_a_throughput_measurement": true
+    }
+  ]
+}

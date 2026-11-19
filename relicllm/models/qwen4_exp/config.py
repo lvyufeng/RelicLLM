@@ -101,9 +101,20 @@ class Qwen4ExpTextConfig:
     eos_token_id: list[int] = field(default_factory=lambda: [248044])
     pad_token_id: int | None = None
 
-    # MTP draft head (one extra layer); unused until spec decoding lands.
+    # MTP draft head (one extra layer). Parsed from the `mtp` block of the checkpoint's text config;
+    # nothing is built from it unless the runtime is asked for the head.
     mtp_num_hidden_layers: int = 1
     mtp_rope_theta: float = 1e7
+    #: The draft layer's attention flavour, in the checkpoint's own vocabulary ("full_attention"
+    #: means the QSA path). Independent of `layer_types`, which belongs to the main stack -- on this
+    #: checkpoint layer 0 of the main stack is a GatedDeltaNet layer and the MTP layer is not.
+    mtp_layer_types: list[str] = field(default_factory=lambda: ["qwen_sparse_attention"])
+    #: "hybrid" in the checkpoint: the head is one decoder layer, not a dense stack.
+    mtp_hybrid: bool = True
+    #: Which backbone layer's hidden state the head reads, or None for the last one. Kept because
+    #: the checkpoint states it explicitly and a different value would quietly change what the head
+    #: conditions on.
+    mtp_use_hidden_state_from_layer: int | None = None
 
     def __post_init__(self) -> None:
         if not self.layer_types:
@@ -198,6 +209,17 @@ class Qwen4ExpTextConfig:
         kwargs["mrope_interleaved"] = bool(rope.get("mrope_interleaved", True))
         if "rope_theta" in mtp:
             kwargs["mtp_rope_theta"] = float(mtp["rope_theta"])
+        if mtp.get("layer_types"):
+            # Same rename as the main stack: the checkpoint calls the QSA layers "full_attention".
+            kwargs["mtp_layer_types"] = [
+                "qwen_sparse_attention" if t == "full_attention" else t for t in mtp["layer_types"]
+            ]
+        if "num_hidden_layers" in mtp:
+            kwargs["mtp_num_hidden_layers"] = int(mtp["num_hidden_layers"])
+        if "hybrid" in mtp:
+            kwargs["mtp_hybrid"] = bool(mtp["hybrid"])
+        if "mtp_use_hidden_state_from_layer" in mtp:
+            kwargs["mtp_use_hidden_state_from_layer"] = mtp["mtp_use_hidden_state_from_layer"]
         return cls(**kwargs)
 
 
