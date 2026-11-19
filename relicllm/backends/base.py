@@ -855,7 +855,11 @@ class _StreamRun:
     def __init__(self, adapter: Any, request: GenerationRequest, name: str) -> None:
         self.adapter = adapter
         self.request = request
-        self.events: queue.Queue[Any] = queue.Queue(maxsize=_STREAM_QUEUE_DEPTH)
+        make_queue = getattr(adapter, "_stream_event_queue", None)
+        self.events: queue.Queue[Any] = (
+            make_queue(request.request_id, _STREAM_QUEUE_DEPTH)
+            if callable(make_queue) else queue.Queue(maxsize=_STREAM_QUEUE_DEPTH)
+        )
         #: What the loop produced, or the exception it raised; read once the thread has joined.
         self.outcome: dict[str, Any] = {}
         self.thread = threading.Thread(
@@ -884,13 +888,24 @@ class _StreamRun:
         the join cannot resolve, since nothing is draining it any more -- must not also hang a
         shutdown; a producer still running after the bound is one that is waiting for a reader.
         """
+        drained = False
         try:
             while True:
                 event = self.events.get()
                 if event is None:
+                    drained = True
                     break
                 yield event
         finally:
+            # Mark a vanished reader before joining: waiting first can fill the bounded queue and
+            # park the producer inside a callback, where it cannot reach its cancellation seam.
+            if not drained:
+                close_reader = getattr(self.events, "close_reader", None)
+                if callable(close_reader):
+                    close_reader()
+                cancel = getattr(self.adapter, "cancel", None)
+                if callable(cancel):
+                    cancel(self.request.request_id)
             self.thread.join(timeout=1.0)
         if "error" in self.outcome:
             raise self.outcome["error"]

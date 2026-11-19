@@ -35,6 +35,8 @@ rank 0, the seam ``ShardedWorkerMixin._step_sync`` writes once for this runtime 
 from __future__ import annotations
 
 import os
+import queue
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any
@@ -45,6 +47,9 @@ from relicllm.api import (
     BackendCapabilities,
     ConfigurationError,
     GenerationRequest,
+    RequestCancelledError,
+    TokenEvent,
+    UnsupportedFeatureError,
 )
 
 from relicllm.scheduler import KVCapacity
@@ -122,6 +127,66 @@ OPTIONS: tuple[BackendOption, ...] = (
 )
 
 
+#: The speculative methods this adapter can serve, and the only one it implements.
+#:
+#: ``mtp`` is the checkpoint's own multi-token-prediction head driven by the *captured* lookahead
+#: loop in ``models/qwen4_exp/runtime.py``: a K-row trunk verify inside one CUDA graph, a recorded
+#: head catch-up, and a recorded one-row tail at the native boundary. It is the only speculative
+#: decoder here, so another method is refused by name rather than silently decoding plainly.
+_SPECULATIVE_METHODS: tuple[str, ...] = ("mtp",)
+
+#: Draft depths that passed a complete 128-token greedy-parity run on the eight-4090 host.
+#:
+#: Depth is not a free knob on this checkpoint: a five-draft round changed the emitted token at
+#: index 67 (every rank agreed, so it is arithmetic rather than a rank disagreement) while identical
+#: tokens at 3 and 4 drafts held at 8K and at the full 262144 positions. A depth outside this set is
+#: refused for that reason, and widening it needs a new complete-output comparison first.
+_SPECULATIVE_DEPTHS: tuple[int, ...] = (3, 4)
+
+#: The environment switch that makes the K-row verify arithmetic reproduce decode's.
+#:
+#: ``models/qwen4_exp/runtime.py`` reads it to run dense, convolution, reduction and QSA work per row;
+#: with it off a verify round is a batched forward whose last bits differ from plain decode, so the
+#: captured path would not be the token-identical answer the plain loop gives. It is required rather
+#: than set here, because turning it on changes the arithmetic of every forward this process runs.
+_STRICT_VERIFY_ENV = "POCKETLLM_QWEN4_VERIFY_ROW_INVARIANT"
+
+
+def _native_positions(config: Any) -> int:
+    """The checkpoint's own position ceiling: prompt plus answer may not exceed it.
+
+    The released config nests the language tower under ``text_config``, and the same number is in
+    either place. Zero means the config did not say, which the speculative path refuses rather than
+    guessing a bound from ``--max-model-len`` -- those are different numbers here, and the arena is
+    sized from the checkpoint's.
+    """
+    for holder in (getattr(config, "text_config", None), config):
+        value = getattr(holder, "max_position_embeddings", None) if holder is not None else None
+        if value:
+            return int(value)
+    return 0
+
+
+def _decode_seconds(stats: Mapping[str, float]) -> float:
+    """The decode interval a caller waited through, for the loop's accounting.
+
+    A plain loop's ``decode_s`` already includes its own graph work. The captured lookahead loop
+    reports the steady interval separately from graph construction and from the resource cleanup it
+    defers until after the last token, and both are time the request held the turn -- so they are
+    charged here rather than dropped. Folding cleanup into the denominator is also what keeps a
+    reported rate from improving merely because work moved past the last token.
+    """
+    if "trunk_steps" not in stats:
+        return float(stats.get("decode_s", 0.0))
+    including_cleanup = stats.get("decode_s_including_cleanup")
+    if including_cleanup is not None:
+        return float(including_cleanup) + float(stats.get("graph_setup_s", 0.0))
+    wall = stats.get("decode_wall_s")
+    if wall is None:
+        wall = float(stats.get("decode_s", 0.0)) + float(stats.get("graph_setup_s", 0.0))
+    return float(wall) + float(stats.get("request_cleanup_s", 0.0) or 0.0)
+
+
 @dataclass(slots=True)
 class _Options:
     """The launcher's levers, resolved once at construction.
@@ -156,6 +221,56 @@ class _Options:
         )
 
 
+class _MTPEventQueue(queue.Queue):
+    """A missing SSE reader cannot strand rank 0 inside a blocking token callback."""
+    def __init__(self, adapter, request_id: str, maxsize: int):
+        super().__init__(maxsize=maxsize)
+        self.adapter, self.request_id = adapter, request_id
+        self._reader_closed = self._aborted = False
+
+    def close_reader(self) -> None:
+        self._reader_closed = self._aborted = True
+
+    def _offer_terminal(self, item) -> None:
+        while True:
+            try:
+                queue.Queue.put(self, item, block=False)
+                return
+            except queue.Full:
+                try:
+                    queue.Queue.get(self, block=False)
+                except queue.Empty:
+                    pass
+
+    def put(self, item, block=True, timeout=None):
+        cancelled = (self._reader_closed or self.adapter._mtp_closing
+                     or self.adapter._is_cancelled(self.request_id))
+        self._aborted |= cancelled
+        terminal = item is None or (isinstance(item, TokenEvent) and item.finish_reason == "cancelled")
+        if self._aborted and terminal:
+            self._offer_terminal(item)
+            return
+        if cancelled:
+            raise RequestCancelledError("the MTP event stream has no active reader")
+        if not block:
+            return queue.Queue.put(self, item, block=False)
+        deadline = None if timeout is None else time.monotonic() + timeout
+        while True:
+            wait = 0.05 if deadline is None else max(0.0, min(0.05, deadline - time.monotonic()))
+            try:
+                return queue.Queue.put(self, item, block=True, timeout=wait)
+            except queue.Full:
+                if (self._reader_closed or self.adapter._mtp_closing
+                        or self.adapter._is_cancelled(self.request_id)):
+                    self._aborted = True
+                    if terminal:
+                        self._offer_terminal(item)
+                        return
+                    raise RequestCancelledError("the MTP event stream was cancelled while backpressured")
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise
+
+
 class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
     """One Qwen3.8-Flash-Next checkpoint, one process a rank, one request at a time."""
 
@@ -174,6 +289,8 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         super().__init__()
         self.args = args
         self._options = _Options.from_args(args)
+        #: Drafts a round of the captured MTP loop proposes; zero means plain greedy decode.
+        self._speculative_tokens = self._resolve_speculative(args)
         self._checkpoint_dir = str(getattr(args, "model", "") or "")
         self._tokenizer_path = str(getattr(args, "tokenizer_path", "") or "")
         self._max_seq_len = int(getattr(args, "max_model_len", 0) or 0) or DEFAULT_MAX_SEQ_LEN
@@ -186,6 +303,10 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         self._loader = loader
         self._tokenizer = tokenizer
         self._model: Any = None
+        self._graph_session: Any = None
+        self._mtp_active = 0
+        self._mtp_closing = False
+        self._mtp_teardown_started = False
         self._config: Any = None
         self._ctx: Any = None
         self._device: Any = None
@@ -197,6 +318,52 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         #: re-raised from the request that owns it. See :meth:`_rank0_callback` for why it cannot
         #: be raised where it was caught.
         self._callback_failure: list[BaseException] = []
+
+    # ------------------------------------------------------------------ speculation
+
+    @staticmethod
+    def _resolve_speculative(args: Any) -> int:
+        """The draft depth this launch asks for, or zero for plain greedy decode.
+
+        The launch opts in with ``--speculative-method mtp`` plus ``--speculative-tokens``, which are
+        the two global arguments every runtime receives; nothing is inferred from the environment.
+        Three failures are answered here, before a checkpoint is read, because each of them is a
+        launch this adapter cannot serve rather than a request it can refuse later: another method
+        (nothing else is implemented), a depth outside the ones that passed complete-output parity,
+        and a depth named without a method (which would otherwise be silently ignored).
+        """
+        method = getattr(args, "speculative_method", None)
+        tokens = int(getattr(args, "speculative_tokens", 1) or 1)
+        if not method:
+            if tokens != 1:
+                raise ConfigurationError(
+                    f"speculative_tokens={tokens} needs speculative_method='mtp'; this backend "
+                    "decodes plainly when no method is named"
+                )
+            return 0
+        if str(method) not in _SPECULATIVE_METHODS:
+            raise UnsupportedFeatureError(
+                "backend='qwen4_exp' has only the captured MTP speculative decoder "
+                f"({', '.join(_SPECULATIVE_METHODS)}); speculative_method={method!r} is not supported"
+            )
+        if tokens not in _SPECULATIVE_DEPTHS:
+            raise UnsupportedFeatureError(
+                f"backend='qwen4_exp' serves MTP at {_SPECULATIVE_DEPTHS} drafts a round only: "
+                f"speculative_tokens={tokens} was measured to change the emitted tokens on this "
+                "checkpoint, and a depth this adapter cannot prove token-identical is refused "
+                "rather than run"
+            )
+        return tokens
+
+    @property
+    def _mtp_enabled(self) -> bool:
+        """Whether this launch serves the captured MTP loop instead of plain greedy decode."""
+        return self._speculative_tokens > 0
+
+    @property
+    def _native_limit(self) -> int:
+        """The loaded checkpoint's position ceiling, or zero before a model is loaded."""
+        return _native_positions(self._config) if self._config is not None else 0
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -251,11 +418,15 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             if self._model is not None:
                 return
             self._init_distributed()
+            # Before the checkpoint is read: a launch that cannot run the captured loop should fail
+            # in seconds rather than after the minutes a shard load takes.
+            self._check_speculative_placement()
             if self._loader is not None:
                 # An injected loader is a test's or an embedding application's model, and it comes
                 # with its own tokenizer: nothing here reaches for the checkpoint, so a run with one
                 # never needs a checkpoint directory on disk.
                 self._model, self._config = self._loader(self.args, self._options)
+                self._check_speculative_model()
                 self._build_details()
                 self._ready = True
                 return
@@ -282,12 +453,110 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
             host_expert_memory=options.host_expert_memory,
             pin_experts=options.pin_experts,
             expert_resident=options.expert_resident,
+            expert_fused_fp8=os.environ.get("POCKETLLM_QWEN4_NVFP4_EXPERTS", "0") == "1",
             expert_reserve_bytes=options.expert_reserve,
+            # The speculative MTP loop needs the head as part of this build: its first draft is
+            # produced from the prefill's last streams, and a head added later would need a second
+            # pass over the checkpoint to acquire the same weights.
+            mtp=self._mtp_enabled,
         )
+        self._check_speculative_model()
         self._build_details()
         if self._tokenizer is None:
             self._tokenizer = self._open_tokenizer()
         self._publish_ready()
+
+    def _stream_event_queue(self, request_id: str, depth: int):
+        return (_MTPEventQueue(self, request_id, depth) if self._mtp_enabled
+                else queue.Queue(maxsize=depth))
+
+    def health(self):
+        status = super().health()
+        return replace(status, status="stopped", ready=False) if self._mtp_closing else status
+
+    def close(self) -> None:
+        """Quiesce active MTP first; never free a recording or send shutdown during its replay."""
+        with self._state_lock:
+            self._mtp_closing = True
+            self._cancelled |= self._active_requests
+            active = self._mtp_active
+        if self._graph_session is not None:
+            self._graph_session.close()  # Refuses checkout; an active lease releases itself later.
+        if not active:
+            self._close_quiescent()
+
+    def _close_quiescent(self) -> None:
+        with self._state_lock:
+            if self._mtp_teardown_started:
+                return
+            self._mtp_teardown_started = True
+        try:
+            if self._graph_session is not None:
+                self._graph_session.close()
+                self._graph_session = None
+        finally:
+            super().close()
+
+    def _check_speculative_placement(self) -> None:
+        """Refuse a launch whose shape the captured MTP loop cannot run in.
+
+        Four requirements, each of them structural rather than tunable. The recorded verify is a CUDA
+        graph, so it needs a card. It is a *tensor-parallel* recording -- one row a rank plus the
+        collectives that make the row's answer agree -- so a pipeline stage has nothing to record.
+        The loop owns the single mutable cache, so a batch width above one has no second sequence to
+        speculate for. And the K-row verify only reproduces decode's arithmetic when the strict
+        row-invariant switches are on, which this process cannot decide for a launch that may be
+        serving other runtimes: an operator sets them on the command line.
+        """
+        if not self._mtp_enabled:
+            return
+        ctx = self._ctx
+        if getattr(self._device, "type", "") != "cuda":
+            raise UnsupportedFeatureError(
+                "the captured MTP loop records CUDA graphs; backend='qwen4_exp' needs "
+                f"device='cuda' for speculative_method='mtp' and resolved {self._device}"
+            )
+        pipeline = int(getattr(ctx, "pp_size", 1) or 1)
+        if pipeline != 1 or int(getattr(ctx, "tp_world_size", 1) or 1) != int(self._world):
+            raise UnsupportedFeatureError(
+                "speculative_method='mtp' is a pure tensor-parallel path: its verify graph holds "
+                f"this rank's row of one round, and this launch resolved {pipeline} pipeline "
+                f"stage(s) over a world of {self._world}"
+            )
+        batch = int(getattr(self.args, "max_batch_size", 1) or 1)
+        if batch != 1:
+            raise UnsupportedFeatureError(
+                "the captured MTP loop owns the process's one mutable cache; "
+                f"max_batch_size={batch} cannot be served with speculative_method='mtp'"
+            )
+        required = (_STRICT_VERIFY_ENV, "POCKETLLM_QWEN4_INDEXER_ROW_INVARIANT")
+        missing = [flag for flag in required if os.environ.get(flag, "0") != "1"]
+        if missing:
+            raise ConfigurationError(
+                "speculative_method='mtp' requires the qualified decode-shaped verifier and "
+                "FP32 indexer-score geometry; set " + ", ".join(f"{flag}=1" for flag in missing)
+            )
+
+    def _check_speculative_model(self) -> None:
+        """Refuse a loaded model that cannot seed the recorded loop.
+
+        The head is what produces a round's drafts: without it there is nothing to verify, and the
+        runtime's own loader only builds one when asked. The position ceiling is what the arena is
+        clamped to, so a checkpoint that does not state one leaves the loop unable to bound a request
+        -- and a wrong guess there would be a failed request rather than a slow one.
+        """
+        if not self._mtp_enabled:
+            return
+        if not getattr(self._model, "has_mtp", False):
+            raise ConfigurationError(
+                "speculative_method='mtp' needs the checkpoint's MTP head, which this model was "
+                "built without; the head is loaded with the tree and cannot be added per request"
+            )
+        if self._native_limit <= 0:
+            raise ConfigurationError(
+                "speculative_method='mtp' sizes its arena from the checkpoint's "
+                "max_position_embeddings, which this config does not state"
+            )
 
     def _build_details(self) -> None:
         text = getattr(self._config, "text_config", None)
@@ -316,6 +585,14 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
                 f"world {self._world}, a per-layer all-reduce" if self._world > 1 else "one rank"
             ),
             "cancellation": "per-step broadcast; not inside a prefill chunk",
+            "speculative": (
+                f"off; plain greedy decode" if not self._mtp_enabled
+                else (
+                    f"captured MTP lookahead, {self._speculative_tokens} drafts a round, greedy and "
+                    f"token-identical to plain decode; experimental, needs "
+                    f"{_STRICT_VERIFY_ENV}=1"
+                )
+            ),
         }
 
     # ------------------------------------------------------------------ contract
@@ -474,12 +751,56 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
 
     # -------------------------------------------------------------------- requests
 
+    def _budget(self, prompt_ids: Sequence[int], request: GenerationRequest) -> int:
+        """How many tokens this request may generate; the checkpoint's ceiling on the MTP path.
+
+        A plain request keeps the base arithmetic, whose ceiling is ``--max-model-len``. The captured
+        loop does not size anything from that flag: its arena is the checkpoint's own position
+        ceiling, clamped, and its verify round cannot truncate itself -- so a request whose prompt
+        plus budget crosses ``max_position_embeddings`` is refused here, before any rank is dispatched
+        into the collective, rather than failing inside a graph with the group already in it.
+        """
+        if not self._mtp_enabled:
+            return super()._budget(prompt_ids, request)
+        self._ensure_loaded()
+        native = self._native_limit
+        prompt = len(prompt_ids)
+        total = prompt + int(request.sampling_params.token_budget(native - prompt))
+        if prompt >= native or total > native:
+            raise ConfigurationError(
+                f"the captured MTP path decodes inside the checkpoint's {native} native positions "
+                f"and this request asks for {prompt} prompt tokens plus "
+                f"{total - prompt} generated ones; shorten the prompt or the budget"
+            )
+        return int(request.sampling_params.token_budget(native - prompt))
+
     def _checkpoint_eos_token_id(self) -> Any:
         """Qwen4-Exp's end-of-turn id lives on the language tower under its text config."""
         text = getattr(self._config, "text_config", None)
         return getattr(text, "eos_token_id", None) if text is not None else None
 
     def _loop(
+        self, prompt_ids: Sequence[int], budget: int, request: GenerationRequest, *,
+        on_token: Callable[[int], None] | None, stop: Callable[[], bool] | None = None,
+    ) -> Any:
+        if not self._mtp_enabled:
+            return self._loop_active(prompt_ids, budget, request, on_token=on_token, stop=stop)
+        # Bracket the broadcast as well as generation: close cannot tear down the group in the
+        # short gap between dispatching a request and entering its captured MTP owner.
+        with self._state_lock:
+            if self._mtp_closing:
+                raise RuntimeError("backend is closing")
+            self._mtp_active += 1
+        try:
+            return self._loop_active(prompt_ids, budget, request, on_token=on_token, stop=stop)
+        finally:
+            with self._state_lock:
+                self._mtp_active -= 1
+                close_after_request = self._mtp_closing and self._mtp_active == 0
+            if close_after_request:
+                self._close_quiescent()
+
+    def _loop_active(
         self,
         prompt_ids: Sequence[int],
         budget: int,
@@ -504,30 +825,113 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         # The prompt and the budget are what the workers reproduce, so rank 0 broadcasts them before
         # it enters the collective the workers must be inside.
         self._dispatch(request, prompt_ids, budget)
-        # `local_eos` is the loop's own end-of-sequence finding, handed back to this rank's
-        # predicate so it rides the broadcast `_step_sync` already performs instead of ending the
-        # loop on one rank. See `generate`'s `local_eos` paragraph: acting on it locally is what
-        # produced the 600-second NCCL broadcast timeout on both the V100 and the 4090 boxes.
-        local_eos = [False]
-        tokens, stats = generate(
-            self._model,
-            self._ctx,
-            torch.tensor([list(prompt_ids)], dtype=torch.long),
-            max_new_tokens=budget,
-            chunk_size=self._options.prefill_chunk,
-            eos_token_ids=tuple(sorted(self._eos_tokens())),
-            on_token=self._rank0_callback(on_token, request.request_id),
-            on_step=self._step_sync(
+        if self._mtp_enabled:
+            # One selector for both sides of the process group: the worker runs this same driver in
+            # `_run_payload`, off the same launch arguments, so both ranks enter the same recording.
+            tokens, stats = self._run_mtp(
+                prompt_ids,
+                budget,
                 request.request_id,
-                None if stop is None else (lambda: stop() or local_eos[0]),
-            ),
-            local_eos=local_eos,
-        )
+                on_token=self._rank0_callback(on_token, request.request_id),
+                stop=stop,
+            )
+        else:
+            # `local_eos` is the loop's own end-of-sequence finding, handed back to this rank's
+            # predicate so it rides the broadcast `_step_sync` already performs instead of ending the
+            # loop on one rank. See `generate`'s `local_eos` paragraph: acting on it locally is what
+            # produced the 600-second NCCL broadcast timeout on both the V100 and the 4090 boxes.
+            local_eos = [False]
+            tokens, stats = generate(
+                self._model,
+                self._ctx,
+                torch.tensor([list(prompt_ids)], dtype=torch.long),
+                max_new_tokens=budget,
+                chunk_size=self._options.prefill_chunk,
+                eos_token_ids=tuple(sorted(self._eos_tokens())),
+                on_token=self._rank0_callback(on_token, request.request_id),
+                on_step=self._step_sync(
+                    request.request_id,
+                    None if stop is None else (lambda: stop() or local_eos[0]),
+                ),
+                local_eos=local_eos,
+            )
         # The callback's exception has to leave here rather than from inside the loop: by the time
         # it is recorded the ranks have unwound together, and this is the frame that owns the
         # request. Raising it from the callback is the hang `_rank0_callback` documents.
         self._raise_callback_failure()
         return _Generation.from_stats(tokens, stats)
+
+    def _run_mtp(
+        self, prompt_ids: Sequence[int], budget: int, request_id: str, *,
+        on_token: Callable[[int], None] | None, stop: Callable[[], bool] | None,
+    ) -> tuple[list[int], dict[str, float]]:
+        with self._state_lock:
+            if self._mtp_closing:
+                raise RuntimeError("backend is closing")
+            self._mtp_active += 1
+        try:
+            return self._run_mtp_active(prompt_ids, budget, request_id,
+                                        on_token=on_token, stop=stop)
+        finally:
+            with self._state_lock:
+                self._mtp_active -= 1
+                close_after_request = self._mtp_closing and self._mtp_active == 0
+            if close_after_request:
+                self._close_quiescent()
+
+    def _run_mtp_active(
+        self,
+        prompt_ids: Sequence[int],
+        budget: int,
+        request_id: str,
+        *,
+        on_token: Callable[[int], None] | None,
+        stop: Callable[[], bool] | None,
+    ) -> tuple[list[int], dict[str, float]]:
+        """One request through the captured lookahead loop, run identically on every rank.
+
+        Called by rank 0 from :meth:`_loop` and by every worker from :meth:`_run_payload`, which is
+        what makes the mode one decision rather than two: the rank that answers and the ranks that
+        must be inside its collectives enter the same recording with the same prompt and budget.
+
+        The predicate handed to ``on_step`` is never ``None``. The loop's end-of-sequence exit is a
+        *flag* on this rank, and a rank that honoured it alone would walk out of a step its peers are
+        still inside -- the 600-second broadcast timeout ``generate``'s ``local_eos`` paragraph
+        records. Folding the flag into the broadcast predicate is what turns it into an exit every
+        rank takes together, and it is why the MTP path folds it in even when there is no stream
+        whose stop string it also has to carry.
+        """
+        from relicllm.models.qwen4_exp.runtime import generate_mtp_draft_lookahead
+
+        local_eos = [False]
+        session = None
+        request_width = min(self._native_limit, len(prompt_ids) + budget + 2 * self._speculative_tokens + 4)
+        has_verify_room = len(prompt_ids) + 2 * (self._speculative_tokens + 1) <= request_width
+        if (budget > 1 and has_verify_room
+                and os.environ.get("POCKETLLM_QWEN4_MTP_SESSION", "0") == "1"):
+            from relicllm.models.qwen4_exp.graph_session import GraphSessionPool
+            if self._graph_session is None:
+                self._graph_session = GraphSessionPool(model=self._model, capacity=1)
+            session = self._graph_session
+
+        def halt() -> bool:
+            # Only rank 0 evaluates `stop`; `_step_sync` broadcasts the answer to the others.
+            return self._mtp_closing or local_eos[0] or (stop() if stop is not None else False)
+
+        return generate_mtp_draft_lookahead(
+            self._model,
+            self._ctx,
+            torch.tensor([list(prompt_ids)], dtype=torch.long),
+            max_new_tokens=int(budget),
+            chunk_size=self._options.prefill_chunk,
+            eos_token_ids=tuple(sorted(self._eos_tokens())),
+            on_token=on_token,
+            draft_tokens=self._speculative_tokens,
+            verify_graph=True,
+            on_step=self._step_sync(request_id, halt),
+            local_eos=local_eos,
+            graph_session=session,
+        )
 
     def _rank0_callback(
         self, on_token: Callable[[int], None] | None, request_id: str
@@ -588,6 +992,18 @@ class Qwen4ExpBackend(ShardedWorkerMixin, RuntimeAdapter):
         from relicllm.models.qwen4_exp.runtime import generate
 
         prompt_ids = [int(token) for token in payload["prompt_ids"]]
+        if self._mtp_enabled:
+            # The same driver rank 0 entered, off the same launch arguments: this rank's answer is
+            # discarded, but its rows have to be in the verify graph's grid for the collectives to
+            # match. No token callback and no stream stop -- neither exists on a worker.
+            self._run_mtp(
+                prompt_ids,
+                int(payload["max_new_tokens"]),
+                str(payload["request_id"]),
+                on_token=None,
+                stop=None,
+            )
+            return
         # The worker carries the flag too, so both sides of the broadcast are asking the same
         # question on every step. It decides nothing here -- this rank's answer is discarded -- it
         # only has to reach the collective in step with rank 0.
@@ -629,7 +1045,9 @@ class _Generation:
             tokens=[int(token) for token in tokens],
             stopped=str(stats.get("stopped", "length")),
             prefill_seconds=float(stats.get("prefill_s", 0.0)),
-            decode_seconds=float(stats.get("decode_s", 0.0)),
+            # The captured lookahead loop reports its setup and its deferred cleanup separately from
+            # the steady interval; they are time this request held the turn and are charged here.
+            decode_seconds=_decode_seconds(stats),
             ttft_seconds=float(stats.get("ttft_s", 0.0)),
         )
 

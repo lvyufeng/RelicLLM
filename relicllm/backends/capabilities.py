@@ -591,11 +591,21 @@ RUNTIMES: dict[str, RuntimeCapabilities] = {
         # False here so a client reads "a repeated prefix is *not* resumed", which is the honest
         # answer and not a silent default.
         reads_prefix_cache=False,
+        # The captured MTP lookahead loop, which the adapter opts into with
+        # `--speculative-method mtp --speculative-tokens 3|4`. It is the runtime's own head and its
+        # own recorded verify, so it is the only method declared -- and only at the two depths that
+        # passed a complete-output comparison against plain greedy decode. A launch that asks for
+        # another method, or for a depth outside that pair, is refused rather than decoded plainly.
+        supports_speculative_decoding=("mtp",),
         identifies=_identify_qwen4exp,
         # Static prose only; the adapter adds the run's own numbers.
         details={
             "execution": "relicllm/models/qwen4_exp PyTorch runtime, GatedDeltaNet + QSA",
             "scheduler": "one mutable KV state, serialized at the backend boundary",
+            "speculative": (
+                "MTP captured lookahead when launched with --speculative-method mtp and "
+                "--speculative-tokens 3 or 4; greedy only, experimental"
+            ),
         },
     ),
 }
