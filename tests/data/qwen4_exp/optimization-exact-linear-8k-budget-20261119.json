@@ -1,0 +1,55 @@
+{
+  "schema": "qwen4-linear-ab8k-disjoint-budget-v1",
+  "off_trial": 2,
+  "on_trial": 3,
+  "off": {
+    "decode_s": 1.6601148820482194,
+    "verify_s": 1.4184284242801368,
+    "device_s": 1.3400059049017727,
+    "stage_s_inside_verify": 0.07398853823542595,
+    "head_s": 0.20435154670849442,
+    "rewind_s": 0.011627941858023405,
+    "other_s": 0.02570696920156479,
+    "decode_tps": 76.50072978281462,
+    "rounds": 46.0,
+    "accepted_prefix_histogram": {
+      "3": [
+        8,
+        9,
+        15,
+        14
+      ]
+    }
+  },
+  "on": {
+    "decode_s": 1.5937330820597708,
+    "verify_s": 1.388807122129947,
+    "device_s": 1.310195082332939,
+    "stage_s_inside_verify": 0.0742650618776679,
+    "head_s": 0.16754244081676006,
+    "rewind_s": 0.012205840554088354,
+    "other_s": 0.025177678558975458,
+    "decode_tps": 79.6871204027859,
+    "rounds": 46.0,
+    "accepted_prefix_histogram": {
+      "3": [
+        8,
+        9,
+        15,
+        14
+      ]
+    }
+  },
+  "savings_s": {
+    "decode_s": 0.06638179998844862,
+    "verify_s": 0.029621302150189877,
+    "device_s": 0.029810822568833828,
+    "stage_s_inside_verify": -0.0002765236422419548,
+    "head_s": 0.03680910589173436,
+    "rewind_s": -0.000577898696064949,
+    "other_s": 0.0005292906425893307
+  },
+  "tps_ratio": 1.0416517676238832,
+  "scope": "untraced final 8K pair; setup/prefill excluded, stage inside verify not added twice",
+  "staging_mode": "two-dimensional M=1 (the immutable launch script exported LINEAR_OUT_2D=1)"
+}

@@ -1,0 +1,220 @@
+{
+ "round.draft": {
+  "replays": 3,
+  "span_ms": 10.704,
+  "busy_ms": 9.367,
+  "nccl_ms": 6.888,
+  "kernels_per_replay": 786.0,
+  "top": [
+   [
+    "ncclDevKernel_AllGather_RING_LL",
+    5.988
+   ],
+   [
+    "std::enable_if",
+    0.949
+   ],
+   [
+    "ncclDevKernel_AllReduce_Sum_bf16_RING_LL",
+    0.9
+   ],
+   [
+    "void at::native::vectorized_elementwise_kernel",
+    0.216
+   ],
+   [
+    "void",
+    0.204
+   ],
+   [
+    "ampere_sgemm_32x128_tn",
+    0.197
+   ],
+   [
+    "void cutlass::Kernel2",
+    0.164
+   ],
+   [
+    "",
+    0.159
+   ],
+   [
+    "void at::native::elementwise_kernel",
+    0.116
+   ],
+   [
+    "void at::native::",
+    0.087
+   ],
+   [
+    "void at::native::reduce_kernel",
+    0.051
+   ],
+   [
+    "void cublasLt::splitKreduce_kernel",
+    0.046
+   ],
+   [
+    "void at::native::unrolled_elementwise_kernel",
+    0.045
+   ],
+   [
+    "void at::native::radixSortKVInPlace",
+    0.034
+   ],
+   [
+    "void at::native::mbtopk::computeBlockDigitCounts",
+    0.021
+   ],
+   [
+    "at::native::mbtopk::computeDigitCumSum",
+    0.021
+   ],
+   [
+    "void at::native::mbtopk::computeBlockwiseWithinKCounts",
+    0.021
+   ],
+   [
+    "void dot_kernel",
+    0.019
+   ],
+   [
+    "void at::native::index_elementwise_kernel",
+    0.017
+   ],
+   [
+    "memcpy32_post",
+    0.017
+   ],
+   [
+    "void at::native::sbtopk::gatherTopK",
+    0.016
+   ],
+   [
+    "void reduce_1Block_kernel",
+    0.014
+   ],
+   [
+    "void at_cuda_detail::cub::detail::scan_by_key::DeviceScanByKeyKernel",
+    0.012
+   ],
+   [
+    "void at::native::mbtopk::gatherTopK",
+    0.01
+   ],
+   [
+    "void at::native::bitonicSortKVInPlace",
+    0.009
+   ]
+  ]
+ },
+ "round.verify": {
+  "replays": 3,
+  "span_ms": 86.105,
+  "busy_ms": 29.947,
+  "nccl_ms": 5.327,
+  "kernels_per_replay": 9978.0,
+  "top": [
+   [
+    "std::enable_if",
+    7.173
+   ],
+   [
+    "ncclDevKernel_AllReduce_Sum_bf16_RING_LL",
+    4.86
+   ],
+   [
+    "",
+    3.038
+   ],
+   [
+    "void cutlass::Kernel2",
+    2.264
+   ],
+   [
+    "void at::native::vectorized_elementwise_kernel",
+    1.801
+   ],
+   [
+    "void at::native::elementwise_kernel",
+    1.595
+   ],
+   [
+    "void",
+    1.459
+   ],
+   [
+    "void at::native::",
+    1.39
+   ],
+   [
+    "ampere_sgemm_32x128_tn",
+    1.217
+   ],
+   [
+    "void cublasLt::splitKreduce_kernel",
+    1.207
+   ],
+   [
+    "void at::native::unrolled_elementwise_kernel",
+    0.733
+   ],
+   [
+    "void dot_kernel",
+    0.558
+   ],
+   [
+    "ncclDevKernel_AllGather_RING_LL",
+    0.466
+   ],
+   [
+    "void reduce_1Block_kernel",
+    0.439
+   ],
+   [
+    "void at::native::sbtopk::gatherTopK",
+    0.34
+   ],
+   [
+    "void at::native::reduce_kernel",
+    0.322
+   ],
+   [
+    "memcpy32_post",
+    0.209
+   ],
+   [
+    "void at::native::bitonicSortKVInPlace",
+    0.154
+   ],
+   [
+    "void at::native::radixSortKVInPlace",
+    0.135
+   ],
+   [
+    "void at::native::mbtopk::computeBlockDigitCounts",
+    0.093
+   ],
+   [
+    "void at::native::mbtopk::computeBlockwiseWithinKCounts",
+    0.089
+   ],
+   [
+    "at::native::mbtopk::computeDigitCumSum",
+    0.085
+   ],
+   [
+    "void at::native::index_elementwise_kernel",
+    0.08
+   ],
+   [
+    "void at_cuda_detail::cub::detail::scan_by_key::DeviceScanByKeyKernel",
+    0.048
+   ],
+   [
+    "void at::native::mbtopk::gatherTopK",
+    0.043
+   ]
+  ]
+ }
+}

@@ -1,0 +1,208 @@
+........................................................................ [  3%]
+...........s...................................FF....................... [  7%]
+........................................................................ [ 11%]
+..s....ss..sssss...........................sssssssss.................... [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 26%]
+........................................................................ [ 30%]
+........................................................................ [ 34%]
+........................................................................ [ 38%]
+........................................................................ [ 41%]
+........................................................................ [ 45%]
+......................................ssssssssssssssssssssssssssssssssss [ 49%]
+sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss......... [ 53%]
+........................................................................ [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+...................................ssssssss............................. [ 72%]
+..........s............................................................. [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 83%]
+.......................................................................s [ 87%]
+ssssss.................................................................. [ 91%]
+........................................................................ [ 95%]
+..............................................sssssssssssssssF.......... [ 98%]
+.....................                                                    [100%]
+=================================== FAILURES ===================================
+____________ test_auto_selects_qwen4_exp_for_the_released_root_type ____________
+
+tmp_path = PosixPath('/private/var/folders/t6/8j8sr691429bshpbm691lwd40000gp/T/pytest-of-lvyufeng/pytest-193/test_auto_selects_qwen4_exp_fo0')
+
+    def test_auto_selects_qwen4_exp_for_the_released_root_type(tmp_path):
+        _write_config(
+            tmp_path,
+            {
+                "model_type": "qwen4_exp",
+                "architectures": ["Qwen4ExpForConditionalGeneration"],
+            },
+        )
+>       assert factory.select_backend(EngineArgs(model=str(tmp_path), backend="auto")) == "qwen4_exp"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_qwen4_exp_backend.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+relicllm/backends/factory.py:160: in select_backend
+    _refuse_a_platform_the_runtime_lacks(name, args, accelerator=accelerator)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'qwen4_exp'
+args = EngineArgs(model='/private/var/folders/t6/8j8sr691429bshpbm691lwd40000gp/T/pytest-of-lvyufeng/pytest-193/test_auto_sel...ive_method=None, speculative_tokens=1, max_batch_size=1, enable_batching=None, backend_options={}, resolved_options={})
+
+    def _refuse_a_platform_the_runtime_lacks(
+        name: str, args: EngineArgs, *, accelerator: Accelerator | None = None
+    ) -> Accelerator:
+        """Resolve ``--device`` and refuse a platform the runtime does not declare.
+    
+        Two things were true of ``--device`` before this and both were wrong in the same direction. The
+        ``auto`` default was *stored*, never read -- nothing in the tree resolved it, so the flag's own
+        help text ("``auto`` asks the build") described behaviour that did not exist. And
+        ``RuntimeCapabilities.devices`` was a declaration no one consulted, so ``--backend mimo
+        --device cpu`` was accepted on a runtime whose own declaration says ``("cuda",)``.
+    
+        Both are answered here because this is the only place that has both halves: the requested
+        platform lives on ``args`` and the declared set lives on the runtime's capabilities. The
+        resolved :class:`Accelerator` is returned rather than probed twice, so a caller that needs the
+        device type or the collective asks for the same answer this check was made against.
+    
+        An empty ``devices`` is read as *unconstrained* rather than as *nothing*: the field defaults to
+        ``()``, and a runtime that has not stated a set has not excluded one.
+        """
+        accelerator = _probe_accelerator() if accelerator is None else accelerator
+        platform = resolve_platform(args.device, accelerator)
+        declared = runtime_capabilities(name).devices
+        if not declared or platform in declared:
+            return accelerator
+>       raise UnsupportedFeatureError(
+            f"backend={name!r} declares devices={declared!r}, so it cannot run on {platform!r}"
+            + (
+                f", which is what --device auto resolved to on this host"
+                if args.device == "auto"
+                else ""
+            )
+            + f". Ask for one of {', '.join(declared)}, or use a runtime that serves {platform!r}"
+        )
+E       relicllm.api.errors.UnsupportedFeatureError: backend='qwen4_exp' declares devices=('cuda',), so it cannot run on 'cpu', which is what --device auto resolved to on this host. Ask for one of cuda, or use a runtime that serves 'cpu'
+
+relicllm/backends/factory.py:126: UnsupportedFeatureError
+___________ test_auto_selects_qwen4_exp_from_the_nested_text_config ____________
+
+tmp_path = PosixPath('/private/var/folders/t6/8j8sr691429bshpbm691lwd40000gp/T/pytest-of-lvyufeng/pytest-193/test_auto_selects_qwen4_exp_fr0')
+
+    def test_auto_selects_qwen4_exp_from_the_nested_text_config(tmp_path):
+        # The release is a conditional-generation wrapper: the root model_type is the wrapper's and the
+        # language stack's repeats inside text_config. Either names this runtime, and the nested walk in
+        # `_names_model` is what reaches the inner one.
+        _write_config(
+            tmp_path,
+            {
+                "model_type": "qwen4_exp",
+                "text_config": {"model_type": "qwen4_exp_text"},
+                "vision_config": {"model_type": "qwen4_exp_vision"},
+            },
+        )
+>       assert factory.select_backend(EngineArgs(model=str(tmp_path), backend="auto")) == "qwen4_exp"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_qwen4_exp_backend.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+relicllm/backends/factory.py:160: in select_backend
+    _refuse_a_platform_the_runtime_lacks(name, args, accelerator=accelerator)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'qwen4_exp'
+args = EngineArgs(model='/private/var/folders/t6/8j8sr691429bshpbm691lwd40000gp/T/pytest-of-lvyufeng/pytest-193/test_auto_sel...ive_method=None, speculative_tokens=1, max_batch_size=1, enable_batching=None, backend_options={}, resolved_options={})
+
+    def _refuse_a_platform_the_runtime_lacks(
+        name: str, args: EngineArgs, *, accelerator: Accelerator | None = None
+    ) -> Accelerator:
+        """Resolve ``--device`` and refuse a platform the runtime does not declare.
+    
+        Two things were true of ``--device`` before this and both were wrong in the same direction. The
+        ``auto`` default was *stored*, never read -- nothing in the tree resolved it, so the flag's own
+        help text ("``auto`` asks the build") described behaviour that did not exist. And
+        ``RuntimeCapabilities.devices`` was a declaration no one consulted, so ``--backend mimo
+        --device cpu`` was accepted on a runtime whose own declaration says ``("cuda",)``.
+    
+        Both are answered here because this is the only place that has both halves: the requested
+        platform lives on ``args`` and the declared set lives on the runtime's capabilities. The
+        resolved :class:`Accelerator` is returned rather than probed twice, so a caller that needs the
+        device type or the collective asks for the same answer this check was made against.
+    
+        An empty ``devices`` is read as *unconstrained* rather than as *nothing*: the field defaults to
+        ``()``, and a runtime that has not stated a set has not excluded one.
+        """
+        accelerator = _probe_accelerator() if accelerator is None else accelerator
+        platform = resolve_platform(args.device, accelerator)
+        declared = runtime_capabilities(name).devices
+        if not declared or platform in declared:
+            return accelerator
+>       raise UnsupportedFeatureError(
+            f"backend={name!r} declares devices={declared!r}, so it cannot run on {platform!r}"
+            + (
+                f", which is what --device auto resolved to on this host"
+                if args.device == "auto"
+                else ""
+            )
+            + f". Ask for one of {', '.join(declared)}, or use a runtime that serves {platform!r}"
+        )
+E       relicllm.api.errors.UnsupportedFeatureError: backend='qwen4_exp' declares devices=('cuda',), so it cannot run on 'cpu', which is what --device auto resolved to on this host. Ask for one of cuda, or use a runtime that serves 'cpu'
+
+relicllm/backends/factory.py:126: UnsupportedFeatureError
+_________________ test_resident_shard_pin_fallback_is_uniform __________________
+
+    def test_resident_shard_pin_fallback_is_uniform():
+        """A mid-load pin failure must leave no pinned tensors behind."""
+        from relicllm.models.qwen4_exp.weights import HostExpertShard
+    
+        shard = HostExpertShard(num_layers=2, rank=0, world_size=1, pin_memory=True)
+        gate_up_all = torch.randn(4, 6, 8)
+        down_all = torch.randn(4, 8, 3)
+        shard.load_layer(0, gate_up_all, down_all)
+        if not shard.pinned:
+            pytest.skip("pinned host memory unavailable in this environment")
+    
+        real_empty = torch.empty
+        # Fail on the *second* pinned allocation of the layer, which is the case that
+        # could otherwise leave one layer with a pinned gate_up and a pageable down.
+        remaining = [1]
+    
+        def failing_empty(*args, **kwargs):
+            if kwargs.get("pin_memory"):
+                if remaining[0] <= 0:
+                    raise RuntimeError("simulated memlock limit")
+                remaining[0] -= 1
+            return real_empty(*args, **kwargs)
+    
+        torch.empty = failing_empty
+        try:
+            shard.load_layer(1, gate_up_all, down_all)
+        finally:
+            torch.empty = real_empty
+    
+        assert not shard.pinned
+        for layer_idx in (0, 1):
+            gate_up, down = shard.rows(layer_idx, 0)
+            assert not gate_up.is_pinned() and not down.is_pinned()
+>           torch.testing.assert_close(gate_up, gate_up_all[0], rtol=0, atol=0)
+E           AssertionError: The values for attribute 'device' do not match: mps:0 != cpu.
+
+tests/test_qwen4_exp_tp_sharding.py:374: AssertionError
+----------------------------- Captured stdout call -----------------------------
+[qwen4exp] pinning the expert shard failed (simulated memlock limit); falling back to pageable host memory
+=============================== warnings summary ===============================
+tests/test_qwen4_exp_real_checkpoint.py:199
+  /Users/lvyufeng/Projects/RelicLLM/tests/test_qwen4_exp_real_checkpoint.py:199: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/test_qwen4_exp_real_checkpoint.py:229
+  /Users/lvyufeng/Projects/RelicLLM/tests/test_qwen4_exp_real_checkpoint.py:229: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_qwen4_exp_backend.py::test_auto_selects_qwen4_exp_for_the_released_root_type
+FAILED tests/test_qwen4_exp_backend.py::test_auto_selects_qwen4_exp_from_the_nested_text_config
+FAILED tests/test_qwen4_exp_tp_sharding.py::test_resident_shard_pin_fallback_is_uniform
+3 failed, 1744 passed, 146 skipped, 2 warnings in 53.08s

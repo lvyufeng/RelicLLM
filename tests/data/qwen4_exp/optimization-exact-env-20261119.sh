@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Qualified TP8 RTX 4090 baseline for the 2026-11-19 exact optimization probes.
+# Source this file, then explicitly select the measured variant in the probe CLI.
+# Host-specific checkpoint, Python, and native-module paths are deliberately not set here.
+export POCKETLLM_QWEN4_HOST_KV=0
+export POCKETLLM_QWEN4_GRAPH_PAST_BUDGET=1
+export POCKETLLM_QWEN4_INDEXER_BUDGET=2048
+export POCKETLLM_QWEN4_SCHEDULE=by_layer
+export POCKETLLM_GRAPH_RETURN_MARGIN=0
+export POCKETLLM_QWEN4_RUN_STAGING=0
+export POCKETLLM_QWEN4_GRAPH_REUSE=1
+export POCKETLLM_QWEN4_NVFP4_EXPERTS=1
+export POCKETLLM_QWEN4_NVFP4_ROWS=1
+export POCKETLLM_QWEN4_MTP_GRAPH=1
+export POCKETLLM_QWEN4_MTP_DRAFT_GRAPH=1
+export POCKETLLM_QWEN4_MTP_HEAD_TABLE=1
+export POCKETLLM_QWEN4_MTP_NVFP4=1
+export POCKETLLM_QWEN4_VERIFY_ROW_INVARIANT=1
+export POCKETLLM_QWEN4_VERIFY_REDUCE_LAYOUT=rank_chunk
+export POCKETLLM_QWEN4_MTP_TAIL_GRAPH=1
+export POCKETLLM_QWEN4_QSA_SPLITK_ROWS=1
+export POCKETLLM_QWEN4_MTP_DEFER_GRAPH_RELEASE=1
+export POCKETLLM_QWEN4_MTP_STARTUP_GRAPH=1
+export POCKETLLM_QWEN4_NVFP4_EXACT_FAST=1
+export POCKETLLM_QWEN4_INDEXER_ROW_INVARIANT=1
+export POCKETLLM_QWEN4_GATED_NORM_EXACT=0
+# The higher-rank preserve-shape linear.out form was rejected; matrix staging is explicit.
+export POCKETLLM_QWEN4_LINEAR_OUT_2D=1
+# Every experimental dispatch defaults off. A missing requested operator is an error.
+export POCKETLLM_QWEN4_LINEAR_OUT=0
+export POCKETLLM_QWEN4_NVFP4_COMPACT=0
+export POCKETLLM_QWEN4_NVFP4_COMPACT_MIN_ROWS=128
+export POCKETLLM_QWEN4_NVFP4_STORE=0
+unset POCKETLLM_QWEN4_ROUND_TRACE

@@ -1,0 +1,89 @@
+{
+  "schema": "qwen4-exact-combined-native-summary-v1",
+  "input_tokens": 261632,
+  "output_tokens": 512,
+  "logical_total_tokens": 262144,
+  "decode_tokens": 511,
+  "all_four_arms_valid": true,
+  "original_greedy_ids_equal": true,
+  "all_rank_and_callback_ids_equal": true,
+  "all_rounds_and_acceptance_equal": true,
+  "arms": [
+    {
+      "trial": 0,
+      "variant": "off",
+      "decode_tps": 54.24002070596766,
+      "decode_tps_including_request_cleanup": 53.62577834473233,
+      "prefix_preparation_s": 491.5817951229401,
+      "prefix_reused": false,
+      "graph_build_s": 5.681979549117386
+    },
+    {
+      "trial": 1,
+      "variant": "on",
+      "decode_tps": 59.69581964118205,
+      "decode_tps_including_request_cleanup": 58.80057481633643,
+      "prefix_preparation_s": 54.83744534384459,
+      "prefix_reused": true,
+      "graph_build_s": 6.700856948271394
+    },
+    {
+      "trial": 2,
+      "variant": "off",
+      "decode_tps": 58.52216190472237,
+      "decode_tps_including_request_cleanup": 57.69304086039647,
+      "prefix_preparation_s": 52.575619251001626,
+      "prefix_reused": true,
+      "graph_build_s": 8.680698948912323
+    },
+    {
+      "trial": 3,
+      "variant": "on",
+      "decode_tps": 59.813665383961705,
+      "decode_tps_including_request_cleanup": 59.15655059031797,
+      "prefix_preparation_s": 48.86101777572185,
+      "prefix_reused": true,
+      "graph_build_s": 12.08731100289151
+    }
+  ],
+  "final_pair": {
+    "off_decode_tps": 58.52216190472237,
+    "on_decode_tps": 59.813665383961705,
+    "rate_ratio": 1.022068622163036,
+    "rate_improvement_pct": 2.2068622163035956,
+    "cleanup_included_rate_improvement_pct": 2.5367179612924895
+  },
+  "measurement_scope": "Same-host full-output untraced decode A/B; prefill, graph setup and cleanup excluded; later arms use CPU prefix restore, not fresh prefill",
+  "combined_warm_graph_reuse_qualified": false,
+  "target_100_tps_achieved": false,
+  "identity": {
+    "kernel_sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3",
+    "native_ops_overlay": {
+      "schema": "qwen4-nvfp4-overlay-v1",
+      "base_path": "/home/mseco/relic-core-norm-opt-20261118/build/extensions/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
+      "base_sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3",
+      "overlay_path": "/home/mseco/qwen4-opt-20261119-store-overlay/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
+      "overlay_sha256": "1e30599d0be2cbaec257e6b379c3ffc43a978589d275af065d91af13fa847254",
+      "module_alias": "_qwen4_nvfp4_overlay_1e30599d0be2cbae.cuda_kernel",
+      "installed_ops": [
+        "nvfp4_moe_rows_forward_exact_fast_compact",
+        "nvfp4_moe_rows_forward_exact_fast_store"
+      ],
+      "replaced_ops": [],
+      "base_has_exact_fast": true
+    },
+    "probe_sha256": "5508c16a0846f095503f06822220b6ca3249c77a760c60d01075d7e99406835f",
+    "reference_sha256": "c16853f71d571cd76f310ff9bfe1e9121fb31e1f5f65cdce03f8ccfb98c621e0",
+    "sources": {
+      "runtime.py": "10ff430a87fae3831e54c0d69a5b4d68e1956bbf22e77f5a0b05a20cd431c5fb",
+      "layers.py": "35e2b403c201f1eb576c1828ee976918572dadb003478441d8475a19542ebc02",
+      "model.py": "0d776908370d5915f86bb478062b78b76cab3b9b9aea2b28450871f357982b05",
+      "moe.py": "b7eccce58cd0f43289faca3e6a46fc8038ca069f23de33c57f58e1b5b903f9b1",
+      "verify_graph.py": "f5297022d22226373fe94423b5256cbe6192ba20f72358c2a343f46fddfacfda",
+      "graph_session.py": "ad74ba0e412b56e978c94bf825e751d39e0ac265c70bab0df71b7dc20df3459d",
+      "linear_out.py": "44c73e07e7da8a73713461d473e5a41e6b1b6fc29089f3d93865c3cb91802184",
+      "nvfp4_overlay.py": "e619134c583f2c4c6574d339278573bdab9c766c473971454b01c945a335f972"
+    }
+  },
+  "reference_sha256": "c16853f71d571cd76f310ff9bfe1e9121fb31e1f5f65cdce03f8ccfb98c621e0"
+}

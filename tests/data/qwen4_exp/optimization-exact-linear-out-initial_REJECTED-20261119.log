@@ -1,0 +1,690 @@
+........................................................................ [ 26%]
+........................................................................ [ 53%]
+.......................................................F.F...F.F...F.F.. [ 80%]
+.F.F...F.F...F.F...F.F...F.F.........F.F...F.F...F.F.                    [100%]
+=================================== FAILURES ===================================
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-6-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75603ffd7610>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 6
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.6250,  31.3750, -32.2500, -23.7500, -49.5000,   8.2500],\n         [-36.7500,  20.8750,  92.0000, -82.000...\n         [-59.2500,  24.6250,  55.0000, -30.3750, -17.3750,  -5.2500]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.6250,  31.3750, -32.2500, -23.8750, -49.7500,   8.1875],\n         [-37.0000,  20.8750,  92.0000, -82.000...\n         [-59.2500,  24.6250,  55.0000, -30.3750, -17.3750,  -5.2188]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.6250,  31.3750, -32.2500, -23.8750, -49.7500,   8.1875],\n         [-37.0000,  20.8750,  92.0000, -82.000...\n         [-59.2500,  24.6250,  55.0000, -30.3750, -17.3750,  -5.2188]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 1.1484,  0.3340,  0.7930,  ...,  1.7891, -0.2266, -1.4844]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-0.7578, -1.3750, -0.9648,  0.9531, -0.0199, -0.7031], device='cuda:0',\n       dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-6-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7561f9d35210>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 6
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.6250,  31.3750, -32.2500, -23.7500, -49.5000,   8.2500],\n         [-36.7500,  20.8750,  92.0000, -82.000...\n         [-59.2500,  24.6250,  55.0000, -30.3750, -17.3750,  -5.2500]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.6250,  31.3750, -32.2500, -23.8750, -49.7500,   8.1875],\n         [-37.0000,  20.8750,  92.0000, -82.000...\n         [-59.2500,  24.6250,  55.0000, -30.3750, -17.3750,  -5.2188]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.6250,  31.3750, -32.2500, -23.8750, -49.7500,   8.1875],\n         [-37.0000,  20.8750,  92.0000, -82.000...\n         [-59.2500,  24.6250,  55.0000, -30.3750, -17.3750,  -5.2188]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 1.1484,  0.3340,  0.7930,  ...,  1.7891, -0.2266, -1.4844]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-0.7578, -1.3750, -0.9648,  0.9531, -0.0199, -0.7031], device='cuda:0',\n       dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1280-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75603ffd6350>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 1280
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.2500,  32.5000, -31.5000,  ..., -71.5000,   6.4375, -69.0000],\n         [-36.2500,  22.1250,  93.0000,  ...    [-58.7500,  25.8750,  55.7500,  ...,   4.6875, -25.6250, -76.5000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.2500,  32.7500, -31.5000,  ..., -71.5000,   6.4375, -68.5000],\n         [-36.5000,  22.1250,  93.0000,  ...    [-58.7500,  25.8750,  55.7500,  ...,   4.6875, -25.6250, -76.5000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.2500,  32.7500, -31.5000,  ..., -71.5000,   6.4375, -68.5000],\n         [-36.5000,  22.1250,  93.0000,  ...    [-58.7500,  25.8750,  55.7500,  ...,   4.6875, -25.6250, -76.5000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-0.0815,  0.3359, -1.8438,  ..., -0.1226,  0.0000,  1.3594]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-0.3145, -0.1494, -0.2266,  ..., -0.6328,  0.6094,  0.5977],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1280-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75603ffef110>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 1280
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.2500,  32.5000, -31.5000,  ..., -71.5000,   6.4375, -69.0000],\n         [-36.2500,  22.1250,  93.0000,  ...    [-58.7500,  25.8750,  55.7500,  ...,   4.6875, -25.6250, -76.5000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.2500,  32.7500, -31.5000,  ..., -71.5000,   6.4375, -68.5000],\n         [-36.5000,  22.1250,  93.0000,  ...    [-58.7500,  25.8750,  55.7500,  ...,   4.6875, -25.6250, -76.5000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.2500,  32.7500, -31.5000,  ..., -71.5000,   6.4375, -68.5000],\n         [-36.5000,  22.1250,  93.0000,  ...    [-58.7500,  25.8750,  55.7500,  ...,   4.6875, -25.6250, -76.5000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-0.0815,  0.3359, -1.8438,  ..., -0.1226,  0.0000,  1.3594]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-0.3145, -0.1494, -0.2266,  ..., -0.6328,  0.6094,  0.5977],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-768-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010a02d90>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 768
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.5000,  32.2500, -30.8750,  ...,  -0.1309,  63.2500, -28.7500],\n         [-36.7500,  21.6250,  93.5000,  ...    [-59.2500,  25.3750,  56.5000,  ...,  90.5000,  16.0000,  67.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.6250,  32.2500, -30.8750,  ...,  -0.1299,  63.0000, -28.7500],\n         [-36.7500,  21.7500,  93.5000,  ...    [-59.0000,  25.5000,  56.5000,  ...,  90.5000,  16.1250,  67.5000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.6250,  32.2500, -30.8750,  ...,  -0.1299,  63.0000, -28.7500],\n         [-36.7500,  21.7500,  93.5000,  ...    [-59.0000,  25.5000,  56.5000,  ...,  90.5000,  16.1250,  67.5000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 0.6133,  0.4922,  1.5156,  ...,  0.7539,  0.8203,  0.5586]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-6.8750e-01, -5.7422e-01,  3.7695e-01,  7.3047e-01, -6.6406e-01,\n         1.4219e+00, -4.5312e-01, -2.5000e+00... 7.7734e-01,  1.5000e+00,\n         3.8086e-01, -2.3281e+00, -1.2734e+00], device='cuda:0',\n       dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-768-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010815d90>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 768
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.5000,  32.2500, -30.8750,  ...,  -0.1309,  63.2500, -28.7500],\n         [-36.7500,  21.6250,  93.5000,  ...    [-59.2500,  25.3750,  56.5000,  ...,  90.5000,  16.0000,  67.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.6250,  32.2500, -30.8750,  ...,  -0.1299,  63.0000, -28.7500],\n         [-36.7500,  21.7500,  93.5000,  ...    [-59.0000,  25.5000,  56.5000,  ...,  90.5000,  16.1250,  67.5000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.6250,  32.2500, -30.8750,  ...,  -0.1299,  63.0000, -28.7500],\n         [-36.7500,  21.7500,  93.5000,  ...    [-59.0000,  25.5000,  56.5000,  ...,  90.5000,  16.1250,  67.5000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 0.6133,  0.4922,  1.5156,  ...,  0.7539,  0.8203,  0.5586]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-6.8750e-01, -5.7422e-01,  3.7695e-01,  7.3047e-01, -6.6406e-01,\n         1.4219e+00, -4.5312e-01, -2.5000e+00... 7.7734e-01,  1.5000e+00,\n         3.8086e-01, -2.3281e+00, -1.2734e+00], device='cuda:0',\n       dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-256-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010821890>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 256
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.7500,  34.5000, -28.8750,  ..., -54.0000,  24.6250,  60.2500],\n         [-36.7500,  24.0000,  95.5000,  ...    [-59.2500,  27.7500,  58.2500,  ...,  53.2500, -56.2500, -48.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.7500,  34.5000, -29.0000,  ..., -53.7500,  24.6250,  60.2500],\n         [-37.0000,  24.0000,  95.5000,  ...    [-59.2500,  27.7500,  58.2500,  ...,  53.2500, -56.5000, -48.0000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.7500,  34.5000, -29.0000,  ..., -53.7500,  24.6250,  60.2500],\n         [-37.0000,  24.0000,  95.5000,  ...    [-59.2500,  27.7500,  58.2500,  ...,  53.2500, -56.5000, -48.0000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 0.2256, -0.5430,  0.8789,  ..., -0.0972,  0.5430, -1.4219]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-8.5156e-01,  1.7656e+00,  2.3594e+00,  2.2168e-01,  5.8984e-01,\n         1.3203e+00,  1.1484e+00,  4.1406e-01...3e-01,  4.5117e-01, -4.2969e-01, -1.4141e+00,  8.7891e-01,\n        -3.2227e-01], device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-256-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010950790>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 256
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.7500,  34.5000, -28.8750,  ..., -54.0000,  24.6250,  60.2500],\n         [-36.7500,  24.0000,  95.5000,  ...    [-59.2500,  27.7500,  58.2500,  ...,  53.2500, -56.2500, -48.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.7500,  34.5000, -29.0000,  ..., -53.7500,  24.6250,  60.2500],\n         [-37.0000,  24.0000,  95.5000,  ...    [-59.2500,  27.7500,  58.2500,  ...,  53.2500, -56.5000, -48.0000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.7500,  34.5000, -29.0000,  ..., -53.7500,  24.6250,  60.2500],\n         [-37.0000,  24.0000,  95.5000,  ...    [-59.2500,  27.7500,  58.2500,  ...,  53.2500, -56.5000, -48.0000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 0.2256, -0.5430,  0.8789,  ..., -0.0972,  0.5430, -1.4219]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-8.5156e-01,  1.7656e+00,  2.3594e+00,  2.2168e-01,  5.8984e-01,\n         1.3203e+00,  1.1484e+00,  4.1406e-01...3e-01,  4.5117e-01, -4.2969e-01, -1.4141e+00,  8.7891e-01,\n        -3.2227e-01], device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-640-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010819b10>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 640
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.0000,  33.0000, -31.8750,  ...,  37.0000, -31.8750, -39.5000],\n         [-36.0000,  22.5000,  92.5000,  ...    [-58.5000,  26.2500,  55.5000,  ..., -49.2500, -61.2500,  26.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.0000,  33.0000, -31.8750,  ...,  37.0000, -31.8750, -39.5000],\n         [-36.2500,  22.6250,  92.5000,  ...    [-58.5000,  26.3750,  55.5000,  ..., -49.2500, -61.2500,  26.0000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.0000,  33.0000, -31.8750,  ...,  37.0000, -31.8750, -39.5000],\n         [-36.2500,  22.6250,  92.5000,  ...    [-58.5000,  26.3750,  55.5000,  ..., -49.2500, -61.2500,  26.0000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-2.9844,  0.3281,  0.6562,  ..., -0.0933, -0.4883,  0.5039]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-1.0938e-01,  3.1055e-01, -6.2500e-01, -5.3467e-02,  3.9648e-01,\n        -4.3555e-01,  2.6367e-01, -1.4453e+00...         2.2031e+00,  9.6094e-01,  2.5977e-01, -7.4609e-01, -6.6016e-01],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-640-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75603ffeff90>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 640
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.0000,  33.0000, -31.8750,  ...,  37.0000, -31.8750, -39.5000],\n         [-36.0000,  22.5000,  92.5000,  ...    [-58.5000,  26.2500,  55.5000,  ..., -49.2500, -61.2500,  26.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.0000,  33.0000, -31.8750,  ...,  37.0000, -31.8750, -39.5000],\n         [-36.2500,  22.6250,  92.5000,  ...    [-58.5000,  26.3750,  55.5000,  ..., -49.2500, -61.2500,  26.0000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-21.0000,  33.0000, -31.8750,  ...,  37.0000, -31.8750, -39.5000],\n         [-36.2500,  22.6250,  92.5000,  ...    [-58.5000,  26.3750,  55.5000,  ..., -49.2500, -61.2500,  26.0000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-2.9844,  0.3281,  0.6562,  ..., -0.0933, -0.4883,  0.5039]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-1.0938e-01,  3.1055e-01, -6.2500e-01, -5.3467e-02,  3.9648e-01,\n        -4.3555e-01,  2.6367e-01, -1.4453e+00...         2.2031e+00,  9.6094e-01,  2.5977e-01, -7.4609e-01, -6.6016e-01],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1536-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7560402268d0>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 1536
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-20.5000,  31.8750, -32.0000,  ..., -14.2500,  22.1250,  48.0000],\n         [-35.7500,  21.3750,  92.0000,  ...    [-58.2500,  25.1250,  55.2500,  ..., -17.8750,   3.4375,  79.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-20.5000,  31.8750, -32.0000,  ..., -14.2500,  22.1250,  48.0000],\n         [-35.7500,  21.3750,  92.5000,  ...    [-58.0000,  25.1250,  55.2500,  ..., -17.8750,   3.4375,  78.5000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-20.5000,  31.8750, -32.0000,  ..., -14.2500,  22.1250,  48.0000],\n         [-35.7500,  21.3750,  92.5000,  ...    [-58.0000,  25.1250,  55.2500,  ..., -17.8750,   3.4375,  78.5000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-0.3555, -0.7109,  0.0000,  ...,  0.1309,  0.5781, -1.3906]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([ 0.3594, -0.8984, -0.8203,  ..., -2.0625,  0.8633, -0.6406],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1536-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75603ff328d0>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 1536
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-20.5000,  31.8750, -32.0000,  ..., -14.2500,  22.1250,  48.0000],\n         [-35.7500,  21.3750,  92.0000,  ...    [-58.2500,  25.1250,  55.2500,  ..., -17.8750,   3.4375,  79.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-20.5000,  31.8750, -32.0000,  ..., -14.2500,  22.1250,  48.0000],\n         [-35.7500,  21.3750,  92.5000,  ...    [-58.0000,  25.1250,  55.2500,  ..., -17.8750,   3.4375,  78.5000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-20.5000,  31.8750, -32.0000,  ..., -14.2500,  22.1250,  48.0000],\n         [-35.7500,  21.3750,  92.5000,  ...    [-58.0000,  25.1250,  55.2500,  ..., -17.8750,   3.4375,  78.5000]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-0.3555, -0.7109,  0.0000,  ...,  0.1309,  0.5781, -1.3906]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([ 0.3594, -0.8984, -0.8203,  ..., -2.0625,  0.8633, -0.6406],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-80-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75601092cb50>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 80
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[ -22.6250,   34.0000,  -30.6250,  -25.5000,  -48.5000,    9.7500,\n           -15.1250,   46.7500,  -10.3125,...,   30.8750,    6.4062,   26.7500,  -49.7500,\n            -1.5312,    0.5664]]], device='cuda:0', dtype=torch.bfloat16), tensor([[[ -22.6250,   34.0000,  -30.7500,  -25.5000,  -48.7500,    9.6875,\n           -15.1875,   46.7500,  -10.3125,...,   30.8750,    6.4062,   26.7500,  -49.7500,\n            -1.5312,    0.5703]]], device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[ -22.6250,   34.0000,  -30.7500,  -25.5000,  -48.7500,    9.6875,\n           -15.1875,   46.7500,  -10.3125,...,   30.8750,    6.4062,   26.7500,  -49.7500,\n            -1.5312,    0.5703]]], device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-0.9766, -2.5781, -0.6250,  ...,  0.6641, -1.3438,  0.0747]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-1.7812,  1.2891,  0.5664, -0.6992,  0.9492,  0.7812, -0.8359,  0.9023,\n         1.2500,  1.1094,  0.5664, -0.... -0.5352,  1.0781,  1.9922,  1.3672,  0.6211,  0.0266, -1.2500, -0.6836],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-80-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75601083bf10>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 80
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[ -22.6250,   34.0000,  -30.6250,  -25.5000,  -48.5000,    9.7500,\n           -15.1250,   46.7500,  -10.3125,...,   30.8750,    6.4062,   26.7500,  -49.7500,\n            -1.5312,    0.5664]]], device='cuda:0', dtype=torch.bfloat16), tensor([[[ -22.6250,   34.0000,  -30.7500,  -25.5000,  -48.7500,    9.6875,\n           -15.1875,   46.7500,  -10.3125,...,   30.8750,    6.4062,   26.7500,  -49.7500,\n            -1.5312,    0.5703]]], device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[ -22.6250,   34.0000,  -30.7500,  -25.5000,  -48.7500,    9.6875,\n           -15.1875,   46.7500,  -10.3125,...,   30.8750,    6.4062,   26.7500,  -49.7500,\n            -1.5312,    0.5703]]], device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [-0.9766, -2.5781, -0.6250,  ...,  0.6641, -1.3438,  0.0747]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-1.7812,  1.2891,  0.5664, -0.6992,  0.9492,  0.7812, -0.8359,  0.9023,\n         1.2500,  1.1094,  0.5664, -0.... -0.5352,  1.0781,  1.9922,  1.3672,  0.6211,  0.0266, -1.2500, -0.6836],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-2560-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010820c90>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 2560
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-19.8750,  32.7500, -31.5000,  ..., -43.7500, -47.2500,  54.7500],\n         [-35.0000,  22.1250,  93.0000,  ...    [-57.5000,  25.8750,  55.7500,  ..., -13.6250,  60.7500, -30.7500]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-19.8750,  32.7500, -31.5000,  ..., -43.7500, -47.0000,  54.5000],\n         [-35.2500,  22.2500,  93.0000,  ...    [-57.5000,  26.0000,  55.7500,  ..., -13.6250,  60.7500, -30.7500]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-19.8750,  32.7500, -31.5000,  ..., -43.7500, -47.0000,  54.5000],\n         [-35.2500,  22.2500,  93.0000,  ...    [-57.5000,  26.0000,  55.7500,  ..., -13.6250,  60.7500, -30.7500]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 2.3594,  0.5742, -0.8086,  ...,  0.7227,  0.5234, -0.3184]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([ 0.9453, -0.0825, -0.2178,  ..., -0.0732,  0.8164, -1.3672],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-2560-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75601085a290>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 2560
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-19.8750,  32.7500, -31.5000,  ..., -43.7500, -47.2500,  54.7500],\n         [-35.0000,  22.1250,  93.0000,  ...    [-57.5000,  25.8750,  55.7500,  ..., -13.6250,  60.7500, -30.7500]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-19.8750,  32.7500, -31.5000,  ..., -43.7500, -47.0000,  54.5000],\n         [-35.2500,  22.2500,  93.0000,  ...    [-57.5000,  26.0000,  55.7500,  ..., -13.6250,  60.7500, -30.7500]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-19.8750,  32.7500, -31.5000,  ..., -43.7500, -47.0000,  54.5000],\n         [-35.2500,  22.2500,  93.0000,  ...    [-57.5000,  26.0000,  55.7500,  ..., -13.6250,  60.7500, -30.7500]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 2.3594,  0.5742, -0.8086,  ...,  0.7227,  0.5234, -0.3184]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([ 0.9453, -0.0825, -0.2178,  ..., -0.0732,  0.8164, -1.3672],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[10240-4-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75601095bd10>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 10240, out_features = 4
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[  41.2500,   69.5000,  103.5000,  -10.1875],\n         [ -98.5000,   -8.5000,  -78.0000,   62.5000],\n        ...000,  -69.0000],\n         [ -60.2500,   63.5000, -144.0000, -166.0000]]], device='cuda:0',\n       dtype=torch.bfloat16), tensor([[[  41.2500,   69.5000,  103.5000,  -10.1875],\n         [ -98.5000,   -8.5000,  -78.0000,   62.2500],\n        ...000,  -69.0000],\n         [ -60.2500,   63.5000, -144.0000, -166.0000]]], device='cuda:0',\n       dtype=torch.bfloat16))
+E        +    where tensor([[[  41.2500,   69.5000,  103.5000,  -10.1875],\n         [ -98.5000,   -8.5000,  -78.0000,   62.2500],\n        ...000,  -69.0000],\n         [ -60.2500,   63.5000, -144.0000, -166.0000]]], device='cuda:0',\n       dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ..., -0.9844,  0.5938, -0.7070],\n         [-0.3008, -0.5312, -0.2773,  ...,  0.1...\n         [ 0.3301, -0.1650,  0.5117,  ...,  0.0537, -0.6211, -0.4922]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-1.1953, -0.9219, -0.2539,  ..., -0.2656, -0.6172,  1.3281],\n        [ 0.0057, -0.3926,  0.1729,  ..., -0.519...],\n        [ 0.1943, -1.1406, -0.0889,  ..., -1.0859, -0.5273, -0.2100]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-0.0854,  0.1611, -0.8359,  0.1367], device='cuda:0',\n       dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[10240-4-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010854050>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 10240, out_features = 4
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[  41.2500,   69.5000,  103.5000,  -10.1875],\n         [ -98.5000,   -8.5000,  -78.0000,   62.5000]],\n\n      ...000,  -69.0000],\n         [ -60.2500,   63.5000, -144.0000, -166.0000]]], device='cuda:0',\n       dtype=torch.bfloat16), tensor([[[  41.2500,   69.5000,  103.5000,  -10.1875],\n         [ -98.5000,   -8.5000,  -78.0000,   62.2500]],\n\n      ...000,  -69.0000],\n         [ -60.2500,   63.5000, -144.0000, -166.0000]]], device='cuda:0',\n       dtype=torch.bfloat16))
+E        +    where tensor([[[  41.2500,   69.5000,  103.5000,  -10.1875],\n         [ -98.5000,   -8.5000,  -78.0000,   62.2500]],\n\n      ...000,  -69.0000],\n         [ -60.2500,   63.5000, -144.0000, -166.0000]]], device='cuda:0',\n       dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ..., -0.9844,  0.5938, -0.7070],\n         [-0.3008, -0.5312, -0.2773,  ...,  0.1...\n         [ 0.3301, -0.1650,  0.5117,  ...,  0.0537, -0.6211, -0.4922]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-1.1953, -0.9219, -0.2539,  ..., -0.2656, -0.6172,  1.3281],\n        [ 0.0057, -0.3926,  0.1729,  ..., -0.519...],\n        [ 0.1943, -1.1406, -0.0889,  ..., -1.0859, -0.5273, -0.2100]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-0.0854,  0.1611, -0.8359,  0.1367], device='cuda:0',\n       dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-31040-leading1-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75601094c090>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+in_features = 2560, out_features = 31040
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-20.5000,  33.0000, -31.7500,  ..., 110.0000,  34.2500, -14.3125],\n         [-35.7500,  22.5000,  92.5000,  ...    [-58.2500,  26.2500,  55.5000,  ...,  55.2500,  13.5000,  44.5000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-20.5000,  33.0000, -31.8750,  ..., 110.0000,  34.2500, -14.3125],\n         [-35.7500,  22.5000,  92.5000,  ...    [-58.0000,  26.2500,  55.5000,  ...,  55.0000,  13.5000,  44.7500]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-20.5000,  33.0000, -31.8750,  ..., 110.0000,  34.2500, -14.3125],\n         [-35.7500,  22.5000,  92.5000,  ...    [-58.0000,  26.2500,  55.5000,  ...,  55.0000,  13.5000,  44.7500]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 0.3477, -0.2217,  1.8203,  ..., -0.0693, -0.3809, -0.0559]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([ 0.3633,  0.2871, -0.5430,  ...,  0.1436,  0.9375,  1.1172],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+_ test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-31040-leading2-same] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010902d50>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (2, 2)
+in_features = 2560, out_features = 31040
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4), (2, 2)])
+    @pytest.mark.parametrize("in_features,out_features", REAL_SHAPES)
+    def test_gpu_bits_match_the_recorded_reference_for_each_real_shape(monkeypatch, cuda, stage,
+                                                                       leading, in_features,
+                                                                       out_features):
+        """The promotion gate: every served shape must reproduce the one-row reference bit for bit.
+    
+        The reference is the same loop the model uses today, executed on the same device with the same
+        operands, so a pass here means the replacement gave up nothing on that shape. Both staging modes
+        are gated independently: the CPU evidence cannot speak for the device.
+        """
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make(leading, in_features, out_features)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        result = qwen4_exp_linear_out(x, weight, b)
+        assert result is not None and result.device == cuda
+>       assert bit_equal(result, reference_linear(x, weight, b))
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-20.5000,  33.0000, -31.7500,  ..., 110.0000,  34.2500, -14.3125],\n         [-35.7500,  22.5000,  92.5000,  ...    [-58.2500,  26.2500,  55.5000,  ...,  55.2500,  13.5000,  44.5000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-20.5000,  33.0000, -31.8750,  ..., 110.0000,  34.2500, -14.3125],\n         [-35.7500,  22.5000,  92.5000,  ...    [-58.0000,  26.2500,  55.5000,  ...,  55.0000,  13.5000,  44.7500]]],\n       device='cuda:0', dtype=torch.bfloat16))
+E        +    where tensor([[[-20.5000,  33.0000, -31.8750,  ..., 110.0000,  34.2500, -14.3125],\n         [-35.7500,  22.5000,  92.5000,  ...    [-58.0000,  26.2500,  55.5000,  ...,  55.0000,  13.5000,  44.7500]]],\n       device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[ 1.4609,  0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [ 0.8242,  0.5469, -0.7148,  ..., -0.2...\n         [-1.9922,  1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-0.3008, -0.5312, -0.2773,  ..., -0.2969,  0.9297,  0.3770],\n        [ 0.2891, -0.5469, -0.5234,  ..., -0.343...],\n        [ 0.3477, -0.2217,  1.8203,  ..., -0.0693, -0.3809, -0.0559]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([ 0.3633,  0.2871, -0.5430,  ...,  0.1436,  0.9375,  1.1172],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:599: AssertionError
+________ test_gpu_adversarial_vectors_stay_bit_identical[leading1-same] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010a0be10>
+cuda = device(type='cuda', index=0), stage = 'same', leading = (1, 4)
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    @pytest.mark.parametrize("leading", [(4,), (1, 4)])
+    def test_gpu_adversarial_vectors_stay_bit_identical(monkeypatch, cuda, stage, leading):
+        """Cancellation-heavy and rounding-tie inputs, which is where a reordered sum shows up."""
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        torch.manual_seed(0)
+        for in_features, out_features in ((2560, 768), (2560, 2560), (80, 2560)):
+            x = torch.randn(*leading, in_features, dtype=torch.bfloat16)
+            # Alternating large magnitudes force cancellation inside the reduction.
+            signs = torch.sign(torch.randn(in_features))
+            x = (x.float() * signs).to(torch.bfloat16)
+            weight = torch.randn(out_features, in_features, dtype=torch.bfloat16)
+            # A near-tie row: many identical products, so the sum's order decides the last bits.
+            weight[0] = x.reshape(-1, in_features)[0]
+            x, weight = x.to(cuda), weight.to(cuda)
+            for bias in (None, torch.randn(out_features, dtype=torch.bfloat16, device=cuda)):
+                result = qwen4_exp_linear_out(x, weight, bias)
+                assert result is not None
+>               assert bit_equal(result, reference_linear(x, weight, bias))
+E               AssertionError: assert False
+E                +  where False = bit_equal(tensor([[[2368.0000,   76.5000,  100.0000,  ...,  -35.7500,   37.2500,\n            97.5000],\n         [  -5.2188,  -58....5000,  -20.6250,  -25.0000,  ...,  -63.7500,   17.3750,\n           -46.0000]]], device='cuda:0', dtype=torch.bfloat16), tensor([[[2368.0000,   76.5000,   99.5000,  ...,  -36.0000,   37.2500,\n            97.5000],\n         [  -5.1875,  -58....0000,  -20.6250,  -25.0000,  ...,  -63.7500,   17.3750,\n           -46.0000]]], device='cuda:0', dtype=torch.bfloat16))
+E                +    where tensor([[[2368.0000,   76.5000,   99.5000,  ...,  -36.0000,   37.2500,\n            97.5000],\n         [  -5.1875,  -58....0000,  -20.6250,  -25.0000,  ...,  -63.7500,   17.3750,\n           -46.0000]]], device='cuda:0', dtype=torch.bfloat16) = reference_linear(tensor([[[-1.4609, -0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n         [-0.8242, -0.5469, -0.7148,  ..., -0.2...\n         [ 1.9922, -1.0156, -0.3184,  ..., -0.9844,  0.5938, -0.7070]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[-1.4609, -0.2910,  0.9609,  ...,  1.1094,  0.0908,  1.4609],\n        [ 0.7812,  0.4531,  0.8984,  ..., -2.234...],\n        [-0.6875, -0.5742,  0.3770,  ..., -0.7852,  0.2158, -0.6055]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([-9.2578e-01, -4.2578e-01, -2.6406e+00,  1.4551e-01, -1.2109e-01,\n        -5.7812e-01, -6.2109e-01, -3.2812e-01... 6.5234e-01, -1.0547e-01,\n        -1.5312e+00, -1.0312e+00,  1.4453e-01], device='cuda:0',\n       dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:621: AssertionError
+_______________ test_gpu_result_survives_a_captured_replay[same] _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x756010937910>
+cuda = device(type='cuda', index=0), stage = 'same'
+
+    @pytest.mark.parametrize("stage", ["same", "2"])
+    def test_gpu_result_survives_a_captured_replay(monkeypatch, cuda, stage):
+        """The path exists to run inside a graph, so it must record and replay with stable addresses."""
+        enable(monkeypatch)
+        monkeypatch.setenv("POCKETLLM_QWEN4_LINEAR_OUT_2D", "1" if stage == "2" else "0")
+        x, weight, b = make((1, 4), 2560, 768)
+        x, weight, b = x.to(cuda), weight.to(cuda), b.to(cuda)
+        reference = reference_linear(x, weight, b)
+        torch.cuda.synchronize()
+        stream = torch.cuda.Stream()
+        stream.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(stream), torch.inference_mode():
+            qwen4_exp_linear_out(x, weight, b)
+        torch.cuda.current_stream().wait_stream(stream)
+        torch.cuda.synchronize()
+        graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(graph), torch.inference_mode():
+            captured = qwen4_exp_linear_out(x, weight, b)
+        assert captured is not None
+        graph.replay()
+        torch.cuda.synchronize()
+>       assert bit_equal(captured, reference)
+E       AssertionError: assert False
+E        +  where False = bit_equal(tensor([[[-21.5000,  32.2500, -30.8750,  ...,  -0.1309,  63.2500, -28.7500],\n         [-36.7500,  21.6250,  93.5000,  ...    [-59.2500,  25.3750,  56.5000,  ...,  90.5000,  16.0000,  67.0000]]],\n       device='cuda:0', dtype=torch.bfloat16), tensor([[[-21.6250,  32.2500, -30.8750,  ...,  -0.1299,  63.0000, -28.7500],\n         [-36.7500,  21.7500,  93.5000,  ...    [-59.0000,  25.5000,  56.5000,  ...,  90.5000,  16.1250,  67.5000]]],\n       device='cuda:0', dtype=torch.bfloat16))
+
+tests/test_qwen4_exp_linear_out.py:645: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-6-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-6-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1280-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1280-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-768-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-768-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-256-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-256-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-640-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-640-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1536-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-1536-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-80-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-80-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-2560-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-2560-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[10240-4-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[10240-4-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-31040-leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_bits_match_the_recorded_reference_for_each_real_shape[2560-31040-leading2-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_adversarial_vectors_stay_bit_identical[leading1-same]
+FAILED tests/test_qwen4_exp_linear_out.py::test_gpu_result_survives_a_captured_replay[same]
+22 failed, 247 passed in 492.93s (0:08:12)

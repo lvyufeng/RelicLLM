@@ -1,0 +1,109 @@
+{
+  "schema": "qwen4-exact-store-native-summary-v1",
+  "input_tokens": 261632,
+  "output_tokens": 512,
+  "indexer_budget": 2048,
+  "all_four_valid": true,
+  "all_full_prefills": true,
+  "arms": [
+    {
+      "trial": 0,
+      "variant": "off",
+      "prefill_s": 505.84869287442416,
+      "decode_tps_excluding_setup_cleanup": 54.475873874856454,
+      "decode_tps_including_request_cleanup": 53.58643300757686,
+      "rounds": 233.0,
+      "accepted_prefix_histogram": {
+        "3": [
+          77,
+          80,
+          35,
+          41
+        ]
+      }
+    },
+    {
+      "trial": 1,
+      "variant": "on",
+      "prefill_s": 486.5979081229307,
+      "decode_tps_excluding_setup_cleanup": 59.54314989552435,
+      "decode_tps_including_request_cleanup": 58.69656244220717,
+      "rounds": 233.0,
+      "accepted_prefix_histogram": {
+        "3": [
+          77,
+          80,
+          35,
+          41
+        ]
+      }
+    },
+    {
+      "trial": 2,
+      "variant": "off",
+      "prefill_s": 486.9075233270414,
+      "decode_tps_excluding_setup_cleanup": 59.107147419005926,
+      "decode_tps_including_request_cleanup": 58.02487721798787,
+      "rounds": 233.0,
+      "accepted_prefix_histogram": {
+        "3": [
+          77,
+          80,
+          35,
+          41
+        ]
+      }
+    },
+    {
+      "trial": 3,
+      "variant": "on",
+      "prefill_s": 485.63695589173585,
+      "decode_tps_excluding_setup_cleanup": 59.56236431115463,
+      "decode_tps_including_request_cleanup": 58.58574314002039,
+      "rounds": 233.0,
+      "accepted_prefix_histogram": {
+        "3": [
+          77,
+          80,
+          35,
+          41
+        ]
+      }
+    }
+  ],
+  "final_pair": {
+    "prefill_time_ratio": 0.9973905364480224,
+    "prefill_saving_s": 1.2705674353055656,
+    "decode_rate_ratio": 1.0077015540763912
+  },
+  "interpretation": "native correctness passed; final warm-pair gains <1%, not the 26% operator micro; default remains off",
+  "identity": {
+    "kernel_sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3",
+    "native_ops_overlay": {
+      "schema": "qwen4-nvfp4-overlay-v1",
+      "base_path": "/home/mseco/relic-core-norm-opt-20261118/build/extensions/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
+      "base_sha256": "d0b85ea554fcaa0ad87751783e92dda5e933b09300ad0a4376ad95a1ddc6f1c3",
+      "overlay_path": "/home/mseco/qwen4-opt-20261119-store-overlay/cuda_kernel.cpython-311-x86_64-linux-gnu.so",
+      "overlay_sha256": "1e30599d0be2cbaec257e6b379c3ffc43a978589d275af065d91af13fa847254",
+      "module_alias": "_qwen4_nvfp4_overlay_1e30599d0be2cbae.cuda_kernel",
+      "installed_ops": [
+        "nvfp4_moe_rows_forward_exact_fast_compact",
+        "nvfp4_moe_rows_forward_exact_fast_store"
+      ],
+      "replaced_ops": [],
+      "base_has_exact_fast": true
+    },
+    "probe_sha256": "a202e236117f89e95fb4a135350be9e1e8f93d5b161e471f0db0bf7b3913077b",
+    "reference_sha256": "c16853f71d571cd76f310ff9bfe1e9121fb31e1f5f65cdce03f8ccfb98c621e0",
+    "sources": {
+      "runtime.py": "10ff430a87fae3831e54c0d69a5b4d68e1956bbf22e77f5a0b05a20cd431c5fb",
+      "layers.py": "35e2b403c201f1eb576c1828ee976918572dadb003478441d8475a19542ebc02",
+      "model.py": "0d776908370d5915f86bb478062b78b76cab3b9b9aea2b28450871f357982b05",
+      "moe.py": "b7eccce58cd0f43289faca3e6a46fc8038ca069f23de33c57f58e1b5b903f9b1",
+      "verify_graph.py": "f5297022d22226373fe94423b5256cbe6192ba20f72358c2a343f46fddfacfda",
+      "graph_session.py": "ad74ba0e412b56e978c94bf825e751d39e0ac265c70bab0df71b7dc20df3459d",
+      "linear_out.py": "44c73e07e7da8a73713461d473e5a41e6b1b6fc29089f3d93865c3cb91802184",
+      "nvfp4_overlay.py": "2d2d5c6a85c046631f86df72a93e8ebe34f45dda688adead7a66dda95dbbdc64"
+    }
+  }
+}

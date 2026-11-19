@@ -1,0 +1,179 @@
+{
+  "schema": "qwen4-exact-optimization-evidence-manifest-v1",
+  "date": "2026-11-19",
+  "scope": "Completed exact optimization round; native262144/indexer2048; target100TPS not achieved",
+  "native_request": {
+    "input_tokens": 261632,
+    "output_tokens": 512,
+    "decode_tokens": 511,
+    "tp_ranks": 8,
+    "indexer_budget": 2048
+  },
+  "final_combined_pair": {
+    "off_decode_tps": 58.52216190472237,
+    "on_decode_tps": 59.813665383961705,
+    "improvement_pct": 2.2068622163035956
+  },
+  "host_lifetimes": {
+    "ts-133": "owned lease released after no CUDA processes",
+    "ts-134": "owned lease released after combined completion and no CUDA processes"
+  },
+  "files": [
+    {
+      "name": "optimization-exact-audit-20261119.md",
+      "bytes": 11455,
+      "sha256": "5360154a663d64b36cf65f603c635cca26894bf096634de751387762d874b904",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-combined-native-summary-20261119.json",
+      "bytes": 3838,
+      "sha256": "6e4a3b851c28badccb0154ff83d8a3b684f886b5eacfaca78c2071fc7d2c0643",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-combined-native512-20261119.jsonl",
+      "bytes": 139763,
+      "sha256": "ac178afce89b7dde4097bc2c6f23b5e3fcd58e3f61b50a58d5d416a6bbb07ad5",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-compact-cuda-20261119.log",
+      "bytes": 421,
+      "sha256": "2403c9bcda73e7e2ce956f9a29f4e7b09c3bc1a7754d574d93fe1b1876ddbe92",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-compact-micro-20261119.jsonl",
+      "bytes": 6603,
+      "sha256": "e6bc390b3b2330f198666be315928790eca0c721faa7dd24bd9b551d7b140d65",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-env-20261119.sh",
+      "bytes": 1589,
+      "sha256": "c7e2cb3954f863d5b9afadba6c564b8eb84a03cd9fd7b567442cb27916e57d6c",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-kernel-census-20261119.json",
+      "bytes": 130647,
+      "sha256": "3ea6683c09d92c4822644c9b527ae52a35a14228e28e46ee7751de98c68d76bb",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-linear-8k-20261119.jsonl",
+      "bytes": 47439,
+      "sha256": "3e93118add34ca79737c4dbc382db7acdda7f23eabfc9c12eb023dd9bcbfca2f",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-linear-8k-budget-20261119.json",
+      "bytes": 1508,
+      "sha256": "6de874d24b22fc887a976d644a59c81a6fcebf4cf1be849d893a1f5d1cf47efc",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-linear-native-warm-20261119.jsonl",
+      "bytes": 71477,
+      "sha256": "44097a891e17b17175ca51563ffbe2def2f80111e1a2e747c3ccdac5379b4786",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-linear-native512-20261119.jsonl",
+      "bytes": 137263,
+      "sha256": "6e7c4d3fcdff98eba4e6505d3bae2c901e8ead9adbbf77947983407b9158b958",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-linear-out-2d-micro-20261119.jsonl",
+      "bytes": 14820,
+      "sha256": "35a8f7800918b788fc6aa414557abb4be36eba23d1b8251c527447a30009537b",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-linear-out-bias-free-diagnostic-20261119.jsonl",
+      "bytes": 14808,
+      "sha256": "7623eed8492549a6aa8cf2f74a250c250725ef93f676005af5eac3462ed21011",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-linear-out-initial_REJECTED-20261119.log",
+      "bytes": 70916,
+      "sha256": "5e74fdd432311b560cf574d5a9daad95971acdfd09915526a726f26ef397ae7e",
+      "rejected_evidence": true
+    },
+    {
+      "name": "optimization-exact-linear-shapes-20261119.json",
+      "bytes": 67850,
+      "sha256": "7a1cf2349ae94d142785888121bbe90963976093fa113399d8d6362ae7c9ccc5",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-original-native-crosshost_REJECTED-20261119.jsonl",
+      "bytes": 34478,
+      "sha256": "c0c185d08035ecbff962dd2cff0c558c3e404d8880fd66d4bbc3c2104725bb8e",
+      "rejected_evidence": true
+    },
+    {
+      "name": "optimization-exact-overlay-cuda-20261119.log",
+      "bytes": 13301,
+      "sha256": "3ecd72be6939b6571a516d3f0a6208e2c514b19652587e8d8ebadb947faf1f35",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-overlay-micro-20261119.jsonl",
+      "bytes": 12349,
+      "sha256": "09094cd0d807b898cb3f51976a96764e0bd0e630839040f4ece36c71f1543190",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-results-20261119.md",
+      "bytes": 12598,
+      "sha256": "927e446ceb788c28e7a8717015979a011502d60a9931a9220ee926103d228cc9",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-runtime-cpu-20261119.log",
+      "bytes": 12889,
+      "sha256": "a00be31ed3263ce14819c3cf02cd36d678f8e2044a978ee97ecb7e68c1596049",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-runtime-cuda-20261119.log",
+      "bytes": 2977,
+      "sha256": "354214bf976e75780deabe5f21ed541d8fdb0f2a9702cffd0d0dc3db6d6d1a73",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-store-cuda-20261119.log",
+      "bytes": 581,
+      "sha256": "db7f42ec8f05f876213b034541ef3bcd8fbbc19edcb9ef28642963fd13ae9d00",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-store-micro-20261119.jsonl",
+      "bytes": 7579,
+      "sha256": "dcdefd72b3505586c5c8511ce79c2230f16576255d292a7d317d01e90642aaa8",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-store-native-crosshost_REJECTED-20261119.jsonl",
+      "bytes": 34451,
+      "sha256": "c6dc4ae3880f6b20dcaf037867fed4cffcce2985dc91f661c4b2b4cdbfb82880",
+      "rejected_evidence": true
+    },
+    {
+      "name": "optimization-exact-store-native-summary-20261119.json",
+      "bytes": 3758,
+      "sha256": "736f9b44a5cd19a62de7bc9dbbc7f9a259790ec5b9d61586a7a60ad2b0b21c43",
+      "rejected_evidence": false
+    },
+    {
+      "name": "optimization-exact-store-native512-20261119.jsonl",
+      "bytes": 139668,
+      "sha256": "99db19897adbbaa21d747ef0e456a2599a753a563978e0f06aa1158ee97c2c74",
+      "rejected_evidence": false
+    }
+  ]
+}
