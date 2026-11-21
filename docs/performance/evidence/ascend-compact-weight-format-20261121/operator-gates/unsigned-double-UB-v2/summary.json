@@ -1,0 +1,110 @@
+{
+  "name": "compact-unsigned-buffered-native-gates",
+  "command": [
+    "<private-python-root>/venv311/bin/python",
+    "<private-compact-root>/source/probe_compact_weight_consumer_v2.py"
+  ],
+  "timeout_s": 900,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-21T14:26:42.446066+00:00",
+  "cwd": "<private-control-root>/source/relic-core",
+  "timed_out": false,
+  "ownership_token": "<withheld-private-token>",
+  "critical_environment": {
+    "PYTHONPATH": "<private-dependencies-root>/python-packages:<private-compact-root>/source/relic-core:<private-compact-root>/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "<private-compact-root>/tmp",
+    "HOME": "<private-compact-root>/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "<private-compact-root>/cache/ascend",
+    "ASCEND_WORK_PATH": "<private-compact-root>/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "<private-compact-root>/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 3435538,
+  "process_group": 3435538,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 3435538,
+        "starttime": 418628851,
+        "pgid": 3435538,
+        "sid": 3435538,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3435574,
+        "starttime": 418629252,
+        "pgid": 3435538,
+        "sid": 3435538,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3435575,
+        "starttime": 418629252,
+        "pgid": 3435538,
+        "sid": 3435538,
+        "state": "R",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [
+      {
+        "identity": {
+          "pid": 3435538,
+          "starttime": 418628851,
+          "pgid": 3435538,
+          "sid": 3435538,
+          "state": "D",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3435538"
+      }
+    ],
+    "terminal_reconciliations": [
+      {
+        "identity": {
+          "pid": 3435538,
+          "starttime": 418628851,
+          "pgid": 3435538,
+          "sid": 3435538,
+          "state": "D",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3435538",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      }
+    ],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 13.926434896886349,
+  "finished_at": "2026-11-21T14:26:56.372495+00:00"
+}

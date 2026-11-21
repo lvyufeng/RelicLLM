@@ -1535,6 +1535,15 @@ Seventeen separate bundles, because each earlier one is frozen:
   checkpoint/idle safety checks and the confirmed lease release. The same-stream N32 sustained result
   is 7.872578 TPS / 1.222902x, not a 50 TPS or original-exact/default quality claim.
 
+* [ascend-compact-weight-format-20261121](<evidence/ascend-compact-weight-format-20261121/manifest.json>) —
+  the [lossless compact-format record](<ascend_compact_weight_format.md>) compares fresh original
+  N16-layout and offline Cube-order N32/K128 consumers over 64 synchronized fixed-length batch-one
+  forwards (including steps after EOS), context 24→88. The matched result is **7.858085→8.581304 TPS
+  (1.092035x)** with all eight
+  reference/teacher/final FP32 comparisons bit-equal between providers and the same 64 generated
+  tokens. Packed expert residency stays 36,097,228,800 bytes/rank. It is an explicit same-provider
+  experiment, not an exact-default, full converted-checkpoint delivery, prefill or 50-TPS claim.
+
 All bundles carry hashes for every file. The comparison JSONs verify all eight rank artifacts.
 Earlier final-logit tensors remain in the working tree rather than being duplicated into bundles.
 For the new Engram/HC bundle, the completed full teacher/final tensors were compared on the host and

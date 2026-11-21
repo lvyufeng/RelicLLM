@@ -1,0 +1,9 @@
+{
+  "project": "runtime",
+  "directory": "<private-compact-root>/source/RelicLLM",
+  "test_sources": {
+    "tests/test_ascend_expert_tp_compact.py": "91182ade0ccd60ae7b912e5eb659ff5cbacc1fb0c3be3d60ad2bba5528f59053",
+    "tests/test_v41_ascend_expert_tp.py": "6e2f691c8941143725c6a704ae2eca4ee2ada5d2d67d585aacdfc80601e29fcd"
+  },
+  "pytest_returncode": 0
+}

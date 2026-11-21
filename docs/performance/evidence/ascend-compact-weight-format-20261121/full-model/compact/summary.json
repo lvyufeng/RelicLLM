@@ -1,0 +1,187 @@
+{
+  "name": "compact-weight-format-cube-packed-v2-host-table-HC-steps64",
+  "command": [
+    "<private-python-root>/venv311/bin/python",
+    "-m",
+    "torch.distributed.run",
+    "--standalone",
+    "--nnodes=1",
+    "--nproc-per-node=8",
+    "<private-compact-root>/source/profile_compact_weight_model.py",
+    "--checkpoint",
+    "<original-checkpoint>",
+    "--expert-device",
+    "npu:0",
+    "--expert-world",
+    "8",
+    "--expert-pool-rows",
+    "0",
+    "--expert-hot-rows",
+    "0",
+    "--no-expert-batched",
+    "--expert-deal",
+    "id",
+    "--no-decode-graphs",
+    "--threads",
+    "4",
+    "--max-seq-len",
+    "128",
+    "--max-new-tokens",
+    "64",
+    "--temperature",
+    "0",
+    "--prompt",
+    "List the integers from 1 through 100 in order, separated by commas. The list is:"
+  ],
+  "timeout_s": 1200,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-21T15:43:25.278944+00:00",
+  "cwd": "<private-compact-root>/source/RelicLLM",
+  "timed_out": false,
+  "ownership_token": "<withheld-private-token>",
+  "critical_environment": {
+    "PYTHONPATH": "<private-dependencies-root>/python-packages:<private-compact-root>/source/relic-core:<private-compact-root>/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "<private-compact-root>/tmp",
+    "HOME": "<private-compact-root>/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "<private-compact-root>/cache/ascend",
+    "ASCEND_WORK_PATH": "<private-compact-root>/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "<private-compact-root>/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 3497919,
+  "process_group": 3497919,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 3497919,
+        "starttime": 419089134,
+        "pgid": 3497919,
+        "sid": 3497919,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497929,
+        "starttime": 419089606,
+        "pgid": 3497929,
+        "sid": 3497929,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497930,
+        "starttime": 419089606,
+        "pgid": 3497930,
+        "sid": 3497930,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497931,
+        "starttime": 419089606,
+        "pgid": 3497931,
+        "sid": 3497931,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497932,
+        "starttime": 419089606,
+        "pgid": 3497932,
+        "sid": 3497932,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497933,
+        "starttime": 419089606,
+        "pgid": 3497933,
+        "sid": 3497933,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497934,
+        "starttime": 419089607,
+        "pgid": 3497934,
+        "sid": 3497934,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497935,
+        "starttime": 419089607,
+        "pgid": 3497935,
+        "sid": 3497935,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3497936,
+        "starttime": 419089607,
+        "pgid": 3497936,
+        "sid": 3497936,
+        "state": "Z",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [
+      {
+        "identity": {
+          "pid": 3497934,
+          "starttime": 419089607,
+          "pgid": 3497934,
+          "sid": 3497934,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3497934"
+      }
+    ],
+    "terminal_reconciliations": [
+      {
+        "identity": {
+          "pid": 3497934,
+          "starttime": 419089607,
+          "pgid": 3497934,
+          "sid": 3497934,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3497934",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      }
+    ],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 331.7309026122093,
+  "finished_at": "2026-11-21T15:48:57.009861+00:00"
+}

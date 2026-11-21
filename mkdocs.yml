@@ -150,6 +150,7 @@ nav:
       - Qwen drafter acceptance: performance/qwen_drafter_acceptance.md
       - Ascend original-checkpoint generation: performance/ascend_original_inference.md
       - Ascend exact decode optimization: performance/ascend_decode_optimization.md
+      - Ascend lossless compact FP4 format: performance/ascend_compact_weight_format.md
       - Ascend decode interception seams: performance/ascend_decode_seams.md
       - Ascend original-format experts: performance/ascend_original_experts.md
       - Ascend original-format online unpack: performance/ascend_online_unpack.md

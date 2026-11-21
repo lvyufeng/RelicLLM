@@ -48,6 +48,7 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [Qwen drafter acceptance](https://lvyufeng.github.io/RelicLLM/performance/qwen_drafter_acceptance/)
 - [Ascend original-checkpoint generation](https://lvyufeng.github.io/RelicLLM/performance/ascend_original_inference/)
 - [Ascend exact decode optimization](https://lvyufeng.github.io/RelicLLM/performance/ascend_decode_optimization/)
+- [Ascend lossless compact FP4 format](https://lvyufeng.github.io/RelicLLM/performance/ascend_compact_weight_format/)
 - [Ascend decode interception seams](https://lvyufeng.github.io/RelicLLM/performance/ascend_decode_seams/)
 - [Ascend original-format experts](https://lvyufeng.github.io/RelicLLM/performance/ascend_original_experts/)
 - [Ascend original-format online unpack](https://lvyufeng.github.io/RelicLLM/performance/ascend_online_unpack/)

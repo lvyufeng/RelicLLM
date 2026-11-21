@@ -1,0 +1,14 @@
+{
+  "steps": 16,
+  "excluded_warmups": 4,
+  "context": [
+    24,
+    40
+  ],
+  "critical_rank_seconds": 1.85836367495358,
+  "TPS": 8.609724897038609,
+  "milliseconds_per_token": 116.14772968459874,
+  "same_16_output_prefix_as_64_step_run": true,
+  "packed_expert_payload_bytes_per_rank": 36097228800,
+  "not_a_second_matched_control_pair": true
+}

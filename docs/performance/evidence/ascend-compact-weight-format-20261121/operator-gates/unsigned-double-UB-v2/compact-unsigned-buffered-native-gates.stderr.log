@@ -1,0 +1,1 @@
+[W1121 22:26:49.729654844 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())

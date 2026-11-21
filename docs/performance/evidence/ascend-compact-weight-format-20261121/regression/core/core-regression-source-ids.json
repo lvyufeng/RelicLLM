@@ -1,0 +1,13 @@
+{
+  "project": "core",
+  "directory": "<private-compact-root>/source/relic-core",
+  "test_sources": {
+    "tests/test_cube_packed_format.py": "235fce0aaa44aeee3897cbaebfd59929f98f60427b3cb5ecb469096c94474e89",
+    "tests/test_compact_decode_tables.py": "81280bef2bb7051b0516b1e5b4b5ebf33e1ee9d56ff28ff0663d3fc2b454bf95",
+    "tests/test_prepared_decode_tables.py": "df29e042c1e507f853400da640d05aecc467e3591b08fddafd4ef2ec3f453047",
+    "tests/test_ascendc_online_tile_cube.py": "cc5cd6624834e9b35841a01c21e2973d2507b5a1fa62bec1e4dcdc3205ffe0a7",
+    "tests/test_ascendc_tile_moe.py": "ab091810fcb11c63043e0d3a07a1fdd6324218461ff806d4c659e68139160c0e",
+    "tests/test_expert_tp_moe.py": "9d380abea72dbaf123cb6b29f98bd61629b108db6ebf7fcda3396880a778f992"
+  },
+  "pytest_returncode": 0
+}
