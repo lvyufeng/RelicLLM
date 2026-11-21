@@ -50,7 +50,8 @@ class TileRoutedDispatch(DeviceRoutedDispatch):
         self.workspace = make_tile_moe_workspace(
             first.dim, first.inter_dim, first.topk, device=first.device, max_bytes=self.budget,
             block_dim=self.consumer.block_dim if self.consumer is not None else 24,
-            group_k=self.consumer.group_k if self.consumer is not None else 1)
+            group_k=self.consumer.group_k if self.consumer is not None else 1,
+            weight_rows=getattr(self.consumer, "output_rows", 16))
         if self.capture_graphs:
             from .ascend_graphs import npu_graph_api
             self.graph_api = npu_graph_api()

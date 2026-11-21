@@ -146,7 +146,14 @@ class DeviceRoutedDispatch:
             entry = (graph, staged, captured["result"])
             self.graph_entries[id(store)] = entry
         graph, staged, result = entry
-        for destination, source in zip(staged, (x, weights, indices)):
+        inputs = (x, weights, indices)
+        # Check the entire triple before any copy: a late mismatch must not
+        # partially overwrite a recorded input or silently narrow routing weights.
+        for name, destination, source in zip(("activation", "routing weights", "routing indices"), staged, inputs):
+            if (destination.dtype != source.dtype or destination.shape != source.shape
+                    or destination.device != source.device):
+                raise ValueError(f"device routed graph cannot change captured {name} dtype, shape or device")
+        for destination, source in zip(staged, inputs):
             destination.copy_(source)
         graph.replay()
         return result

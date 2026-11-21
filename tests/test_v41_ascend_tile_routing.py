@@ -81,3 +81,68 @@ def test_multi_layer_tile_workspace_is_shared_and_admitted_before_patching():
     with TileRoutedDispatch([first, second], backend="torch", certified_bf16_operands=True) as binding:
         assert binding.describe()["stores"] == 2
         assert not binding.describe()["resident_weight_bank_duplicated"]
+
+
+class ScratchConsumer:
+    """Only declared geometry is used; these contracts never execute a consumer."""
+
+    def __init__(self, output_rows="legacy", *, group_k=1):
+        self.block_dim = 6
+        self.group_k = group_k
+        if output_rows != "legacy":
+            self.output_rows = output_rows
+
+    def __call__(self, *args, **kwargs):
+        pytest.fail("scratch admission must not execute a native consumer")
+
+
+@pytest.mark.parametrize("rows, expected_rows", [(None, 16), ("legacy", 16), (16, 16), (32, 32)],
+                         ids=["no-consumer", "legacy-consumer", "n16", "n32"])
+def test_tile_scratch_uses_the_declared_consumer_rows(rows, expected_rows):
+    routed, _ = store()
+    original = routed.forward
+    consumer = None if rows is None else ScratchConsumer(rows)
+    with TileRoutedDispatch([routed], consumer=consumer, backend="torch",
+                            certified_bf16_operands=True) as binding:
+        workspace = binding.workspace
+        block_dim = 24 if consumer is None else consumer.block_dim
+        group_k = 1 if consumer is None else consumer.group_k
+        assert workspace.weight_rows == expected_rows
+        assert workspace.weight_storage.shape == (block_dim, 2, expected_rows * 32 * group_k)
+        assert getattr(routed, "_relic_device_selected_moe_owner") is binding
+    assert routed.forward is original
+    assert not hasattr(routed, "_relic_device_selected_moe_owner")
+
+
+@pytest.mark.parametrize("rows, group_k", [(0, 1), (True, 1), (8, 1), (64, 1), (32, 8)],
+                         ids=["zero", "boolean", "n8", "n64", "n32-ring-too-wide"])
+def test_invalid_tile_row_geometry_is_refused_before_store_ownership_changes(rows, group_k):
+    first, _ = store()
+    second, _ = store()
+    originals = (first.forward, second.forward)
+    binding = TileRoutedDispatch([first, second], consumer=ScratchConsumer(rows, group_k=group_k),
+                                backend="torch", certified_bf16_operands=True)
+    with pytest.raises(ValueError, match="geometry"):
+        binding.install()
+    assert not binding.installed and not binding.replacements and binding.workspace is None
+    for routed, original in zip((first, second), originals):
+        assert routed.forward is original
+        assert not hasattr(routed, "_relic_device_selected_moe_owner")
+
+
+def test_n32_workspace_budget_is_checked_before_patching_any_store():
+    control, _ = store()
+    with TileRoutedDispatch([control], consumer=ScratchConsumer(16), backend="torch",
+                            certified_bf16_operands=True) as baseline:
+        n16_budget = baseline.workspace.nbytes
+    first, _ = store()
+    second, _ = store()
+    originals = (first.forward, second.forward)
+    binding = TileRoutedDispatch([first, second], consumer=ScratchConsumer(32), backend="torch",
+                                certified_bf16_operands=True, max_workspace_bytes=n16_budget)
+    with pytest.raises(ValueError, match="budget"):
+        binding.install()
+    assert not binding.installed and not binding.replacements and binding.workspace is None
+    for routed, original in zip((first, second), originals):
+        assert routed.forward is original
+        assert not hasattr(routed, "_relic_device_selected_moe_owner")
