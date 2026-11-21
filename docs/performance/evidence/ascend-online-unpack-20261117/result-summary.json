@@ -11,7 +11,7 @@
     "provider": "Torch composition or optional fused Triton Ascend, selected before execution; compiler errors propagate, no runtime execution-error fallback."
   },
   "verified_stack": {
-    "hardware": "Ascend910B3 on ts-216, driver26.1.0, CANN9.2.0",
+    "hardware": "Ascend910B3 on fleet-host-2, driver26.1.0, CANN9.2.0",
     "torch": "2.10.0+cpu",
     "torch_npu": "2.10.0.post7",
     "torch_lane_python": "3.12.7 (existing private venv unchanged)",
@@ -69,8 +69,8 @@
     "original_checkpoint_unchanged_by_stat_identity_check": true,
     "shared_cann_environment_and_targets_unchanged": true,
     "jenkins_agent_retained": true,
-    "ts216_lease_released_and_absent_after_confirmation": true,
-    "private_root_retained": "/data1/relic-online-unpack-20261117-0534",
+    "fleet-host-2_lease_released_and_absent_after_confirmation": true,
+    "private_root_retained": "<workspace>/relic-online-unpack-20261117-0534",
     "further_compute_requires_new_lease": true
   }
 }

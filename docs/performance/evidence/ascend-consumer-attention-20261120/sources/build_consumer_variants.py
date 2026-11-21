@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 SOURCE = ROOT / "source/relic-core/relic_core/csrc/ascend/online_tile_cube"
 VARIANTS = {"k256": (8, 0), "k128-preload-a": (4, 1), "k256-preload-a": (8, 1)}
 OUTPUT = Path(os.environ["RELIC_PERF_OUTPUT"])

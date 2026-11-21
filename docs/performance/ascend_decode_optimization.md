@@ -8,6 +8,32 @@ host**, allowing a separate opt-in NPU WKV/gating experiment. Native accumulatio
 this new placement are not promoted to the exact production default. The target has **not been
 reached** by the measurements below.
 
+## Published evidence and measurement identities
+
+The public evidence is a **sanitized view of the original captures**, not a new experiment. Home
+and private workspace/checkpoint paths, fleet labels, workstation names and non-standard network
+identifiers are replaced by neutral labels. Loopback, wildcard binds and the standard container
+bridge are retained. Filenames and line endings are unchanged; anchored matching avoids treating a
+date in an artifact filename as a host identifier.
+
+Frozen manifest sizes and SHA-256 values continue to identify the **original measured bytes**. They
+are not recomputed against a sanitized source, log or receipt. The separate
+[publication hash map](<evidence/ascend-publication-sanitization-20261121.json>) records the original
+and current published identities for every changed file, including any sanitized manifest itself.
+A published file without a mapping entry is unchanged. Recorded tensor/checkpoint hashes, token IDs,
+timings, numerical arrays and acceptance counts are preserved.
+
+The [publication checker](https://github.com/lvyufeng/RelicLLM/blob/master/scripts/check_ascend_publication.py)
+verifies current published hashes and resolves every retained manifest entry through that mapping.
+It performs file/metadata checks only, not model execution or accelerator acceptance. Neutral paths
+and host labels in retained driver snapshots must be replaced with newly authorized local values
+before reuse; the snapshots are not portable launch configurations.
+
+The pre-merge scratch-geometry and graph-replay admission fixes have not been rerun on hardware.
+Existing acceptance still applies to its recorded sources and scopes, not automatically to every
+later guard or test addition. Original Git/PR history is not rewritten by this publication cleanup;
+removing historical copies would require a separate, explicitly authorized history operation.
+
 ## Reproducible scope
 
 - Released DeepSeek-V4.1-Flash checkpoint, complete 40-layer text backbone, dense/attention TP8.

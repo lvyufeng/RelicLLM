@@ -12,7 +12,7 @@ from relic_core.kernels.ascendc_online_tile_cube import AscendCTileCubeConsumer
 from relic_core.kernels.online_tile_cube import pack_expert_tile_bank
 from relic_core.kernels.unpack import unpack_fp4_to_int8, fp4_int8_scale
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 OUTPUT = Path(os.environ["RELIC_PERF_OUTPUT"])
 
 

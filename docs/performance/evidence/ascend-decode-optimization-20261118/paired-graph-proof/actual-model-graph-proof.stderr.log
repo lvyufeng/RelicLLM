@@ -512,7 +512,7 @@
 [rank 0] loaded in 19.3 s
 [rank 0] routed experts: AscendPackedRoutedExperts on 40 layers, world 8
 [rank 0] prompt 20 tokens
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [rank 7] layers.19  (445 filled)
 [rank 3] layers.30  (697 filled)
@@ -714,21 +714,21 @@
 [rank 3] loaded in 22.7 s
 [rank 3] routed experts: AscendPackedRoutedExperts on 40 layers, world 8
 [rank 3] prompt 20 tokens
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
-/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   return self._tensor % mod if self._tensor is not None else self._host % mod
 [rank 7] 8 tokens in 192.7 s (24.09 s/token), stopped on fixed_graph_parity_probe
 [rank 7] decode steps: 37.8 s for 8 tokens (4723 ms/token)

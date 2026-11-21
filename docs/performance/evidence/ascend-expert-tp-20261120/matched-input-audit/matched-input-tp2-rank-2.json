@@ -988,7 +988,7 @@
   "single_stream": true,
   "production_defaults_and_serving_guards_unchanged": true,
   "original_complete_model_receipt": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-expert-tp2-forced-host-table-HC-20261120T132926Z/Cube-model-rank-2.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-tp2-forced-host-table-HC-20261120T132926Z/Cube-model-rank-2.json",
     "bytes": 108669,
     "sha256": "e88bb107852199d7deea3bbe7e0ffddf962f1299edb1d91b003db226e736a831"
   },

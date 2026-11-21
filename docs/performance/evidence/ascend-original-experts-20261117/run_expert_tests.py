@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import sys
 
-ROOT = Path("/data1/relic-expert-gemm-20261117-1046")
+ROOT = Path("<workspace>/relic-expert-gemm-20261117-1046")
 SAFETY_SHA = "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a"
 
 

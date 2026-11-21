@@ -18,7 +18,7 @@ from relicllm.models.deepseek_v4_1.ascend_graphs import _record, npu_graph_api
 from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, scale_key
 from probe_online_tile_cube import CopyAudit
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 OUTPUT = Path(os.environ["RELIC_PERF_OUTPUT"])
 OLD = ROOT / "cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so"
 OLD_SHA = "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287"
@@ -134,7 +134,7 @@ def main():
         json.dump(validations, stream, indent=2)
     print(json.dumps({"dynamic_validation": validations}), flush=True)
     # Actual checkpoint bytes, not a random-weight performance proxy.
-    checkpoint = V41Checkpoint("/data1/relic-v41-20261116-210/checkpoint", device="cpu")
+    checkpoint = V41Checkpoint("<checkpoint>", device="cpu")
     records = []
     try:
         for projection in ("w1", "w3", "w2"):

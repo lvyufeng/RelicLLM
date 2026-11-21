@@ -436,7 +436,7 @@
     12
   ],
   "original_raw_model_receipt": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-4.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-4.json",
     "sha256": "4c54592a380b25f3c40703b09c83785d7e9f2667cae691ba5e54c5972b9dd73a",
     "bytes": 113299
   }

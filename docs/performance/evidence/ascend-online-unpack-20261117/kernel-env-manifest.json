@@ -3,23 +3,23 @@
   "owner": "kernel-env-v2",
   "generated_at_utc": "2026-11-16T23:33:32.625897+00:00",
   "status": "READY (patched) - venv311 installed, ABI-proven, CANN 9.x host-driver patch applied and bootstrap-proven; no device op by env agent",
-  "remote_root": "/data1/relic-online-unpack-20261117-0534",
+  "remote_root": "<workspace>/relic-online-unpack-20261117-0534",
   "python": {
-    "interpreter": "/data1/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "interpreter": "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
     "version": "3.11.18",
     "abi": "cp311",
-    "prefix": "/data1/relic-online-unpack-20261117-0534/venv311",
-    "base_prefix": "/data1/relic-online-unpack-20261117-0534/python311-base/python",
-    "bootstrap_receipt": "/data1/relic-online-unpack-20261117-0534/logs/private-python311-bootstrap.json",
+    "prefix": "<workspace>/relic-online-unpack-20261117-0534/venv311",
+    "base_prefix": "<workspace>/relic-online-unpack-20261117-0534/python311-base/python",
+    "bootstrap_receipt": "<workspace>/relic-online-unpack-20261117-0534/logs/private-python311-bootstrap.json",
     "archive_bytes": 31154065,
     "archive_sha256": "7e71f26a003949b57757e287f4f4b6689da07e7a229f5bbee7919c19ed77155d"
   },
   "environment_script": {
-    "path_on_host": "/data1/relic-online-unpack-20261117-0534/source/kernel-env-scripts/env311.sh",
+    "path_on_host": "<workspace>/relic-online-unpack-20261117-0534/source/kernel-env-scripts/env311.sh",
     "local_source": ".coord/kernel-env-scripts/env311.sh",
     "sha256": "0cbf2450f5df278a973d4715f77327881e91f896d98c70c006fe4521666027a9"
   },
-  "wheel_dir_on_host": "/data1/relic-online-unpack-20261117-0534/wheels311",
+  "wheel_dir_on_host": "<workspace>/relic-online-unpack-20261117-0534/wheels311",
   "wheel_count": 21,
   "wheel_bytes": 266078040,
   "wheels": [
@@ -219,31 +219,31 @@
       "pybind11": "3.1.0"
     },
     "module_origins": {
-      "torch": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/__init__.py",
-      "torch_npu": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch_npu/__init__.py",
-      "triton": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/__init__.py",
-      "numpy": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/numpy/__init__.py",
-      "yaml": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/yaml/__init__.py",
-      "filelock": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/filelock/__init__.py",
-      "fsspec": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/fsspec/__init__.py",
-      "jinja2": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/jinja2/__init__.py",
-      "markupsafe": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/markupsafe/__init__.py",
-      "mpmath": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/mpmath/__init__.py",
-      "networkx": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/networkx/__init__.py",
-      "sympy": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/sympy/__init__.py",
-      "pytest": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/pytest/__init__.py",
-      "safetensors": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/safetensors/__init__.py",
-      "pybind11": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/pybind11/__init__.py"
+      "torch": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/__init__.py",
+      "torch_npu": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch_npu/__init__.py",
+      "triton": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/__init__.py",
+      "numpy": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/numpy/__init__.py",
+      "yaml": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/yaml/__init__.py",
+      "filelock": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/filelock/__init__.py",
+      "fsspec": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/fsspec/__init__.py",
+      "jinja2": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/jinja2/__init__.py",
+      "markupsafe": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/markupsafe/__init__.py",
+      "mpmath": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/mpmath/__init__.py",
+      "networkx": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/networkx/__init__.py",
+      "sympy": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/sympy/__init__.py",
+      "pytest": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/pytest/__init__.py",
+      "safetensors": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/safetensors/__init__.py",
+      "pybind11": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/pybind11/__init__.py"
     },
     "sys_path": [
-      "/data1/relic-online-unpack-20261117-0534/source/kernel-env-scripts",
-      "/data1/relic-online-unpack-20261117-0534/python-packages311",
+      "<workspace>/relic-online-unpack-20261117-0534/source/kernel-env-scripts",
+      "<workspace>/relic-online-unpack-20261117-0534/python-packages311",
       "/usr/local/Ascend/cann-9.2.0/python/site-packages",
       "/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
-      "/data1/relic-online-unpack-20261117-0534/python311-base/python/lib/python311.zip",
-      "/data1/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11",
-      "/data1/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11/lib-dynload",
-      "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages"
+      "<workspace>/relic-online-unpack-20261117-0534/python311-base/python/lib/python311.zip",
+      "<workspace>/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11",
+      "<workspace>/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11/lib-dynload",
+      "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages"
     ],
     "cann_read_only_python_paths_present": [
       "/usr/local/Ascend/cann-9.2.0/python/site-packages",
@@ -289,11 +289,11 @@
     "Triton's ascend backend is a mapping key in triton.backends.backends, not an attribute of the module."
   ],
   "receipts_on_host": [
-    "/data1/relic-online-unpack-20261117-0534/logs/private-python311-bootstrap.json",
-    "/data1/relic-online-unpack-20261117-0534/logs/wheels311-fetch-20261116T232603Z.json",
-    "/data1/relic-online-unpack-20261117-0534/logs/kernel-env311-install-20261116T233300Z.json",
-    "/data1/relic-online-unpack-20261117-0534/logs/kernel-env311-install-runner.log",
-    "/data1/relic-online-unpack-20261117-0534/logs/final-npu-smi-presence.log"
+    "<workspace>/relic-online-unpack-20261117-0534/logs/private-python311-bootstrap.json",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/wheels311-fetch-20261116T232603Z.json",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/kernel-env311-install-20261116T233300Z.json",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/kernel-env311-install-runner.log",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/final-npu-smi-presence.log"
   ],
   "receipt_files_local": {
     "install": ".coord/kernel-env-scripts/receipt-install-20261116T233300Z.json",
@@ -302,23 +302,23 @@
   "isolation_guarantees": {
     "shared_environment_modified": false,
     "old_cpython312_venv_modified": false,
-    "old_venv_path": "/data1/relic-v41-20261116-210/venv (CPython 3.12, untouched)",
+    "old_venv_path": "<workspace>/relic-v41-20261116-210/venv (CPython 3.12, untouched)",
     "shared_cann_conda_jenkins_touched": false,
-    "separate_package_root": "/data1/relic-online-unpack-20261117-0534/python-packages311",
+    "separate_package_root": "<workspace>/relic-online-unpack-20261117-0534/python-packages311",
     "pythonpath_replaced_not_appended": true
   },
   "usage": {
-    "shell": "source /data1/relic-online-unpack-20261117-0534/source/kernel-env-scripts/env311.sh",
+    "shell": "source <workspace>/relic-online-unpack-20261117-0534/source/kernel-env-scripts/env311.sh",
     "python": "$RELIC_KERNEL_PY (== .../venv311/bin/python)",
     "note": "One visible NPU (ASCEND_RT_VISIBLE_DEVICES=0). Do not point CPython 3.12 at this site-packages."
   },
   "triton_cann92_compat": {
     "applied": true,
-    "file": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+    "file": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
     "original_sha256": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
     "patched_sha256": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
-    "backup": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel",
-    "rollback_command": "cp -p /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp && sha256sum /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+    "backup": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel",
+    "rollback_command": "cp -p <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp && sha256sum <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
     "enum_substitution": null,
     "real_bootstrap_proof": true,
     "receipt": "FINAL-compat-receipt.json"

@@ -21,7 +21,7 @@ def main():
     device = torch.device("npu:0")
     torch.npu.set_device(device)
     output = Path(os.environ["RELIC_PERF_OUTPUT"])
-    checkpoint = V41Checkpoint("/data1/relic-v41-20261116-210/checkpoint")
+    checkpoint = V41Checkpoint("<checkpoint>")
     records = []
     for key in ("layers.0.ffn.experts.0.w1.weight", "layers.0.ffn.experts.0.w2.weight"):
         raw = checkpoint.packed(key).view(torch.uint8).to(device)

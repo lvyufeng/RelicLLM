@@ -943,7 +943,7 @@
     ]
   },
   "direct_original_consumer": {
-    "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build/lib/librelic_online_tile_cube.so",
+    "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build/lib/librelic_online_tile_cube.so",
     "sha256": "094d79b3e30aa945bb4f2dcc7de7106f6de1a64c081ca0bb003cc75588ece81d",
     "AIV_to_small_GM_ring_to_L1_to_AIC": true,
     "original_K32_blocks_per_Cube_tile": 4,
@@ -1118,7 +1118,7 @@
   ],
   "production_defaults_and_serving_guards_unchanged": true,
   "original_complete_artifact": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-n32-generated-steps64-20261121T060035Z/Cube-model-rank-5.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-n32-generated-steps64-20261121T060035Z/Cube-model-rank-5.json",
     "bytes": 111303,
     "sha256": "21e4eb19992e19688ddb53a5057a041fd5b1f1c823ffaf893501d1fb819be3fb"
   }

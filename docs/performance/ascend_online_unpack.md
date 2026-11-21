@@ -1,5 +1,9 @@
 # Online original-format weight unpack on Ascend
 
+> Publication note: [the evidence publication policy](ascend_decode_optimization.md#published-evidence-and-measurement-identities)
+> explains neutral paths/host labels and the separate original/published hash map. Publication cleanup
+> does not rerun the recorded measurements.
+
 The new byte-level operators live in relic-core, not in the model runtime. They decode the original
 released FP8/E8M0 payload to BF16, and widen original packed E2M1 values exactly to INT8 multiplied
 by two with the original scale divided by two. No row-wise amax requantization or offline
@@ -35,7 +39,7 @@ bytes remain unchanged.
 
 ## Measured acceptance so far
 
-On leased ts-216, Ascend 910B3 with PyTorch **2.10.0** and torch_npu **2.10.0.post7**:
+On leased fleet-host-2, Ascend 910B3 with PyTorch **2.10.0** and torch_npu **2.10.0.post7**:
 
 - Core Torch/NPU unpack tests: **68 passed, zero skips**, 6.64 s. These include all 256 packed FP4
   bytes, all 65,536 E4M3/E8M0 code pairs, signed zeros, NaN classification, subnormal output, layouts,
@@ -137,10 +141,10 @@ unchanged shared CANN environment/link targets, and the same resident Jenkins pr
 [final NPU snapshot](evidence/ascend-online-unpack-20261117/final-operator-npu-smi.log)
 shows healthy idle cards and no running NPU processes on all eight. No shared cache deletion,
 driver reset, Jenkins stop or CANN reinstall was used. The private compatibility patch and both
-private Python environments remain under `/data1/relic-online-unpack-20261117-0534`.
+private Python environments remain under `<workspace>/relic-online-unpack-20261117-0534`.
 
-`ts_release(host="ts-216")` returned `released: true`; an immediate lease-list read confirmed
-[ts-216 absent](evidence/ascend-online-unpack-20261117/lease-release.json). Other agents' leases were
+`ts_release(host="fleet-host-2")` returned `released: true`; an immediate lease-list read confirmed
+[fleet-host-2 absent](evidence/ascend-online-unpack-20261117/lease-release.json). Other agents' leases were
 left untouched. Future NPU work requires a new lease even though the private files remain.
 
 ## Chitu findings and semantic limits

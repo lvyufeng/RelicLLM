@@ -1,5 +1,9 @@
 # Original-format experts on Ascend 910B
 
+> Publication note: [the evidence publication policy](ascend_decode_optimization.md#published-evidence-and-measurement-identities)
+> explains neutral paths/host labels and the separate original/published hash map. Publication cleanup
+> does not rerun the recorded measurements.
+
 This continues [online original-format unpack](ascend_online_unpack.md) with actual expert execution.
 It does **not** replace the released checkpoint with W8A8/W4A8 weights or INT8 activations, and it
 does not claim native FP4/FP8 arithmetic. The new kernels live in relic-core; RelicLLM owns the
@@ -48,7 +52,7 @@ refused by name. Existing CPU/CUDA bodies and the serving capability gate remain
 
 ## Actual acceptance
 
-The leased host was **ts-216 / Ascend910B3 / CANN 9.2.0 / driver 26.1.0**. All hardware tests used
+The leased host was **fleet-host-2 / Ascend910B3 / CANN 9.2.0 / driver 26.1.0**. All hardware tests used
 **torch 2.10.0+cpu / torch_npu 2.10.0.post7** in the retained private **CPython 3.11.18 / Triton Ascend
 3.2.0** environment. The private host-driver compatibility patch from the online-unpack run remains
 necessary and documented there; no stock-wheel or cross-ABI claim is made.

@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import sys
 
-ROOT=Path("/data1/relic-expert-gemm-20261117-1046")
+ROOT=Path("<workspace>/relic-expert-gemm-20261117-1046")
 
 
 def main():

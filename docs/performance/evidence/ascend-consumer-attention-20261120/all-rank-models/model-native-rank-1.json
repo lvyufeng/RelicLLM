@@ -414,7 +414,7 @@
     0
   ],
   "original_complete_model_receipt": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-consumer-native-host-table-HC-20261120T105952Z/Cube-model-rank-1.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-native-host-table-HC-20261120T105952Z/Cube-model-rank-1.json",
     "sha256": "8dc0e48fb3ed598135262c654ef44f8d2431e1659be0a22a448b5ccf3c1f3153",
     "bytes": 113467
   },

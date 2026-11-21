@@ -1032,7 +1032,7 @@
   ],
   "production_defaults_and_serving_guards_unchanged": true,
   "original_model_artifact": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-1.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-1.json",
     "bytes": 110517,
     "sha256": "c59aadf4b7deaac0c1f2d6a468bee7a1edfcccc2151db423d39d80bcab2a2f7c"
   }

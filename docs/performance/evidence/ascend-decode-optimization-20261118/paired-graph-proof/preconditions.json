@@ -1,14 +1,14 @@
 {
   "command": [
-    "/data1/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
     "-m",
     "torch.distributed.run",
     "--standalone",
     "--nnodes=1",
     "--nproc-per-node=8",
-    "/data1/relic-v41-perf-20261118-0938/source/profile_actual_graph.py",
+    "<workspace>/relic-v41-perf-20261118-0938/source/profile_actual_graph.py",
     "--checkpoint",
-    "/data1/relic-v41-20261116-210/checkpoint",
+    "<checkpoint>",
     "--expert-device",
     "npu:0",
     "--expert-world",

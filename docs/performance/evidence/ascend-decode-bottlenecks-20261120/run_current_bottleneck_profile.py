@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import sys
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 LEASE_END = dt.datetime.fromisoformat("2026-11-20T05:37:45+00:00")
 LIMIT = 900
 HELPER_SHA = "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a"
@@ -60,7 +60,7 @@ def main():
         env.update(DEEPSEEK_V41_ASCEND_TILE_MAJOR="1", RELIC_EXPERT_PROJECTION="loader")
     command = [sys.executable, "-m", "torch.distributed.run", "--standalone", "--nnodes=1", "--nproc-per-node=8",
                str(ROOT / "source/profile_current_bottlenecks.py"),
-               "--checkpoint", "/data1/relic-v41-20261116-210/checkpoint", "--expert-device", "npu:0",
+               "--checkpoint", "<checkpoint>", "--expert-device", "npu:0",
                "--expert-world", "8", "--expert-pool-rows", "0", "--expert-hot-rows", "0",
                "--no-expert-batched", "--expert-deal", "id", "--no-decode-graphs", "--threads", "4",
                "--max-seq-len", "128", "--max-new-tokens", "16", "--temperature", "0", "--prompt",

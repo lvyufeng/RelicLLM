@@ -3,13 +3,13 @@
   "generated_at_utc": "2026-11-16T23:51:47.252429+00:00",
   "status": "APPLIED to the private venv311 only; patched source compiles standalone and through the real NPUUtils bootstrap; feature stays unavailable; awaiting root compiled tests",
   "scope": {
-    "file_patched": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
-    "backup": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel",
+    "file_patched": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+    "backup": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel",
     "original_sha256": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
     "patched_sha256": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
     "files_touched": [
-      "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
-      "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel"
+      "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+      "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel"
     ],
     "cann_headers_libraries_touched": false,
     "torch_or_torch_npu_touched": false,
@@ -52,13 +52,13 @@
     "standalone_original_reproduces_defect": true,
     "standalone_patched_compiles": true,
     "installed_path_recompile": {
-      "command": "g++ -std=c++17 -fPIC -c /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp -o /data1/relic-online-unpack-20261117-0534/tmp/npu_utils_installed.o -I /data1/relic-online-unpack-20261117-0534/python311-base/python/include/python3.11 -I /usr/local/Ascend/cann-9.2.0/aarch64-linux/pkg_inc",
+      "command": "g++ -std=c++17 -fPIC -c <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp -o <workspace>/relic-online-unpack-20261117-0534/tmp/npu_utils_installed.o -I <workspace>/relic-online-unpack-20261117-0534/python311-base/python/include/python3.11 -I /usr/local/Ascend/cann-9.2.0/aarch64-linux/pkg_inc",
       "returncode": 0,
       "object_bytes": 419656,
       "stderr_sha256": "f20973679a8477b2b582f145d4774f0e59d4d66527f778552c9d647c5c1b7347"
     },
     "real_bootstrap_passed": true,
-    "bootstrap_module_file": "/data1/relic-online-unpack-20261117-0534/cache/triton/9RKlB4eemkLAgxHoO8wCDA/npu_utils.so",
+    "bootstrap_module_file": "<workspace>/relic-online-unpack-20261117-0534/cache/triton/9RKlB4eemkLAgxHoO8wCDA/npu_utils.so",
     "warp_stack_size_behaviour": {
       "raises": "NotImplementedError",
       "message": "WARP_STACK_SIZE is unsupported: the installed CANN runtime does not declare RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE"
@@ -70,7 +70,7 @@
     "device_work_performed": false,
     "kernel_launch_performed": false
   },
-  "rollback_command": "cp -p /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp && sha256sum /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+  "rollback_command": "cp -p <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp && sha256sum <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
   "artifacts_local": {
     "npu_utils.cpp.orig": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
     "npu_utils.cpp.patched": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
@@ -85,9 +85,9 @@
     "driver-bootstrap-proof.log": "756a36dd6c0df03dadaad70ca022372602eda9afd16fa1f79e4d3e1b630d53df"
   },
   "host_receipts": [
-    "/data1/relic-online-unpack-20261117-0534/logs/triton-cann92-compat.json",
-    "/data1/relic-online-unpack-20261117-0534/logs/driver-bootstrap-proof.log",
-    "/data1/relic-online-unpack-20261117-0534/logs/kernel-env311-install-20261116T233300Z.json"
+    "<workspace>/relic-online-unpack-20261117-0534/logs/triton-cann92-compat.json",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/driver-bootstrap-proof.log",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/kernel-env311-install-20261116T233300Z.json"
   ],
   "environment_manifest": ".coord/kernel-env-manifest.json (unchanged wheel set; this receipt supersedes the patch state)"
 }

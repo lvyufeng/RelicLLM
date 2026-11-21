@@ -99,5 +99,5 @@
   "captured_expected": 36.0,
   "captured_value_correct": true,
   "eager_value": 36.0,
-  "output": "/data1/relic-v41-perf-20261118-0938/logs/reduce-floor-correct-20261119T071414Z"
+  "output": "<workspace>/relic-v41-perf-20261118-0938/logs/reduce-floor-correct-20261119T071414Z"
 }

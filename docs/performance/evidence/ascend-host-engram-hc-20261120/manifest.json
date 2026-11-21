@@ -350,12 +350,12 @@
     "tests/test_hc_decode_fold.py": {
       "sha256": "0fdd27391422d3a03b62d669df41c45c926cea2e74581f97c25c4fb1ca0b5f28",
       "bytes": 3413,
-      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_hc_decode_fold.py"
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_hc_decode_fold.py"
     },
     "tests/test_original_fp8_engram.py": {
       "sha256": "fdea8853ef577bd3ef305014a2ee6bf916c07a32a2f47e0679edee9d5bdec4fc",
       "bytes": 4998,
-      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_original_fp8_engram.py"
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_original_fp8_engram.py"
     },
     "tests/test_v41_ascend_device_engram.py": {
       "sha256": "97f57bf1999f6adaf3c27cccb005802289ddd39fdcaa0d727c80aec722af524e",

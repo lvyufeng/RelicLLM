@@ -27,9 +27,9 @@ from relicllm.models.deepseek_v4_1.config import load_config, resolve_config
 from relicllm.models.deepseek_v4_1.engram import EngramLayout
 from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, CheckpointEngramTable, scale_key
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 OUTPUT = Path(os.environ["RELIC_PERF_OUTPUT"])
-CHECKPOINT = Path("/data1/relic-v41-20261116-210/checkpoint")
+CHECKPOINT = Path("<checkpoint>")
 
 
 class MiniEngramModel(nn.Module):

@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import zipfile
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 DEST = ROOT / "logs/expert-TP2-EP4-evidence-20261120-v1.zip"
 
 

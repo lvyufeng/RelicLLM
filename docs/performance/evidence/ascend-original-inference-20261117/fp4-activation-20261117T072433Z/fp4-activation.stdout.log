@@ -21,7 +21,7 @@ scale_format = 'e8m0'
 
 tests/test_block_fp4_quant.py:503: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
     return func(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
@@ -29,7 +29,7 @@ relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
     block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -132,7 +132,7 @@ kwargs = {'debug': False}
                     f"Global variable {name} has changed since we compiled this kernel, from {val} to {newVal}")
 E               RuntimeError: Global variable _NAN has changed since we compiled this kernel, from constexpr[nan] to constexpr[nan]
 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
 ________ test_npu_nonfinite_inplace_writes_nan_like_the_reference[e4m3] ________
 
 scale_format = 'e4m3'
@@ -154,7 +154,7 @@ scale_format = 'e4m3'
 
 tests/test_block_fp4_quant.py:503: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
     return func(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
@@ -162,7 +162,7 @@ relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
     block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -265,7 +265,7 @@ kwargs = {'debug': False}
                     f"Global variable {name} has changed since we compiled this kernel, from {val} to {newVal}")
 E               RuntimeError: Global variable _NAN has changed since we compiled this kernel, from constexpr[nan] to constexpr[nan]
 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
 _________ test_npu_inplace_matches_the_reference_dequantization[e8m0] __________
 
 scale_format = 'e8m0'
@@ -285,7 +285,7 @@ scale_format = 'e8m0'
 
 tests/test_block_fp4_quant.py:542: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
     return func(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
@@ -293,7 +293,7 @@ relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
     block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -396,7 +396,7 @@ kwargs = {'debug': False}
                     f"Global variable {name} has changed since we compiled this kernel, from {val} to {newVal}")
 E               RuntimeError: Global variable _NAN has changed since we compiled this kernel, from constexpr[nan] to constexpr[nan]
 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
 _________ test_npu_inplace_matches_the_reference_dequantization[e4m3] __________
 
 scale_format = 'e4m3'
@@ -416,7 +416,7 @@ scale_format = 'e4m3'
 
 tests/test_block_fp4_quant.py:542: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
     return func(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
@@ -424,7 +424,7 @@ relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
     block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in <lambda>
     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -527,5 +527,5 @@ kwargs = {'debug': False}
                     f"Global variable {name} has changed since we compiled this kernel, from {val} to {newVal}")
 E               RuntimeError: Global variable _NAN has changed since we compiled this kernel, from constexpr[nan] to constexpr[nan]
 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:672: RuntimeError
 4 failed, 61 passed in 66.55s (0:01:06)

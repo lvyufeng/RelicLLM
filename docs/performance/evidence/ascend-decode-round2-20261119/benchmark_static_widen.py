@@ -19,7 +19,7 @@ def main():
     torch.npu.set_device(device)
     out=Path(os.environ["RELIC_PERF_OUTPUT"])
     all_bytes=torch.arange(256,dtype=torch.int64).to(torch.uint8).reshape(16,16)
-    checkpoint=V41Checkpoint("/data1/relic-v41-20261116-210/checkpoint")
+    checkpoint=V41Checkpoint("<checkpoint>")
     raw=checkpoint.packed("layers.0.ffn.experts.0.w1.weight").view(torch.uint8).to(device)
     expected=unpack_fp4_to_int8(raw,backend="triton")
     tiny_expected=unpack_fp4_to_int8(all_bytes,backend="torch")

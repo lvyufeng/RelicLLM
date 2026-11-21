@@ -11,7 +11,7 @@
       ],
       "BF16_bit_differences": 0,
       "operator": {
-        "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build/lib/librelic_online_tile_cube.so",
+        "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build/lib/librelic_online_tile_cube.so",
         "sha256": "ad08f3f08a5c41f5ec4d29d77e63235f1c536b0295475d176638eb49ee8e33db",
         "AIV_to_small_GM_ring_to_L1_to_AIC": true,
         "original_K32_blocks_per_Cube_tile": 4,
@@ -43,7 +43,7 @@
       ],
       "BF16_bit_differences": 0,
       "operator": {
-        "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build/lib/librelic_online_tile_cube.so",
+        "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build/lib/librelic_online_tile_cube.so",
         "sha256": "192a35ed93ab591c2420b9f3857e24a64fcec771883ab3e51c8e9d12c7ead4a0",
         "AIV_to_small_GM_ring_to_L1_to_AIC": true,
         "original_K32_blocks_per_Cube_tile": 4,
@@ -959,7 +959,7 @@
   ],
   "build": {
     "k128-prepared-float": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build/lib/librelic_online_tile_cube.so",
       "sha256": "ad08f3f08a5c41f5ec4d29d77e63235f1c536b0295475d176638eb49ee8e33db",
       "group_k": 4,
       "direct_bits": false,
@@ -969,13 +969,13 @@
         "CMakeLists.txt": "86be2c39ec75f4edf5313f6208220b592400fa518e0e42354b0fcf6c7a949662",
         "kernel_entry.cpp.in": "399be95050a81365e43d5042e97e9a92101383b58bed6652814e01b481b5f33c"
       },
-      "source_snapshot": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/source",
+      "source_snapshot": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/source",
       "configure_command": [
         "cmake",
         "-S",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/source",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/source",
         "-B",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build",
         "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
         "-DSOC_VERSION=Ascend910B3",
         "-DRUN_MODE=npu",
@@ -988,7 +988,7 @@
       "original_binaries_unchanged": true
     },
     "k128-prepared-bits": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build/lib/librelic_online_tile_cube.so",
       "sha256": "192a35ed93ab591c2420b9f3857e24a64fcec771883ab3e51c8e9d12c7ead4a0",
       "group_k": 4,
       "direct_bits": true,
@@ -998,13 +998,13 @@
         "CMakeLists.txt": "86be2c39ec75f4edf5313f6208220b592400fa518e0e42354b0fcf6c7a949662",
         "kernel_entry.cpp.in": "399be95050a81365e43d5042e97e9a92101383b58bed6652814e01b481b5f33c"
       },
-      "source_snapshot": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/source",
+      "source_snapshot": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/source",
       "configure_command": [
         "cmake",
         "-S",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/source",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/source",
         "-B",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build",
         "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
         "-DSOC_VERSION=Ascend910B3",
         "-DRUN_MODE=npu",

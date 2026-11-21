@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = Path("/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack")
+CORE = Path("/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack")
 AUDIT = ROOT / ".coord/consumer-attention-audit-20261120T110608Z"
 DEST = ROOT / "docs/performance/evidence/ascend-consumer-attention-20261120"
 
@@ -52,7 +52,7 @@ def main():
     pointer = ROOT / ".coord/consumer-model-source-snapshots"
     preconditions = json.loads((pointer / "preconditions.json").read_bytes())
     snapshots = pointer / "source-snapshots"
-    private_source = Path("/data1/relic-v41-perf-20261118-0938/source")
+    private_source = Path("<workspace>/relic-v41-perf-20261118-0938/source")
     for path in sorted(snapshots.rglob("*")):
         if not path.is_file():
             continue
@@ -94,7 +94,7 @@ def main():
         relative = "safety/" + name
         staged[relative] = (json.dumps(row, indent=2) + "\n").encode()
         origins[relative] = str(path.relative_to(ROOT))
-    release = {"host": "ts-216", "released": True, "detail": "lease dropped",
+    release = {"host": "fleet-host-2", "released": True, "detail": "lease dropped",
                "confirmed_by": "ts-fleet-bridge.ts_release after final idle/checkpoint/CANN/CI safety receipt"}
     staged["safety/lease-release.json"] = (json.dumps(release, indent=2) + "\n").encode()
     origins["safety/lease-release.json"] = "confirmed tool result"

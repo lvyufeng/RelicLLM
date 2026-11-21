@@ -1,13 +1,13 @@
 {
   "source_hashes": {
-    "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/decode_block_gemv.py": "a69626576d234b3a3048b9b1c0e356f93848a8ed261be7e65721215f78bed0eb",
-    "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/cpu_block_gemv.py": "25ee771c0944e2a3480286ecdc2e9f8e7af7a6a6922ac2f3d7a29dcce0f62f83",
-    "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/_ascend_decode_block_gemv_kernels.py": "3c76a65075f938fbb77e5472b80209238e50566dff85a8703929d1873413f9b2",
-    "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/csrc/cpu_block_gemv.cpp": "37b0bc205316b4f956dc79df1e72b2c6e79c3ffc25a24ddfca25ef4366ddeb31"
+    "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/decode_block_gemv.py": "a69626576d234b3a3048b9b1c0e356f93848a8ed261be7e65721215f78bed0eb",
+    "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/cpu_block_gemv.py": "25ee771c0944e2a3480286ecdc2e9f8e7af7a6a6922ac2f3d7a29dcce0f62f83",
+    "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/_ascend_decode_block_gemv_kernels.py": "3c76a65075f938fbb77e5472b80209238e50566dff85a8703929d1873413f9b2",
+    "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/csrc/cpu_block_gemv.cpp": "37b0bc205316b4f956dc79df1e72b2c6e79c3ffc25a24ddfca25ef4366ddeb31"
   },
   "command": [
-    "/data1/relic-online-unpack-20261117-0534/venv311/bin/python",
-    "/data1/relic-v41-perf-20261118-0938/source/benchmark_exact_gemv.py",
+    "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "<workspace>/relic-v41-perf-20261118-0938/source/benchmark_exact_gemv.py",
     "--mode",
     "cpu"
   ],

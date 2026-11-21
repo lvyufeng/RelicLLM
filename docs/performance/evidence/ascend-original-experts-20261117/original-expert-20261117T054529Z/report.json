@@ -3,7 +3,7 @@
   "torch": "2.10.0+cpu",
   "torch_npu": "2.10.0.post7",
   "device": "Ascend910B3",
-  "checkpoint": "/data1/relic-v41-20261116-210/checkpoint",
+  "checkpoint": "<checkpoint>",
   "rows": 1,
   "expert_ids": [
     0,
@@ -13,15 +13,15 @@
   "dim": 5120,
   "inter_dim": 2304,
   "tested_source_hashes": {
-    "/data1/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/block_gemm.py": "496892b936bbb1798f072fd498b24d7039b9115886cbe72963b4c2e08e15f712",
-    "/data1/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/_ascend_block_gemm_kernels.py": "4e1f0c1e72db5370e3e9b46de8d382a408e0c007c31e2a902ad25d531ca43adf",
-    "/data1/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/block_fp8_quant.py": "036bb3b52c98bd602ad4612e2a4070514ddd5901b29cf8f7c4870c772370f7bc",
-    "/data1/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/_ascend_fp8_quant_kernels.py": "033b66eeabdc64940763d13d1431cb07a0e5644a8083fed25ecac5ad945bcfa2",
-    "/data1/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_experts.py": "e917f0e93ce0aebbaf6f4a51c381c6d7f557fcbe13dc5cb79a772624b0c43800",
-    "/data1/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_linear.py": "461e258a21c972203d49a8da047fc54971500f25daab7634cb98abad38162aac",
-    "/data1/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py": "56b4b488556c01cf57d2b1784135cbe004952ed26c626e8863ccfb03bb81184d",
-    "/data1/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/kernels.py": "75e7c48447d05afd700c9e50a35318dfe22e95b4430283188264398574c09ad0",
-    "/data1/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/mma.py": "6bd8d98ef0a7c50811c700b2f11b5b2d8c1ff12706dcacc25ddb95ab465ef552"
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/block_gemm.py": "496892b936bbb1798f072fd498b24d7039b9115886cbe72963b4c2e08e15f712",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/_ascend_block_gemm_kernels.py": "4e1f0c1e72db5370e3e9b46de8d382a408e0c007c31e2a902ad25d531ca43adf",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/block_fp8_quant.py": "036bb3b52c98bd602ad4612e2a4070514ddd5901b29cf8f7c4870c772370f7bc",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/_ascend_fp8_quant_kernels.py": "033b66eeabdc64940763d13d1431cb07a0e5644a8083fed25ecac5ad945bcfa2",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_experts.py": "e917f0e93ce0aebbaf6f4a51c381c6d7f557fcbe13dc5cb79a772624b0c43800",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_linear.py": "461e258a21c972203d49a8da047fc54971500f25daab7634cb98abad38162aac",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py": "56b4b488556c01cf57d2b1784135cbe004952ed26c626e8863ccfb03bb81184d",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/kernels.py": "75e7c48447d05afd700c9e50a35318dfe22e95b4430283188264398574c09ad0",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/mma.py": "6bd8d98ef0a7c50811c700b2f11b5b2d8c1ff12706dcacc25ddb95ab465ef552"
   },
   "warm_iterations": 10,
   "cpu_warm_median_seconds": 0.5886818333528936,

@@ -26,7 +26,7 @@ import os
 from pathlib import Path
 import subprocess
 
-ROOT = Path("/data1/relic-online-unpack-20261117-0534")
+ROOT = Path("<workspace>/relic-online-unpack-20261117-0534")
 TARGET = ROOT / "venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp"
 BACKUP_NAME = "npu_utils.cpp.orig.wheel"
 COMPAT = ROOT / "source/kernel-env-scripts/triton-cann92-compat"

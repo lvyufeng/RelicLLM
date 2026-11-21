@@ -10,7 +10,7 @@ import sys
 
 import run_device_engram_trial as base
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 
 
 def main():

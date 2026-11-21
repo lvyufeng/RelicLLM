@@ -17,8 +17,8 @@ from relicllm.models.deepseek_v4_1.ascend_graphs import _record, npu_graph_api
 from relicllm.models.deepseek_v4_1.config import load_config, resolve_config
 from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
-ROOT = Path('/data1/relic-v41-perf-20261118-0938')
-CHECKPOINT = '/data1/relic-v41-20261116-210/checkpoint'
+ROOT = Path('<workspace>/relic-v41-perf-20261118-0938')
+CHECKPOINT = '<checkpoint>'
 OUTPUT = Path(os.environ['RELIC_PERF_OUTPUT'])
 
 

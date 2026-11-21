@@ -414,7 +414,7 @@
     "original_tile_bank_duplicated": false,
     "global_expanded_weight_scratch_bytes": 393216,
     "native_consumer": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
       "sha256": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
       "AIV_to_small_GM_ring_to_L1_to_AIC": true,
       "original_K32_blocks_per_Cube_tile": 8,
@@ -440,7 +440,7 @@
   ],
   "expert_body_graph_teacher_FP32_bit_differences": null,
   "original_complete_model_receipt": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-consumer-k256-host-table-HC-20261120T104030Z/Cube-model-rank-0.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-k256-host-table-HC-20261120T104030Z/Cube-model-rank-0.json",
     "sha256": "f15943ef585866c8527fd90e478dd7586f93aa0454430d789873979e616f8e37",
     "bytes": 105141
   },

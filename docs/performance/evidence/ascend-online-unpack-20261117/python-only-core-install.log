@@ -1,7 +1,7 @@
 Processing ./.
   Preparing metadata (pyproject.toml): started
   Preparing metadata (pyproject.toml): finished with status 'done'
-  /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+  <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
   !!
   
           ********************************************************************************
@@ -15,7 +15,7 @@ Processing ./.
   
   !!
     corresp(dist, value, root_dir)
-  /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:61: BuildBackendWarning: License classifiers are deprecated.
+  <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:61: BuildBackendWarning: License classifiers are deprecated.
   !!
   
           ********************************************************************************
@@ -28,7 +28,7 @@ Processing ./.
   
   !!
     dist._finalize_license_expression()
-  /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/dist.py:765: BuildBackendWarning: License classifiers are deprecated.
+  <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/dist.py:765: BuildBackendWarning: License classifiers are deprecated.
   !!
   
           ********************************************************************************
@@ -44,7 +44,7 @@ Processing ./.
 Building wheels for collected packages: relic-core
   Building wheel for relic-core (pyproject.toml): started
   Building wheel for relic-core (pyproject.toml): finished with status 'done'
-  /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+  <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
   !!
   
           ********************************************************************************
@@ -58,7 +58,7 @@ Building wheels for collected packages: relic-core
   
   !!
     corresp(dist, value, root_dir)
-  /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:61: BuildBackendWarning: License classifiers are deprecated.
+  <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:61: BuildBackendWarning: License classifiers are deprecated.
   !!
   
           ********************************************************************************
@@ -71,7 +71,7 @@ Building wheels for collected packages: relic-core
   
   !!
     dist._finalize_license_expression()
-  /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/dist.py:765: BuildBackendWarning: License classifiers are deprecated.
+  <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/setuptools/dist.py:765: BuildBackendWarning: License classifiers are deprecated.
   !!
   
           ********************************************************************************
@@ -85,7 +85,7 @@ Building wheels for collected packages: relic-core
   !!
     self._finalize_license_expression()
   Created wheel for relic-core: filename=relic_core-0.1.0.dev0-py3-none-any.whl size=34609 sha256=09cb707a972f787f0501e01545579f9a8c33f10470848ea1e3017cfc1d9a0f57
-  Stored in directory: /data1/relic-online-unpack-20261117-0534/tmp/pip-ephem-wheel-cache-chi1asp7/wheels/d1/72/32/891f4ec7cc3089af0003fbb250f297e8d83c77650ce18e8c01
+  Stored in directory: <workspace>/relic-online-unpack-20261117-0534/tmp/pip-ephem-wheel-cache-chi1asp7/wheels/d1/72/32/891f4ec7cc3089af0003fbb250f297e8d83c77650ce18e8c01
 Successfully built relic-core
 Installing collected packages: relic-core
 Successfully installed relic-core-0.1.0.dev0

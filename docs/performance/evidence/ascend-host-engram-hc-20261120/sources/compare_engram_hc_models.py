@@ -13,7 +13,7 @@ from pathlib import Path
 
 import torch
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938/logs")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938/logs")
 DIRECTORIES = {
     "host": ROOT / "original-host-table-host-engram-native-baseline-20261120T074354Z",
     "device": ROOT / "original-host-table-device-engram-native-baseline-20261120T073354Z",

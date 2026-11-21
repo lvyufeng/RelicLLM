@@ -429,7 +429,7 @@
     0
   ],
   "original_complete_model_receipt": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-consumer-native-reuse-host-table-HC-20261120T105304Z/Cube-model-rank-7.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-native-reuse-host-table-HC-20261120T105304Z/Cube-model-rank-7.json",
     "sha256": "293827b4f4e992668696eab4c2ba5bd6c9a135cde21c049c7af8546c659db615",
     "bytes": 114040
   },

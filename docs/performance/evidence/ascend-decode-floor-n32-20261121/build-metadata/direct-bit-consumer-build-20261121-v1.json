@@ -1,8 +1,8 @@
 {
-  "report": "/data1/relic-v41-perf-20261118-0938/logs/build-original-direct-bit-consumers-20261121T031623Z/direct-bit-consumer-build.json",
+  "report": "<workspace>/relic-v41-perf-20261118-0938/logs/build-original-direct-bit-consumers-20261121T031623Z/direct-bit-consumer-build.json",
   "variants": {
     "k128-direct-bits": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
       "sha256": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765",
       "group_k": 4,
       "direct_bits": true,
@@ -15,7 +15,7 @@
       "no_original_binary_overwrite": true
     },
     "k256-direct-bits": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
       "sha256": "83b91e5740ddc92003871908cd69517c8e5d7a9e6dadfffcd75aae8d87ba3510",
       "group_k": 8,
       "direct_bits": true,

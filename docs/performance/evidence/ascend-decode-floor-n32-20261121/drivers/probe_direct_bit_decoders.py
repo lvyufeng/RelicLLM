@@ -18,7 +18,7 @@ from relicllm.models.deepseek_v4_1.ascend_graphs import _record, npu_graph_api
 from relicllm.models.deepseek_v4_1.loader import V41Checkpoint, scale_key
 from probe_online_tile_cube import CopyAudit
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 OUTPUT = Path(os.environ["RELIC_PERF_OUTPUT"])
 
 
@@ -132,7 +132,7 @@ def main():
         dynamic.append({"K": k, "N": n, "shared": shared, "variants": list(states),
                         "changing_replays": 32, "BF16_bit_differences": 0, "routing_D2H_calls": 0,
                         "invalid_sources_and_scales_poisoned": True})
-    checkpoint = V41Checkpoint("/data1/relic-v41-20261116-210/checkpoint", device="cpu")
+    checkpoint = V41Checkpoint("<checkpoint>", device="cpu")
     real = []
     try:
         for projection in ("w1", "w3", "w2"):

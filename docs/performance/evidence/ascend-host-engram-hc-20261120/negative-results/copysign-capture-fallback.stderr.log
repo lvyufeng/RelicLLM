@@ -75,29 +75,29 @@ TraceBack (most recent call last):
 , graph_id=281470673194160, stream=<torch_npu.npu.Stream device=npu:0 npu_stream=0xaaaae7023628>, pool=((0, 1),), device=0
 NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
 [rank0]: Traceback (most recent call last):
-[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank0]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank0]:     main()
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank0]:     return func(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank0]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank0]:     actual = manager._forward(entry, x, ids, mask)
 [rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank0]:     return func(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank0]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank0]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank0]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank0]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank0]:     body()
-[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank0]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank0]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank0]:                                   ^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank0]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank0]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank0]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank0]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank0]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank0]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank0]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -109,29 +109,29 @@ NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynam
 [rank0]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
 
 [rank5]: Traceback (most recent call last):
-[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank5]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank5]:     main()
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank5]:     return func(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank5]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank5]:     actual = manager._forward(entry, x, ids, mask)
 [rank5]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank5]:     return func(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank5]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank5]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank5]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank5]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank5]:     body()
-[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank5]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank5]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank5]:                                   ^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank5]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank5]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank5]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank5]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank5]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank5]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank5]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -143,29 +143,29 @@ NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynam
 [rank5]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
 
 [rank3]: Traceback (most recent call last):
-[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank3]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank3]:     main()
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank3]:     return func(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank3]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank3]:     actual = manager._forward(entry, x, ids, mask)
 [rank3]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank3]:     return func(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank3]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank3]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank3]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank3]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank3]:     body()
-[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank3]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank3]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank3]:                                   ^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank3]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank3]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank3]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank3]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank3]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank3]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank3]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -177,29 +177,29 @@ NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynam
 [rank3]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
 
 [rank2]: Traceback (most recent call last):
-[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank2]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank2]:     main()
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank2]:     return func(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank2]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank2]:     actual = manager._forward(entry, x, ids, mask)
 [rank2]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank2]:     return func(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank2]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank2]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank2]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank2]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank2]:     body()
-[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank2]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank2]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank2]:                                   ^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank2]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank2]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank2]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank2]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank2]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank2]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank2]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -211,29 +211,29 @@ NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynam
 [rank2]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
 
 [rank4]: Traceback (most recent call last):
-[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank4]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank4]:     main()
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank4]:     return func(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank4]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank4]:     actual = manager._forward(entry, x, ids, mask)
 [rank4]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank4]:     return func(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank4]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank4]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank4]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank4]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank4]:     body()
-[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank4]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank4]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank4]:                                   ^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank4]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank4]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank4]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank4]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank4]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank4]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank4]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -245,29 +245,29 @@ NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynam
 [rank4]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
 
 [rank7]: Traceback (most recent call last):
-[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank7]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank7]:     main()
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank7]:     return func(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank7]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank7]:     actual = manager._forward(entry, x, ids, mask)
 [rank7]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank7]:     return func(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank7]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank7]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank7]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank7]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank7]:     body()
-[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank7]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank7]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank7]:                                   ^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank7]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank7]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank7]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank7]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank7]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank7]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank7]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -279,29 +279,29 @@ NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynam
 [rank7]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
 
 [rank6]: Traceback (most recent call last):
-[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank6]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank6]:     main()
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank6]:     return func(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank6]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank6]:     actual = manager._forward(entry, x, ids, mask)
 [rank6]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank6]:     return func(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank6]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank6]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank6]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank6]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank6]:     body()
-[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank6]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank6]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank6]:                                   ^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank6]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank6]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank6]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank6]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank6]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank6]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank6]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -313,29 +313,29 @@ NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynam
 [rank6]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
 
 [rank1]: Traceback (most recent call last):
-[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank1]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
 [rank1]:     main()
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank1]:     return func(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank1]:   File "<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
 [rank1]:     actual = manager._forward(entry, x, ids, mask)
 [rank1]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank1]:     return func(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank1]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
 [rank1]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank1]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank1]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
 [rank1]:     body()
-[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank1]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
 [rank1]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
 [rank1]:                                   ^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank1]:   File "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
 [rank1]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
 [rank1]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank1]:   File "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
 [rank1]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
 [rank1]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 [rank1]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
@@ -353,74 +353,74 @@ W1120 14:32:39.704000 3187966 torch/distributed/elastic/multiprocessing/api.py:1
 W1120 14:32:39.704000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187981 closing signal SIGTERM
 W1120 14:32:39.705000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187982 closing signal SIGTERM
 W1120 14:32:39.705000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187983 closing signal SIGTERM
-E1120 14:32:40.221000 3187966 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 4 (pid: 3187980) of binary: /data1/relic-online-unpack-20261117-0534/venv311/bin/python
+E1120 14:32:40.221000 3187966 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 4 (pid: 3187980) of binary: <workspace>/relic-online-unpack-20261117-0534/venv311/bin/python
 Traceback (most recent call last):
   File "<frozen runpy>", line 198, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
     main()
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
     return f(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
     run(args)
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
     elastic_launch(
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
     return launch_agent(self._config, self._entrypoint, list(args))
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
     raise ChildFailedError(
 torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
 ============================================================
-/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py FAILED
+<workspace>/relic-v41-perf-20261118-0938/source/probe_device_engram.py FAILED
 ------------------------------------------------------------
 Failures:
 [1]:
   time      : 2026-11-20_14:32:40
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 0 (local_rank: 0)
   exitcode  : -15 (pid: 3187976)
   error_file: <N/A>
   traceback : Signal 15 (SIGTERM) received by PID 3187976
 [2]:
   time      : 2026-11-20_14:32:40
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 1 (local_rank: 1)
   exitcode  : -15 (pid: 3187977)
   error_file: <N/A>
   traceback : Signal 15 (SIGTERM) received by PID 3187977
 [3]:
   time      : 2026-11-20_14:32:40
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 2 (local_rank: 2)
   exitcode  : -15 (pid: 3187978)
   error_file: <N/A>
   traceback : Signal 15 (SIGTERM) received by PID 3187978
 [4]:
   time      : 2026-11-20_14:32:40
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 3 (local_rank: 3)
   exitcode  : -15 (pid: 3187979)
   error_file: <N/A>
   traceback : Signal 15 (SIGTERM) received by PID 3187979
 [5]:
   time      : 2026-11-20_14:32:40
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 5 (local_rank: 5)
   exitcode  : 1 (pid: 3187981)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [6]:
   time      : 2026-11-20_14:32:40
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 6 (local_rank: 6)
   exitcode  : -15 (pid: 3187982)
   error_file: <N/A>
   traceback : Signal 15 (SIGTERM) received by PID 3187982
 [7]:
   time      : 2026-11-20_14:32:40
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 7 (local_rank: 7)
   exitcode  : -15 (pid: 3187983)
   error_file: <N/A>
@@ -429,7 +429,7 @@ Failures:
 Root Cause (first observed failure):
 [0]:
   time      : 2026-11-20_14:32:39
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 4 (local_rank: 4)
   exitcode  : 1 (pid: 3187980)
   error_file: <N/A>

@@ -33,10 +33,10 @@ kwargs = {'backend': 'triton', 'out': tensor([-85., -85., -85.,  ..., -85., -85.
                    ^^^^^^^^^^^^^^^^^^^^^
 E           TypeError: fp4_int8_scale() got an unexpected keyword argument 'out'
 
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: TypeError
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: TypeError
 =============================== warnings summary ===============================
 tests/test_online_unpack.py::test_frontend_torch_chunks_cross_matrix_and_batch_boundaries
-  /data1/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py:251: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  <workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py:251: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
     row = (indices // columns) % rows
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

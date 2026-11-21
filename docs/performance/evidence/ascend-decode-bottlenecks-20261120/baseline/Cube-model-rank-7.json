@@ -4057,7 +4057,7 @@
   "kernel_profile_not_a_TPS_window": {
     "rank": 7,
     "all_ranks_profiled": true,
-    "profile_directory": "/data1/relic-v41-perf-20261118-0938/logs/current-bottleneck-baseline-20261120T035802Z/profiler-rank7",
+    "profile_directory": "<workspace>/relic-v41-perf-20261118-0938/logs/current-bottleneck-baseline-20261120T035802Z/profiler-rank7",
     "steps": 4,
     "context_start": 24,
     "context_end": 28,
@@ -4069,7 +4069,7 @@
     ],
     "same_token_ids_as_uninstrumented_window": true,
     "profile_wall_ms_per_forward": 181.84946663677692,
-    "event_scope_receipt": "/data1/relic-v41-perf-20261118-0938/logs/current-bottleneck-baseline-20261120T035802Z/decode-scopes-rank-7.json",
+    "event_scope_receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/current-bottleneck-baseline-20261120T035802Z/decode-scopes-rank-7.json",
     "note": "actual captured graph and routed path; kernel/dependency attribution, not a TPS window"
   },
   "expert_projection_source": "native_Cube",

@@ -1,6 +1,6 @@
 {
-  "first_attempt": "/data1/relic-v41-infer-20261117-1424/logs/inference-20261117T075737Z",
-  "second_attempt": "/data1/relic-v41-infer-20261117-1424/logs/inference-20261117T084542Z",
+  "first_attempt": "<workspace>/relic-v41-infer-20261117-1424/logs/inference-20261117T075737Z",
+  "second_attempt": "<workspace>/relic-v41-infer-20261117-1424/logs/inference-20261117T084542Z",
   "first_token_ids": [
     11111,
     16,

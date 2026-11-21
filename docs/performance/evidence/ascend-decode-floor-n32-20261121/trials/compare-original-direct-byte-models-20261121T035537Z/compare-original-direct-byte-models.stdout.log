@@ -1,7 +1,7 @@
 {
   "modes": {
     "old": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z",
       "slowest_rank_seconds": 2.470898433122784,
       "batch_one_single_request_TPS": 6.4753774519897185,
       "context": [
@@ -73,7 +73,7 @@
       "isolated_FFN_layer_sum_not_model_critical_path": true
     },
     "bits": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-bits-generated-20261121T034301Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-bits-generated-20261121T034301Z",
       "slowest_rank_seconds": 2.628096621017903,
       "batch_one_single_request_TPS": 6.088056227477264,
       "context": [

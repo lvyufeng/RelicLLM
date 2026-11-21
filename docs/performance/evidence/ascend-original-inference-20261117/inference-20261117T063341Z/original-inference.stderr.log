@@ -2,92 +2,92 @@
 [rank0]: Traceback (most recent call last):
 [rank0]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank0]:   File "<frozen runpy>", line 88, in _run_code
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank0]:     sys.exit(main())
 [rank0]:              ^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank0]:     from transformers import AutoTokenizer
 [rank0]: ModuleNotFoundError: No module named 'transformers'
 [rank4]: Traceback (most recent call last):
 [rank4]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank4]:   File "<frozen runpy>", line 88, in _run_code
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank4]:     sys.exit(main())
 [rank4]:              ^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank4]:     from transformers import AutoTokenizer
 [rank4]: ModuleNotFoundError: No module named 'transformers'
 [rank7]: Traceback (most recent call last):
 [rank7]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank7]:   File "<frozen runpy>", line 88, in _run_code
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank7]:     sys.exit(main())
 [rank7]:              ^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank7]:     from transformers import AutoTokenizer
 [rank7]: ModuleNotFoundError: No module named 'transformers'
 [rank1]: Traceback (most recent call last):
 [rank1]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank1]:   File "<frozen runpy>", line 88, in _run_code
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank1]:     sys.exit(main())
 [rank1]:              ^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank1]:     from transformers import AutoTokenizer
 [rank1]: ModuleNotFoundError: No module named 'transformers'
 [rank2]: Traceback (most recent call last):
 [rank2]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank2]:   File "<frozen runpy>", line 88, in _run_code
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank2]:     sys.exit(main())
 [rank2]:              ^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank2]:     from transformers import AutoTokenizer
 [rank2]: ModuleNotFoundError: No module named 'transformers'
 [rank3]: Traceback (most recent call last):
 [rank3]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank3]:   File "<frozen runpy>", line 88, in _run_code
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank3]:     sys.exit(main())
 [rank3]:              ^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank3]:     from transformers import AutoTokenizer
 [rank3]: ModuleNotFoundError: No module named 'transformers'
 [rank6]: Traceback (most recent call last):
 [rank6]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank6]:   File "<frozen runpy>", line 88, in _run_code
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank6]:     sys.exit(main())
 [rank6]:              ^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank6]:     from transformers import AutoTokenizer
 [rank6]: ModuleNotFoundError: No module named 'transformers'
 [rank5]: Traceback (most recent call last):
 [rank5]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank5]:   File "<frozen runpy>", line 88, in _run_code
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank5]:     sys.exit(main())
 [rank5]:              ^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 502, in main
 [rank5]:     from transformers import AutoTokenizer
 [rank5]: ModuleNotFoundError: No module named 'transformers'
-E1117 14:34:41.569000 2444052 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 0 (pid: 2444062) of binary: /data1/relic-online-unpack-20261117-0534/venv311/bin/python
+E1117 14:34:41.569000 2444052 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 0 (pid: 2444062) of binary: <workspace>/relic-online-unpack-20261117-0534/venv311/bin/python
 Traceback (most recent call last):
   File "<frozen runpy>", line 198, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
     main()
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
     return f(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
     run(args)
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
     elastic_launch(
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
     return launch_agent(self._config, self._entrypoint, list(args))
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
     raise ChildFailedError(
 torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
 ============================================================
@@ -96,49 +96,49 @@ relicllm.cli.generate_v41 FAILED
 Failures:
 [1]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 1 (local_rank: 1)
   exitcode  : 1 (pid: 2444063)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [2]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 2 (local_rank: 2)
   exitcode  : 1 (pid: 2444064)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [3]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 3 (local_rank: 3)
   exitcode  : 1 (pid: 2444065)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [4]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 4 (local_rank: 4)
   exitcode  : 1 (pid: 2444066)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [5]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 5 (local_rank: 5)
   exitcode  : 1 (pid: 2444067)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [6]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 6 (local_rank: 6)
   exitcode  : 1 (pid: 2444068)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [7]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 7 (local_rank: 7)
   exitcode  : 1 (pid: 2444069)
   error_file: <N/A>
@@ -147,7 +147,7 @@ Failures:
 Root Cause (first observed failure):
 [0]:
   time      : 2026-11-17_14:34:41
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 0 (local_rank: 0)
   exitcode  : 1 (pid: 2444062)
   error_file: <N/A>

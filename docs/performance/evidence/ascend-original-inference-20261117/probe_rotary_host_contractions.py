@@ -11,7 +11,7 @@ import struct
 
 import torch
 
-ROOT = Path("/data1/relic-v41-infer-20261117-1424")
+ROOT = Path("<workspace>/relic-v41-infer-20261117-1424")
 
 
 def f32(value):

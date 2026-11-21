@@ -9,14 +9,14 @@ import os
 from pathlib import Path
 import subprocess
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
-CHECKPOINT = Path("/data1/relic-v41-20261116-210/checkpoint")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
+CHECKPOINT = Path("<checkpoint>")
 SAFETY_SHA = "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a"
 CANN_SHA = "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12"
 
 
 def main():
-    if subprocess.check_output(["hostname"], text=True).strip() != "ascend216":
+    if subprocess.check_output(["hostname"], text=True).strip() != "fleet-host-2":
         raise RuntimeError("the authenticated control channel reached a different host")
     source = ROOT / "source/bounded_task.py"
     if hashlib.sha256(source.read_bytes()).hexdigest() != SAFETY_SHA:
@@ -49,7 +49,7 @@ def main():
             private.append({"pid": int(proc.name), "command": argv.replace(b"\0", b" ").decode()})
     if private:
         raise RuntimeError("private Python jobs remain: " + str(private))
-    baseline = json.loads(Path("/data1/relic-v41-20261116-210/logs/model-attempts/original-fp4-fp8-tp8-verified/preconditions.json").read_bytes())["checkpoint_stats"]
+    baseline = json.loads(Path("<workspace>/relic-v41-20261116-210/logs/model-attempts/original-fp4-fp8-tp8-verified/preconditions.json").read_bytes())["checkpoint_stats"]
     current = {}
     for name in baseline:
         st = (CHECKPOINT / name).stat()
@@ -67,7 +67,7 @@ def main():
     if npu.count("No running processes found in NPU") != 8:
         raise RuntimeError("not all eight NPU process tables are empty")
     report = {"timestamp_UTC": dt.datetime.now(dt.timezone.utc).isoformat(),
-              "hostname": "ascend216", "private_live_jobs": [], "private_job_receipts": receipts,
+              "hostname": "fleet-host-2", "private_live_jobs": [], "private_job_receipts": receipts,
               "all_eight_NPU_process_tables_empty": True, "checkpoint_stat_identity_unchanged": True,
               "checkpoint_files_compared": len(current), "no_new_full_checkpoint_checksum_claim": True,
               "CANN_env_sha256": cann, "CANN_links": links,

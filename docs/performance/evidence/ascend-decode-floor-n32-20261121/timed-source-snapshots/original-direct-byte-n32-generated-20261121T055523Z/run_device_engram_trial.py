@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import sys
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 LEASE_END = dt.datetime.fromisoformat("2026-11-20T09:54:06+00:00")
 LIMIT = 900
 HELPER_SHA = "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a"
@@ -56,7 +56,7 @@ def main():
                DEEPSEEK_V41_CPU_GEMV_IMPL="raw_simd", DEEPSEEK_V41_CPU_GEMV_THREADS="96", DEEPSEEK_V41_ENGRAM_RANK0="1",
                RELIC_CPU_RAW_SIMD_GEMV_CACHE=str(ROOT / "cache/cpu"), RELIC_CPU_GEMV_CACHE=str(ROOT / "cache/cpu"))
     command = [sys.executable, "-m", "torch.distributed.run", "--standalone", "--nnodes=1", "--nproc-per-node=8",
-               str(ROOT / "source/profile_device_engram.py"), "--checkpoint", "/data1/relic-v41-20261116-210/checkpoint",
+               str(ROOT / "source/profile_device_engram.py"), "--checkpoint", "<checkpoint>",
                "--expert-device", "npu:0", "--expert-world", "8", "--expert-pool-rows", "0", "--expert-hot-rows", "0",
                "--no-expert-batched", "--expert-deal", "id", "--no-decode-graphs", "--threads", "4",
                "--max-seq-len", "128", "--max-new-tokens", str(steps), "--temperature", "0", "--prompt",

@@ -13,7 +13,7 @@
       ],
       "BF16_bit_differences": 0,
       "operator": {
-        "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build/lib/librelic_online_tile_cube.so",
+        "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build/lib/librelic_online_tile_cube.so",
         "sha256": "094d79b3e30aa945bb4f2dcc7de7106f6de1a64c081ca0bb003cc75588ece81d",
         "AIV_to_small_GM_ring_to_L1_to_AIC": true,
         "original_K32_blocks_per_Cube_tile": 4,
@@ -676,7 +676,7 @@
   ],
   "build": {
     "k128-prepared-n32": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build/lib/librelic_online_tile_cube.so",
       "sha256": "094d79b3e30aa945bb4f2dcc7de7106f6de1a64c081ca0bb003cc75588ece81d",
       "group_k": 4,
       "direct_bits": false,
@@ -687,13 +687,13 @@
         "CMakeLists.txt": "7c5488bf01dd9214d902f116a2e5036f5dbd50768caa56e0328fbf78fd62c0d4",
         "kernel_entry.cpp.in": "468083f065fecacbeee849646582dbe061a5650cbb5e74bfbe7746a7f925fed0"
       },
-      "source_snapshot": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/source",
+      "source_snapshot": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/source",
       "configure_command": [
         "cmake",
         "-S",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/source",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/source",
         "-B",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build",
         "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
         "-DSOC_VERSION=Ascend910B3",
         "-DRUN_MODE=npu",

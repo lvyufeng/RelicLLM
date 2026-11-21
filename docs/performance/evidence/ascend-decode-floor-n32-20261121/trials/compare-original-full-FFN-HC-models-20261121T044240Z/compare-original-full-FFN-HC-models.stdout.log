@@ -1,7 +1,7 @@
 {
   "modes": {
     "old-generated": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z",
       "wall_seconds": 2.470898433122784,
       "ms_per_forward": 154.431152070174,
       "real_generation_TPS": 6.4753774519897185,
@@ -29,7 +29,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "HC-generated": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z",
       "wall_seconds": 2.431752739008516,
       "ms_per_forward": 151.98454618803225,
       "real_generation_TPS": 6.579616316798551,
@@ -57,7 +57,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "global-generated": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z",
       "wall_seconds": 2.467105132061988,
       "ms_per_forward": 154.19407075387426,
       "real_generation_TPS": 6.485333677948017,
@@ -85,7 +85,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "old-matched": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z",
       "wall_seconds": 2.457627146039158,
       "ms_per_forward": 153.60169662744738,
       "real_generation_TPS": null,
@@ -130,7 +130,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "HC-matched": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z",
       "wall_seconds": 2.439139728900045,
       "ms_per_forward": 152.44623305625282,
       "real_generation_TPS": null,
@@ -175,7 +175,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "global-matched": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z",
       "wall_seconds": 2.454421598929912,
       "ms_per_forward": 153.4013499331195,
       "real_generation_TPS": null,

@@ -1,7 +1,7 @@
 {
   "modes": {
     "old-generated": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z",
       "wall_seconds": 2.470898433122784,
       "ms_per_forward": 154.431152070174,
       "real_generation_TPS": 6.4753774519897185,
@@ -29,7 +29,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "HC-generated": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z",
       "wall_seconds": 2.431752739008516,
       "ms_per_forward": 151.98454618803225,
       "real_generation_TPS": 6.579616316798551,
@@ -57,7 +57,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "global-generated": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z",
       "wall_seconds": 2.467105132061988,
       "ms_per_forward": 154.19407075387426,
       "real_generation_TPS": 6.485333677948017,
@@ -85,7 +85,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "old-matched": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z",
       "wall_seconds": 2.457627146039158,
       "ms_per_forward": 153.60169662744738,
       "real_generation_TPS": null,
@@ -130,7 +130,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "HC-matched": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z",
       "wall_seconds": 2.439139728900045,
       "ms_per_forward": 152.44623305625282,
       "real_generation_TPS": null,
@@ -175,7 +175,7 @@
       "teacher_original_exact_8_greedy_match": true
     },
     "global-matched": {
-      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z",
+      "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z",
       "wall_seconds": 2.454421598929912,
       "ms_per_forward": 153.4013499331195,
       "real_generation_TPS": null,
@@ -1268,579 +1268,579 @@
   "HC_projection_and_global_FP32_addition_order_are_explicit_reduction_experiments": true,
   "small_teacher_window_not_general_quality_acceptance": true,
   "artifact_hashes": {
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-0.json": {
       "bytes": 109303,
       "sha256": "50692caa1f66afbf624e3c8ade23c53aadb8ea5db3748db256964fb80d59dd99"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-0.pt": {
       "bytes": 8276029,
       "sha256": "6adaf6b54325be09245833b42fabc451af7ad03d6a25a33a9a6fbf2745e0603b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-0.pt": {
       "bytes": 518880,
       "sha256": "96cab6cb2568455b21895fbb5e66f52a286cff1900c5e0c007f963f7e773333b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-1.json": {
       "bytes": 109304,
       "sha256": "99c3173673f532e90821b9bed2edede127013f32655f2d6f1ee5114c02f48519"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-1.pt": {
       "bytes": 8276029,
       "sha256": "2d36968054cda27ce43dff11fc789dc9dff0da530f19de18f2edc729fdf2d82f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-1.pt": {
       "bytes": 518880,
       "sha256": "669f3599e619f7d2342707d42641f97cb2d3054a54bbc1ad99515e8038e97740"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-2.json": {
       "bytes": 109305,
       "sha256": "aabf1ff5eea8ee845ce547c79a86ae3aa1225e19e2f22a6d0b8613d4a88906eb"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-2.pt": {
       "bytes": 8276029,
       "sha256": "029507cb1db7d066779557c145100f4e67725ce50037f49ce12469b303259a0d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-2.pt": {
       "bytes": 518880,
       "sha256": "c69bfa7846102e52c233dca663390bd275a6f8f15bba28e4a545af4c31fc2103"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-3.json": {
       "bytes": 109307,
       "sha256": "07db8085f60bf124487e72a1e72d01eb369cccc3ba8880d52b35696a3fd6c9e2"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-3.pt": {
       "bytes": 8276029,
       "sha256": "71c94a380c910a27dfe17f59c5b0b6253cb96e5ec3277c866c6ab7f177d846a6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-3.pt": {
       "bytes": 518880,
       "sha256": "7fead8a17fb23b0cec86e9e3c536c09affdbe8a9de187ac9b3c1b83bfac3b242"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-4.json": {
       "bytes": 109310,
       "sha256": "57dad89a9ff0c85d056ecf9e2a6b306f64f5cba372cee92830a9ec768b84a4e5"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-4.pt": {
       "bytes": 8276029,
       "sha256": "f24d51fa69c274148f2054ad25d67c49a7bd216b87dd2b853cde1b257abcd680"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-4.pt": {
       "bytes": 518880,
       "sha256": "ec83d25d7eb7ce5c97b002161f0b97985ae89ab8da914710fc4a4bc8f21d1d3c"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-5.json": {
       "bytes": 109309,
       "sha256": "197fda4d712447ac6d016ed4c5f89d53c0182a9d46af16483b032f9062b3dbc2"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-5.pt": {
       "bytes": 8276029,
       "sha256": "59bab2d9519e2c6f9b5e03d739ca7b5599b643f633b923ce9d2779001ee3a5a0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-5.pt": {
       "bytes": 518880,
       "sha256": "efdfaf6dd508607304abe2daeb66910318f9214c843750f00461fa1dc72cd97a"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-6.json": {
       "bytes": 109306,
       "sha256": "844b57741b701563efa05259ed89d681b4e799960c574b18d8ef405b765b64ec"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-6.pt": {
       "bytes": 8276029,
       "sha256": "aff755ac4f25e47c1726364de0f6195e000e46c58a04853a1a88761f6ea3a3fd"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-6.pt": {
       "bytes": 518880,
       "sha256": "1768798100dbff90d04c68ee554d8a37e82a64068cc635681e4a2083861875ab"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-7.json": {
       "bytes": 109304,
       "sha256": "c303730bfa4bd6aa6e7ff67446ecdc9b818d98dc2e09538ca30fbe2489faab04"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-quality-logits-rank-7.pt": {
       "bytes": 8276029,
       "sha256": "adb36ff1125de2e10fc6dcd7ede27f403cd8e7a7769aa4465918f29cef1decdc"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-final-logits-rank-7.pt": {
       "bytes": 518880,
       "sha256": "1a311f8d3021e72f7c0c408c4435a89d2b3c493198bfe906cd08d4de2fffc949"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-0.json": {
       "bytes": 109057,
       "sha256": "876a81f93656b477bf498709812820683646d161b1fe74c0031715a6214f621f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-0.pt": {
       "bytes": 8276029,
       "sha256": "04607f7d961d6121babfedd3d7de4e43f860e2b097464b2b23600ad39bad55b1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-0.pt": {
       "bytes": 518880,
       "sha256": "88f0eabae304dd9d83923b4a6bea4f38678e21ed11777aba9799e28c5af35acc"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-1.json": {
       "bytes": 109053,
       "sha256": "dafe094af21cc0f712e0a912c4f2b03917156c942add42c304176375d0bc31c1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-1.pt": {
       "bytes": 8276029,
       "sha256": "1a9e59141827b90d3eff130b5a1c1bc13daa592a0babde994096043db7c663b1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-1.pt": {
       "bytes": 518880,
       "sha256": "165f2dc6242a4eb95d596631bb03855f9d8eb2ba85f72e6ac47550fb03b0db9e"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-2.json": {
       "bytes": 109055,
       "sha256": "898ffa1c20c966d63c46f8d3406470fc576de61cf86398171d9dedc520b72fba"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-2.pt": {
       "bytes": 8276029,
       "sha256": "85d76153ba2bab5561f960bd5fa2fe8db2197d8e313a36c34efc162aac9945e0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-2.pt": {
       "bytes": 518880,
       "sha256": "2a54a51dc5d84b579ae232840b8cb2c059d710e6fb1f3c0b7d3f29aa6444140d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-3.json": {
       "bytes": 109048,
       "sha256": "84881e801b994feb230560112ccca57342834ac3bc4b7bfa742e65478583657f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-3.pt": {
       "bytes": 8276029,
       "sha256": "03996baff9b5d3a45b4a6a6c226917e2a48b786ef110c2376ee9b674cad43357"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-3.pt": {
       "bytes": 518880,
       "sha256": "6c9283b06ad0952bb8292a6af50b3ad55314f1baf521bc7860af11b5b08f87a0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-4.json": {
       "bytes": 109049,
       "sha256": "b663a1b6c959d348a3863991cd3c5e3ca971284e532feda27e6890664ae341f6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-4.pt": {
       "bytes": 8276029,
       "sha256": "ddd25a88d19204642fed2f34e7ac7f8fd6acd9b3b764e736fbca0bd98d79d8ce"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-4.pt": {
       "bytes": 518880,
       "sha256": "7bc6590ba57c8685a0791cef3a93a381cd5ca9046f3af05b28fa7e8c8bca7272"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-5.json": {
       "bytes": 109052,
       "sha256": "06ee59bb2ee2fbe2cb8b6c0cd317e5425aa84a0f6a6ed1fb7402a06881100193"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-5.pt": {
       "bytes": 8276029,
       "sha256": "ce9219e7cf0529b94f37ac6b994c5cdabda5e57f7f313786f8c6c498c5017e1d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-5.pt": {
       "bytes": 518880,
       "sha256": "6b447df9e0db0a06fa9ba398a6cf1019f1ec76608b1331b4dce10f2b3e4671e7"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-6.json": {
       "bytes": 109051,
       "sha256": "e249d8d5225a844485312ce0838d7d3da2ea4f6d3a9b8e6761f21d3e2af7e6c7"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-6.pt": {
       "bytes": 8276029,
       "sha256": "336a05577fa1a55fb2123ee361d0fad9e2c7b6fc9a79cff614870fc99c0fb9fd"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-6.pt": {
       "bytes": 518880,
       "sha256": "d7b5a6b6c80aba14f40c031f59cf0e6470502752a5f002d7a69940ab73ac3a71"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-model-rank-7.json": {
       "bytes": 109050,
       "sha256": "04d4ebfc2cfc536f1c8107f42714cc66df05a3c7c33ef8aa5bb7e7f2ab3631cf"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-quality-logits-rank-7.pt": {
       "bytes": 8276029,
       "sha256": "11fdfef104e1fe7e20e770073345d84989043827651ee6d8d84ff4213e2ffc46"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z/Cube-final-logits-rank-7.pt": {
       "bytes": 518880,
       "sha256": "ee10fab6a37caa6f4f3e10bcf09e64b62eca782c30d1ff17ab8ebdb71246d0fd"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-0.json": {
       "bytes": 110263,
       "sha256": "ae3f91ce13299773b1fb2aa8d1c2f8b4f386718d0f4abec6851a0c3112b585e4"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-0.pt": {
       "bytes": 8276029,
       "sha256": "6adaf6b54325be09245833b42fabc451af7ad03d6a25a33a9a6fbf2745e0603b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-0.pt": {
       "bytes": 518880,
       "sha256": "96cab6cb2568455b21895fbb5e66f52a286cff1900c5e0c007f963f7e773333b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-1.json": {
       "bytes": 110264,
       "sha256": "308e030a609b6bb7d3ed5b23e3bc5a579703d213cb6929c50828db8bd864a9e6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-1.pt": {
       "bytes": 8276029,
       "sha256": "2d36968054cda27ce43dff11fc789dc9dff0da530f19de18f2edc729fdf2d82f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-1.pt": {
       "bytes": 518880,
       "sha256": "669f3599e619f7d2342707d42641f97cb2d3054a54bbc1ad99515e8038e97740"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-2.json": {
       "bytes": 110267,
       "sha256": "1ee82c8bf8445057872d7d10065c4eff125c8a803d9fe924568da0865c1bd002"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-2.pt": {
       "bytes": 8276029,
       "sha256": "029507cb1db7d066779557c145100f4e67725ce50037f49ce12469b303259a0d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-2.pt": {
       "bytes": 518880,
       "sha256": "c69bfa7846102e52c233dca663390bd275a6f8f15bba28e4a545af4c31fc2103"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-3.json": {
       "bytes": 110266,
       "sha256": "d0094cf8451ed769f578ea3ec01fafa454d4744de209c3d8e1527e589623712f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-3.pt": {
       "bytes": 8276029,
       "sha256": "71c94a380c910a27dfe17f59c5b0b6253cb96e5ec3277c866c6ab7f177d846a6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-3.pt": {
       "bytes": 518880,
       "sha256": "7fead8a17fb23b0cec86e9e3c536c09affdbe8a9de187ac9b3c1b83bfac3b242"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-4.json": {
       "bytes": 110261,
       "sha256": "91e83a9aa32d33fabf7825b8d07f87c3c611e357a83127690e5ef8fd225d69e0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-4.pt": {
       "bytes": 8276029,
       "sha256": "f24d51fa69c274148f2054ad25d67c49a7bd216b87dd2b853cde1b257abcd680"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-4.pt": {
       "bytes": 518880,
       "sha256": "ec83d25d7eb7ce5c97b002161f0b97985ae89ab8da914710fc4a4bc8f21d1d3c"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-5.json": {
       "bytes": 110264,
       "sha256": "2d66154d23e7dec6a7e85b64aef0f0d407b769f4e264b780412f104cfa1625af"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-5.pt": {
       "bytes": 8276029,
       "sha256": "59bab2d9519e2c6f9b5e03d739ca7b5599b643f633b923ce9d2779001ee3a5a0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-5.pt": {
       "bytes": 518880,
       "sha256": "efdfaf6dd508607304abe2daeb66910318f9214c843750f00461fa1dc72cd97a"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-6.json": {
       "bytes": 110264,
       "sha256": "d998cfb11fd2c896c5fa43549d98442006d7dbf1847f01f34a673dc41924cc98"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-6.pt": {
       "bytes": 8276029,
       "sha256": "aff755ac4f25e47c1726364de0f6195e000e46c58a04853a1a88761f6ea3a3fd"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-6.pt": {
       "bytes": 518880,
       "sha256": "1768798100dbff90d04c68ee554d8a37e82a64068cc635681e4a2083861875ab"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-model-rank-7.json": {
       "bytes": 110260,
       "sha256": "6528b00ad96be1616d02d2e0a367aababe42a612c5b14866b591f8e6efdf5434"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-quality-logits-rank-7.pt": {
       "bytes": 8276029,
       "sha256": "adb36ff1125de2e10fc6dcd7ede27f403cd8e7a7769aa4465918f29cef1decdc"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z/Cube-final-logits-rank-7.pt": {
       "bytes": 518880,
       "sha256": "1a311f8d3021e72f7c0c408c4435a89d2b3c493198bfe906cd08d4de2fffc949"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-0.json": {
       "bytes": 109554,
       "sha256": "ddc083211060ccfd0f8cb419d06ff569ee5bf93110694958889e5b8d49782d29"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-0.pt": {
       "bytes": 8276029,
       "sha256": "6adaf6b54325be09245833b42fabc451af7ad03d6a25a33a9a6fbf2745e0603b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-0.pt": {
       "bytes": 518880,
       "sha256": "d83001d6645279b1ce3c2b5ac4ddcc3462599e4f4d20322c19194fb6fc89c104"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-1.json": {
       "bytes": 109552,
       "sha256": "b9b402aaee859cd44a78a2584a6e6d6149bf84dd406434a89160788abcfc60b2"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-1.pt": {
       "bytes": 8276029,
       "sha256": "2d36968054cda27ce43dff11fc789dc9dff0da530f19de18f2edc729fdf2d82f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-1.pt": {
       "bytes": 518880,
       "sha256": "b50aa54af411d0f7d6eb588ea12b51c942ecd3ba299a2646b70fe114f96190ba"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-2.json": {
       "bytes": 109554,
       "sha256": "679fd39fd2b9fa93e60f23db7ef18e3b6b75523a5fd96686e6f0db2d1d5d704a"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-2.pt": {
       "bytes": 8276029,
       "sha256": "029507cb1db7d066779557c145100f4e67725ce50037f49ce12469b303259a0d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-2.pt": {
       "bytes": 518880,
       "sha256": "46774676f9cf3b490287ac6484c94ec8dcdaa146a9c7d787d533ebd0d6547b4b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-3.json": {
       "bytes": 109551,
       "sha256": "ca1abd1bd82fe8c6b65c9bf3cf50aa2cb696512905e49e0c4e598a6428cc724f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-3.pt": {
       "bytes": 8276029,
       "sha256": "71c94a380c910a27dfe17f59c5b0b6253cb96e5ec3277c866c6ab7f177d846a6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-3.pt": {
       "bytes": 518880,
       "sha256": "803c6b33cfc1137f0e79f85c97680ded52fcfac94d11b1ba99fd38a46dd62726"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-4.json": {
       "bytes": 109551,
       "sha256": "a9f793af3520345708f70f9dc5a102c8c35a0628e4cc41c02461ff4c695f98ab"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-4.pt": {
       "bytes": 8276029,
       "sha256": "f24d51fa69c274148f2054ad25d67c49a7bd216b87dd2b853cde1b257abcd680"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-4.pt": {
       "bytes": 518880,
       "sha256": "829fbf9b062802ba7c8e6a9613633efe9e78e86f5580b294fe0a62e3fa069de7"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-5.json": {
       "bytes": 109558,
       "sha256": "e83ae45e28bcea47e2e2d69e6d425754bdbe0e41770e6c6bd46a597eea8753be"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-5.pt": {
       "bytes": 8276029,
       "sha256": "59bab2d9519e2c6f9b5e03d739ca7b5599b643f633b923ce9d2779001ee3a5a0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-5.pt": {
       "bytes": 518880,
       "sha256": "df07a23a471d75aeab7fce688857137c965a0426191550cf147a8ac98033fb4a"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-6.json": {
       "bytes": 109558,
       "sha256": "ec412ee88661c91aa5556876581c1501bc3f9460f094f614b7a547d910c3cff2"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-6.pt": {
       "bytes": 8276029,
       "sha256": "aff755ac4f25e47c1726364de0f6195e000e46c58a04853a1a88761f6ea3a3fd"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-6.pt": {
       "bytes": 518880,
       "sha256": "9fc745f9c2180f47dbea13c951af37a551f398c48c0648f4ed66d8f2b9bce1b6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-model-rank-7.json": {
       "bytes": 109554,
       "sha256": "3668a405dd133e254fe197186112eb1373e953ae5e2d8a77b2c03d302de0a8b4"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-quality-logits-rank-7.pt": {
       "bytes": 8276029,
       "sha256": "adb36ff1125de2e10fc6dcd7ede27f403cd8e7a7769aa4465918f29cef1decdc"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z/Cube-final-logits-rank-7.pt": {
       "bytes": 518880,
       "sha256": "55839426553b8fe52dd13a54778a36685df7feb3c2ebeb88754b809d1835ab69"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-0.json": {
       "bytes": 109303,
       "sha256": "914c22bf5e5c73b7c77f97366f880382c768844aafed0633c3d6e3fcef9e44e0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-0.pt": {
       "bytes": 8276029,
       "sha256": "04607f7d961d6121babfedd3d7de4e43f860e2b097464b2b23600ad39bad55b1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-0.pt": {
       "bytes": 518880,
       "sha256": "f73848092b50d70aa1875d66c646b64e2ec10b3e5f0332eb0004523cdade893b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-1.json": {
       "bytes": 109297,
       "sha256": "c08d485a4f68395419c68f816ec15bbc7a7cabbd86305e7054e24ca929eb0545"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-1.pt": {
       "bytes": 8276029,
       "sha256": "1a9e59141827b90d3eff130b5a1c1bc13daa592a0babde994096043db7c663b1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-1.pt": {
       "bytes": 518880,
       "sha256": "cf3f7fb7f908b68dacade1dca92bd9fd8c0edf0c1e1fa55bba31706f6fb8ff50"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-2.json": {
       "bytes": 109297,
       "sha256": "1e5706687a39b5c9e1176944a9ecede4c0df4eb085ca35db2f452990ee179359"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-2.pt": {
       "bytes": 8276029,
       "sha256": "85d76153ba2bab5561f960bd5fa2fe8db2197d8e313a36c34efc162aac9945e0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-2.pt": {
       "bytes": 518880,
       "sha256": "f3f659051f6463822303927a1c67a19e02cee2d4b7e2b8d530e71e16b7a2daa3"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-3.json": {
       "bytes": 109302,
       "sha256": "a2a5e183adb356f6b236d432e07ae5bba2f901ab53caf6299072ae779e10551e"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-3.pt": {
       "bytes": 8276029,
       "sha256": "03996baff9b5d3a45b4a6a6c226917e2a48b786ef110c2376ee9b674cad43357"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-3.pt": {
       "bytes": 518880,
       "sha256": "d9cf2c76df40d891e83217ccea6288d96719dc4755751f79c449b65f3fbb87b1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-4.json": {
       "bytes": 109301,
       "sha256": "b8e19f99a8c608fe97f17e54fac7628a3f656d2e03276c0d52d79ec1cf4fa1b0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-4.pt": {
       "bytes": 8276029,
       "sha256": "ddd25a88d19204642fed2f34e7ac7f8fd6acd9b3b764e736fbca0bd98d79d8ce"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-4.pt": {
       "bytes": 518880,
       "sha256": "97327cb2f9017abc14279bed8d5b7942c4b2d7370da9fa9aa60e4a498a5ded86"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-5.json": {
       "bytes": 109296,
       "sha256": "4f4aaa86d81c5cb4eaf7678dad27e410d15e6fb8fdaaf56d358cdece50523963"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-5.pt": {
       "bytes": 8276029,
       "sha256": "ce9219e7cf0529b94f37ac6b994c5cdabda5e57f7f313786f8c6c498c5017e1d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-5.pt": {
       "bytes": 518880,
       "sha256": "c94da028465ce06f7caa27f845729d0888c156afb52d88e8ffd44797e5c831cb"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-6.json": {
       "bytes": 109302,
       "sha256": "986043b02f2c96778a8f3d8b8c590dd838de7502f7fb3982a9f2f76a6ac33936"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-6.pt": {
       "bytes": 8276029,
       "sha256": "336a05577fa1a55fb2123ee361d0fad9e2c7b6fc9a79cff614870fc99c0fb9fd"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-6.pt": {
       "bytes": 518880,
       "sha256": "823df7060a025b540330a5988a7819274a5284fcd1efa2afa3350412e84eb749"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-7.json": {
       "bytes": 109298,
       "sha256": "7167b1770c886ce95fddb783c131d4da132d7d2bb414b24eff8c2650ff065bed"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-quality-logits-rank-7.pt": {
       "bytes": 8276029,
       "sha256": "11fdfef104e1fe7e20e770073345d84989043827651ee6d8d84ff4213e2ffc46"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-final-logits-rank-7.pt": {
       "bytes": 518880,
       "sha256": "7ca829285fb2e3a46d4cdf19313fd1d21ef24cec13fb1f121a81ea6beef4e821"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-0.json": {
       "bytes": 110511,
       "sha256": "ff7f0f74795f432842532829f4ec8cfb20bb663fad21a0cde5d95b3ee7688510"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-0.pt": {
       "bytes": 8276029,
       "sha256": "6adaf6b54325be09245833b42fabc451af7ad03d6a25a33a9a6fbf2745e0603b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-0.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-0.pt": {
       "bytes": 518880,
       "sha256": "d83001d6645279b1ce3c2b5ac4ddcc3462599e4f4d20322c19194fb6fc89c104"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-1.json": {
       "bytes": 110517,
       "sha256": "c59aadf4b7deaac0c1f2d6a468bee7a1edfcccc2151db423d39d80bcab2a2f7c"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-1.pt": {
       "bytes": 8276029,
       "sha256": "2d36968054cda27ce43dff11fc789dc9dff0da530f19de18f2edc729fdf2d82f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-1.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-1.pt": {
       "bytes": 518880,
       "sha256": "b50aa54af411d0f7d6eb588ea12b51c942ecd3ba299a2646b70fe114f96190ba"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-2.json": {
       "bytes": 110512,
       "sha256": "a76bcac1e37ad9ae17bbcb2ba048a66c98821c644652418e208da934010cb6e9"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-2.pt": {
       "bytes": 8276029,
       "sha256": "029507cb1db7d066779557c145100f4e67725ce50037f49ce12469b303259a0d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-2.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-2.pt": {
       "bytes": 518880,
       "sha256": "46774676f9cf3b490287ac6484c94ec8dcdaa146a9c7d787d533ebd0d6547b4b"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-3.json": {
       "bytes": 110513,
       "sha256": "433f029c65506f41330852e58bbab530b20b04be038767567c113b6e3969c8fc"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-3.pt": {
       "bytes": 8276029,
       "sha256": "71c94a380c910a27dfe17f59c5b0b6253cb96e5ec3277c866c6ab7f177d846a6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-3.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-3.pt": {
       "bytes": 518880,
       "sha256": "803c6b33cfc1137f0e79f85c97680ded52fcfac94d11b1ba99fd38a46dd62726"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-4.json": {
       "bytes": 110514,
       "sha256": "b108758a3898a5e01edc220cc4f6f930e73fa19535a0ef10e29e656a00148ba3"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-4.pt": {
       "bytes": 8276029,
       "sha256": "f24d51fa69c274148f2054ad25d67c49a7bd216b87dd2b853cde1b257abcd680"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-4.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-4.pt": {
       "bytes": 518880,
       "sha256": "829fbf9b062802ba7c8e6a9613633efe9e78e86f5580b294fe0a62e3fa069de7"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-5.json": {
       "bytes": 110513,
       "sha256": "914083fdf020b48417d894e5c48e4ff56ab701a49247599703d5812b5b21b9e2"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-5.pt": {
       "bytes": 8276029,
       "sha256": "59bab2d9519e2c6f9b5e03d739ca7b5599b643f633b923ce9d2779001ee3a5a0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-5.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-5.pt": {
       "bytes": 518880,
       "sha256": "df07a23a471d75aeab7fce688857137c965a0426191550cf147a8ac98033fb4a"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-6.json": {
       "bytes": 110513,
       "sha256": "09134de99a27b49580687f3f3614adeb128f9e109253946f21aeee62cafd6c12"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-6.pt": {
       "bytes": 8276029,
       "sha256": "aff755ac4f25e47c1726364de0f6195e000e46c58a04853a1a88761f6ea3a3fd"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-6.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-6.pt": {
       "bytes": 518880,
       "sha256": "9fc745f9c2180f47dbea13c951af37a551f398c48c0648f4ed66d8f2b9bce1b6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-model-rank-7.json": {
       "bytes": 110514,
       "sha256": "ba9c4b404424a8f9e09620cf238667530114aca6e4cd051e85a92d121a73ae62"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-quality-logits-rank-7.pt": {
       "bytes": 8276029,
       "sha256": "adb36ff1125de2e10fc6dcd7ede27f403cd8e7a7769aa4465918f29cef1decdc"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-7.pt": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z/Cube-final-logits-rank-7.pt": {
       "bytes": 518880,
       "sha256": "55839426553b8fe52dd13a54778a36685df7feb3c2ebeb88754b809d1835ab69"
     }

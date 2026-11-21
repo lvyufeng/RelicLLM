@@ -1,4 +1,4 @@
-{"variant": "k128-direct-bits", "configure": ["cmake", "-S", "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/csrc/ascend/online_tile_cube", "-B", "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0", "-DSOC_VERSION=Ascend910B3", "-DRUN_MODE=npu", "-DCMAKE_BUILD_TYPE=Release", "-DRELIC_TILE_K_BLOCKS=4", "-DRELIC_TILE_PRELOAD_A=0", "-DRELIC_TILE_DIRECT_BITS=1"]}
+{"variant": "k128-direct-bits", "configure": ["cmake", "-S", "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/csrc/ascend/online_tile_cube", "-B", "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0", "-DSOC_VERSION=Ascend910B3", "-DRUN_MODE=npu", "-DCMAKE_BUILD_TYPE=Release", "-DRELIC_TILE_K_BLOCKS=4", "-DRELIC_TILE_PRELOAD_A=0", "-DRELIC_TILE_DIRECT_BITS=1"]}
 -- The CXX compiler identification is GNU 10.3.1
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
@@ -7,7 +7,7 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1
 [  2%] Creating directories for 'relic_online_tile_cube_precompile'
 [  4%] No download step for 'relic_online_tile_cube_precompile'
 [  7%] No update step for 'relic_online_tile_cube_precompile'
@@ -27,9 +27,9 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_precompile-prefix/src/relic_online_tile_cube_precompile-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_precompile-prefix/src/relic_online_tile_cube_precompile-build
 [ 14%] Performing build step for 'relic_online_tile_cube_precompile'
-[100%] Building CXX object CMakeFiles/precompile_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [100%] Built target precompile_obj
 [100%] Built target check_src_template
 [ 16%] No install step for 'relic_online_tile_cube_precompile'
@@ -54,16 +54,16 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build
 [ 33%] Performing build step for 'relic_online_tile_cube_preprocess'
-[ 33%] Building CXX object CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
-[ 66%] Building CXX object CMakeFiles/preprocess_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[ 33%] Building CXX object CMakeFiles/aiv_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[ 66%] Building CXX object CMakeFiles/preprocess_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [ 66%] Built target preprocess_obj
-[100%] Building CXX object CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/aic_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [100%] Built target aic_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aic_obj_text
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aic_obj_text
 [100%] Built target aiv_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aiv_obj_text
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aiv_obj_text
 [100%] Built target _host_cpp
 [ 35%] No install step for 'relic_online_tile_cube_preprocess'
 [ 38%] Completed 'relic_online_tile_cube_preprocess'
@@ -100,7 +100,7 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build
 -- Detecting CXX compiler ABI info - done
 [ 64%] Performing build step for 'relic_online_tile_cube_aic_device'
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
@@ -108,12 +108,12 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build
-[100%] Building CXX object CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build
+[100%] Building CXX object CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
 [ 66%] Performing build step for 'relic_online_tile_cube_aiv_device'
-[100%] Building CXX object CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
 [100%] Built target device_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build/CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build/CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o
 [100%] Built target merge_device_obj
 [ 69%] No install step for 'relic_online_tile_cube_aic_device'
 [ 71%] Completed 'relic_online_tile_cube_aic_device'
@@ -125,13 +125,13 @@
 [ 83%] Performing configure step for 'relic_online_tile_cube_host'
 -- The C compiler identification is GNU 10.3.1
 [100%] Built target device_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build/CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build/CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o
 [100%] Built target merge_device_obj
 [ 85%] No install step for 'relic_online_tile_cube_aiv_device'
 [ 88%] Completed 'relic_online_tile_cube_aiv_device'
 [ 88%] Built target relic_online_tile_cube_aiv_device
 -- The CXX compiler identification is GNU 10.3.1
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o -static -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o
 -- Detecting C compiler ABI info
 [ 88%] Built target relic_online_tile_cube_merge_obj
 [ 90%] Building CXX object CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
@@ -147,22 +147,22 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_host-prefix/src/relic_online_tile_cube_host-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_host-prefix/src/relic_online_tile_cube_host-build
 [ 92%] Performing build step for 'relic_online_tile_cube_host'
-[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [100%] Built target host_bisheng_obj
 [ 95%] Performing install step for 'relic_online_tile_cube_host'
 [100%] Built target host_bisheng_obj
 Install the project...
 -- Install configuration: "Release"
--- Installing: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/./objects-Release/host_bisheng_obj/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+-- Installing: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/./objects-Release/host_bisheng_obj<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [ 97%] Completed 'relic_online_tile_cube_host'
 [ 97%] Built target relic_online_tile_cube_host
 [100%] Linking CXX shared library lib/librelic_online_tile_cube.so
-/usr/local/Ascend/cann-9.2.0/bin/ascendc_pack_kernel /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o 0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
-recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,librelic_online_tile_cube.so -o lib/librelic_online_tile_cube.so CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/objects-Release/host_bisheng_obj/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o    -L/usr/local/Ascend/cann-9.2.0/lib64  -L/usr/local/Ascend/cann-9.2.0/tools/simulator/Ascend910B3/lib  /usr/local/Ascend/cann-9.2.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
+/usr/local/Ascend/cann-9.2.0/bin/ascendc_pack_kernel <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o 0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,librelic_online_tile_cube.so -o lib/librelic_online_tile_cube.so CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/objects-Release/host_bisheng_obj<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o    -L/usr/local/Ascend/cann-9.2.0/lib64  -L/usr/local/Ascend/cann-9.2.0/tools/simulator/Ascend910B3/lib  /usr/local/Ascend/cann-9.2.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
 [100%] Built target relic_online_tile_cube
-{"variant": "k256-direct-bits", "configure": ["cmake", "-S", "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/csrc/ascend/online_tile_cube", "-B", "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0", "-DSOC_VERSION=Ascend910B3", "-DRUN_MODE=npu", "-DCMAKE_BUILD_TYPE=Release", "-DRELIC_TILE_K_BLOCKS=8", "-DRELIC_TILE_PRELOAD_A=0", "-DRELIC_TILE_DIRECT_BITS=1"]}
+{"variant": "k256-direct-bits", "configure": ["cmake", "-S", "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/csrc/ascend/online_tile_cube", "-B", "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0", "-DSOC_VERSION=Ascend910B3", "-DRUN_MODE=npu", "-DCMAKE_BUILD_TYPE=Release", "-DRELIC_TILE_K_BLOCKS=8", "-DRELIC_TILE_PRELOAD_A=0", "-DRELIC_TILE_DIRECT_BITS=1"]}
 -- The CXX compiler identification is GNU 10.3.1
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
@@ -171,7 +171,7 @@ recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexec
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1
 [  2%] Creating directories for 'relic_online_tile_cube_precompile'
 [  4%] No download step for 'relic_online_tile_cube_precompile'
 [  7%] No update step for 'relic_online_tile_cube_precompile'
@@ -191,9 +191,9 @@ recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexec
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_precompile-prefix/src/relic_online_tile_cube_precompile-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_precompile-prefix/src/relic_online_tile_cube_precompile-build
 [ 14%] Performing build step for 'relic_online_tile_cube_precompile'
-[100%] Building CXX object CMakeFiles/precompile_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [100%] Built target precompile_obj
 [100%] Built target check_src_template
 [ 16%] No install step for 'relic_online_tile_cube_precompile'
@@ -218,16 +218,16 @@ recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexec
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build
 [ 33%] Performing build step for 'relic_online_tile_cube_preprocess'
-[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
-[ 66%] Building CXX object CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[ 66%] Building CXX object CMakeFiles/aiv_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [ 66%] Built target preprocess_obj
-[100%] Building CXX object CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/aic_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [100%] Built target aiv_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aiv_obj_text
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aiv_obj_text
 [100%] Built target aic_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aic_obj_text
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aic_obj_text
 [100%] Built target _host_cpp
 [ 35%] No install step for 'relic_online_tile_cube_preprocess'
 [ 38%] Completed 'relic_online_tile_cube_preprocess'
@@ -265,19 +265,19 @@ recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexec
 -- Configuring done
 -- Detecting CXX compiler ABI info - done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build
 [ 64%] Performing build step for 'relic_online_tile_cube_aiv_device'
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build
 [ 66%] Performing build step for 'relic_online_tile_cube_aic_device'
-[100%] Building CXX object CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
-[100%] Building CXX object CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
 [100%] Built target device_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build/CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build/CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o
 [100%] Built target merge_device_obj
 [ 69%] No install step for 'relic_online_tile_cube_aic_device'
 [ 71%] Completed 'relic_online_tile_cube_aic_device'
@@ -289,13 +289,13 @@ recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexec
 [ 83%] Performing configure step for 'relic_online_tile_cube_host'
 -- The C compiler identification is GNU 10.3.1
 [100%] Built target device_obj
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build/CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build/CMakeFiles/device_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o
 [100%] Built target merge_device_obj
 [ 85%] No install step for 'relic_online_tile_cube_aiv_device'
 [ 88%] Completed 'relic_online_tile_cube_aiv_device'
 [ 88%] Built target relic_online_tile_cube_aiv_device
 -- The CXX compiler identification is GNU 10.3.1
-/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aic_device_dir/device.o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_aiv_device_dir/device.o -static -o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o
 -- Detecting C compiler ABI info
 [ 88%] Built target relic_online_tile_cube_merge_obj
 [ 90%] Building CXX object CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
@@ -311,19 +311,19 @@ recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexec
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_host-prefix/src/relic_online_tile_cube_host-build
+-- Build files have been written to: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_host-prefix/src/relic_online_tile_cube_host-build
 [ 92%] Performing build step for 'relic_online_tile_cube_host'
-[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [100%] Built target host_bisheng_obj
 [ 95%] Performing install step for 'relic_online_tile_cube_host'
 [100%] Built target host_bisheng_obj
 Install the project...
 -- Install configuration: "Release"
--- Installing: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/./objects-Release/host_bisheng_obj/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
+-- Installing: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/./objects-Release/host_bisheng_obj<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o
 [ 97%] Completed 'relic_online_tile_cube_host'
 [ 97%] Built target relic_online_tile_cube_host
 [100%] Linking CXX shared library lib/librelic_online_tile_cube.so
-/usr/local/Ascend/cann-9.2.0/bin/ascendc_pack_kernel /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o 0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
-recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,librelic_online_tile_cube.so -o lib/librelic_online_tile_cube.so CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/objects-Release/host_bisheng_obj/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o    -L/usr/local/Ascend/cann-9.2.0/lib64  -L/usr/local/Ascend/cann-9.2.0/tools/simulator/Ascend910B3/lib  /usr/local/Ascend/cann-9.2.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
+/usr/local/Ascend/cann-9.2.0/bin/ascendc_pack_kernel <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_merge_obj_dir/device.o 0 <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,librelic_online_tile_cube.so -o lib/librelic_online_tile_cube.so CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/relic_online_tile_cube_host_dir/objects-Release/host_bisheng_obj<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/online_tile_cube_entry.cpp.o    -L/usr/local/Ascend/cann-9.2.0/lib64  -L/usr/local/Ascend/cann-9.2.0/tools/simulator/Ascend910B3/lib  /usr/local/Ascend/cann-9.2.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
 [100%] Built target relic_online_tile_cube
-{"k128-direct-bits": {"library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so", "sha256": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765", "group_k": 4, "direct_bits": true, "source_hashes": {"online_tile_cube.cpp": "7ffa21dd71de88ac4a1470d3de916519a78930bb3d32f1d93341c035ec9325dc", "CMakeLists.txt": "79f7eadffe35be64bf04c2cf21ba0ade168e6a6e8f598b8511af073cfaef0ad6", "kernel_entry.cpp.in": "d2219d9bf078225c9d4856a4bc1ac599662452d440a548090e5431f8821d0b55"}, "preload_activation": false, "no_original_binary_overwrite": true}, "k256-direct-bits": {"library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so", "sha256": "83b91e5740ddc92003871908cd69517c8e5d7a9e6dadfffcd75aae8d87ba3510", "group_k": 8, "direct_bits": true, "source_hashes": {"online_tile_cube.cpp": "7ffa21dd71de88ac4a1470d3de916519a78930bb3d32f1d93341c035ec9325dc", "CMakeLists.txt": "79f7eadffe35be64bf04c2cf21ba0ade168e6a6e8f598b8511af073cfaef0ad6", "kernel_entry.cpp.in": "d2219d9bf078225c9d4856a4bc1ac599662452d440a548090e5431f8821d0b55"}, "preload_activation": false, "no_original_binary_overwrite": true}}
+{"k128-direct-bits": {"library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so", "sha256": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765", "group_k": 4, "direct_bits": true, "source_hashes": {"online_tile_cube.cpp": "7ffa21dd71de88ac4a1470d3de916519a78930bb3d32f1d93341c035ec9325dc", "CMakeLists.txt": "79f7eadffe35be64bf04c2cf21ba0ade168e6a6e8f598b8511af073cfaef0ad6", "kernel_entry.cpp.in": "d2219d9bf078225c9d4856a4bc1ac599662452d440a548090e5431f8821d0b55"}, "preload_activation": false, "no_original_binary_overwrite": true}, "k256-direct-bits": {"library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so", "sha256": "83b91e5740ddc92003871908cd69517c8e5d7a9e6dadfffcd75aae8d87ba3510", "group_k": 8, "direct_bits": true, "source_hashes": {"online_tile_cube.cpp": "7ffa21dd71de88ac4a1470d3de916519a78930bb3d32f1d93341c035ec9325dc", "CMakeLists.txt": "79f7eadffe35be64bf04c2cf21ba0ade168e6a6e8f598b8511af073cfaef0ad6", "kernel_entry.cpp.in": "d2219d9bf078225c9d4856a4bc1ac599662452d440a548090e5431f8821d0b55"}, "preload_activation": false, "no_original_binary_overwrite": true}}

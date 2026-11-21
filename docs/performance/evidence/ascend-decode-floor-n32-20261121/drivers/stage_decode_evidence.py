@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 import shutil
 
-ROOT = Path('/data1/relic-v41-perf-20261118-0938')
+ROOT = Path('<workspace>/relic-v41-perf-20261118-0938')
 LOGS = ROOT/'logs'
 DEST = LOGS/'decoder-evidence-20261121-v1'
 PREFIXES = (

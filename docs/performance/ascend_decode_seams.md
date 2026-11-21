@@ -1,5 +1,9 @@
 # Where the Ascend decode path can be intercepted
 
+> Publication note: [the evidence publication policy](ascend_decode_optimization.md#published-evidence-and-measurement-identities)
+> explains neutral paths/host labels and the separate original/published hash map. Publication cleanup
+> does not rerun the recorded measurements.
+
 This page exists because of a repeated mistake. Across three rounds an optimisation was
 implemented here that the tree already had: a widened-weight cache that `cube_weight_cache.py`
 already provided, an attention-dispatch hoist that `sparse_attn` already did, and a batch-one

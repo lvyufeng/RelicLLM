@@ -1000,7 +1000,7 @@
   ],
   "production_defaults_and_serving_guards_unchanged": true,
   "original_model_artifact": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-6.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z/Cube-model-rank-6.json",
     "bytes": 109306,
     "sha256": "844b57741b701563efa05259ed89d681b4e799960c574b18d8ef405b765b64ec"
   }

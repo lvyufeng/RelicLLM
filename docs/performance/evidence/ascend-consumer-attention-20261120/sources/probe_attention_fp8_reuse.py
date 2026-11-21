@@ -24,7 +24,7 @@ def main():
     torch.npu.set_device(0)
     torch.set_num_threads(4)
     device = torch.device("npu:0")
-    checkpoint = V41Checkpoint("/data1/relic-v41-20261116-210/checkpoint", device="cpu")
+    checkpoint = V41Checkpoint("<checkpoint>", device="cpu")
     keys = [f"layers.0.attn.{name}.weight" for name in ("wq_a", "wkv")]
     weights = [checkpoint.weight(key, dtype=torch.bfloat16, device="cpu").t().contiguous().to(device) for key in keys]
     k = weights[0].shape[0]

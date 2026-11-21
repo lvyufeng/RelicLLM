@@ -292,7 +292,7 @@
 [rank 0] loaded in 11.6 s
 [rank 0] routed experts: AscendRoutedExperts on 40 layers, world 8
 [rank 0] prompt 5 tokens
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [rank 7] layers.0  (0 filled)
 [rank 7] layers.1  (22 filled)
@@ -400,6 +400,6 @@
 [rank 4] decode steps: 24.3 s for 3 tokens (8116 ms/token)
 [rank 5] decode steps: 24.3 s for 3 tokens (8088 ms/token)
 
-[rank 0] logits dumped to /data1/relic-v41-infer-20261117-1424/logs/inference-20261117T084542Z/generated-logits.pt (3 rows)
+[rank 0] logits dumped to <workspace>/relic-v41-infer-20261117-1424/logs/inference-20261117T084542Z/generated-logits.pt (3 rows)
 [rank 0] 3 tokens in 58.3 s (19.42 s/token), stopped on eos
 [rank 0] decode steps: 24.4 s for 3 tokens (8130 ms/token)

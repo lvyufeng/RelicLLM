@@ -15,8 +15,8 @@ import torch_npu
 from relicllm.models.deepseek_v4_1.loader import CheckpointRoutedExperts, V41Checkpoint
 from relicllm.models.deepseek_v4_1.ascend_experts import AscendExpertCache, AscendRoutedExperts
 
-ROOT = Path("/data1/relic-expert-gemm-20261117-1046")
-CHECKPOINT = Path("/data1/relic-v41-20261116-210/checkpoint")
+ROOT = Path("<workspace>/relic-expert-gemm-20261117-1046")
+CHECKPOINT = Path("<checkpoint>")
 
 
 def run(store, x, weights, indices):

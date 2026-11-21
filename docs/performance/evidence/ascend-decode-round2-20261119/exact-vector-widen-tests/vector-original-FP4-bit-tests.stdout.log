@@ -1,7 +1,7 @@
 ................................                                         [100%]
 =============================== warnings summary ===============================
 tests/test_vector_fp4_decode.py::test_every_byte_pattern_is_the_frozen_widening_on_the_device[arithmetic]
-  /data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/unpack.py:200: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  <workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/unpack.py:200: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
     target[2 * start + 1:2 * stop:2].copy_(lookup[(chunk >> 4).long()])
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

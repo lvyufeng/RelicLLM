@@ -571,7 +571,7 @@
   ],
   "consumer_mode": "bits",
   "consumer": {
-    "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
+    "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
     "sha256": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765",
     "AIV_to_small_GM_ring_to_L1_to_AIC": true,
     "original_K32_blocks_per_Cube_tile": 4,

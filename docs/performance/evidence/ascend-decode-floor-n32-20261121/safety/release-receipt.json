@@ -1,5 +1,5 @@
 {
-  "host": "ts-216",
+  "host": "fleet-host-2",
   "released": true,
   "detail": "lease dropped",
   "tool": "ts_release",

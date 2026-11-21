@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import zipfile
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938/logs").resolve()
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938/logs").resolve()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("run")

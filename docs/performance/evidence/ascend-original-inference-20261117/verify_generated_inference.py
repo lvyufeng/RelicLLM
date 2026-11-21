@@ -24,7 +24,7 @@ def main():
         raise RuntimeError("non-finite model logits cannot be claimed as successful inference")
     greedy=logits.argmax(-1).tolist()
     if greedy!=tokens:raise RuntimeError("recorded tokens do not match the actual greedy logits")
-    tokenizer=AutoTokenizer.from_pretrained("/data1/relic-v41-20261116-210/checkpoint",local_files_only=True)
+    tokenizer=AutoTokenizer.from_pretrained("<checkpoint>",local_files_only=True)
     output={"generation_succeeded":True,"token_ids":tokens,"text":tokenizer.decode(tokens,skip_special_tokens=True),
             "prompt_tokens":payload["prompt_tokens"],"logits_shape":list(logits.shape),
             "all_logits_finite":True,"tokens_match_greedy_logits":True,

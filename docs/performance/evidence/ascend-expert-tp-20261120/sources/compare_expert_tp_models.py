@@ -8,7 +8,7 @@ from pathlib import Path
 
 import torch
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938/logs")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938/logs")
 OUTPUT = Path(os.environ["RELIC_PERF_OUTPUT"])
 CONFIG = {"ep8": "original-expert-ep8-host-table-HC-20*T*Z",
           "tp2": "original-expert-tp2-host-table-HC-20*T*Z",

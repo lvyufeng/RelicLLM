@@ -279,7 +279,7 @@
 [rank 0] loaded in 33.2 s
 [rank 0] routed experts: AscendRoutedExperts on 40 layers, world 8
 [rank 0] prompt 5 tokens
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [rank 3] layers.33  (765 filled)
 [rank 6] layers.23  (539 filled)
@@ -389,593 +389,593 @@
 [rank0]: Traceback (most recent call last):
 [rank0]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank0]:   File "<frozen runpy>", line 88, in _run_code
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank0]:     sys.exit(main())
 [rank0]:              ^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank0]:     result = generate(
 [rank0]:              ^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank0]:     return func(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank0]:     return loop(
 [rank0]:            ^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank0]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank0]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank0]:     return func(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank0]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank0]:     return self._call_impl(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank0]:     return forward_call(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank0]:     return func(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank0]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank0]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank0]:     return self._call_impl(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank0]:     return forward_call(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank0]:     x = self.attn(x, start_pos, shared)
 [rank0]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank0]:     return self._call_impl(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank0]:     return forward_call(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank0]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank0]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank0]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank0]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank0]:     return self._call_impl(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank0]:     return forward_call(*args, **kwargs)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank0]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank0]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank0]:     raise ValueError(
 [rank0]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 [rank2]: Traceback (most recent call last):
 [rank2]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank2]:   File "<frozen runpy>", line 88, in _run_code
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank2]:     sys.exit(main())
 [rank2]:              ^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank2]:     result = generate(
 [rank2]:              ^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank2]:     return func(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank2]:     return loop(
 [rank2]:            ^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank2]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank2]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank2]:     return func(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank2]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank2]:     return self._call_impl(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank2]:     return forward_call(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank2]:     return func(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank2]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank2]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank2]:     return self._call_impl(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank2]:     return forward_call(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank2]:     x = self.attn(x, start_pos, shared)
 [rank2]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank2]:     return self._call_impl(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank2]:     return forward_call(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank2]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank2]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank2]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank2]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank2]:     return self._call_impl(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank2]:     return forward_call(*args, **kwargs)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank2]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank2]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank2]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank2]:     raise ValueError(
 [rank2]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 [rank7]: Traceback (most recent call last):
 [rank7]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank7]:   File "<frozen runpy>", line 88, in _run_code
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank7]:     sys.exit(main())
 [rank7]:              ^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank7]:     result = generate(
 [rank7]:              ^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank7]:     return func(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank7]:     return loop(
 [rank7]:            ^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank7]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank7]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank7]:     return func(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank7]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank7]:     return self._call_impl(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank7]:     return forward_call(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank7]:     return func(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank7]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank7]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank7]:     return self._call_impl(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank7]:     return forward_call(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank7]:     x = self.attn(x, start_pos, shared)
 [rank7]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank7]:     return self._call_impl(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank7]:     return forward_call(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank7]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank7]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank7]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank7]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank7]:     return self._call_impl(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank7]:     return forward_call(*args, **kwargs)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank7]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank7]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank7]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank7]:     raise ValueError(
 [rank7]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 [rank3]: Traceback (most recent call last):
 [rank3]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank3]:   File "<frozen runpy>", line 88, in _run_code
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank3]:     sys.exit(main())
 [rank3]:              ^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank3]:     result = generate(
 [rank3]:              ^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank3]:     return func(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank3]:     return loop(
 [rank3]:            ^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank3]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank3]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank3]:     return func(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank3]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank3]:     return self._call_impl(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank3]:     return forward_call(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank3]:     return func(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank3]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank3]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank3]:     return self._call_impl(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank3]:     return forward_call(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank3]:     x = self.attn(x, start_pos, shared)
 [rank3]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank3]:     return self._call_impl(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank3]:     return forward_call(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank3]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank3]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank3]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank3]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank3]:     return self._call_impl(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank3]:     return forward_call(*args, **kwargs)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank3]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank3]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank3]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank3]:     raise ValueError(
 [rank3]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 [rank5]: Traceback (most recent call last):
 [rank5]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank5]:   File "<frozen runpy>", line 88, in _run_code
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank5]:     sys.exit(main())
 [rank5]:              ^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank5]:     result = generate(
 [rank5]:              ^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank5]:     return func(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank5]:     return loop(
 [rank5]:            ^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank5]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank5]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank5]:     return func(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank5]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank5]:     return self._call_impl(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank5]:     return forward_call(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank5]:     return func(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank5]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank5]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank5]:     return self._call_impl(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank5]:     return forward_call(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank5]:     x = self.attn(x, start_pos, shared)
 [rank5]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank5]:     return self._call_impl(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank5]:     return forward_call(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank5]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank5]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank5]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank5]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank5]:     return self._call_impl(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank5]:     return forward_call(*args, **kwargs)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank5]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank5]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank5]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank5]:     raise ValueError(
 [rank5]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 [rank6]: Traceback (most recent call last):
 [rank6]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank6]:   File "<frozen runpy>", line 88, in _run_code
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank6]:     sys.exit(main())
 [rank6]:              ^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank6]:     result = generate(
 [rank6]:              ^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank6]:     return func(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank6]:     return loop(
 [rank6]:            ^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank6]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank6]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank6]:     return func(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank6]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank6]:     return self._call_impl(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank6]:     return forward_call(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank6]:     return func(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank6]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank6]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank6]:     return self._call_impl(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank6]:     return forward_call(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank6]:     x = self.attn(x, start_pos, shared)
 [rank6]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank6]:     return self._call_impl(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank6]:     return forward_call(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank6]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank6]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank6]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank6]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank6]:     return self._call_impl(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank6]:     return forward_call(*args, **kwargs)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank6]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank6]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank6]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank6]:     raise ValueError(
 [rank6]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 [rank1]: Traceback (most recent call last):
 [rank1]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank1]:   File "<frozen runpy>", line 88, in _run_code
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank1]:     sys.exit(main())
 [rank1]:              ^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank1]:     result = generate(
 [rank1]:              ^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank1]:     return func(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank1]:     return loop(
 [rank1]:            ^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank1]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank1]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank1]:     return func(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank1]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank1]:     return self._call_impl(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank1]:     return forward_call(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank1]:     return func(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank1]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank1]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank1]:     return self._call_impl(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank1]:     return forward_call(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank1]:     x = self.attn(x, start_pos, shared)
 [rank1]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank1]:     return self._call_impl(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank1]:     return forward_call(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank1]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank1]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank1]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank1]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank1]:     return self._call_impl(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank1]:     return forward_call(*args, **kwargs)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank1]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank1]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank1]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank1]:     raise ValueError(
 [rank1]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 [rank4]: Traceback (most recent call last):
 [rank4]:   File "<frozen runpy>", line 198, in _run_module_as_main
 [rank4]:   File "<frozen runpy>", line 88, in _run_code
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
 [rank4]:     sys.exit(main())
 [rank4]:              ^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 646, in main
 [rank4]:     result = generate(
 [rank4]:              ^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank4]:     return func(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 168, in generate
 [rank4]:     return loop(
 [rank4]:            ^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/generate.py", line 285, in _decode
 [rank4]:     _, logits, _ = front(torch.tensor([[token]]), position)
 [rank4]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank4]:     return func(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 943, in __call__
 [rank4]:     return self.model(token_ids, start_pos, hashes, image_mask, chunk)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank4]:     return self._call_impl(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank4]:     return forward_call(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
 [rank4]:     return func(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 956, in forward
 [rank4]:     h, pre_mix = block(h, at, pre_mix, mask, shared)
 [rank4]:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank4]:     return self._call_impl(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank4]:     return forward_call(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/modules.py", line 778, in forward
 [rank4]:     x = self.attn(x, start_pos, shared)
 [rank4]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank4]:     return self._call_impl(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank4]:     return forward_call(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1665, in forward
 [rank4]:     compress_kv, compress_idxs = self._compress_kv(x, qr, pos, kv.size(1), shared)
 [rank4]:                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1640, in _compress_kv
 [rank4]:     idxs = self._compress_topk_idxs(x, qr, latent, pos, offset, shared)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1613, in _compress_topk_idxs
 [rank4]:     idxs = self.indexer(x, qr, latent, pos, offset, shared)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
 [rank4]:     return self._call_impl(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
 [rank4]:     return forward_call(*args, **kwargs)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 1047, in forward
 [rank4]:     apply_rotary_emb(k[..., -rd:], freqs)
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 221, in apply_rotary_emb
 [rank4]:     return apply_rotary_emb_pairs(x, freqs_cis, inverse)
 [rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank4]:   File "/data1/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/attention.py", line 263, in apply_rotary_emb_pairs
 [rank4]:     raise ValueError(
 [rank4]: ValueError: the rotary table must be [s, 32, 2], got (32, 2)
 W1117 15:50:54.536000 2460290 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2460300 closing signal SIGTERM
@@ -985,23 +985,23 @@ W1117 15:50:54.538000 2460290 torch/distributed/elastic/multiprocessing/api.py:1
 W1117 15:50:54.538000 2460290 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2460305 closing signal SIGTERM
 W1117 15:50:54.539000 2460290 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2460306 closing signal SIGTERM
 W1117 15:50:54.539000 2460290 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2460307 closing signal SIGTERM
-E1117 15:50:55.719000 2460290 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 2 (pid: 2460302) of binary: /data1/relic-online-unpack-20261117-0534/venv311/bin/python
+E1117 15:50:55.719000 2460290 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 2 (pid: 2460302) of binary: <workspace>/relic-online-unpack-20261117-0534/venv311/bin/python
 Traceback (most recent call last):
   File "<frozen runpy>", line 198, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
     main()
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
     return f(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
     run(args)
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
     elastic_launch(
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
     return launch_agent(self._config, self._entrypoint, list(args))
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
     raise ChildFailedError(
 torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
 ============================================================
@@ -1010,49 +1010,49 @@ relicllm.cli.generate_v41 FAILED
 Failures:
 [1]:
   time      : 2026-11-17_15:50:55
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 0 (local_rank: 0)
   exitcode  : 1 (pid: 2460300)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [2]:
   time      : 2026-11-17_15:50:55
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 1 (local_rank: 1)
   exitcode  : -15 (pid: 2460301)
   error_file: <N/A>
   traceback : Signal 15 (SIGTERM) received by PID 2460301
 [3]:
   time      : 2026-11-17_15:50:55
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 3 (local_rank: 3)
   exitcode  : -15 (pid: 2460303)
   error_file: <N/A>
   traceback : Signal 15 (SIGTERM) received by PID 2460303
 [4]:
   time      : 2026-11-17_15:50:55
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 4 (local_rank: 4)
   exitcode  : 1 (pid: 2460304)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [5]:
   time      : 2026-11-17_15:50:55
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 5 (local_rank: 5)
   exitcode  : 1 (pid: 2460305)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [6]:
   time      : 2026-11-17_15:50:55
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 6 (local_rank: 6)
   exitcode  : 1 (pid: 2460306)
   error_file: <N/A>
   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
 [7]:
   time      : 2026-11-17_15:50:55
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 7 (local_rank: 7)
   exitcode  : -15 (pid: 2460307)
   error_file: <N/A>
@@ -1061,7 +1061,7 @@ Failures:
 Root Cause (first observed failure):
 [0]:
   time      : 2026-11-17_15:50:54
-  host      : ascend216
+  host      : fleet-host-2
   rank      : 2 (local_rank: 2)
   exitcode  : 1 (pid: 2460302)
   error_file: <N/A>

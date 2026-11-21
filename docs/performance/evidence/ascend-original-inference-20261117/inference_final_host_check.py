@@ -10,8 +10,8 @@ from pathlib import Path
 import subprocess
 import sys
 
-ROOT = Path("/data1/relic-v41-infer-20261117-1424")
-CHECKPOINT = Path("/data1/relic-v41-20261116-210/checkpoint")
+ROOT = Path("<workspace>/relic-v41-infer-20261117-1424")
+CHECKPOINT = Path("<checkpoint>")
 SAFETY_SHA = "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a"
 CANN_SHA = "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12"
 TRITON_PATCH_SHA = "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50"
@@ -53,7 +53,7 @@ def main():
              ("/usr/local/Ascend/cann", "/usr/local/Ascend/ascend-toolkit/latest")}
     if cann != CANN_SHA or set(links.values()) != {"/usr/local/Ascend/cann-9.2.0"}:
         raise RuntimeError("shared CANN environment or links changed")
-    baseline_path = Path("/data1/relic-v41-20261116-210/logs/model-attempts/original-fp4-fp8-tp8-verified/preconditions.json")
+    baseline_path = Path("<workspace>/relic-v41-20261116-210/logs/model-attempts/original-fp4-fp8-tp8-verified/preconditions.json")
     baseline = json.loads(baseline_path.read_bytes())["checkpoint_stats"]
     current = {}
     for name in baseline:
@@ -62,7 +62,7 @@ def main():
                          "st_mtime_ns": st.st_mtime_ns, "st_ctime_ns": st.st_ctime_ns}
     if current != baseline:
         raise RuntimeError("a verified original checkpoint identity/timestamp changed")
-    prior = json.loads(Path("/data1/relic-expert-gemm-20261117-1046/logs/final-expert-host-check-after-final-tests.json").read_bytes())
+    prior = json.loads(Path("<workspace>/relic-expert-gemm-20261117-1046/logs/final-expert-host-check-after-final-tests.json").read_bytes())
     jenkins = subprocess.check_output(["ps", "-p", "115417", "-o", "pid,lstart,args"], text=True)
     if jenkins != prior["jenkins_agent"]:
         raise RuntimeError("the shared Jenkins agent identity/command changed")
@@ -74,7 +74,7 @@ def main():
     import triton
     if torch.__version__ != "2.10.0+cpu" or torch_npu.__version__ != "2.10.0.post7":
         raise RuntimeError("the exact Torch/NPU stack changed")
-    patch = Path("/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp")
+    patch = Path("<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp")
     patch_sha = hashlib.sha256(patch.read_bytes()).hexdigest()
     if patch_sha != TRITON_PATCH_SHA:
         raise RuntimeError("the reviewed private Triton compatibility source changed")

@@ -1,5 +1,5 @@
 [W1119 17:09:20.199158506 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
-/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/unpack.py:200: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/unpack.py:200: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
   target[2 * start + 1:2 * stop:2].copy_(lookup[(chunk >> 4).long()])
 w1_w3 1024 0.4724 ms 37.45 GB/s identical
 w1_w3 2048 0.3854 ms 45.91 GB/s identical

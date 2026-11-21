@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import sys
 
-ROOT = Path("/data1/relic-v41-infer-20261117-1424")
+ROOT = Path("<workspace>/relic-v41-infer-20261117-1424")
 
 
 def main():

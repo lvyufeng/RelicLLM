@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import sys
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 LEASE_END = dt.datetime.fromisoformat("2026-11-19T10:07:52+00:00")
 LIMIT = 900
 
@@ -49,7 +49,7 @@ def main():
                DEEPSEEK_V41_CPU_GEMV_THREADS="96", DEEPSEEK_V41_ENGRAM_RANK0="1",
                RELIC_CPU_RAW_SIMD_GEMV_CACHE=str(ROOT/"cache/cpu"), RELIC_CPU_GEMV_CACHE=str(ROOT/"cache/cpu"))
     command = [sys.executable,"-m","torch.distributed.run","--standalone","--nnodes=1","--nproc-per-node=8",
-               str(ROOT/"source/profile_actual_cube.py"),"--checkpoint","/data1/relic-v41-20261116-210/checkpoint",
+               str(ROOT/"source/profile_actual_cube.py"),"--checkpoint","<checkpoint>",
                "--expert-device","npu:0","--expert-world","8","--expert-pool-rows","0","--expert-hot-rows","0",
                "--no-expert-batched","--expert-deal","id","--no-decode-graphs","--threads","4",
                "--max-seq-len","128","--max-new-tokens","16","--temperature","0","--prompt",

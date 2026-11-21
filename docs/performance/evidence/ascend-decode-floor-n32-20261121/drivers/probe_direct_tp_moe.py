@@ -8,7 +8,7 @@ from pathlib import Path
 
 import probe_expert_tp2_ep4 as base
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 
 
 def main():

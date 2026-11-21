@@ -10,8 +10,8 @@ from pathlib import Path
 import subprocess
 import sys
 
-ROOT = Path("/data1/relic-expert-gemm-20261117-1046")
-CHECKPOINT = Path("/data1/relic-v41-20261116-210/checkpoint")
+ROOT = Path("<workspace>/relic-expert-gemm-20261117-1046")
+CHECKPOINT = Path("<checkpoint>")
 CANN_SHA256 = "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12"
 SAFETY_SHA256 = "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a"
 
@@ -56,7 +56,7 @@ def main():
         raise RuntimeError("shared CANN link targets changed")
     # Compare current payload identities/stats with the accepted prior original-
     # checkpoint attempt. No second hundreds-of-GB hash pass is represented here.
-    baseline = json.loads(Path("/data1/relic-v41-20261116-210/logs/model-attempts/original-fp4-fp8-tp8-verified/preconditions.json").read_bytes())["checkpoint_stats"]
+    baseline = json.loads(Path("<workspace>/relic-v41-20261116-210/logs/model-attempts/original-fp4-fp8-tp8-verified/preconditions.json").read_bytes())["checkpoint_stats"]
     current = {}
     for name in baseline:
         path = CHECKPOINT / name
@@ -73,7 +73,7 @@ def main():
     import triton
     if torch.__version__ != "2.10.0+cpu" or torch_npu.__version__ != "2.10.0.post7":
         raise RuntimeError("the exact Torch/NPU stack changed")
-    patch_path = Path("/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp")
+    patch_path = Path("<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp")
     patch_sha = hashlib.sha256(patch_path.read_bytes()).hexdigest()
     if patch_sha != "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50":
         raise RuntimeError("the reviewed private Triton compatibility source changed")
@@ -88,7 +88,7 @@ def main():
               "cann_env_sha256": cann, "cann_links": links,
               "jenkins_agent": subprocess.check_output(["ps", "-p", "115417", "-o", "pid,lstart,args"], text=True),
               "no_device_reset_or_shared_cleanup": True,
-              "private_triton_patch_retained": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+              "private_triton_patch_retained": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
               "private_root_retained": str(ROOT), "lease_release": "pending fleet tool after final checks"}
     with (ROOT / "logs/final-expert-host-check-after-final-tests.json").open("x") as handle:
         json.dump(result, handle, indent=2)

@@ -1006,7 +1006,7 @@
   "device_selected_MoE": null,
   "production_defaults_and_serving_guards_unchanged": true,
   "original_model_artifact": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-expert-tp2-host-table-HC-20261120T124507Z/Cube-model-rank-6.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-tp2-host-table-HC-20261120T124507Z/Cube-model-rank-6.json",
     "sha256": "66dfdd310010384e17218908b535d4093651e8fa14e17a738e836ee5c0a291f5",
     "bytes": 108297
   },

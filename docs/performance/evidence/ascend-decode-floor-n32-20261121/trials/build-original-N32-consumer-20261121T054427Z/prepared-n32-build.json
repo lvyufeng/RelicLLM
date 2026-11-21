@@ -1,7 +1,7 @@
 {
   "variants": {
     "k128-prepared-n32": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/build/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/build/lib/librelic_online_tile_cube.so",
       "sha256": "bf2c8c9d949f01e1004cefe033f14b6f6715f4567eefa73d552879eef522b848",
       "group_k": 4,
       "direct_bits": false,
@@ -12,13 +12,13 @@
         "CMakeLists.txt": "7c5488bf01dd9214d902f116a2e5036f5dbd50768caa56e0328fbf78fd62c0d4",
         "kernel_entry.cpp.in": "468083f065fecacbeee849646582dbe061a5650cbb5e74bfbe7746a7f925fed0"
       },
-      "source_snapshot": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/source",
+      "source_snapshot": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/source",
       "configure_command": [
         "cmake",
         "-S",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/source",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/source",
         "-B",
-        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/build",
+        "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v1/build",
         "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
         "-DSOC_VERSION=Ascend910B3",
         "-DRUN_MODE=npu",
@@ -33,10 +33,10 @@
     }
   },
   "original_binary_hashes": {
-    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
-    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
-    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765",
-    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so": "83b91e5740ddc92003871908cd69517c8e5d7a9e6dadfffcd75aae8d87ba3510"
+    "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
+    "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
+    "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765",
+    "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so": "83b91e5740ddc92003871908cd69517c8e5d7a9e6dadfffcd75aae8d87ba3510"
   },
   "no_source_or_binary_overwrite": true,
   "runtime_device_queries_and_acceptance_are_deferred_until_torch_npu_is_loaded": true

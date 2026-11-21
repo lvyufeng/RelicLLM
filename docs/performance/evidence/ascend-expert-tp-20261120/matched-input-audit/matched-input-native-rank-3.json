@@ -406,7 +406,7 @@
   "single_stream": true,
   "production_defaults_and_serving_guards_unchanged": true,
   "original_complete_model_receipt": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-expert-native-forced-host-table-HC-20261120T133950Z/Cube-model-rank-3.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-native-forced-host-table-HC-20261120T133950Z/Cube-model-rank-3.json",
     "bytes": 113739,
     "sha256": "5f7496a8c4de3c544b0b94fde5efde1662cb144ed26a0d246bcd36083f68183c"
   },

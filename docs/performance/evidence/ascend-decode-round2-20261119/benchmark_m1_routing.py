@@ -24,7 +24,7 @@ def main():
     device=torch.device("npu:0")
     torch.npu.set_device(device)
     output=Path(os.environ["RELIC_PERF_OUTPUT"])
-    checkpoint=V41Checkpoint("/data1/relic-v41-20261116-210/checkpoint")
+    checkpoint=V41Checkpoint("<checkpoint>")
     original_widen=unpack.unpack_fp4_to_int8
     unpack.unpack_fp4_to_int8=partial(vector_fp4_decode.unpack_fp4_vector,mode="arithmetic",tile=2048)
     store=None

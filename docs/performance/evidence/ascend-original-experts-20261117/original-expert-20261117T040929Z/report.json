@@ -3,7 +3,7 @@
   "torch": "2.10.0+cpu",
   "torch_npu": "2.10.0.post7",
   "device": "Ascend910B3",
-  "checkpoint": "/data1/relic-v41-20261116-210/checkpoint",
+  "checkpoint": "<checkpoint>",
   "rows": 1,
   "dim": 5120,
   "inter_dim": 2304,

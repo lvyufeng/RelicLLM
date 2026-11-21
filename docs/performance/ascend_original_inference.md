@@ -1,5 +1,9 @@
 # Original-checkpoint generation on Ascend 910B
 
+> Publication note: [the evidence publication policy](ascend_decode_optimization.md#published-evidence-and-measurement-identities)
+> explains neutral paths/host labels and the separate original/published hash map. Publication cleanup
+> does not rerun the recorded measurements.
+
 This continues the [online unpack](ascend_online_unpack.md) and
 [original-format expert](ascend_original_experts.md) work with a real **40-layer
 DeepSeek-V4.1-Flash TP8 prefill and autoregressive decode**. Engram is enabled and
@@ -162,7 +166,7 @@ export DEEPSEEK_V41_RESIDENT_EXPERTS=0 DEEPSEEK_V41_PIN_RESIDENT_EXPERTS=0
 export POCKETLLM_V41_MMA_EMULATE=1
 python -m torch.distributed.run --standalone --nnodes=1 --nproc-per-node=8 \
   -m relicllm.cli.generate_v41 \
-  --checkpoint /data1/relic-v41-20261116-210/checkpoint \
+  --checkpoint <checkpoint> \
   --expert-device npu:0 --expert-world 8 \
   --expert-pool-rows 0 --expert-hot-rows 0 --no-expert-batched --expert-deal id \
   --no-decode-graphs --threads 4 --max-seq-len 128 --max-new-tokens 4 \

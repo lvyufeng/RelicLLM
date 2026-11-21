@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 import sys
 
-ROOT=Path("/data1/relic-v41-infer-20261117-1424")
-CHECKPOINT=Path("/data1/relic-v41-20261116-210/checkpoint")
+ROOT=Path("<workspace>/relic-v41-infer-20261117-1424")
+CHECKPOINT=Path("<checkpoint>")
 
 
 def main():

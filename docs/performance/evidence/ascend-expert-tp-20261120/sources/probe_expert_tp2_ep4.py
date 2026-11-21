@@ -23,7 +23,7 @@ from relicllm.models.deepseek_v4_1.ascend_expert_tp import ExpertTPDispatch
 from relicllm.models.deepseek_v4_1.ascend_tile_major_experts import AscendTileMajorRoutedExperts
 from relicllm.models.deepseek_v4_1.loader import V41Checkpoint
 
-ROOT = Path("/data1/relic-v41-perf-20261118-0938")
+ROOT = Path("<workspace>/relic-v41-perf-20261118-0938")
 OUTPUT = Path(os.environ["RELIC_PERF_OUTPUT"])
 LIBRARY = ROOT / "cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so"
 SHA = "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287"
@@ -35,7 +35,7 @@ def main():
     torch.npu.set_device(rank)
     torch.set_num_threads(4)
     dist.init_process_group("hccl", timeout=dt.timedelta(seconds=180))
-    checkpoint = V41Checkpoint("/data1/relic-v41-20261116-210/checkpoint", device="cpu")
+    checkpoint = V41Checkpoint("<checkpoint>", device="cpu")
     operator = AscendCTileCubeConsumer(LIBRARY, sha256=SHA)
     original = AscendTileMajorRoutedExperts(checkpoint, 0, n_experts=8, dim=5120, inter_dim=2304, topk=6,
         rank=rank, world=world, device=f"npu:{rank}", dtype=torch.bfloat16, backend="triton", preload=True)

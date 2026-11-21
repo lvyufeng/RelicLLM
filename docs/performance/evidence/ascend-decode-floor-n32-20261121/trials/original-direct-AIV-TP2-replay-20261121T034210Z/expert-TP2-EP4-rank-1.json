@@ -582,7 +582,7 @@
     "projection_FP32_accumulate_and_explicit_BF16_boundary": true,
     "native_reduction_differs_from_exact_default": true,
     "packed_weight_and_original_scale_bytes_unchanged": true,
-    "source": "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/direct_aiv_gemv.py",
+    "source": "<workspace>/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/direct_aiv_gemv.py",
     "not_a_measured_speedup_claim": true
   },
   "synchronized_routed_TP_body_ms": [

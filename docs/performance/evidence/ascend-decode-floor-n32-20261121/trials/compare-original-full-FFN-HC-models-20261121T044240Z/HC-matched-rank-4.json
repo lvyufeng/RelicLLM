@@ -1031,7 +1031,7 @@
   ],
   "production_defaults_and_serving_guards_unchanged": true,
   "original_model_artifact": {
-    "path": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-4.json",
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z/Cube-model-rank-4.json",
     "bytes": 109301,
     "sha256": "b8e19f99a8c608fe97f17e54fac7628a3f656d2e03276c0d52d79ec1cf4fa1b0"
   }

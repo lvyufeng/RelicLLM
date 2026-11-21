@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = Path("/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack")
+CORE = Path("/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack")
 SOURCE = ROOT / ".coord/expert-tp-frozen-inputs-20261120"
 DEST = ROOT / "docs/performance/evidence/ascend-expert-tp-20261120"
 
@@ -38,7 +38,7 @@ def main():
         for path in (SOURCE / tag / "source-snapshots").rglob("*"):
             if path.is_file():
                 relative = path.relative_to(SOURCE / tag / "source-snapshots").as_posix()
-                expected = pre["source_hashes"]["/data1/relic-v41-perf-20261118-0938/source/" + relative]
+                expected = pre["source_hashes"]["<workspace>/relic-v41-perf-20261118-0938/source/" + relative]
                 if sha(path.read_bytes()) != expected:
                     raise RuntimeError("a timed source snapshot changed")
     for tag in ("original-real-replay", "final-real-replay"):
@@ -84,7 +84,7 @@ def main():
         local(CORE / "tests" / name, "tests/" + name)
     local(CORE / "relic_core/csrc/ascend/online_tile_cube/README.md", "sources/online-tile-consumer-README.md.txt")
     local(ROOT / ".coord/expert-tp-final-regression-20261120.log", "portable-regression.log")
-    release = {"host": "ts-216", "released": True, "detail": "lease dropped",
+    release = {"host": "fleet-host-2", "released": True, "detail": "lease dropped",
                "confirmed_by": "ts-fleet-bridge.ts_release after ending idle/checkpoint/CANN/CI receipt"}
     staged["safety/lease-release.json"] = (json.dumps(release, indent=2) + "\n").encode()
     origins["safety/lease-release.json"] = {"path": "confirmed tool result"}

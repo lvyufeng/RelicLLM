@@ -11,9 +11,9 @@ import json, subprocess, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-PY_INCLUDE = Path("/data1/relic-online-unpack-20261117-0534/python311-base/python/include/python3.11")
+PY_INCLUDE = Path("<workspace>/relic-online-unpack-20261117-0534/python311-base/python/include/python3.11")
 CANN_INC = Path("/usr/local/Ascend/cann-9.2.0/aarch64-linux/pkg_inc")
-OUT = Path("/data1/relic-online-unpack-20261117-0534/tmp")
+OUT = Path("<workspace>/relic-online-unpack-20261117-0534/tmp")
 EXPECTED_FAILURE = "RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE"
 
 

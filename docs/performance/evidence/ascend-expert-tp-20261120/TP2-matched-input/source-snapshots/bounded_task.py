@@ -30,7 +30,7 @@ import subprocess
 import sys
 import time
 
-ROOT = Path("/data1/relic-v41-20261116-210")
+ROOT = Path("<workspace>/relic-v41-20261116-210")
 HF_REVISION = "314113f8a7dadb388215396ba5fbee2c610a04d6"
 MODEL = "deepseek-ai/DeepSeek-V4.1-Flash"
 PLATFORM_VARIANT_METADATA = {

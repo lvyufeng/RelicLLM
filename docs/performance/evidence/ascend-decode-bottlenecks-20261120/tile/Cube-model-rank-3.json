@@ -4177,7 +4177,7 @@
   "kernel_profile_not_a_TPS_window": {
     "rank": 3,
     "all_ranks_profiled": true,
-    "profile_directory": "/data1/relic-v41-perf-20261118-0938/logs/current-bottleneck-tile-20261120T034608Z/profiler-rank3",
+    "profile_directory": "<workspace>/relic-v41-perf-20261118-0938/logs/current-bottleneck-tile-20261120T034608Z/profiler-rank3",
     "steps": 4,
     "context_start": 24,
     "context_end": 28,
@@ -4189,7 +4189,7 @@
     ],
     "same_token_ids_as_uninstrumented_window": true,
     "profile_wall_ms_per_forward": 218.0584353627637,
-    "event_scope_receipt": "/data1/relic-v41-perf-20261118-0938/logs/current-bottleneck-tile-20261120T034608Z/decode-scopes-rank-3.json",
+    "event_scope_receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/current-bottleneck-tile-20261120T034608Z/decode-scopes-rank-3.json",
     "note": "actual captured graph and routed path; kernel/dependency attribution, not a TPS window"
   },
   "expert_projection_source": "device_selected_native_tile_ring_Cube",
@@ -4233,7 +4233,7 @@
     "original_tile_bank_duplicated": false,
     "global_expanded_weight_scratch_bytes": 196608,
     "native_consumer": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
       "sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
       "AIV_to_small_GM_ring_to_L1_to_AIC": true,
       "original_K32_blocks_per_Cube_tile": 4,

@@ -1,5 +1,5 @@
 {
-  "directory": "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z",
+  "directory": "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z",
   "ranks": 8,
   "actual_configuration": "original_fp4_expert_TP_FP32_down_reduce_before_BF16_ascending_expert_combine",
   "uninstrumented_forwards": 16,
@@ -50380,135 +50380,135 @@
     }
   ],
   "raw_CANN_and_scope_artifact_identities": {
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank0/ascend216_3369182_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank0/fleet-host-2_3369182_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15316311,
       "sha256": "219a7c0af9cc2a9a33fda25525661726df51c5b448ca06b29b5bf8037fdf7e3f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank1/ascend216_3369183_20261121125229442_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank1/fleet-host-2_3369183_20261121125229442_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15274071,
       "sha256": "58c6aaae62dff40639558187d576df04659009d4232b0def9769ed6284533994"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank2/ascend216_3369184_20261121125229444_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank2/fleet-host-2_3369184_20261121125229444_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15316031,
       "sha256": "d45dac6828d53c9bf1ce6d35e7f50f11b770cfc1bd7eac535ee5f1a40b5149a3"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank3/ascend216_3369185_20261121125229445_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank3/fleet-host-2_3369185_20261121125229445_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15273582,
       "sha256": "4a763567cee941d648d5ea3f02e0e0e447e77a08c4149fe1b02184e920da178f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank4/ascend216_3369186_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank4/fleet-host-2_3369186_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15317195,
       "sha256": "2cb284a2fb4ba5d4dfff41eaaff4a56e3e53c3e04af1250e4820e83cbfd629df"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank5/ascend216_3369187_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank5/fleet-host-2_3369187_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15273984,
       "sha256": "66cb48266b154027ae3d7bedbd5a86b8454f1931b05368835f9c025dda0889b7"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank6/ascend216_3369188_20261121125229447_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank6/fleet-host-2_3369188_20261121125229447_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15317725,
       "sha256": "311f7d671eadabd7b18c8129b7ba825ebafe2985ebc5923d6d23c59daa182878"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank7/ascend216_3369189_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank7/fleet-host-2_3369189_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv": {
       "bytes": 15274849,
       "sha256": "24fc0c4e51dbb2569e27fc5e9e0981659be01137b862e7fe90bd62617c7683d9"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank0/ascend216_3369182_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank0/fleet-host-2_3369182_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 48631272,
       "sha256": "7a18af3f817ddf281f6118e0bb0e11dce4f940eab4a8b04c6410089805dae731"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank1/ascend216_3369183_20261121125229442_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank1/fleet-host-2_3369183_20261121125229442_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 46292479,
       "sha256": "37598f041f8ac24d03ab3b10b7f3fec12c03d0f24714d8a40c7a18adbb9de854"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank2/ascend216_3369184_20261121125229444_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank2/fleet-host-2_3369184_20261121125229444_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 46404620,
       "sha256": "aff36c54dfda19a659b4cf7869742517196e468783dd00c02cbb0ceedf68a09f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank3/ascend216_3369185_20261121125229445_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank3/fleet-host-2_3369185_20261121125229445_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 46413154,
       "sha256": "4e7f31b95f02940e685385f4a14abc5952fd9eb4d47b1421682c368391e65fec"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank4/ascend216_3369186_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank4/fleet-host-2_3369186_20261121125229438_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 46434232,
       "sha256": "90f245d9877dfc3d86ac37df2e03e6b9e15d22b78e07233adc35b34711ad07b9"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank5/ascend216_3369187_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank5/fleet-host-2_3369187_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 46292034,
       "sha256": "bccb50be662399550578a9e5f4e360637f8af57ea6df9b31da1fd730a20ef211"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank6/ascend216_3369188_20261121125229447_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank6/fleet-host-2_3369188_20261121125229447_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 46406423,
       "sha256": "2c9a4ab9ce5dd00949214388c03ced356eec864ef60c13b130070afdee17a69d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank7/ascend216_3369189_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank7/fleet-host-2_3369189_20261121125229441_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json": {
       "bytes": 46292998,
       "sha256": "1d064cf0c05081e5df86c7639c7bb52eab92533a908a211b8f6468dc5c4c638f"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-0.json": {
       "bytes": 260173,
       "sha256": "74ccd732b40200ad4aff9a586f6c2f112dd563b35fa8fcc80a3ebf8be7471a7e"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-1.json": {
       "bytes": 260156,
       "sha256": "bcc0420d28bad73fd8237de84c94c16c7c7ee6b8c3d589c3c8e0aade17239512"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-2.json": {
       "bytes": 260179,
       "sha256": "ef32bb66a80d96abaea9c223c026af1dba1798a3c06194e4f1a13782d19048e1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-3.json": {
       "bytes": 260184,
       "sha256": "8f54875dffc1834ddbec2c38aefb4b9a4e38ae7f7dfd35f341599b5ff33b8ba0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-4.json": {
       "bytes": 260197,
       "sha256": "17b02efcd55820fe23f1f0043aae5cf49357d6cbfa8f322c80e6ef551cb64269"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-5.json": {
       "bytes": 260159,
       "sha256": "eccc2e4e6d287dc7580266ac4c52d5ba0f4f1a89fe2f0c6f71802c6e37894b32"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-6.json": {
       "bytes": 260065,
       "sha256": "8992b98ae36f8290b51230e5b2908a4e249688c0347bafd710f1d8fe7492ccf6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/decode-scopes-rank-7.json": {
       "bytes": 260113,
       "sha256": "ad77d3572ddc219fad6b3a2f5789d7264b31456d5ed0ba42f318210463dbfe16"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-0.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-0.json": {
       "bytes": 662,
       "sha256": "f002ad53a3a0f1e5fc60f56a73b20446a5d952c590a93d58abb4706e0c0750f6"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-1.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-1.json": {
       "bytes": 662,
       "sha256": "9ead1daf178dcb304a641ea7ada235582b88599d34fc7f9b9b68db1e26d06df0"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-2.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-2.json": {
       "bytes": 662,
       "sha256": "b3e6acd511af24d5ef5522f11f9ba75880cc95d31b8e7602a66e0365c3a8233d"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-3.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-3.json": {
       "bytes": 661,
       "sha256": "99444e0564a3db7743b5e7a98ef0aaeedf7fcdb9af1697640c5b8153ab4b6d24"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-4.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-4.json": {
       "bytes": 661,
       "sha256": "fa1df4c7eb53203ccaa26c4dee8a79724b0483c30dd11808a9bdfab688e2d356"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-5.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-5.json": {
       "bytes": 662,
       "sha256": "67cf2b49580cb5e93e3f78e80479939101136824bf83a5c49b1ac23df817da07"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-6.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-6.json": {
       "bytes": 662,
       "sha256": "315748b82cc383429e84076b10ac8cefd5dca80ae1aa60ba7f38081b2ec43d41"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-7.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profile-scope-rank-7.json": {
       "bytes": 662,
       "sha256": "dff8520f149ebd25beb80ee5378e1ec8433486ac2d15772b6d82d67d1c90a7c1"
     },
-    "/data1/relic-v41-perf-20261118-0938/logs/current-TP2-timeline-20261121.json": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/current-TP2-timeline-20261121.json": {
       "bytes": 3857927,
       "sha256": "5ebbb329531f0565e093345ebf0c94a1069fb43a49d892c16387e4aec78c514e"
     }

@@ -206,7 +206,7 @@
     "final-source-hardening/README.md.txt": {
       "sha256": "1ad3feaae7d5a26ff35ffe6f09484306c2195e3632045f2fc5b5a53bcc37d7eb",
       "bytes": 6980,
-      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/csrc/ascend/online_tile_cube/README.md"
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/csrc/ascend/online_tile_cube/README.md"
     },
     "final-source-hardening/ascend_attention_reuse.py": {
       "sha256": "38f14ff57dc1669cdfb929d73ddd8222cfbafa1ff66a493841d8aefa2260dc94",
@@ -216,12 +216,12 @@
     "final-source-hardening/ascendc_online_tile_cube.py": {
       "sha256": "99f9adf68073259847b8cfc7ac485456601fcb19534447e2b2013770f51ac663",
       "bytes": 6502,
-      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/ascendc_online_tile_cube.py"
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/ascendc_online_tile_cube.py"
     },
     "final-source-hardening/ascendc_tile_moe.py": {
       "sha256": "a78c60a29446880a64fa8ed4ae73b65685566d8627cdaeac9c98b0e4e5d2b04d",
       "bytes": 9797,
-      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/ascendc_tile_moe.py"
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/ascendc_tile_moe.py"
     },
     "native-reuse-preconditions.json": {
       "sha256": "3ba94bef877e9368f2d5b53b310cdad5402dba08cb54d45784c68483063eadd8",
@@ -311,12 +311,12 @@
     "tests/test_ascendc_online_tile_cube.py": {
       "sha256": "31e21c6f19d020e9a4b087ec21ace9da4d47cb72c683669af656de6282f6acf4",
       "bytes": 5899,
-      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascendc_online_tile_cube.py"
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascendc_online_tile_cube.py"
     },
     "tests/test_ascendc_tile_moe.py": {
       "sha256": "ab091810fcb11c63043e0d3a07a1fdd6324218461ff806d4c659e68139160c0e",
       "bytes": 4860,
-      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascendc_tile_moe.py"
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascendc_tile_moe.py"
     },
     "tests/test_v41_ascend_attention_reuse.py": {
       "sha256": "093025eae9907f58da51ff6aee4553c3cd617b2dfed903836252f5357986f39f",

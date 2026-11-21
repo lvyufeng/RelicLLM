@@ -367,7 +367,7 @@
 [rank 0] loaded in 18.1 s
 [rank 0] routed experts: AscendRoutedExperts on 40 layers, world 8
 [rank 0] prompt 20 tokens
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [rank 7] layers.35  (809 filled)
 [rank 7] layers.36  (831 filled)
@@ -386,7 +386,7 @@
 [rank 7] loaded in 19.4 s
 [rank 7] routed experts: AscendRoutedExperts on 40 layers, world 8
 [rank 7] prompt 20 tokens
-/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
   return func(*args, **kwargs)
 [rank 4] 16 tokens in 909.4 s (56.83 s/token), stopped on fixed_benchmark_steps
 [rank 1] 16 tokens in 909.4 s (56.83 s/token), stopped on fixed_benchmark_steps[rank 3] 16 tokens in 909.4 s (56.83 s/token), stopped on fixed_benchmark_steps[rank 4] decode steps: 173.9 s for 16 tokens (10870 ms/token)

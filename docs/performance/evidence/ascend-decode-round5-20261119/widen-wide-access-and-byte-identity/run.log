@@ -3,42 +3,42 @@ w1_w3_released_bytes_per_lane_2048 0.277 ms 63.88 GB/s identical
 w1_w3_words_per_lane_1024 0.3037 ms 58.27 GB/s identical
 w1_w3_words_per_lane_2048 0.2493 ms 70.98 GB/s identical
 Traceback (most recent call last):
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py", line 310, in compile
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py", line 310, in compile
     next_module = compile_ir(module, metadata)
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/compiler.py", line 778, in <lambda>
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/compiler.py", line 778, in <lambda>
     lambda src, metadata: linalg_to_bin_enable_npu_compile_A2_A3(
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/compiler.py", line 549, in linalg_to_bin_enable_npu_compile_A2_A3
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/compiler.py", line 549, in linalg_to_bin_enable_npu_compile_A2_A3
     ret = subprocess.run(cmd_list, capture_output=True, check=True)
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11/subprocess.py", line 571, in run
+  File "<workspace>/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11/subprocess.py", line 571, in run
     raise CalledProcessError(retcode, process.args,
-subprocess.CalledProcessError: Command '['/usr/local/Ascend/cann-9.2.0/bin/bishengir-compile', '/data1/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel.ttadapter.mlir', '--target=Ascend910B3', '--enable-auto-multi-buffer=True', '--enable-auto-bind-sub-block=True', '--enable-hfusion-compile=true', '--enable-hivm-compile=true', '--enable-triton-kernel-compile=true', '-o', '/data1/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel']' returned non-zero exit status 1.
+subprocess.CalledProcessError: Command '['/usr/local/Ascend/cann-9.2.0/bin/bishengir-compile', '<workspace>/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel.ttadapter.mlir', '--target=Ascend910B3', '--enable-auto-multi-buffer=True', '--enable-auto-bind-sub-block=True', '--enable-hfusion-compile=true', '--enable-hivm-compile=true', '--enable-triton-kernel-compile=true', '-o', '<workspace>/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel']' returned non-zero exit status 1.
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-  File "/data1/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 129, in <module>
+  File "<workspace>/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 129, in <module>
     raise SystemExit(main())
                      ^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
     return func(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 119, in main
+  File "<workspace>/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 119, in main
     measure(f"{name}_words_per_lane_{tile}",
-  File "/data1/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 77, in measure
+  File "<workspace>/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 77, in measure
     launch()
-  File "/data1/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 120, in <lambda>
+  File "<workspace>/relic-v41-perf-20261118-0938/source/benchmark_widen_wide_access.py", line 120, in <lambda>
     lambda tile=tile, words=words, half=half: _words_per_lane[words](
                                               ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 660, in run
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 660, in run
     kernel = self.compile(
              ^^^^^^^^^^^^^
-  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py", line 320, in compile
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py", line 320, in compile
     raise MLIRCompilationError(stage_name, error_detail)
 triton.compiler.errors.MLIRCompilationError: 
 ///------------------[ERROR][Triton][BEG]------------------
@@ -46,13 +46,13 @@ triton.compiler.errors.MLIRCompilationError:
 [NOTE] Ub overflow detected; automatically set enable-code-motion to false and retrying compilation.
 [NOTE] Ub overflow detected; automatically set enable-auto-multi-buffer to false and retrying compilation.
 [NOTE] Due to Ub overflow, automatically set enable-code-motion to false, set enable-auto-multi-buffer to false; compilation still failed.
-loc("/data1/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel.ttadapter.mlir":1:1): error: Failed to run BiShengHIR pipeline
+loc("<workspace>/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel.ttadapter.mlir":1:1): error: Failed to run BiShengHIR pipeline
 
-loc("/data1/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel.ttadapter.mlir":2:3): error: ub overflow, requires 1704192 bits while 1572864 bits available! (possible reason: tiling basic block is too large or block number is more than what user expect due to multi-buffer feature is enabled and some ops need extra local buffer.)
+loc("<workspace>/relic-v41-perf-20261118-0938/tmp/tmpt_90741o/kernel.ttadapter.mlir":2:3): error: ub overflow, requires 1704192 bits while 1572864 bits available! (possible reason: tiling basic block is too large or block number is more than what user expect due to multi-buffer feature is enabled and some ops need extra local buffer.)
 [ERROR] Failed to run BiShengIR pipeline
 
 
-[INFO]: The compiled kernel cache is in /data1/relic-v41-perf-20261118-0938/cache/triton/ywqq7r23362xFTPeDt-mDQny7idyzPOgPILduCYQ1h0
+[INFO]: The compiled kernel cache is in <workspace>/relic-v41-perf-20261118-0938/cache/triton/ywqq7r23362xFTPeDt-mDQny7idyzPOgPILduCYQ1h0
 
 ///------------------[ERROR][Triton][END]------------------
 

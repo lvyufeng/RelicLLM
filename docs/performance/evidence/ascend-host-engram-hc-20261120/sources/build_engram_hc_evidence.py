@@ -6,11 +6,11 @@ import json
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parents[1]
-CORE = Path("/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack")
+CORE = Path("/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack")
 AUDIT = BASE / ".coord/engram-hc-audit-20261120T084701Z"
 SNAPSHOTS = BASE / ".coord/engram-hc-final-sources/source-snapshots"
 DEST = BASE / "docs/performance/evidence/ascend-host-engram-hc-20261120"
-PRIVATE = Path("/data1/relic-v41-perf-20261118-0938/source")
+PRIVATE = Path("<workspace>/relic-v41-perf-20261118-0938/source")
 
 
 def sha(data):
@@ -93,7 +93,7 @@ def main():
         row["original_private_receipt_sha256"] = sha(path.read_bytes())
         staged["safety/" + name] = (json.dumps(row, indent=2) + "\n").encode()
         origins["safety/" + name] = str(path.relative_to(BASE))
-    release = {"host": "ts-216", "released": True, "detail": "lease dropped",
+    release = {"host": "fleet-host-2", "released": True, "detail": "lease dropped",
                "confirmed_by": "ts-fleet-bridge.ts_release after final idle/checkpoint/CANN/CI safety receipt",
                "final_safety_receipt": "safety/new-lease-safety-20261120T084751Z.json"}
     staged["safety/lease-release.json"] = (json.dumps(release, indent=2) + "\n").encode()

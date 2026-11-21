@@ -508,7 +508,7 @@
       },
       "library_reports": {
         "k128": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
           "sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 4,
@@ -521,7 +521,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k256": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 8,
@@ -534,7 +534,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k128-preload-a": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "b1d1408b5767fa74c21a278229e858fa1329cd90b6905802d8b7d8044fffb54c",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 4,
@@ -547,7 +547,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k256-preload-a": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "4b752f223813ee3fbb28a312a33cde0a4a053dddb1b72c70a2f3d321ca48a318",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 8,
@@ -937,7 +937,7 @@
       },
       "library_reports": {
         "k128": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
           "sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 4,
@@ -950,7 +950,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k256": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 8,
@@ -963,7 +963,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k128-preload-a": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "b1d1408b5767fa74c21a278229e858fa1329cd90b6905802d8b7d8044fffb54c",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 4,
@@ -976,7 +976,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k256-preload-a": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "4b752f223813ee3fbb28a312a33cde0a4a053dddb1b72c70a2f3d321ca48a318",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 8,
@@ -1366,7 +1366,7 @@
       },
       "library_reports": {
         "k128": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
           "sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 4,
@@ -1379,7 +1379,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k256": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 8,
@@ -1392,7 +1392,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k128-preload-a": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "b1d1408b5767fa74c21a278229e858fa1329cd90b6905802d8b7d8044fffb54c",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 4,
@@ -1405,7 +1405,7 @@
           "native_full_K_accumulation_differs_from_exact_default": true
         },
         "k256-preload-a": {
-          "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+          "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
           "sha256": "4b752f223813ee3fbb28a312a33cde0a4a053dddb1b72c70a2f3d321ca48a318",
           "AIV_to_small_GM_ring_to_L1_to_AIC": true,
           "original_K32_blocks_per_Cube_tile": 8,
@@ -1426,7 +1426,7 @@
   "accepted_k128_sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
   "new_build_report": {
     "k256": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so",
       "sha256": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
       "original_K32_blocks": 8,
       "activation_L1_preload_requested": false,
@@ -1439,7 +1439,7 @@
       "host_device_queries_deferred_to_NPU_probe": true
     },
     "k128-preload-a": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
       "sha256": "b1d1408b5767fa74c21a278229e858fa1329cd90b6905802d8b7d8044fffb54c",
       "original_K32_blocks": 4,
       "activation_L1_preload_requested": true,
@@ -1452,7 +1452,7 @@
       "host_device_queries_deferred_to_NPU_probe": true
     },
     "k256-preload-a": {
-      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-preload-a-20261120-v2/lib/librelic_online_tile_cube.so",
       "sha256": "4b752f223813ee3fbb28a312a33cde0a4a053dddb1b72c70a2f3d321ca48a318",
       "original_K32_blocks": 8,
       "activation_L1_preload_requested": true,
