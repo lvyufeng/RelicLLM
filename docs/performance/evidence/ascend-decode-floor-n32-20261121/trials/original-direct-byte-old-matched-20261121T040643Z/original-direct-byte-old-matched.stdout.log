@@ -1,0 +1,65 @@
+EXPERT_TP_RESIDENT layer=0 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=1 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=2 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=3 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=4 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=5 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=6 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=7 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=8 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=9 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=10 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=11 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=12 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=13 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=14 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=15 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=16 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=17 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=18 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=19 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=20 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=21 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=22 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=23 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=24 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=25 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=26 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=27 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=28 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=29 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=30 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=31 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=32 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=33 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=34 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=35 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=36 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=37 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=38 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=39 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+ISOLATED_CUBE_MODEL_RESULTISOLATED_CUBE_MODEL_RESULT  {"rank": 4, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.457627146039158, "single_request_forward_rate_not_generation_TPS": 6.510344755015604, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}{"rank": 3, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4575790562666953, "single_request_forward_rate_not_generation_TPS": 6.51047214908544, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+
+ISOLATED_CUBE_MODEL_RESULT {"rank": 0, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4575190963223577, "single_request_forward_rate_not_generation_TPS": 6.510630995276403, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 6, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4576085158623755, "single_request_forward_rate_not_generation_TPS": 6.510394107413644, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 7, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4576155762188137, "single_request_forward_rate_not_generation_TPS": 6.510375404039774, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 2, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.457579276058823, "single_request_forward_rate_not_generation_TPS": 6.510471566825271, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 5, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4576121158897877, "single_request_forward_rate_not_generation_TPS": 6.510384570677924, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 1, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.457580976188183, "single_request_forward_rate_not_generation_TPS": 6.510467062947692, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+List the integers from 1 through 100 in order, separated by commas. The list is:, 3, ..., 100.<｜end▁of▁sentence｜> no |.<｜end▁of▁sentence｜> no problem.

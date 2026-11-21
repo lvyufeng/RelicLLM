@@ -1,0 +1,50 @@
+[
+  {
+    "rank": 0,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  },
+  {
+    "rank": 1,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  },
+  {
+    "rank": 2,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  },
+  {
+    "rank": 3,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  },
+  {
+    "rank": 4,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  },
+  {
+    "rank": 5,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  },
+  {
+    "rank": 6,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  },
+  {
+    "rank": 7,
+    "exact_control_FP32_bits_equal": true,
+    "teacher_candidate_FP32_bits_equal": true,
+    "final_candidate_FP32_bits_equal": true
+  }
+]

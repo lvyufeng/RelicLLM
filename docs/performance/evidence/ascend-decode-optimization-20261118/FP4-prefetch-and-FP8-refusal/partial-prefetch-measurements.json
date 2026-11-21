@@ -1,0 +1,186 @@
+[
+  {
+    "key": "layers.0.ffn.experts.0.w1.weight",
+    "variant": "old-reference",
+    "N": 2304,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 2304,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.012757833115756512,
+    "seconds": [
+      0.01276409812271595,
+      0.012752308044582605,
+      0.01273588789626956,
+      0.012839219067245722,
+      0.013553283642977476,
+      0.012763358186930418,
+      0.0127521981485188,
+      0.01273543806746602
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w1.weight",
+    "variant": "current-group4",
+    "N": 2304,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 2304,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.01860288856551051,
+    "seconds": [
+      0.018542817793786526,
+      0.018518798053264618,
+      0.018672779202461243,
+      0.018625078722834587,
+      0.018593259155750275,
+      0.018612517975270748,
+      0.0187322199344635,
+      0.018571967724710703
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w1.weight",
+    "variant": "prefetch-group4",
+    "N": 2304,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 2304,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.016466853907331824,
+    "seconds": [
+      0.016368383076041937,
+      0.016477693803608418,
+      0.01645601401105523,
+      0.016451023053377867,
+      0.016479363664984703,
+      0.016752525698393583,
+      0.016301563009619713,
+      0.016483533661812544
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w2.weight",
+    "variant": "old-reference",
+    "N": 5120,
+    "K": 2304,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 5120,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.011437778826802969,
+    "seconds": [
+      0.0114403385668993,
+      0.011433229316025972,
+      0.011435219086706638,
+      0.011460228823125362,
+      0.011433059349656105,
+      0.011473880149424076,
+      0.011433758772909641,
+      0.011445099022239447
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w2.weight",
+    "variant": "current-group4",
+    "N": 5120,
+    "K": 2304,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 5120,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.018111200537532568,
+    "seconds": [
+      0.018110386095941067,
+      0.01808007527142763,
+      0.01811201497912407,
+      0.018115445040166378,
+      0.01816341606900096,
+      0.018032124266028404,
+      0.017988095059990883,
+      0.01812374498695135
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w2.weight",
+    "variant": "prefetch-group4",
+    "N": 5120,
+    "K": 2304,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 5120,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.01641539274714887,
+    "seconds": [
+      0.01642620377242565,
+      0.01641755271703005,
+      0.01632252335548401,
+      0.01631162315607071,
+      0.01634028274565935,
+      0.016413232777267694,
+      0.016488054301589727,
+      0.016552994027733803
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.attn.wq_a.weight",
+    "variant": "old-reference",
+    "N": 1280,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 1280,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.00626581790857017,
+    "seconds": [
+      0.006273114122450352,
+      0.006264872848987579,
+      0.006264152936637402,
+      0.006264043040573597,
+      0.006260373629629612,
+      0.0062752231024205685,
+      0.0062667629681527615,
+      0.006292413920164108
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.attn.wq_a.weight",
+    "variant": "current-group4",
+    "N": 1280,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 1280,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.009795462246984243,
+    "seconds": [
+      0.00989855919033289,
+      0.009815606754273176,
+      0.009914178866893053,
+      0.011304697953164577,
+      0.00977531773969531,
+      0.009710956830531359,
+      0.009709007106721401,
+      0.00976018700748682
+    ],
+    "whole_model_TPS_claimed": false
+  }
+]

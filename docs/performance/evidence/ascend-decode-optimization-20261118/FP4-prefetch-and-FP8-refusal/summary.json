@@ -1,0 +1,206 @@
+{
+  "name": "prefetch-int8-view-actual-benchmark",
+  "command": [
+    "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "<workspace>/relic-v41-perf-20261118-0938/source/benchmark_prefetch_decode.py"
+  ],
+  "timeout_s": 1200,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-18T04:59:55.438976+00:00",
+  "cwd": "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM",
+  "timed_out": false,
+  "ownership_token": "3acab0e3b02cad90e1f53dd731889d5cdb01b0647ea3d659ecc50a5ea5adb72d",
+  "critical_environment": {
+    "PYTHONPATH": "<workspace>/relic-v41-infer-20261117-1424/python-packages:<workspace>/relic-v41-perf-20261118-0938/source/relic-core:<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "<workspace>/relic-v41-perf-20261118-0938/tmp",
+    "HOME": "<workspace>/relic-v41-perf-20261118-0938/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend",
+    "ASCEND_WORK_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "<workspace>/relic-v41-perf-20261118-0938/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 2673363,
+  "process_group": 2673363,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 2673363,
+        "starttime": 389308150,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2673470,
+        "starttime": 389308982,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2673917,
+        "starttime": 389316847,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2673939,
+        "starttime": 389316877,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2674001,
+        "starttime": 389317592,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2674006,
+        "starttime": 389317645,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2674208,
+        "starttime": 389325466,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2674230,
+        "starttime": 389325496,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2674286,
+        "starttime": 389326129,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2674289,
+        "starttime": 389326168,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2674299,
+        "starttime": 389327305,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2674320,
+        "starttime": 389327333,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2674383,
+        "starttime": 389327957,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2674393,
+        "starttime": 389329194,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2674416,
+        "starttime": 389329244,
+        "pgid": 2673363,
+        "sid": 2673363,
+        "state": "R",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [
+      {
+        "identity": {
+          "pid": 2673363,
+          "starttime": 389308150,
+          "pgid": 2673363,
+          "sid": 2673363,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 2673363"
+      }
+    ],
+    "terminal_reconciliations": [
+      {
+        "identity": {
+          "pid": 2673363,
+          "starttime": 389308150,
+          "pgid": 2673363,
+          "sid": 2673363,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 2673363",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      }
+    ],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 1,
+  "elapsed_s": 229.12021480314434,
+  "finished_at": "2026-11-18T05:03:44.559205+00:00"
+}

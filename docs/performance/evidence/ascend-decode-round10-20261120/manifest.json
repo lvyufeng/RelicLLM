@@ -1,0 +1,104 @@
+{
+  "milestone": "round 10: the launch flood is the numerical contract, and the host-side knobs that look free do not move the number",
+  "file_count": 10,
+  "total_bytes": 12562219,
+  "files": [
+    {
+      "path": "build_round10_evidence.py",
+      "bytes": 5113,
+      "sha256": "c7d683f09389020833efeef31c66e3f94ef930ef24e3a6d740ee8f8e20e37296"
+    },
+    {
+      "path": "candidate-reverify/Cube-model-rank-0.json",
+      "bytes": 108585,
+      "sha256": "00b00a0a4b07cb006309cbf99b91675add2972c5dd0c9d5fd0ab87a8420f797c"
+    },
+    {
+      "path": "kernel-inventory/kernel_details.csv",
+      "bytes": 12426020,
+      "sha256": "28bf8de25431c603de7a5ca086a8d81f2fa78d6778cfd001b6320ce637248716"
+    },
+    {
+      "path": "kernel-inventory/op_statistic.csv",
+      "bytes": 3773,
+      "sha256": "f4346f4e842bb33683f379219ace4224f21ad0bb4c258b1d4714369c48b258cb"
+    },
+    {
+      "path": "test_sparse_attn_dispatch_count.py",
+      "bytes": 6349,
+      "sha256": "0fdf11dbb7ffe7c1183e646481c3bff32e92425847bdc1c6e393563d0572f0c3"
+    },
+    {
+      "path": "test_v41_tile_major_switch.py",
+      "bytes": 1999,
+      "sha256": "ee6fc8ecf4e347fd89035ec0d42fecde3df76b05bbf3eeaca033c85705bc8034"
+    },
+    {
+      "path": "tile-major-isolated/summary.json",
+      "bytes": 5134,
+      "sha256": "5f72bc782f1c19a2801794d62b86e0ca0685eaf5ca02fa2d3a864a2a89bbe936"
+    },
+    {
+      "path": "tile-major-isolated/tile-major-runtime-acceptance.json",
+      "bytes": 5135,
+      "sha256": "85f3522af79a94626e820e4e4fbd16db0984ef099a996cb99254f2749edfc0bf"
+    },
+    {
+      "path": "tile-major-isolated/tile-major-runtime-acceptance.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tile-major-isolated/tile-major-runtime-acceptance.stdout.log",
+      "bytes": 111,
+      "sha256": "4c62d6432d4a33b6d79252d2fcce9c458a4a7a92dbafb195cb4dd48fecfd0cf0"
+    }
+  ],
+  "verified_candidate_TPS": 5.1042,
+  "verified_candidate_TPS_range": [
+    5.0327,
+    5.1584
+  ],
+  "measurements": {
+    "aten_ops_per_token": 5704,
+    "dtype_conversions_per_token": 5704,
+    "copies_per_token": 3041,
+    "conversions_by_shape_per_token": {
+      "[1,1,5120]": 328,
+      "[1,5120]": 297,
+      "[1,1,8,64]": 276,
+      "[1,32]": 264,
+      "[1,2304]": 224,
+      "[1,288]": 200,
+      "[1,1,4,5120]": 167
+    },
+    "sparse_attn_dispatches_per_call": {
+      "before_hoist": 110,
+      "after_hoist": 70
+    }
+  },
+  "null_results": {
+    "tile_major_whole_model_TPS": 0.2395,
+    "tile_major_isolated_speedup": 3.05,
+    "allocator_expandable_segments_TPS": 5.1358,
+    "OMP_threads": {
+      "2": 5.1119,
+      "4": 5.094,
+      "8": 5.1231,
+      "16": 5.0891
+    },
+    "metadata_only_dispatch_removal_TPS": 5.1052
+  },
+  "verification": {
+    "exact_control_reproduced_bit_exactly": {
+      "max_abs_difference": 2.173757076263428,
+      "relative_L2_difference": 0.1565176397562027,
+      "reference_to_candidate_KL": 0.001334548112936318
+    },
+    "relic_core_suite": "1143 passed, 13 pre-existing CUDA-environment failures (proven identical with and without the change)",
+    "v41_suite_on_target": "529 passed, 19 skipped",
+    "v41_suite_local": "562 passed, 39 skipped"
+  },
+  "target_TPS": 50.0,
+  "target_met": false
+}

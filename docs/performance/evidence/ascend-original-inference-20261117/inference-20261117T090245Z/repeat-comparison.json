@@ -1,0 +1,26 @@
+{
+  "first_attempt": "<workspace>/relic-v41-infer-20261117-1424/logs/inference-20261117T075737Z",
+  "second_attempt": "<workspace>/relic-v41-infer-20261117-1424/logs/inference-20261117T090245Z",
+  "first_token_ids": [
+    11111,
+    16,
+    1
+  ],
+  "second_token_ids": [
+    11111,
+    16,
+    1
+  ],
+  "token_ids_equal": true,
+  "all_logits_finite": true,
+  "logits_shape": [
+    3,
+    129280
+  ],
+  "float32_logit_bit_mismatches": 0,
+  "max_absolute_logit_difference": 0.0,
+  "second_inference_source_hashes_still_match": true,
+  "checked_source_count": 36,
+  "official_reference_parity_claimed": false,
+  "repeat_scope": "two short untemplated original-checkpoint requests only"
+}

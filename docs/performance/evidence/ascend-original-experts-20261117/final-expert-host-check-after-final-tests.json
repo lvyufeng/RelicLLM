@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-11-17T05:54:03.496436+00:00",
+  "python": "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
+  "python_version": "3.11.18 (main, Nov 11 2026, 00:18:57) [Clang 23.1.3 ]",
+  "torch": "2.10.0+cpu",
+  "torch_npu": "2.10.0.post7",
+  "triton": "3.2.0",
+  "private_triton_patch_sha256": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
+  "task_owned_live_processes": [],
+  "private_python_processes": [],
+  "receipt_count_checked": 18,
+  "receipts": [
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/gemm-cpu-20261117T032513Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/gemm-cpu-20261117T044243Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/gemm-npu-20261117T032557Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/gemm-npu-20261117T033250Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/gemm-npu-20261117T034635Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/gemm-npu-20261117T044257Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/original-expert-20261117T040929Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/original-expert-20261117T044332Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/original-expert-20261117T054529Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/quant-cpu-20261117T032613Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/quant-cpu-20261117T034711Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/quant-npu-20261117T040112Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/quant-npu-20261117T054459Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/runtime-cpu-20261117T034942Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/runtime-npu-20261117T040241Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/runtime-npu-20261117T042447Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/runtime-npu-20261117T044956Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "<workspace>/relic-expert-gemm-20261117-1046/logs/runtime-npu-20261117T054511Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    }
+  ],
+  "original_checkpoint_unchanged_by_stat_identity_check": true,
+  "original_checkpoint_path": "<checkpoint>",
+  "cann_env_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+  "cann_links": {
+    "/usr/local/Ascend/cann": "/usr/local/Ascend/cann-9.2.0",
+    "/usr/local/Ascend/ascend-toolkit/latest": "/usr/local/Ascend/cann-9.2.0"
+  },
+  "jenkins_agent": "    PID                  STARTED COMMAND\n 115417 Sun Oct 11 22:04:00 2026 java -jar remoting.jar -workDir /home/<user>/agent-working-dir -jar-cache /home/<user>/agent-working-dir/remoting/jarCache\n",
+  "no_device_reset_or_shared_cleanup": true,
+  "private_triton_patch_retained": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+  "private_root_retained": "<workspace>/relic-expert-gemm-20261117-1046",
+  "lease_release": "pending fleet tool after final checks"
+}

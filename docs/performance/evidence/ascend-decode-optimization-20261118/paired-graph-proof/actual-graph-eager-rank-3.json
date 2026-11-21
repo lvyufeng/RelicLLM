@@ -1,0 +1,65 @@
+{
+  "rank": 3,
+  "prompt_tokens": 20,
+  "context_start": 20,
+  "steps": 8,
+  "eager_tokens": [
+    19,
+    14,
+    223,
+    20,
+    14,
+    223,
+    21,
+    14
+  ],
+  "graph_tokens": [
+    19,
+    14,
+    223,
+    20,
+    14,
+    223,
+    21,
+    14
+  ],
+  "FP32_logit_bit_mismatches_per_step": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "capture_seconds_excluded": 13.661850174888968,
+  "eager_seconds": [
+    5.378878170624375,
+    5.009820520877838,
+    4.856604292988777,
+    4.824149728287011,
+    5.182388893328607,
+    4.991399594116956,
+    5.228108599316329,
+    4.828361297026277
+  ],
+  "graph_seconds": [
+    4.949041090905666,
+    4.719565724954009,
+    4.482429206836969,
+    4.611861172132194,
+    4.809691668953747,
+    4.700490863993764,
+    4.884091591928154,
+    4.622296683955938
+  ],
+  "eager_median_seconds": 5.000610057497397,
+  "graph_median_seconds": 4.7100282944738865,
+  "warm_full_model_graph_not_yet_sustained_TPS": true,
+  "host_Engram_remains_CPU": true,
+  "original_checkpoint_rewritten": false,
+  "reference_reduction_enabled": "1",
+  "recorded_layers": 40,
+  "pool_bytes": 1024
+}

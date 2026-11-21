@@ -1,0 +1,93 @@
+{
+  "task": "task-24 Triton-Ascend 3.2.0 / CANN 9.x host-driver compatibility",
+  "generated_at_utc": "2026-11-16T23:51:47.252429+00:00",
+  "status": "APPLIED to the private venv311 only; patched source compiles standalone and through the real NPUUtils bootstrap; feature stays unavailable; awaiting root compiled tests",
+  "scope": {
+    "file_patched": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+    "backup": "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel",
+    "original_sha256": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
+    "patched_sha256": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
+    "files_touched": [
+      "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+      "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel"
+    ],
+    "cann_headers_libraries_touched": false,
+    "torch_or_torch_npu_touched": false,
+    "kernel_files_touched": false,
+    "shared_python_or_old_312_env_touched": false
+  },
+  "defect": {
+    "symptom": "host-driver bootstrap failed before any kernel: g++ error at npu_utils.cpp:321:37 'RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE is not a member of rtLimitType_t'",
+    "cause": "triton 3.2.0 maps WARP_STACK_SIZE to an enumerator absent from both installed CANN lines",
+    "cann_9_1_0_rt_external_base_sha256": "e4f372e3a3804d8061f57f12714c415f8c5ea9d34905f9c726ecdfc0ae9696c6",
+    "cann_9_2_0_rt_external_base_sha256": "0b89cd3b978decfc25950509f8bb162ab1c3212631ff8d44e4734df29e2cb499",
+    "cann_enum_members": [
+      "LOW_POWER_TIMEOUT=0",
+      "SIMT_STACK_SIZE=1",
+      "SIMT_DVG_WARP_STACK_SIZE=2",
+      "STACK_SIZE=3",
+      "SIMD_PRINTF_FIFO_SIZE_PER_CORE=4",
+      "SIMT_PRINTF_FIFO_SIZE=5",
+      "RESERVED"
+    ],
+    "public_wheel_with_fix": null,
+    "pypl_triton_ascend_versions": [
+      "3.2.0",
+      "3.2.0rc4",
+      "3.2.0rc3",
+      "3.2.0rc2"
+    ],
+    "affected_limit_has_call_sites": false,
+    "note": "repo-wide search: set_device_limit exists only as a generic pass-through, its docstring and the C method table; nothing calls it, so the mapping cannot affect 910B execution"
+  },
+  "fix": {
+    "change": "drop only the broken map entry; raise NotImplementedError for WARP_STACK_SIZE; ValueError for unknown names",
+    "preserved_mappings": 3,
+    "enum_substitution": null,
+    "why_no_substitution": "CANN declares RT_LIMIT_TYPE_SIMT_STACK_SIZE=1 which may be a rename, but no installed header or package states that equivalence; substituting it would silently change device-limit semantics",
+    "revert_condition": "a CANN release that declares RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE; restore the entry and delete the guard together",
+    "patch_file": ".coord/kernel-env-scripts/triton-cann92-compat/npu_utils-cann92.patch"
+  },
+  "proof": {
+    "standalone_original_reproduces_defect": true,
+    "standalone_patched_compiles": true,
+    "installed_path_recompile": {
+      "command": "g++ -std=c++17 -fPIC -c <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp -o <workspace>/relic-online-unpack-20261117-0534/tmp/npu_utils_installed.o -I <workspace>/relic-online-unpack-20261117-0534/python311-base/python/include/python3.11 -I /usr/local/Ascend/cann-9.2.0/aarch64-linux/pkg_inc",
+      "returncode": 0,
+      "object_bytes": 419656,
+      "stderr_sha256": "f20973679a8477b2b582f145d4774f0e59d4d66527f778552c9d647c5c1b7347"
+    },
+    "real_bootstrap_passed": true,
+    "bootstrap_module_file": "<workspace>/relic-online-unpack-20261117-0534/cache/triton/9RKlB4eemkLAgxHoO8wCDA/npu_utils.so",
+    "warp_stack_size_behaviour": {
+      "raises": "NotImplementedError",
+      "message": "WARP_STACK_SIZE is unsupported: the installed CANN runtime does not declare RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE"
+    },
+    "invalid_name_behaviour": {
+      "raises": "ValueError",
+      "message": "Invalid limit type: NOT_A_LIMIT."
+    },
+    "device_work_performed": false,
+    "kernel_launch_performed": false
+  },
+  "rollback_command": "cp -p <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp && sha256sum <workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+  "artifacts_local": {
+    "npu_utils.cpp.orig": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
+    "npu_utils.cpp.patched": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
+    "npu_utils-cann92.patch": "c08eab8f1c52d675350220f4bc45bfff0e988c22316f2d056cebf1e3757bc14b",
+    "patch-record.json": "64c8207ec8b0def9bb69a85c8a4052b7eada1b953f6a93bfa4cf9d187ca9d528",
+    "make_patch.py": "1242ca88191f2e03fa428d43e6ca7661700a8147a9aa5d91fded9cfe8ad3df0a",
+    "apply_patch.py": "68dcdd8418cd4eb46948cb96af868f763588174050a3173e6093c85008d82386",
+    "compile_proof.py": "1ef935081eb69e26084eadad42dbd9679df4e2baf13bde2038d9224adbbf5862",
+    "driver_bootstrap_proof.py": "dd88563117789e5d909dcfd03f4deca2e53e8a4fa28d0ddc27a53eea5b062584",
+    "triton-cann92-compat.json": "a7da9a23e28c5b87c13b41b86e91e36f9eace45dd04fb667ffe6efc0501af39b",
+    "compile-proof.json": "4f5ca02926f5572d4fa8312dd5d895a94cfd6ede7ac342fb0d150a967e3b50a1",
+    "driver-bootstrap-proof.log": "756a36dd6c0df03dadaad70ca022372602eda9afd16fa1f79e4d3e1b630d53df"
+  },
+  "host_receipts": [
+    "<workspace>/relic-online-unpack-20261117-0534/logs/triton-cann92-compat.json",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/driver-bootstrap-proof.log",
+    "<workspace>/relic-online-unpack-20261117-0534/logs/kernel-env311-install-20261116T233300Z.json"
+  ],
+  "environment_manifest": ".coord/kernel-env-manifest.json (unchanged wheel set; this receipt supersedes the patch state)"
+}

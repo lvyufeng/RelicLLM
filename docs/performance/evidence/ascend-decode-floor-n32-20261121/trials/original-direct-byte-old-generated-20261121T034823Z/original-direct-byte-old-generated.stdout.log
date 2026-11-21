@@ -1,0 +1,65 @@
+EXPERT_TP_RESIDENT layer=0 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=1 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=2 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=3 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=4 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=5 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=6 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=7 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=8 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=9 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=10 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=11 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=12 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=13 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=14 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=15 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=16 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=17 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=18 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=19 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=20 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=21 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=22 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=23 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=24 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=25 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=26 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=27 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=28 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=29 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=30 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=31 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=32 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=33 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=34 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=35 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=36 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=37 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=38 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=39 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+ISOLATED_CUBE_MODEL_RESULT {"rank": 6, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.47088286280632, "sustained_single_stream_TPS": 6.475418256706797, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 4, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.470898433122784, "sustained_single_stream_TPS": 6.4753774519897185, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 7, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.470868483185768, "sustained_single_stream_TPS": 6.47545594145533, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 3, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4708614628762007, "sustained_single_stream_TPS": 6.475474339777527, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 1, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.470826033037156, "sustained_single_stream_TPS": 6.475567193345738, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 5, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.470897973049432, "sustained_single_stream_TPS": 6.475378657684426, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 2, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4708506232127547, "sustained_single_stream_TPS": 6.475502747792903, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 0, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.470790073275566, "sustained_single_stream_TPS": 6.475661438443673, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+List the integers from 1 through 100 in order, separated by commas. The list is:, 3, ..., 100.<｜end▁of▁sentence｜> no | 0<｜end▁of▁sentence｜> a one

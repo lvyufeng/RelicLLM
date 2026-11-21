@@ -1,0 +1,71 @@
+[
+  {
+    "name": "original_index_copy_dispatch",
+    "original_layer": 0,
+    "owned_experts_in_probe": [
+      0,
+      8,
+      16
+    ],
+    "batch_size": 1,
+    "original_FP32_result_bit_differences": 0,
+    "median_seconds": 0.013740150025114417,
+    "seconds": [
+      0.01694768713787198,
+      0.013767315074801445,
+      0.013761565089225769,
+      0.01374351466074586,
+      0.01374829513952136,
+      0.013736785389482975,
+      0.013696924783289433,
+      0.013756854925304651,
+      0.013701804913580418,
+      0.013721494004130363,
+      0.013729645404964685,
+      0.013696984853595495
+    ],
+    "native_Cube_accumulation_same_in_both_modes": true,
+    "original_FP8_activation_contract_unchanged": true,
+    "whole_model_TPS_claimed": false,
+    "binding": null
+  },
+  {
+    "name": "M1_direct_row_dispatch",
+    "original_layer": 0,
+    "owned_experts_in_probe": [
+      0,
+      8,
+      16
+    ],
+    "batch_size": 1,
+    "original_FP32_result_bit_differences": 0,
+    "median_seconds": 0.012415435630828142,
+    "seconds": [
+      0.012437134981155396,
+      0.012399526312947273,
+      0.012431805953383446,
+      0.012422225903719664,
+      0.012411145959049463,
+      0.012424354907125235,
+      0.012382035609334707,
+      0.012422095984220505,
+      0.01241837628185749,
+      0.012390215415507555,
+      0.01238200580701232,
+      0.012412494979798794
+    ],
+    "native_Cube_accumulation_same_in_both_modes": true,
+    "original_FP8_activation_contract_unchanged": true,
+    "whole_model_TPS_claimed": false,
+    "binding": {
+      "installed": true,
+      "stores": 1,
+      "M1_calls": 16,
+      "original_calls": 0,
+      "expert_contributions": 48,
+      "host_routing_unchanged": true,
+      "ascending_expert_FP32_sum_unchanged": true,
+      "complete_Engram_CPU": true
+    }
+  }
+]

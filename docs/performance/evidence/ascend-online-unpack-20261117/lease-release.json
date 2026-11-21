@@ -1,0 +1,21 @@
+{
+  "host": "fleet-host-2",
+  "release_operation": "ts_release(host='fleet-host-2')",
+  "release_result": {"host": "fleet-host-2", "released": true, "detail": "lease dropped"},
+  "confirmation_operation": "ts_leases() immediately after release",
+  "confirmation": {"fleet-host-2_present": false, "remaining_leased_hosts": ["fleet-host-1", "fleet-host-3"]},
+  "before_release": {
+    "final_host_receipt": "final-operator-host-check.json",
+    "final_npu_receipt": "final-operator-npu-smi.log",
+    "owned_live_processes": 0,
+    "private_python_processes": 0,
+    "npu_compute_processes_on_all_eight_cards": 0,
+    "original_checkpoint_stat_identities_unchanged": true,
+    "shared_cann_environment_and_link_targets_unchanged": true,
+    "resident_jenkins_agent_retained": true,
+    "device_reset_or_shared_cleanup_performed": false
+  },
+  "retained_private_root": "<workspace>/relic-online-unpack-20261117-0534",
+  "retained_original_checkpoint": "<checkpoint>",
+  "authorization": "Retained files do not retain permission for further NPU work; obtain a new live-probed lease first. Other agents' leases were not touched."
+}

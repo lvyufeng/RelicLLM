@@ -1,0 +1,307 @@
+{
+  "name": "original-N32-TP2-replay",
+  "command": [
+    "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "-m",
+    "torch.distributed.run",
+    "--standalone",
+    "--nnodes=1",
+    "--nproc-per-node=8",
+    "<workspace>/relic-v41-perf-20261118-0938/source/probe_prepared_tp_moe.py"
+  ],
+  "timeout_s": 300,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-21T05:54:42.934926+00:00",
+  "cwd": "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM",
+  "timed_out": false,
+  "ownership_token": "eddec9511c1ae4dfa42ef357a88cb58ac61b4c63ca8dc8e2d7410e1d6a12c9e6",
+  "critical_environment": {
+    "PYTHONPATH": "<workspace>/relic-v41-infer-20261117-1424/python-packages:<workspace>/relic-v41-perf-20261118-0938/source/relic-core:<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "<workspace>/relic-v41-perf-20261118-0938/tmp",
+    "HOME": "<workspace>/relic-v41-perf-20261118-0938/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend",
+    "ASCEND_WORK_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "<workspace>/relic-v41-perf-20261118-0938/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 3397000,
+  "process_group": 3397000,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 3397000,
+        "starttime": 415556900,
+        "pgid": 3397000,
+        "sid": 3397000,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3397039,
+        "starttime": 415557366,
+        "pgid": 3397039,
+        "sid": 3397039,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3397040,
+        "starttime": 415557366,
+        "pgid": 3397040,
+        "sid": 3397040,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3397041,
+        "starttime": 415557367,
+        "pgid": 3397041,
+        "sid": 3397041,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3397042,
+        "starttime": 415557367,
+        "pgid": 3397042,
+        "sid": 3397042,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3397043,
+        "starttime": 415557367,
+        "pgid": 3397043,
+        "sid": 3397043,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3397044,
+        "starttime": 415557367,
+        "pgid": 3397044,
+        "sid": 3397044,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3397045,
+        "starttime": 415557367,
+        "pgid": 3397045,
+        "sid": 3397045,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3397046,
+        "starttime": 415557367,
+        "pgid": 3397046,
+        "sid": 3397046,
+        "state": "S",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [
+      {
+        "identity": {
+          "pid": 3397039,
+          "starttime": 415557366,
+          "pgid": 3397039,
+          "sid": 3397039,
+          "state": "D",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3397039"
+      },
+      {
+        "identity": {
+          "pid": 3397040,
+          "starttime": 415557366,
+          "pgid": 3397040,
+          "sid": 3397040,
+          "state": "D",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3397040"
+      },
+      {
+        "identity": {
+          "pid": 3397044,
+          "starttime": 415557367,
+          "pgid": 3397044,
+          "sid": 3397044,
+          "state": "D",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3397044"
+      },
+      {
+        "identity": {
+          "pid": 3397046,
+          "starttime": 415557367,
+          "pgid": 3397046,
+          "sid": 3397046,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3397046"
+      },
+      {
+        "identity": {
+          "pid": 3397043,
+          "starttime": 415557367,
+          "pgid": 3397043,
+          "sid": 3397043,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3397043"
+      },
+      {
+        "identity": {
+          "pid": 3397045,
+          "starttime": 415557367,
+          "pgid": 3397045,
+          "sid": 3397045,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3397045"
+      },
+      {
+        "identity": {
+          "pid": 3397000,
+          "starttime": 415556900,
+          "pgid": 3397000,
+          "sid": 3397000,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3397000"
+      }
+    ],
+    "terminal_reconciliations": [
+      {
+        "identity": {
+          "pid": 3397039,
+          "starttime": 415557366,
+          "pgid": 3397039,
+          "sid": 3397039,
+          "state": "D",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3397039",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 3397040,
+          "starttime": 415557366,
+          "pgid": 3397040,
+          "sid": 3397040,
+          "state": "D",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3397040",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 3397044,
+          "starttime": 415557367,
+          "pgid": 3397044,
+          "sid": 3397044,
+          "state": "D",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3397044",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 3397046,
+          "starttime": 415557367,
+          "pgid": 3397046,
+          "sid": 3397046,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3397046",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 3397043,
+          "starttime": 415557367,
+          "pgid": 3397043,
+          "sid": 3397043,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3397043",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 3397045,
+          "starttime": 415557367,
+          "pgid": 3397045,
+          "sid": 3397045,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3397045",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 3397000,
+          "starttime": 415556900,
+          "pgid": 3397000,
+          "sid": 3397000,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3397000",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      }
+    ],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 40.61178071470931,
+  "finished_at": "2026-11-21T05:55:23.546707+00:00"
+}

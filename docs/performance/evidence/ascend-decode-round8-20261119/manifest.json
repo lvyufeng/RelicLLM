@@ -1,0 +1,55 @@
+{
+  "milestone": "round 8: layer A is small-kernel bound, not matmul bound",
+  "file_count": 4,
+  "total_bytes": 114957,
+  "files": [
+    {
+      "path": "benchmark_dense_m1.py",
+      "bytes": 2985,
+      "sha256": "a04860a345b2b7fa58cd6396c11946e2b158f6446c7521fd97d85ff060839baa"
+    },
+    {
+      "path": "dense-M1-pricing/dense-M1-pricing.json",
+      "bytes": 2312,
+      "sha256": "9ab584a0437f34ca8d0eaa41ba2a62700f7640fa2110b205f46226e0043bd98c"
+    },
+    {
+      "path": "dense-M1-pricing/run.log",
+      "bytes": 608,
+      "sha256": "897bd42eee58606655f3d572e7bb89d0572bb4c4eb6046f8a323d2f2ce084481"
+    },
+    {
+      "path": "replay-latency/Cube-model-rank-0.json",
+      "bytes": 109052,
+      "sha256": "9d66c42bef4e43a39e8761fdb60743a2e631db547b9dc7081be8d26d1eafe381"
+    }
+  ],
+  "verified_candidate_TPS": 5.151722,
+  "exact_baseline_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "layer_attention_weights_bytes": 47710208,
+  "plain_matmul_M1_ms": 0.1334,
+  "plain_matmul_M1_GB_per_s": 357.7,
+  "recorded_layer_A_ms": 1.3863178342580795,
+  "recorded_layer_A_GB_per_s": 34.4,
+  "gap_factor": 10.39,
+  "matmul_share_of_layer_A_pct": 9.6,
+  "non_matmul_part_of_layer_A_ms_per_layer": 1.2529,
+  "non_matmul_part_of_layer_A_ms_per_token": 50.1,
+  "M1_versus_M8_ms": {
+    "M1": 0.1334,
+    "M8": 0.2362
+  },
+  "conclusions": [
+    "there is no row-dimension penalty on these shapes: the M=1 total is faster than M=8",
+    "the layer's own matmuls are under a tenth of the recorded layer",
+    "the remaining ~50 ms per token is dozens of small elementwise and selection kernels inside the recording, so the cost is kernel latency rather than arithmetic or bandwidth",
+    "buying it back needs Triton fusion of those chains, which is bit-exact work but kernel authorship rather than a scheduling change"
+  ],
+  "numerical_contract": {
+    "exact_default_path": "unchanged",
+    "complete_Engram_CPU": true,
+    "checkpoint_rewritten": false,
+    "serving_guards_changed": false
+  }
+}

@@ -1,0 +1,134 @@
+[
+  {
+    "k": 256,
+    "n": 64,
+    "slots": 6,
+    "shared": true,
+    "changed_input_graph_replays": 32,
+    "all_variants_BF16_bit_differences": 0,
+    "routing_D2H": 0,
+    "invalid_source_poisoning": true,
+    "activation_L1_geometry": {
+      "k128": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 8192,
+        "NZ_activation_bytes": 8192,
+        "total_bytes": 16384,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k256": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 16384,
+        "NZ_activation_bytes": 8192,
+        "total_bytes": 24576,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k128-preload-a": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 8192,
+        "NZ_activation_bytes": 8192,
+        "total_bytes": 16384,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k256-preload-a": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 16384,
+        "NZ_activation_bytes": 8192,
+        "total_bytes": 24576,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      }
+    }
+  },
+  {
+    "k": 256,
+    "n": 64,
+    "slots": 6,
+    "shared": false,
+    "changed_input_graph_replays": 32,
+    "all_variants_BF16_bit_differences": 0,
+    "routing_D2H": 0,
+    "invalid_source_poisoning": true,
+    "activation_L1_geometry": {
+      "k128": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 8192,
+        "NZ_activation_bytes": 49152,
+        "total_bytes": 57344,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k256": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 16384,
+        "NZ_activation_bytes": 49152,
+        "total_bytes": 65536,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k128-preload-a": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 8192,
+        "NZ_activation_bytes": 49152,
+        "total_bytes": 57344,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k256-preload-a": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 16384,
+        "NZ_activation_bytes": 49152,
+        "total_bytes": 65536,
+        "fits": true,
+        "admission_is_geometry_not_measured_occupancy": true
+      }
+    }
+  },
+  {
+    "k": 4096,
+    "n": 16,
+    "slots": 8,
+    "shared": false,
+    "changed_input_graph_replays": 32,
+    "all_variants_BF16_bit_differences": 0,
+    "routing_D2H": 0,
+    "invalid_source_poisoning": true,
+    "activation_L1_geometry": {
+      "k128": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 8192,
+        "NZ_activation_bytes": 1048576,
+        "total_bytes": 1056768,
+        "fits": false,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k256": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 16384,
+        "NZ_activation_bytes": 1048576,
+        "total_bytes": 1064960,
+        "fits": false,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k128-preload-a": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 8192,
+        "NZ_activation_bytes": 1048576,
+        "total_bytes": 1056768,
+        "fits": false,
+        "admission_is_geometry_not_measured_occupancy": true
+      },
+      "k256-preload-a": {
+        "L1_capacity_bytes": 524288,
+        "weight_double_buffer_bytes": 16384,
+        "NZ_activation_bytes": 1048576,
+        "total_bytes": 1064960,
+        "fits": false,
+        "admission_is_geometry_not_measured_occupancy": true
+      }
+    }
+  }
+]

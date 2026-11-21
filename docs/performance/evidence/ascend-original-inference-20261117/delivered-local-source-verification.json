@@ -1,0 +1,223 @@
+{
+  "all_36_actual_inference_sources_match_delivered_worktrees": true,
+  "original_checkpoint_rewritten": false,
+  "experimental_fma_withdrawn": true,
+  "sources": [
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/moe_dispatch_loader.py",
+      "sha256": "d670199ca2ccf9b1e1045e1e3204655d933998a78ff847d933653e8c715dfaf8",
+      "bytes": 1935
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/int8_per_token_head_triton.py",
+      "sha256": "5ab24f79b5fe3d0e8a1fc8e37a0aa56effff4012270911a8b3c71071fca1816f",
+      "bytes": 7232
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/block_fp4_quant.py",
+      "sha256": "7b622009654cc90b18ec7abe7be217022f9dda4a69d7ea961af8fc98d348d0dc",
+      "bytes": 21152
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/block_gemm.py",
+      "sha256": "496892b936bbb1798f072fd498b24d7039b9115886cbe72963b4c2e08e15f712",
+      "bytes": 10188
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/_ascend_fp8_quant_kernels.py",
+      "sha256": "033b66eeabdc64940763d13d1431cb07a0e5644a8083fed25ecac5ad945bcfa2",
+      "bytes": 7091
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/_ascend_unpack_kernels.py",
+      "sha256": "5b1b16f4679af0fcc515c044848f6cf5d0c95f3f78824b5d1105960e59e2bc40",
+      "bytes": 5504
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/ops.py",
+      "sha256": "afd04ebdd46749baaea715d738def6626b012f5d5f741ace13604221c28e66e9",
+      "bytes": 60656
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/unpack.py",
+      "sha256": "5b8d4cc0d55ccb977e24a5356e8066c906dcb44fab493955b8d5f33b5839fcb9",
+      "bytes": 13109
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/block_fp8_quant.py",
+      "sha256": "036bb3b52c98bd602ad4612e2a4070514ddd5901b29cf8f7c4870c772370f7bc",
+      "bytes": 13468
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/int8_triton_wrapper.py",
+      "sha256": "dfbd8f3c7b2e563891bf2d89aa90412969b5b73bbfc29fc16015651f83ac4b16",
+      "bytes": 5259
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/_ascend_fp4_quant_kernels.py",
+      "sha256": "fb12e53ebdca5d5bd594e57fbedd1ce41a74f8dc3961222e54bbdf27ef965843",
+      "bytes": 16685
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/ascend_unpack.py",
+      "sha256": "e79596dd00bce26d3f0e7b64d4ab1832244b04aecf96f9267371b29fdba58e74",
+      "bytes": 3426
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/cuda_loader.py",
+      "sha256": "1b0ff5ca4a9e32f552f2bbe7bf06043959b016042e6d73e54e590dc23bb6fc0c",
+      "bytes": 2078
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/tq4nc_quantizer.py",
+      "sha256": "0de429a815ff6fe971327db48f6ed689ffcd9d75b4eaac89e8680b08c3a592b7",
+      "bytes": 10123
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/_ascend_block_gemm_kernels.py",
+      "sha256": "4e1f0c1e72db5370e3e9b46de8d382a408e0c007c31e2a902ad25d531ca43adf",
+      "bytes": 7280
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/ascend_experts.py",
+      "sha256": "e917f0e93ce0aebbaf6f4a51c381c6d7f557fcbe13dc5cb79a772624b0c43800",
+      "bytes": 38797
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/tp.py",
+      "sha256": "15587fa64a5de10d8113d039346e0c919bdbc6d32e6e0ecba9ab13090769bb69",
+      "bytes": 29623
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/attention.py",
+      "sha256": "42668b94662a3c14fcf7f2131faf08e88bc1b0a12d1673db95a96e8f051ad555",
+      "bytes": 104295
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/graphs.py",
+      "sha256": "2e970253c1555d7fa3241c09faa46fe223c638b45fa6a8cd9a8f0d73519c4628",
+      "bytes": 26209
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/generate.py",
+      "sha256": "f216c81ca85cb81733459f72aef5bab661b306417f13d1017a23252085ab31d1",
+      "bytes": 26544
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/engram.py",
+      "sha256": "50fe636b90fd210bff8c75f54864596912be83c05cc5a52f9baa70248894e5bb",
+      "bytes": 25505
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/kernels.py",
+      "sha256": "d938fb62b1ce3ce29a374e586d66be759b91fe1ca40ebfea51d1bd4a3a3325e9",
+      "bytes": 22011
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/online_unpack.py",
+      "sha256": "8f73724348f77e572c3f3d308fc788ce1c1e83a08c45eaf8daa2dcf8865256d4",
+      "bytes": 22584
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/decode_pos.py",
+      "sha256": "66c7c94afdd8dcfab52eb5cdbc6421522858edb1ce60f50471737cce4cd71d30",
+      "bytes": 17678
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/modules.py",
+      "sha256": "bfd85ca0cc6f03a4c8175c16cc8a39da58984d704896df509eb930ee80d2f2ba",
+      "bytes": 53337
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/ascend_linear.py",
+      "sha256": "461e258a21c972203d49a8da047fc54971500f25daab7634cb98abad38162aac",
+      "bytes": 2475
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/kv_spec.py",
+      "sha256": "218ebf91c3b77b2312068c9a71209ac594916f65f183ca07386ff14007b1abeb",
+      "bytes": 5016
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/ascend_activation.py",
+      "sha256": "b1421a5e01f4cdddac44f0bdb4fccd70b5a82e424fa3d46447437269947bc65e",
+      "bytes": 3910
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/loader.py",
+      "sha256": "0ba28fdfebed593c5077e25224803552a5e5b7e531daad6b56674e4aea029b08",
+      "bytes": 73078
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/__init__.py",
+      "sha256": "0a6f16b414641c228c32798791222e274d69bc81fac6e8bb1b70323a2d1070d5",
+      "bytes": 1792
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/config.py",
+      "sha256": "fda75c7d4b088a11346811bcc0f7653e1d7c26ec87d4785e29221308b4812840",
+      "bytes": 37796
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/resident_bank.py",
+      "sha256": "5a9edb540b1dcaba156b45e43adb908fec05e6439c5a1f59b99071bbc01bb2d0",
+      "bytes": 47280
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/mma.py",
+      "sha256": "6bd8d98ef0a7c50811c700b2f11b5b2d8c1ff12706dcacc25ddb95ab465ef552",
+      "bytes": 54264
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/device_experts.py",
+      "sha256": "cca16f2f3e6cc3fe0cd22935f7510ec73ddf85a2ba983acd91873ae03d3ca547",
+      "bytes": 107404
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/prefix_cache.py",
+      "sha256": "0eae52f4e461b98a9dbf2cb5770e9c6aadbbec1e2eeeab433a791c3db7a00dc4",
+      "bytes": 9784
+    }
+  ]
+}

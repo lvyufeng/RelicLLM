@@ -1,0 +1,65 @@
+EXPERT_TP_RESIDENT layer=0 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=1 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=2 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=3 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=4 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=5 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=6 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=7 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=8 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=9 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=10 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=11 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=12 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=13 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=14 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=15 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=16 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=17 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=18 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=19 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=20 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=21 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=22 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=23 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=24 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=25 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=26 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=27 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=28 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=29 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=30 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=31 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=32 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=33 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=34 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=35 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=36 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=37 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=38 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=39 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[ERROR] 2026-11-21-11:18:00 (PID:3318808, Device:0, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:18:00 (PID:3318811, Device:3, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:18:00 (PID:3318812, Device:4, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:18:00 (PID:3318814, Device:6, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:18:00 (PID:3318815, Device:7, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:18:00 (PID:3318810, Device:2, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:18:00 (PID:3318813, Device:5, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:18:00 (PID:3318809, Device:1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-11:19:17 (PID:3318770, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

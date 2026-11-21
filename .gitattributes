@@ -1,0 +1,3 @@
+# Keep published evidence line endings stable; measurement identities remain raw.
+# Publication-only redactions are tracked separately without rewriting measured hashes.
+docs/performance/evidence/** -text -whitespace

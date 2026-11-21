@@ -93,6 +93,32 @@ __all__ = [
 HC_TOKEN_TILE = max(0, int(os.getenv("DEEPSEEK_V41_HC_TOKEN_TILE", "1024")))
 
 
+#: The device an Engram is built on when the block around it is on an Ascend card.
+#:
+#: Host-side rather than a placement preference: the released tables are 91.55 GiB a layer and are
+#: read out of the shard mapping, so the cost of a lookup is a row per hash column and not the table,
+#: and it is paid on whichever device the gather runs on. Keeping the table, the projection and the
+#: gate on the host keeps that read off the link and off the card's memory entirely; only the token
+#: tile this module reads crosses it, in each direction, once. `_engram_device` is where the choice is
+#: made and `Block` is the only caller.
+_ENGRAM_HOST_DEVICE = torch.device("cpu")
+
+
+def _engram_device(device: torch.device | None) -> torch.device | None:
+    """Where a block's Engram is built, given the device the rest of the block is on.
+
+    Ascend is the one device that puts the Engram on the host -- see `_ENGRAM_HOST_DEVICE` -- and
+    `Engram.forward` carries the token tile across the boundary that creates. Every other device,
+    including `None` (the CPU default), returns `device` unchanged and the Engram sits exactly where
+    it did before this function existed: the CPU and CUDA paths are bit-identical, and a CUDA
+    block with a host Engram is still the device mismatch it always was rather than a silently slow
+    host fallback.
+    """
+    if device is not None and device.type == "npu":
+        return _ENGRAM_HOST_DEVICE
+    return device
+
+
 class Expert(nn.Module):
     """One SwiGLU FFN. The clamps come straight from training, where they keep fp8/fp4 activations
     in range: the up branch is clamped on both sides, the gate branch only from above."""
@@ -367,6 +393,11 @@ class Engram(nn.Module):
     The hash ids fetch `n_hash_cols` rows; `wkv` turns them into one key per hc copy plus a shared
     value. The gate is a normalized dot product of stream against key, signed-sqrt'd before the
     sigmoid, which is what the training kernel does and not what a plain sigmoid would.
+
+    On Ascend the whole module lives on the host -- parameters, table lookup, `wkv` and gate -- and
+    `forward` moves only the token tile across the boundary; `_engram_device` says why and
+    `RelicLLM`'s `docs/performance/ascend_original_experts.md` records the reasoning. Everywhere
+    else the module sits on the block's device.
     """
 
     def __init__(self, cfg: V41TextConfig, layer_id: int, layout, table: EngramTable, device=None,
@@ -422,6 +453,40 @@ class Engram(nn.Module):
 
     def forward(self, x: torch.Tensor, hash_ids: torch.Tensor,
                 token_mask: torch.Tensor | None = None) -> torch.Tensor:
+        """The lookup, the key/value split and the gate, on wherever this Engram lives.
+
+        For Ascend inference the whole Engram -- table, `wkv`, the gate weights and every reduce over
+        them -- lives on the host (see `_engram_device`), while the block that calls this runs on the
+        card. The boundary is here, and it is the only thing this method adds: the current token span
+        (`x`, the `hash_ids` it reads and the mask that gates it, all `[b, s, ...]` and never the
+        table) is carried to the host, `_forward_span` runs unchanged there, and the result is
+        carried back. Nothing about the arithmetic moves with it: the same gather, the same
+        reference-MMA metadata the loader attached to the host parameters and the same fp32 gate,
+        executed by the same code a CPU run executes.
+
+        Every other case -- a host stream, and every CUDA one, where the Engram is on the card with
+        the rest of the block -- calls `_forward_span` directly, which is what this method did before
+        the offload existed. A CUDA block holding a host Engram is deliberately *not* bridged: that
+        is a construction mismatch, and turning it into a slow host path would hide it.
+        """
+        if x.device.type == "npu" and self.wkv.weight.device.type == "cpu":
+            state = getattr(self, "_host_engram_state", None)
+            if state is not None:
+                from .ascend_host_engram import rank0_host_engram
+                return rank0_host_engram(self._forward_span, x, hash_ids, token_mask, state)
+            host = self.wkv.weight.device
+            moved = self._forward_span(
+                x.to(host),
+                hash_ids.to(host),
+                None if token_mask is None else token_mask.to(host),
+            )
+            # `.to` and not a cast: `_forward_span` already narrowed to the activation's dtype, so
+            # this is the same BF16 value on the device the caller's stream is on.
+            return moved.to(x.device)
+        return self._forward_span(x, hash_ids, token_mask)
+
+    def _forward_span(self, x: torch.Tensor, hash_ids: torch.Tensor,
+                      token_mask: torch.Tensor | None) -> torch.Tensor:
         """The lookup, the key/value split and the gate, a token tile at a time.
 
         Every step here reduces over `dim` or over the `hc_mult` copies and never over the token
@@ -600,8 +665,17 @@ class Block(nn.Module):
             if engram_table is None:
                 raise ValueError(f"layer {layer_id} carries an Engram memory but no table was supplied")
             self.engram = Engram(
-                cfg, layer_id, layout, engram_table, device=device, quantized=(cfg.dtype == "fp8")
+                cfg, layer_id, layout, engram_table, device=_engram_device(device),
+                quantized=(cfg.dtype == "fp8"),
             )
+            if device is not None and device.type == "npu":
+                from . import ascend_host_engram
+                if ascend_host_engram.enabled_from_environment():
+                    import torch.distributed as dist
+                    if dist.is_available() and dist.is_initialized() and dist.get_world_size() > 1:
+                        self.engram._host_engram_state = ascend_host_engram.HostEngramState.from_distributed(
+                            device=device
+                        )
         self.attn_norm = RMSNorm(cfg.dim, self.norm_eps, device=device)
         self.ffn_norm = RMSNorm(cfg.dim, self.norm_eps, device=device)
         self.hc_mult = hc_mult = cfg.hc_mult

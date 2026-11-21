@@ -1,0 +1,56 @@
+[
+  {
+    "smoke_case": "finite",
+    "variant": "serial",
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 32,
+      "NaN_and_Inf_classification_matches": true
+    }
+  },
+  {
+    "smoke_case": "finite",
+    "variant": "grouped",
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 32,
+      "NaN_and_Inf_classification_matches": true
+    }
+  },
+  {
+    "smoke_case": "scale_edges",
+    "variant": "serial",
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 22,
+      "NaN_and_Inf_classification_matches": true
+    }
+  },
+  {
+    "smoke_case": "scale_edges",
+    "variant": "grouped",
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 22,
+      "NaN_and_Inf_classification_matches": true
+    }
+  },
+  {
+    "smoke_case": "activation_NaN",
+    "variant": "serial",
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 0,
+      "NaN_and_Inf_classification_matches": true
+    }
+  },
+  {
+    "smoke_case": "activation_NaN",
+    "variant": "grouped",
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 0,
+      "NaN_and_Inf_classification_matches": true
+    }
+  }
+]

@@ -1,0 +1,399 @@
+{
+  "rank": 2,
+  "world": 8,
+  "shape": [
+    7,
+    5120
+  ],
+  "changing_replays": 32,
+  "global_FP32_collective_before_per_expert_BF16_narrowing": true,
+  "eager_graph_FP32_bits_equal": true,
+  "all_global_expert_and_shared_slots_not_combined_early": true,
+  "records": [
+    {
+      "replay": 0,
+      "selected_global_expert_ids": [
+        14,
+        25,
+        10,
+        7,
+        16,
+        3
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 1,
+      "selected_global_expert_ids": [
+        4,
+        16,
+        23,
+        30,
+        10,
+        1
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 2,
+      "selected_global_expert_ids": [
+        14,
+        15,
+        5,
+        20,
+        16,
+        12
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 3,
+      "selected_global_expert_ids": [
+        29,
+        18,
+        3,
+        20,
+        11,
+        21
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 4,
+      "selected_global_expert_ids": [
+        11,
+        21,
+        5,
+        24,
+        20,
+        9
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 5,
+      "selected_global_expert_ids": [
+        20,
+        1,
+        15,
+        31,
+        18,
+        27
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 6,
+      "selected_global_expert_ids": [
+        15,
+        28,
+        18,
+        11,
+        5,
+        24
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 7,
+      "selected_global_expert_ids": [
+        21,
+        14,
+        4,
+        27,
+        12,
+        0
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 8,
+      "selected_global_expert_ids": [
+        2,
+        1,
+        20,
+        8,
+        26,
+        0
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 9,
+      "selected_global_expert_ids": [
+        2,
+        22,
+        10,
+        19,
+        27,
+        12
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 10,
+      "selected_global_expert_ids": [
+        18,
+        17,
+        21,
+        9,
+        11,
+        16
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 11,
+      "selected_global_expert_ids": [
+        2,
+        20,
+        14,
+        21,
+        5,
+        19
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 12,
+      "selected_global_expert_ids": [
+        22,
+        28,
+        5,
+        6,
+        4,
+        0
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 13,
+      "selected_global_expert_ids": [
+        18,
+        20,
+        4,
+        19,
+        30,
+        11
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 14,
+      "selected_global_expert_ids": [
+        23,
+        28,
+        29,
+        18,
+        20,
+        16
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 15,
+      "selected_global_expert_ids": [
+        31,
+        10,
+        17,
+        7,
+        2,
+        28
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 16,
+      "selected_global_expert_ids": [
+        3,
+        2,
+        29,
+        1,
+        24,
+        5
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 17,
+      "selected_global_expert_ids": [
+        29,
+        10,
+        6,
+        2,
+        16,
+        12
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 18,
+      "selected_global_expert_ids": [
+        30,
+        28,
+        3,
+        6,
+        5,
+        29
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 19,
+      "selected_global_expert_ids": [
+        28,
+        31,
+        26,
+        1,
+        23,
+        25
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 20,
+      "selected_global_expert_ids": [
+        23,
+        16,
+        12,
+        3,
+        29,
+        25
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 21,
+      "selected_global_expert_ids": [
+        27,
+        8,
+        14,
+        10,
+        0,
+        9
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 22,
+      "selected_global_expert_ids": [
+        5,
+        1,
+        12,
+        14,
+        4,
+        8
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 23,
+      "selected_global_expert_ids": [
+        16,
+        15,
+        5,
+        13,
+        19,
+        12
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 24,
+      "selected_global_expert_ids": [
+        9,
+        25,
+        23,
+        27,
+        20,
+        22
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 25,
+      "selected_global_expert_ids": [
+        9,
+        7,
+        11,
+        20,
+        18,
+        25
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 26,
+      "selected_global_expert_ids": [
+        8,
+        30,
+        12,
+        26,
+        27,
+        5
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 27,
+      "selected_global_expert_ids": [
+        9,
+        25,
+        2,
+        28,
+        30,
+        17
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 28,
+      "selected_global_expert_ids": [
+        23,
+        25,
+        12,
+        5,
+        1,
+        9
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 29,
+      "selected_global_expert_ids": [
+        10,
+        5,
+        28,
+        30,
+        27,
+        13
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 30,
+      "selected_global_expert_ids": [
+        24,
+        20,
+        19,
+        18,
+        0,
+        16
+      ],
+      "FP32_bit_differences": 0
+    },
+    {
+      "replay": 31,
+      "selected_global_expert_ids": [
+        1,
+        16,
+        2,
+        24,
+        8,
+        11
+      ],
+      "FP32_bit_differences": 0
+    }
+  ],
+  "not_model_TPS": true
+}

@@ -1,0 +1,221 @@
+{
+  "timestamp": "2026-11-18T05:35:49.072715+00:00",
+  "receipts": [
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-candidate-actual-benchmark-20261118T041917Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-raw-SIMD-acceptance-20261118T040450Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-raw-SIMD-fixture-fixed-20261118T041851Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-raw-wide-thread-sweep-20261118T045730Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/NPU-graph-adapter-primitives-20261118T041930Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/NPU-graph-primitive-assert-fixed-20261118T043033Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-graph-benchmark-20261118T052801Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-graph-proof-20261118T051621Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/collective-floor-20261118T024745Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/collective-graph-floor-20261118T030609Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-Engram-bench-20261118T023521Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-exact-tests-20261118T023506Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-prepacked-real-bench-20261118T032519Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-prepacked-tests-20261118T030555Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/decode-profile-20261118T015323Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/exact-GEMV-capture-proof-20261118T034431Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/float-significand-actual-acceptance-20261118T045818Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-decode-isolation-20261118T030052Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-decode-safe-budget-20261118T032243Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-decode-staticshift-20261118T030829Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/host-Engram-HCCL-proof-20261118T025357Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/integer-decode-acceptance-20261118T033446Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/integer-decode-hoisted-loads-20261118T034444Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/integer-decode-parent-store-20261118T043045Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/npu-decode-bench-20261118T024650Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/npu-decode-tests-20261118T023535Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/optimized-model-20261118T032533Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/optimized-model-20261118T050708Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/packed-resident-test-fixed-20261118T025955Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/packed-resident-tests-20261118T025515Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/prefetch-decode-NPU-smoke-20261118T044233Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/prefetch-int8-view-NPU-smoke-20261118T045818Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_owned": []
+    },
+    {
+      "receipt": "<workspace>/relic-v41-perf-20261118-0938/logs/prefetch-int8-view-actual-benchmark-20261118T045955Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_owned": []
+    }
+  ],
+  "owned_processes_live": [],
+  "private_python_processes_live": [],
+  "empty_NPU_process_snapshots": 8,
+  "checkpoint_stat_identity_count": 90,
+  "checkpoint_stat_identities_unchanged": true,
+  "full_checksum_pass_claimed": false,
+  "CANN_SHA": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+  "CANN_links": {
+    "/usr/local/Ascend/cann": "/usr/local/Ascend/cann-9.2.0",
+    "/usr/local/Ascend/ascend-toolkit/latest": "/usr/local/Ascend/cann-9.2.0"
+  },
+  "jenkins_agent": "    PID                  STARTED COMMAND\n 115417 Sun Oct 11 22:04:00 2026 java -jar remoting.jar -workDir /home/<user>/agent-working-dir -jar-cache /home/<user>/agent-working-dir/remoting/jarCache\n",
+  "private_Triton_patch_SHA": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
+  "torch": "2.10.0+cpu",
+  "torch_npu": "2.10.0.post7",
+  "triton": "3.2.0",
+  "no_device_reset_or_shared_cache_cleanup": true,
+  "lease_release": "pending fleet release"
+}

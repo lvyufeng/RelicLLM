@@ -1,0 +1,2 @@
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[ERROR] 2026-11-21-11:35:46 (PID:3332647, Device:0, RankID:-1) ERR99999 UNKNOWN applicaiton exception

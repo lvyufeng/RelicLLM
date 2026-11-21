@@ -1,0 +1,16 @@
+{
+  "sources": {
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/block_gemm.py": "c2206472dda6e7aa9949214ef37611469a93086eac8eb2aff27014543471c20e",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/_ascend_block_gemm_kernels.py": "4e1f0c1e72db5370e3e9b46de8d382a408e0c007c31e2a902ad25d531ca43adf",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/block_fp8_quant.py": "f619aa785416928b575a9846a03cc5e1fdc2ddb2a0bc7479b287e764d2bc9473",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/_ascend_fp8_quant_kernels.py": "033b66eeabdc64940763d13d1431cb07a0e5644a8083fed25ecac5ad945bcfa2",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/unpack.py": "5b8d4cc0d55ccb977e24a5356e8066c906dcb44fab493955b8d5f33b5839fcb9",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/ascend_unpack.py": "cbcbf16fa35f4dee1122b7831b3a3ad851ee5c09900e5c710f40e435c4051f12",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/relic-core/relic_core/kernels/_ascend_unpack_kernels.py": "afaa42870957d8a68dabd979bc0e4305e6772235199d01522f9ebe15a5cf305e",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/RelicLLM/tests/test_v41_ascend_experts.py": "d19ee2864786f0fadbce91c021bd53e132ded92d8e8747b31a8b95c29507180d",
+    "<workspace>/relic-expert-gemm-20261117-1046/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_experts.py": "2727b195ece5866609bd0ebb74947d25c89201edbe032b4d7269620e60a47fe7"
+  },
+  "python": "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
+  "requested_backend": "torch",
+  "requested_device": "cpu"
+}

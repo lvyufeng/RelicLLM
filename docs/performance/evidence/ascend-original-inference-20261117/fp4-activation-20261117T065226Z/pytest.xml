@@ -1,0 +1,937 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="10" skipped="0" tests="63" time="11.450" timestamp="2026-11-17T14:52:26.599706+08:00" hostname="fleet-host-2"><testcase classname="tests.test_block_fp4_quant" name="test_the_oracle_f32_rounding_matches_torch_division" time="0.212" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype0-16-e8m0]" time="0.035" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype0-16-e4m3]" time="0.033" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype0-32-e8m0]" time="0.057" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype0-32-e4m3]" time="0.062" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype1-16-e8m0]" time="0.032" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype1-16-e4m3]" time="0.032" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype1-32-e8m0]" time="0.056" /><testcase classname="tests.test_block_fp4_quant" name="test_random_blocks_match_the_exact_oracle[dtype1-32-e4m3]" time="0.058" /><testcase classname="tests.test_block_fp4_quant" name="test_every_codebook_value_and_midpoint_rounds_as_the_reference[e8m0]" time="0.086" /><testcase classname="tests.test_block_fp4_quant" name="test_every_codebook_value_and_midpoint_rounds_as_the_reference[e4m3]" time="0.084" /><testcase classname="tests.test_block_fp4_quant" name="test_clamp_and_extreme_magnitudes[e8m0]" time="0.012" /><testcase classname="tests.test_block_fp4_quant" name="test_clamp_and_extreme_magnitudes[e4m3]" time="0.012" /><testcase classname="tests.test_block_fp4_quant" name="test_e4m3_scale_saturates_above_the_ratio_that_overflows[2688.0]" time="0.004" /><testcase classname="tests.test_block_fp4_quant" name="test_e4m3_scale_saturates_above_the_ratio_that_overflows[2784.0]" time="0.004" /><testcase classname="tests.test_block_fp4_quant" name="test_e4m3_scale_saturates_above_the_ratio_that_overflows[2816.0]" time="0.004" /><testcase classname="tests.test_block_fp4_quant" name="test_e4m3_scale_saturates_above_the_ratio_that_overflows[2880.0]" time="0.004" /><testcase classname="tests.test_block_fp4_quant" name="test_e4m3_scale_saturates_above_the_ratio_that_overflows[3000.0]" time="0.004" /><testcase classname="tests.test_block_fp4_quant" name="test_negative_zero_survives_in_the_code_and_the_inplace_result[e8m0]" time="0.003" /><testcase classname="tests.test_block_fp4_quant" name="test_negative_zero_survives_in_the_code_and_the_inplace_result[e4m3]" time="0.003" /><testcase classname="tests.test_block_fp4_quant" name="test_nonfinite_blocks_follow_the_documented_extension[e8m0]" time="0.003" /><testcase classname="tests.test_block_fp4_quant" name="test_nonfinite_blocks_follow_the_documented_extension[e4m3]" time="0.002" /><testcase classname="tests.test_block_fp4_quant" name="test_all_zero_block_keeps_a_nonzero_scale[e8m0]" time="0.003" /><testcase classname="tests.test_block_fp4_quant" name="test_all_zero_block_keeps_a_nonzero_scale[e4m3]" time="0.002" /><testcase classname="tests.test_block_fp4_quant" name="test_inplace_matches_the_reference_dequantization_for_both_dtypes[e8m0]" time="0.027" /><testcase classname="tests.test_block_fp4_quant" name="test_inplace_matches_the_reference_dequantization_for_both_dtypes[e4m3]" time="0.028" /><testcase classname="tests.test_block_fp4_quant" name="test_packed_codes_read_back_through_the_frozen_unpack_operator[e8m0]" time="0.008" /><testcase classname="tests.test_block_fp4_quant" name="test_packed_codes_read_back_through_the_frozen_unpack_operator[e4m3]" time="0.008" /><testcase classname="tests.test_block_fp4_quant" name="test_leading_axes_and_block_16_are_flattened_rows[e8m0]" time="0.006" /><testcase classname="tests.test_block_fp4_quant" name="test_leading_axes_and_block_16_are_flattened_rows[e4m3]" time="0.012" /><testcase classname="tests.test_block_fp4_quant" name="test_out_pair_is_written_in_place_and_returned[e8m0]" time="0.004" /><testcase classname="tests.test_block_fp4_quant" name="test_out_pair_is_written_in_place_and_returned[e4m3]" time="0.003" /><testcase classname="tests.test_block_fp4_quant" name="test_empty_rows_and_zero_length_leading_axis" time="0.001" /><testcase classname="tests.test_block_fp4_quant" name="test_refusals_name_the_contract" time="0.003" /><testcase classname="tests.test_block_fp4_quant" name="test_npu_kernel_matches_the_torch_reference_bit_for_bit[16-e8m0]" time="3.384"><failure message="triton.compiler.errors.CompilationError: at 19:27:&#10;    both stores are contiguous, and the caller merges code pairs into packed&#10;    nibbles afterwards.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 19:32:
+    sit one ulp away from a tie, and no unselected branch shifts by an undefined
+    amount. A tie goes to the even code, so the comparisons against ``0.75``,
+    ``1.75`` and ``3.5`` are inclusive while the others are strict.
+
+    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity
+    reaching this helper has no NaN encoding and is simply classified by its
+    magnitude bits. Non-finite blocks are replaced by the caller, never by this
+    helper.
+    """
+    negative = (signed_bits &gt;&gt; 31) != 0
+    magnitude = signed_bits &amp; 0x7FFFFFFF
+    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)
+                                ^
+NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 26:12:
+        # division the released kernel performs on this path.
+        normalized = values / scale_value[:, None]
+    else:
+        # The scale is an exact power of two, so multiplying by its exactly
+        # representable reciprocal is bit-identical to the released ``x / s`` --
+        # in the subnormal range too, where both round the same real quotient to
+        # nearest -- while leaving no division node in the kernel. The exponent is
+        # recovered from the byte the scale decision just produced.
+        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)
+        normalized = values * inverse[:, None]
+    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)
+    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))
+            ^
+CompilationError('def _e2m1_code(signed_bits):\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\n\n    ``signed_bits`` is the value\'s IEEE bit pattern read as int32, so the sign is\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\n    For a non-negative finite float the bit pattern orders exactly like the value,\n    which makes every midpoint decision an integer comparison: no FP32 compare can\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\n\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\n    reaching this helper has no NaN encoding and is simply classified by its\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\n    helper.\n    """\n    negative = (signed_bits &gt;&gt; 31) != 0\n    magnitude = signed_bits &amp; 0x7FFFFFFF\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\n    return tl.where(negative, code + 8, code)\n', &lt;ast.Name object at 0xffff1b371990&gt;, 'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e8m0', block_size = 16
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    @pytest.mark.parametrize("block_size", [16, 32])
+    def test_npu_kernel_matches_the_torch_reference_bit_for_bit(scale_format, block_size):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(404 + block_size)
+        x = _blocks(33, block_size, generator).to(torch.bfloat16)
+        expected_packed, expected_scales = quantize_block_fp4(x, block_size, scale_format,
+                                                              backend="torch")
+&gt;       packed, scales = quantize_block_fp4(x.to(NPU_DEVICE), block_size, scale_format,
+                                            backend="triton")
+
+tests/test_block_fp4_quant.py:484: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:418: in quantize_block_fp4
+    _triton_codes(values, codes, scales, block_size, scale_format, implementation)
+relic_core/kernels/block_fp4_quant.py:336: in _triton_codes
+    block_fp4_quant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff1b270710&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b269080&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff1b2dacf0&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 19:27:
+E           both stores are contiguous, and the caller merges code pairs into packed
+E           nibbles afterwards.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, scale_byte, _ = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                  ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff1b39dde0&gt;, 'CompilationError(\'def _e2m1_code(signed_bits):\\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\\n\\n    ``signed_bits`` is the value\\\'s IEEE bit pattern read as int32, so the sign is\\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\\n    For a non-negative finite float the bit pattern orders exactly like the value,\\n    which makes every midpoint decision an integer comparison: no FP32 compare can\\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\\n\\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\\n    reaching this helper has no NaN encoding and is simply classified by its\\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\\n    helper.\\n    """\\n    negative = (signed_bits &gt;&gt; 31) != 0\\n    magnitude = signed_bits &amp; 0x7FFFFFFF\\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\\n    return tl.where(negative, code + 8, code)\\n\', &lt;ast.Name object at 0xffff1b371990&gt;, \'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_kernel_matches_the_torch_reference_bit_for_bit[16-e4m3]" time="0.024"><failure message="triton.compiler.errors.CompilationError: at 19:27:&#10;    both stores are contiguous, and the caller merges code pairs into packed&#10;    nibbles afterwards.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 9:39:
+def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                 E4M3_SCALE: tl.constexpr):
+    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""
+    amax = tl.maximum(amax, FLOOR)
+    if E4M3_SCALE:
+        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant
+        # 6.0 (the source divides, it does not multiply by a reciprocal) and the
+        # E4M3 encode is round-to-nearest-even, saturating at 448.
+        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)
+                                       ^
+NameError("Cannot access global variable _E4M3_MAX from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 11:30:
+def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                    E4M3_SCALE: tl.constexpr):
+    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""
+    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF
+    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0
+    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)
+    # A non-finite block has no finite scale; computing one from its NaN/Inf
+    # magnitude would be an undefined exponent, so the finite floor is used and
+    # the block is replaced at the end. Nothing downstream then sees a NaN.
+    amax = tl.where(nonfinite, FLOOR, amax)
+    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+                              ^
+CompilationError('def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                 E4M3_SCALE: tl.constexpr):\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\n    amax = tl.maximum(amax, FLOOR)\n    if E4M3_SCALE:\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\n        return scale_byte, _e4m3_byte_value(scale_byte)\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\n    # a nearest rounding of the logarithm.\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\n', &lt;ast.Name object at 0xffff1b3708b0&gt;, 'NameError("Cannot access global variable _E4M3_MAX from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e4m3', block_size = 16
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    @pytest.mark.parametrize("block_size", [16, 32])
+    def test_npu_kernel_matches_the_torch_reference_bit_for_bit(scale_format, block_size):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(404 + block_size)
+        x = _blocks(33, block_size, generator).to(torch.bfloat16)
+        expected_packed, expected_scales = quantize_block_fp4(x, block_size, scale_format,
+                                                              backend="torch")
+&gt;       packed, scales = quantize_block_fp4(x.to(NPU_DEVICE), block_size, scale_format,
+                                            backend="triton")
+
+tests/test_block_fp4_quant.py:484: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:418: in quantize_block_fp4
+    _triton_codes(values, codes, scales, block_size, scale_format, implementation)
+relic_core/kernels/block_fp4_quant.py:336: in _triton_codes
+    block_fp4_quant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff180fe490&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b3974c0&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff180fe570&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 19:27:
+E           both stores are contiguous, and the caller merges code pairs into packed
+E           nibbles afterwards.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, scale_byte, _ = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                  ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff1b371a50&gt;, 'CompilationError(\'def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\\n                 E4M3_SCALE: tl.constexpr):\\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\\n    amax = tl.maximum(amax, FLOOR)\\n    if E4M3_SCALE:\\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\\n        return scale_byte, _e4m3_byte_value(scale_byte)\\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\\n    # a nearest rounding of the logarithm.\\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\\n\', &lt;ast.Name object at 0xffff1b3708b0&gt;, \'NameError("Cannot access global variable _E4M3_MAX from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_kernel_matches_the_torch_reference_bit_for_bit[32-e8m0]" time="0.031"><failure message="triton.compiler.errors.CompilationError: at 19:27:&#10;    both stores are contiguous, and the caller merges code pairs into packed&#10;    nibbles afterwards.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 19:32:
+    sit one ulp away from a tie, and no unselected branch shifts by an undefined
+    amount. A tie goes to the even code, so the comparisons against ``0.75``,
+    ``1.75`` and ``3.5`` are inclusive while the others are strict.
+
+    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity
+    reaching this helper has no NaN encoding and is simply classified by its
+    magnitude bits. Non-finite blocks are replaced by the caller, never by this
+    helper.
+    """
+    negative = (signed_bits &gt;&gt; 31) != 0
+    magnitude = signed_bits &amp; 0x7FFFFFFF
+    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)
+                                ^
+NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 26:12:
+        # division the released kernel performs on this path.
+        normalized = values / scale_value[:, None]
+    else:
+        # The scale is an exact power of two, so multiplying by its exactly
+        # representable reciprocal is bit-identical to the released ``x / s`` --
+        # in the subnormal range too, where both round the same real quotient to
+        # nearest -- while leaving no division node in the kernel. The exponent is
+        # recovered from the byte the scale decision just produced.
+        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)
+        normalized = values * inverse[:, None]
+    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)
+    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))
+            ^
+CompilationError('def _e2m1_code(signed_bits):\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\n\n    ``signed_bits`` is the value\'s IEEE bit pattern read as int32, so the sign is\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\n    For a non-negative finite float the bit pattern orders exactly like the value,\n    which makes every midpoint decision an integer comparison: no FP32 compare can\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\n\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\n    reaching this helper has no NaN encoding and is simply classified by its\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\n    helper.\n    """\n    negative = (signed_bits &gt;&gt; 31) != 0\n    magnitude = signed_bits &amp; 0x7FFFFFFF\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\n    return tl.where(negative, code + 8, code)\n', &lt;ast.Name object at 0xffff1b39f910&gt;, 'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e8m0', block_size = 32
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    @pytest.mark.parametrize("block_size", [16, 32])
+    def test_npu_kernel_matches_the_torch_reference_bit_for_bit(scale_format, block_size):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(404 + block_size)
+        x = _blocks(33, block_size, generator).to(torch.bfloat16)
+        expected_packed, expected_scales = quantize_block_fp4(x, block_size, scale_format,
+                                                              backend="torch")
+&gt;       packed, scales = quantize_block_fp4(x.to(NPU_DEVICE), block_size, scale_format,
+                                            backend="triton")
+
+tests/test_block_fp4_quant.py:484: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:418: in quantize_block_fp4
+    _triton_codes(values, codes, scales, block_size, scale_format, implementation)
+relic_core/kernels/block_fp4_quant.py:336: in _triton_codes
+    block_fp4_quant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff134e2090&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b4b82c0&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff134e2230&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 19:27:
+E           both stores are contiguous, and the caller merges code pairs into packed
+E           nibbles afterwards.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, scale_byte, _ = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                  ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff1b372680&gt;, 'CompilationError(\'def _e2m1_code(signed_bits):\\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\\n\\n    ``signed_bits`` is the value\\\'s IEEE bit pattern read as int32, so the sign is\\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\\n    For a non-negative finite float the bit pattern orders exactly like the value,\\n    which makes every midpoint decision an integer comparison: no FP32 compare can\\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\\n\\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\\n    reaching this helper has no NaN encoding and is simply classified by its\\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\\n    helper.\\n    """\\n    negative = (signed_bits &gt;&gt; 31) != 0\\n    magnitude = signed_bits &amp; 0x7FFFFFFF\\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\\n    return tl.where(negative, code + 8, code)\\n\', &lt;ast.Name object at 0xffff1b39f910&gt;, \'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_kernel_matches_the_torch_reference_bit_for_bit[32-e4m3]" time="0.023"><failure message="triton.compiler.errors.CompilationError: at 19:27:&#10;    both stores are contiguous, and the caller merges code pairs into packed&#10;    nibbles afterwards.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 9:39:
+def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                 E4M3_SCALE: tl.constexpr):
+    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""
+    amax = tl.maximum(amax, FLOOR)
+    if E4M3_SCALE:
+        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant
+        # 6.0 (the source divides, it does not multiply by a reciprocal) and the
+        # E4M3 encode is round-to-nearest-even, saturating at 448.
+        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)
+                                       ^
+NameError("Cannot access global variable _E4M3_MAX from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 11:30:
+def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                    E4M3_SCALE: tl.constexpr):
+    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""
+    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF
+    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0
+    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)
+    # A non-finite block has no finite scale; computing one from its NaN/Inf
+    # magnitude would be an undefined exponent, so the finite floor is used and
+    # the block is replaced at the end. Nothing downstream then sees a NaN.
+    amax = tl.where(nonfinite, FLOOR, amax)
+    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+                              ^
+CompilationError('def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                 E4M3_SCALE: tl.constexpr):\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\n    amax = tl.maximum(amax, FLOOR)\n    if E4M3_SCALE:\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\n        return scale_byte, _e4m3_byte_value(scale_byte)\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\n    # a nearest rounding of the logarithm.\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\n', &lt;ast.Name object at 0xffff1b371de0&gt;, 'NameError("Cannot access global variable _E4M3_MAX from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e4m3', block_size = 32
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    @pytest.mark.parametrize("block_size", [16, 32])
+    def test_npu_kernel_matches_the_torch_reference_bit_for_bit(scale_format, block_size):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(404 + block_size)
+        x = _blocks(33, block_size, generator).to(torch.bfloat16)
+        expected_packed, expected_scales = quantize_block_fp4(x, block_size, scale_format,
+                                                              backend="torch")
+&gt;       packed, scales = quantize_block_fp4(x.to(NPU_DEVICE), block_size, scale_format,
+                                            backend="triton")
+
+tests/test_block_fp4_quant.py:484: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:418: in quantize_block_fp4
+    _triton_codes(values, codes, scales, block_size, scale_format, implementation)
+relic_core/kernels/block_fp4_quant.py:336: in _triton_codes
+    block_fp4_quant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff13582b90&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b269080&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff13582bf0&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 19:27:
+E           both stores are contiguous, and the caller merges code pairs into packed
+E           nibbles afterwards.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, scale_byte, _ = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                  ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff1b3737c0&gt;, 'CompilationError(\'def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\\n                 E4M3_SCALE: tl.constexpr):\\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\\n    amax = tl.maximum(amax, FLOOR)\\n    if E4M3_SCALE:\\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\\n        return scale_byte, _e4m3_byte_value(scale_byte)\\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\\n    # a nearest rounding of the logarithm.\\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\\n\', &lt;ast.Name object at 0xffff1b371de0&gt;, \'NameError("Cannot access global variable _E4M3_MAX from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_nonfinite_inplace_writes_nan_like_the_reference[e8m0]" time="0.031"><failure message="triton.compiler.errors.CompilationError: at 20:28:&#10;    released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and&#10;    narrows once to the input dtype; that is what this does.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 19:32:
+    sit one ulp away from a tie, and no unselected branch shifts by an undefined
+    amount. A tie goes to the even code, so the comparisons against ``0.75``,
+    ``1.75`` and ``3.5`` are inclusive while the others are strict.
+
+    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity
+    reaching this helper has no NaN encoding and is simply classified by its
+    magnitude bits. Non-finite blocks are replaced by the caller, never by this
+    helper.
+    """
+    negative = (signed_bits &gt;&gt; 31) != 0
+    magnitude = signed_bits &amp; 0x7FFFFFFF
+    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)
+                                ^
+NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 26:12:
+        # division the released kernel performs on this path.
+        normalized = values / scale_value[:, None]
+    else:
+        # The scale is an exact power of two, so multiplying by its exactly
+        # representable reciprocal is bit-identical to the released ``x / s`` --
+        # in the subnormal range too, where both round the same real quotient to
+        # nearest -- while leaving no division node in the kernel. The exponent is
+        # recovered from the byte the scale decision just produced.
+        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)
+        normalized = values * inverse[:, None]
+    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)
+    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))
+            ^
+CompilationError('def _e2m1_code(signed_bits):\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\n\n    ``signed_bits`` is the value\'s IEEE bit pattern read as int32, so the sign is\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\n    For a non-negative finite float the bit pattern orders exactly like the value,\n    which makes every midpoint decision an integer comparison: no FP32 compare can\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\n\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\n    reaching this helper has no NaN encoding and is simply classified by its\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\n    helper.\n    """\n    negative = (signed_bits &gt;&gt; 31) != 0\n    magnitude = signed_bits &amp; 0x7FFFFFFF\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\n    return tl.where(negative, code + 8, code)\n', &lt;ast.Name object at 0xffff1b4bdf60&gt;, 'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e8m0'
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    def test_npu_nonfinite_inplace_writes_nan_like_the_reference(scale_format):
+        """The inplace kernel carries the NaN out through the scale value.
+    
+        Zero codes times a *finite* scale would write a plausible zero block, so this is
+        the case that separates "documented extension" from "silently plausible".
+        """
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        x = torch.tensor([[math.inf] + [1.0] * 31, [2.0] * 32, [math.nan] * 32],
+                         dtype=torch.float32).to(torch.bfloat16)
+        device_x = x.to(NPU_DEVICE)
+&gt;       quantize_block_fp4(device_x, 32, scale_format, inplace=True, backend="triton")
+
+tests/test_block_fp4_quant.py:503: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
+    return _triton_inplace(values, block_size, scale_format, implementation)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
+    block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff134d2950&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b4b9800&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff31c8b330&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 20:28:
+E           released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and
+E           narrows once to the input dtype; that is what this does.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, _, scale_value = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                   ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff18053ee0&gt;, 'CompilationError(\'def _e2m1_code(signed_bits):\\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\\n\\n    ``signed_bits`` is the value\\\'s IEEE bit pattern read as int32, so the sign is\\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\\n    For a non-negative finite float the bit pattern orders exactly like the value,\\n    which makes every midpoint decision an integer comparison: no FP32 compare can\\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\\n\\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\\n    reaching this helper has no NaN encoding and is simply classified by its\\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\\n    helper.\\n    """\\n    negative = (signed_bits &gt;&gt; 31) != 0\\n    magnitude = signed_bits &amp; 0x7FFFFFFF\\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\\n    return tl.where(negative, code + 8, code)\\n\', &lt;ast.Name object at 0xffff1b4bdf60&gt;, \'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_nonfinite_inplace_writes_nan_like_the_reference[e4m3]" time="0.020"><failure message="triton.compiler.errors.CompilationError: at 20:28:&#10;    released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and&#10;    narrows once to the input dtype; that is what this does.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 9:39:
+def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                 E4M3_SCALE: tl.constexpr):
+    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""
+    amax = tl.maximum(amax, FLOOR)
+    if E4M3_SCALE:
+        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant
+        # 6.0 (the source divides, it does not multiply by a reciprocal) and the
+        # E4M3 encode is round-to-nearest-even, saturating at 448.
+        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)
+                                       ^
+NameError("Cannot access global variable _E4M3_MAX from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 11:30:
+def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                    E4M3_SCALE: tl.constexpr):
+    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""
+    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF
+    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0
+    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)
+    # A non-finite block has no finite scale; computing one from its NaN/Inf
+    # magnitude would be an undefined exponent, so the finite floor is used and
+    # the block is replaced at the end. Nothing downstream then sees a NaN.
+    amax = tl.where(nonfinite, FLOOR, amax)
+    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+                              ^
+CompilationError('def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                 E4M3_SCALE: tl.constexpr):\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\n    amax = tl.maximum(amax, FLOOR)\n    if E4M3_SCALE:\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\n        return scale_byte, _e4m3_byte_value(scale_byte)\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\n    # a nearest rounding of the logarithm.\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\n', &lt;ast.Name object at 0xffff1b4b6f20&gt;, 'NameError("Cannot access global variable _E4M3_MAX from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e4m3'
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    def test_npu_nonfinite_inplace_writes_nan_like_the_reference(scale_format):
+        """The inplace kernel carries the NaN out through the scale value.
+    
+        Zero codes times a *finite* scale would write a plausible zero block, so this is
+        the case that separates "documented extension" from "silently plausible".
+        """
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        x = torch.tensor([[math.inf] + [1.0] * 31, [2.0] * 32, [math.nan] * 32],
+                         dtype=torch.float32).to(torch.bfloat16)
+        device_x = x.to(NPU_DEVICE)
+&gt;       quantize_block_fp4(device_x, 32, scale_format, inplace=True, backend="triton")
+
+tests/test_block_fp4_quant.py:503: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
+    return _triton_inplace(values, block_size, scale_format, implementation)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
+    block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff1357b110&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b4b9260&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff1357b630&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 20:28:
+E           released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and
+E           narrows once to the input dtype; that is what this does.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, _, scale_value = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                   ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff1b4b7ee0&gt;, 'CompilationError(\'def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\\n                 E4M3_SCALE: tl.constexpr):\\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\\n    amax = tl.maximum(amax, FLOOR)\\n    if E4M3_SCALE:\\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\\n        return scale_byte, _e4m3_byte_value(scale_byte)\\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\\n    # a nearest rounding of the logarithm.\\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\\n\', &lt;ast.Name object at 0xffff1b4b6f20&gt;, \'NameError("Cannot access global variable _E4M3_MAX from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_kernel_saturates_the_e4m3_scale_where_the_ratio_overflows" time="0.022"><failure message="triton.compiler.errors.CompilationError: at 19:27:&#10;    both stores are contiguous, and the caller merges code pairs into packed&#10;    nibbles afterwards.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 9:39:
+def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                 E4M3_SCALE: tl.constexpr):
+    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""
+    amax = tl.maximum(amax, FLOOR)
+    if E4M3_SCALE:
+        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant
+        # 6.0 (the source divides, it does not multiply by a reciprocal) and the
+        # E4M3 encode is round-to-nearest-even, saturating at 448.
+        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)
+                                       ^
+NameError("Cannot access global variable _E4M3_MAX from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 11:30:
+def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                    E4M3_SCALE: tl.constexpr):
+    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""
+    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF
+    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0
+    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)
+    # A non-finite block has no finite scale; computing one from its NaN/Inf
+    # magnitude would be an undefined exponent, so the finite floor is used and
+    # the block is replaced at the end. Nothing downstream then sees a NaN.
+    amax = tl.where(nonfinite, FLOOR, amax)
+    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+                              ^
+CompilationError('def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                 E4M3_SCALE: tl.constexpr):\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\n    amax = tl.maximum(amax, FLOOR)\n    if E4M3_SCALE:\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\n        return scale_byte, _e4m3_byte_value(scale_byte)\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\n    # a nearest rounding of the logarithm.\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\n', &lt;ast.Name object at 0xffff1b3723e0&gt;, 'NameError("Cannot access global variable _E4M3_MAX from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+    @requires_npu
+    def test_npu_kernel_saturates_the_e4m3_scale_where_the_ratio_overflows():
+        """The compiled kernel must clamp the encode input, not emit the NaN byte.
+    
+        Until this pinch point was found the device kernel produced ``0x7F`` for a ratio
+        in ``[448, 512)`` while the reference produced the saturated ``0x7E``, so this is
+        the case that separates them.
+        """
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        rows = []
+        for amax in (2688.0, 2784.0, 2816.0, 2880.0, 3000.0, 10000.0):
+            rows.append([amax, 448.0, 224.0, 0.01171875, -amax, -1.0] + [0.0] * 26)
+        x = torch.tensor(rows, dtype=torch.float32).to(torch.bfloat16)
+        expected_packed, expected_scales = quantize_block_fp4(x, 32, "e4m3", backend="torch")
+        assert expected_scales.reshape(-1).tolist() == [0x7E] * len(rows)
+&gt;       packed, scales = quantize_block_fp4(x.to(NPU_DEVICE), 32, "e4m3", backend="triton")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_block_fp4_quant.py:526: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:418: in quantize_block_fp4
+    _triton_codes(values, codes, scales, block_size, scale_format, implementation)
+relic_core/kernels/block_fp4_quant.py:336: in _triton_codes
+    block_fp4_quant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff134d3cd0&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b4b96c0&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff134d20f0&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 19:27:
+E           both stores are contiguous, and the caller merges code pairs into packed
+E           nibbles afterwards.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, scale_byte, _ = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                  ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff1b373940&gt;, 'CompilationError(\'def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\\n                 E4M3_SCALE: tl.constexpr):\\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\\n    amax = tl.maximum(amax, FLOOR)\\n    if E4M3_SCALE:\\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\\n        return scale_byte, _e4m3_byte_value(scale_byte)\\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\\n    # a nearest rounding of the logarithm.\\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\\n\', &lt;ast.Name object at 0xffff1b3723e0&gt;, \'NameError("Cannot access global variable _E4M3_MAX from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_inplace_matches_the_reference_dequantization[e8m0]" time="0.029"><failure message="triton.compiler.errors.CompilationError: at 20:28:&#10;    released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and&#10;    narrows once to the input dtype; that is what this does.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 19:32:
+    sit one ulp away from a tie, and no unselected branch shifts by an undefined
+    amount. A tie goes to the even code, so the comparisons against ``0.75``,
+    ``1.75`` and ``3.5`` are inclusive while the others are strict.
+
+    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity
+    reaching this helper has no NaN encoding and is simply classified by its
+    magnitude bits. Non-finite blocks are replaced by the caller, never by this
+    helper.
+    """
+    negative = (signed_bits &gt;&gt; 31) != 0
+    magnitude = signed_bits &amp; 0x7FFFFFFF
+    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)
+                                ^
+NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 26:12:
+        # division the released kernel performs on this path.
+        normalized = values / scale_value[:, None]
+    else:
+        # The scale is an exact power of two, so multiplying by its exactly
+        # representable reciprocal is bit-identical to the released ``x / s`` --
+        # in the subnormal range too, where both round the same real quotient to
+        # nearest -- while leaving no division node in the kernel. The exponent is
+        # recovered from the byte the scale decision just produced.
+        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)
+        normalized = values * inverse[:, None]
+    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)
+    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))
+            ^
+CompilationError('def _e2m1_code(signed_bits):\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\n\n    ``signed_bits`` is the value\'s IEEE bit pattern read as int32, so the sign is\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\n    For a non-negative finite float the bit pattern orders exactly like the value,\n    which makes every midpoint decision an integer comparison: no FP32 compare can\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\n\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\n    reaching this helper has no NaN encoding and is simply classified by its\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\n    helper.\n    """\n    negative = (signed_bits &gt;&gt; 31) != 0\n    magnitude = signed_bits &amp; 0x7FFFFFFF\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\n    return tl.where(negative, code + 8, code)\n', &lt;ast.Name object at 0xffff1b4bd060&gt;, 'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e8m0'
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    def test_npu_inplace_matches_the_reference_dequantization(scale_format):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(505)
+        x = _blocks(7, 32, generator).to(torch.bfloat16)
+        expected = x.clone()
+        quantize_block_fp4(expected, 32, scale_format, inplace=True, backend="torch")
+        device_x = x.to(NPU_DEVICE)
+&gt;       result = quantize_block_fp4(device_x, 32, scale_format, inplace=True, backend="triton")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_block_fp4_quant.py:542: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
+    return _triton_inplace(values, block_size, scale_format, implementation)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
+    block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff18057ed0&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b4b9940&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff180575f0&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 20:28:
+E           released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and
+E           narrows once to the input dtype; that is what this does.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, _, scale_value = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                   ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff13569cf0&gt;, 'CompilationError(\'def _e2m1_code(signed_bits):\\n    """E2M1 code of an FP32 value already clamped to ``[-6, 6]``, as ``int32``.\\n\\n    ``signed_bits`` is the value\\\'s IEEE bit pattern read as int32, so the sign is\\n    its arithmetic shift and the magnitude is the pattern with the sign cleared.\\n    For a non-negative finite float the bit pattern orders exactly like the value,\\n    which makes every midpoint decision an integer comparison: no FP32 compare can\\n    sit one ulp away from a tie, and no unselected branch shifts by an undefined\\n    amount. A tie goes to the even code, so the comparisons against ``0.75``,\\n    ``1.75`` and ``3.5`` are inclusive while the others are strict.\\n\\n    E2M1 is a finite format: all sixteen codes are numbers, so a NaN or infinity\\n    reaching this helper has no NaN encoding and is simply classified by its\\n    magnitude bits. Non-finite blocks are replaced by the caller, never by this\\n    helper.\\n    """\\n    negative = (signed_bits &gt;&gt; 31) != 0\\n    magnitude = signed_bits &amp; 0x7FFFFFFF\\n    code = tl.where(magnitude &gt; _MIDPOINT_0_25, 1, 0)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_0_75, 2, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_1_25, 3, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_1_75, 4, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_2_50, 5, code)\\n    code = tl.where(magnitude &gt;= _MIDPOINT_3_50, 6, code)\\n    code = tl.where(magnitude &gt; _MIDPOINT_5_00, 7, code)\\n    return tl.where(negative, code + 8, code)\\n\', &lt;ast.Name object at 0xffff1b4bd060&gt;, \'NameError("Cannot access global variable _MIDPOINT_0_25 from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_inplace_matches_the_reference_dequantization[e4m3]" time="0.021"><failure message="triton.compiler.errors.CompilationError: at 20:28:&#10;    released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and&#10;    narrows once to the input dtype; that is what this does.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 9:39:
+def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                 E4M3_SCALE: tl.constexpr):
+    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""
+    amax = tl.maximum(amax, FLOOR)
+    if E4M3_SCALE:
+        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant
+        # 6.0 (the source divides, it does not multiply by a reciprocal) and the
+        # E4M3 encode is round-to-nearest-even, saturating at 448.
+        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)
+                                       ^
+NameError("Cannot access global variable _E4M3_MAX from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 11:30:
+def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                    E4M3_SCALE: tl.constexpr):
+    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""
+    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF
+    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0
+    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)
+    # A non-finite block has no finite scale; computing one from its NaN/Inf
+    # magnitude would be an undefined exponent, so the finite floor is used and
+    # the block is replaced at the end. Nothing downstream then sees a NaN.
+    amax = tl.where(nonfinite, FLOOR, amax)
+    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+                              ^
+CompilationError('def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                 E4M3_SCALE: tl.constexpr):\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\n    amax = tl.maximum(amax, FLOOR)\n    if E4M3_SCALE:\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\n        return scale_byte, _e4m3_byte_value(scale_byte)\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\n    # a nearest rounding of the logarithm.\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\n', &lt;ast.Name object at 0xffff134aab90&gt;, 'NameError("Cannot access global variable _E4M3_MAX from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+scale_format = 'e4m3'
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    def test_npu_inplace_matches_the_reference_dequantization(scale_format):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(505)
+        x = _blocks(7, 32, generator).to(torch.bfloat16)
+        expected = x.clone()
+        quantize_block_fp4(expected, 32, scale_format, inplace=True, backend="torch")
+        device_x = x.to(NPU_DEVICE)
+&gt;       result = quantize_block_fp4(device_x, 32, scale_format, inplace=True, backend="triton")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_block_fp4_quant.py:542: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:414: in quantize_block_fp4
+    return _triton_inplace(values, block_size, scale_format, implementation)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:350: in _triton_inplace
+    block_fp4_quant_dequant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff134d37d0&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b4bb4c0&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff180dc8f0&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 20:28:
+E           released kernel's ``inplace`` branch computes ``fp32(fp4_value) * scale`` and
+E           narrows once to the input dtype; that is what this does.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, _, scale_value = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                   ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff134abc10&gt;, 'CompilationError(\'def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\\n                 E4M3_SCALE: tl.constexpr):\\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\\n    amax = tl.maximum(amax, FLOOR)\\n    if E4M3_SCALE:\\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\\n        return scale_byte, _e4m3_byte_value(scale_byte)\\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\\n    # a nearest rounding of the logarithm.\\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\\n\', &lt;ast.Name object at 0xffff134aab90&gt;, \'NameError("Cannot access global variable _E4M3_MAX from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_kernel_follows_the_current_stream_and_restores_the_device" time="0.038"><failure message="triton.compiler.errors.CompilationError: at 19:27:&#10;    both stores are contiguous, and the caller merges code pairs into packed&#10;    nibbles afterwards.&#10;    &quot;&quot;&quot;&#10;    if INDEX64:&#10;        first_block = tl.program_id(0).to(tl.int64) * BLOCKS&#10;    else:&#10;        first_block = tl.program_id(0) * BLOCKS&#10;    block_ids = first_block + tl.arange(0, BLOCKS)&#10;    active = block_ids &lt; NUM_BLOCKS&#10;    offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]&#10;[+4 more lines; full report in element text]">triton.compiler.errors.CompilationError: at 9:39:
+def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                 E4M3_SCALE: tl.constexpr):
+    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""
+    amax = tl.maximum(amax, FLOOR)
+    if E4M3_SCALE:
+        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant
+        # 6.0 (the source divides, it does not multiply by a reciprocal) and the
+        # E4M3 encode is round-to-nearest-even, saturating at 448.
+        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)
+                                       ^
+NameError("Cannot access global variable _E4M3_MAX from within @jit'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 11:30:
+def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,
+                    E4M3_SCALE: tl.constexpr):
+    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""
+    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF
+    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0
+    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)
+    # A non-finite block has no finite scale; computing one from its NaN/Inf
+    # magnitude would be an undefined exponent, so the finite floor is used and
+    # the block is replaced at the end. Nothing downstream then sees a NaN.
+    amax = tl.where(nonfinite, FLOOR, amax)
+    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+                              ^
+CompilationError('def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                 E4M3_SCALE: tl.constexpr):\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\n    amax = tl.maximum(amax, FLOOR)\n    if E4M3_SCALE:\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\n        return scale_byte, _e4m3_byte_value(scale_byte)\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\n    # a nearest rounding of the logarithm.\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\n', &lt;ast.Name object at 0xffff1b4db0d0&gt;, 'NameError("Cannot access global variable _E4M3_MAX from within @jit\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")')
+
+The above exception was the direct cause of the following exception:
+
+    @requires_npu
+    def test_npu_kernel_follows_the_current_stream_and_restores_the_device():
+        import torch_npu
+        import triton
+    
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        torch.npu.set_device(NPU_DEVICE)
+        generator = torch.Generator().manual_seed(606)
+        x_host = _blocks(4, 32, generator).to(torch.bfloat16)
+        expected_packed, expected_scales = quantize_block_fp4(x_host, 32, "e4m3", backend="torch")
+        stream = torch.npu.Stream(device=NPU_DEVICE)
+        with torch.npu.stream(stream):
+            before = torch.npu.current_device()
+            x = x_host.to(NPU_DEVICE)
+            target = triton.runtime.driver.active.get_current_target()
+            assert target.backend.lower() in {"npu", "ascend"}, target.backend
+            current = triton.runtime.driver.active.get_current_stream(NPU_DEVICE.index)
+            expected_stream = torch_npu._C._npu_getCurrentRawStream(NPU_DEVICE.index)
+            assert current == expected_stream, "Triton and Torch launch on different streams"
+&gt;           packed, scales = quantize_block_fp4(x, 32, "e4m3", backend="triton")
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_block_fp4_quant.py:568: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+relic_core/kernels/block_fp4_quant.py:418: in quantize_block_fp4
+    _triton_codes(values, codes, scales, block_size, scale_format, implementation)
+relic_core/kernels/block_fp4_quant.py:336: in _triton_codes
+    block_fp4_quant_kernel[((blocks + _BLOCKS - 1) // _BLOCKS,)](
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:353: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py:660: in run
+    kernel = self.compile(
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:303: in compile
+    module = src.make_ir(options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;triton.compiler.compiler.ASTSource object at 0xffff1357b290&gt;
+options = NPUOptions(debug=False, sanitize_overflow=True, llvm_version=15, kernel_name='triton_', cluster_dims=(1, 1, 1), num_wa...ck_sync=None, stream=None, parallel_mode='simd', force_simt_only=False, force_simt_template=False, compile_mode='simd')
+codegen_fns = {'min_dot_size': &lt;function min_dot_size.&lt;locals&gt;.&lt;lambda&gt; at 0xffff1b4ba660&gt;}
+module_map = {}
+context = &lt;triton._C.libtriton.ir.context object at 0xffff1357acf0&gt;
+
+    def make_ir(self, options, codegen_fns, module_map, context):
+&gt;       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 19:27:
+E           both stores are contiguous, and the caller merges code pairs into packed
+E           nibbles afterwards.
+E           """
+E           if INDEX64:
+E               first_block = tl.program_id(0).to(tl.int64) * BLOCKS
+E           else:
+E               first_block = tl.program_id(0) * BLOCKS
+E           block_ids = first_block + tl.arange(0, BLOCKS)
+E           active = block_ids &lt; NUM_BLOCKS
+E           offsets = block_ids[:, None] * BLOCK + tl.arange(0, BLOCK)[None, :]
+E           values = tl.load(X + offsets, mask=active[:, None], other=0.0).to(tl.float32)
+E           codes, scale_byte, _ = _block_quantize(values, FLOOR, INV_FP4_MAX, E4M3_SCALE)
+E                                  ^
+E       CompilationError('def _block_quantize(values, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\n                    E4M3_SCALE: tl.constexpr):\n    """Per-block E2M1 codes and scale bytes for a ``[BLOCKS, BLOCK]`` tile."""\n    magnitude_bits = values.to(tl.int32, bitcast=True) &amp; 0x7FFFFFFF\n    nonfinite = tl.max(_nonfinite_bits(magnitude_bits), axis=1) != 0\n    amax = tl.max(magnitude_bits, axis=1).to(tl.float32, bitcast=True)\n    # A non-finite block has no finite scale; computing one from its NaN/Inf\n    # magnitude would be an undefined exponent, so the finite floor is used and\n    # the block is replaced at the end. Nothing downstream then sees a NaN.\n    amax = tl.where(nonfinite, FLOOR, amax)\n    scale_byte, scale_value = _block_scale(amax, FLOOR, INV_FP4_MAX, E4M3_SCALE)\n    if E4M3_SCALE:\n        # The scale is the *rounded* ratio, so the reference divides by that\n        # rounded value; a reciprocal multiply would round twice. This is the one\n        # division the released kernel performs on this path.\n        normalized = values / scale_value[:, None]\n    else:\n        # The scale is an exact power of two, so multiplying by its exactly\n        # representable reciprocal is bit-identical to the released ``x / s`` --\n        # in the subnormal range too, where both round the same real quotient to\n        # nearest -- while leaving no division node in the kernel. The exponent is\n        # recovered from the byte the scale decision just produced.\n        inverse = _pow2_bits(127 - scale_byte).to(tl.float32, bitcast=True)\n        normalized = values * inverse[:, None]\n    normalized = tl.minimum(tl.maximum(normalized, -6.0), 6.0)\n    codes = _e2m1_code(normalized.to(tl.int32, bitcast=True))\n    # E2M1 has no NaN code. A non-finite block is extended to the *scale\'s* NaN\n    # byte and all-zero codes, so a consumer that multiplies by the scale still\n    # sees NaN rather than a plausible finite value.\n    codes = tl.where(nonfinite[:, None], 0, codes)\n    scale_byte = tl.where(nonfinite, 0x7F if E4M3_SCALE else 255, scale_byte)\n    # The inplace path multiplies the codes by this value and never reads the byte,\n    # so the value itself has to carry the NaN out: zero codes times a finite scale\n    # would write a plausible zero block instead of the documented NaN.\n    scale_value = tl.where(nonfinite, _NAN, scale_value)\n    return codes, scale_byte, scale_value\n', &lt;ast.Call object at 0xffff1b4db160&gt;, 'CompilationError(\'def _block_scale(amax, FLOOR: tl.constexpr, INV_FP4_MAX: tl.constexpr,\\n                 E4M3_SCALE: tl.constexpr):\\n    """``(scale byte, FP32 scale)`` for a block amax, per the released branch."""\\n    amax = tl.maximum(amax, FLOOR)\\n    if E4M3_SCALE:\\n        # ``fp32(e4m3(amax / 6.0))``: the ratio is divided by the exact constant\\n        # 6.0 (the source divides, it does not multiply by a reciprocal) and the\\n        # E4M3 encode is round-to-nearest-even, saturating at 448.\\n        ratio = tl.minimum(amax / 6.0, _E4M3_MAX)\\n        scale_byte = _e4m3_byte_from_bits(ratio.to(tl.int32, bitcast=True))\\n        return scale_byte, _e4m3_byte_value(scale_byte)\\n    # ``fast_pow2(fast_log2_ceil(amax * fp32(1/6)))``: an FP32 multiply by the\\n    # rounded reciprocal, then an exponent-field ceiling -- not a divide, and not\\n    # a nearest rounding of the logarithm.\\n    exponent = _scale_exponent_from_bits((amax * INV_FP4_MAX).to(tl.int32, bitcast=True))\\n    return exponent + 127, _pow2_bits(exponent).to(tl.float32, bitcast=True)\\n\', &lt;ast.Name object at 0xffff1b4db0d0&gt;, \'NameError("Cannot access global variable _E4M3_MAX from within @jit\\\'ed function. Triton kernels can only access global variables that are annotated as constexpr (`x: triton.language.constexpr = 42` or `x = triton.language.constexpr(42)`).  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")\')')
+
+&lt;workspace&gt;/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py:124: CompilationError</failure></testcase><testcase classname="tests.test_block_fp4_quant" name="test_npu_torch_backend_is_refused_before_an_unsupported_cast" time="0.290" /><testcase classname="tests.test_block_fp4_quant_math" name="test_every_codebook_value_encodes_to_its_own_code" time="0.001" /><testcase classname="tests.test_block_fp4_quant_math" name="test_ties_go_to_the_even_code_from_both_sides" time="0.003" /><testcase classname="tests.test_block_fp4_quant_math" name="test_one_ulp_around_every_midpoint_matches_the_exact_oracle" time="0.005" /><testcase classname="tests.test_block_fp4_quant_math" name="test_random_fp32_magnitudes_in_range_match_the_exact_oracle" time="0.478" /><testcase classname="tests.test_block_fp4_quant_math" name="test_every_exponent_boundary_across_the_range_is_exact" time="0.036" /><testcase classname="tests.test_block_fp4_quant_math" name="test_negative_zero_keeps_its_sign_and_never_becomes_positive_zero" time="0.001" /><testcase classname="tests.test_block_fp4_quant_math" name="test_kernel_decoder_returns_the_codebook_values" time="0.001" /><testcase classname="tests.test_block_fp4_quant_math" name="test_e8m0_scale_is_the_ceiling_power_of_two_not_a_rounded_log" time="0.002" /><testcase classname="tests.test_block_fp4_quant_math" name="test_e8m0_scale_sweeps_every_octave_of_the_amax_range" time="0.006" /><testcase classname="tests.test_block_fp4_quant_math" name="test_e8m0_floor_keeps_a_zero_block_at_the_smallest_power_of_two" time="0.001" /><testcase classname="tests.test_block_fp4_quant_math" name="test_e4m3_scale_is_the_rounded_ratio_and_saturates_at_448" time="0.002" /><testcase classname="tests.test_block_fp4_quant_math" name="test_e4m3_scale_saturates_for_the_amax_range_that_overflows_the_ratio" time="0.001" /><testcase classname="tests.test_block_fp4_quant_math" name="test_composed_block_with_a_saturating_amax_keeps_the_clamped_codes" time="0.002" /><testcase classname="tests.test_block_fp4_quant_math" name="test_e4m3_scale_decoder_matches_the_oracle_for_every_byte" time="0.005" /><testcase classname="tests.test_block_fp4_quant_math" name="test_composed_blocks_match_the_exact_oracle" time="0.782" /><testcase classname="tests.test_block_fp4_quant_math" name="test_composed_blocks_match_on_the_exact_tie_values" time="0.035" /><testcase classname="tests.test_block_fp4_quant_math" name="test_negative_zero_survives_the_composed_operator" time="0.002" /><testcase classname="tests.test_block_fp4_quant_math" name="test_the_executed_bodies_are_the_ones_the_package_ships" time="0.005" /></testsuite></testsuites>

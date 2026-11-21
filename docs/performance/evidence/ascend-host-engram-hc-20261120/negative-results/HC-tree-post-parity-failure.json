@@ -1,0 +1,23 @@
+{
+  "comparisons": [
+    {
+      "case": 0,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 1,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 1,
+      "pre_max_abs": 0.0,
+      "post_max_abs": 1.52587890625e-05
+    }
+  ],
+  "failure": {
+    "case": 1,
+    "pre_bit_differences": 0,
+    "post_bit_differences": 1,
+    "pre_max_abs": 0.0,
+    "post_max_abs": 1.52587890625e-05
+  }
+}

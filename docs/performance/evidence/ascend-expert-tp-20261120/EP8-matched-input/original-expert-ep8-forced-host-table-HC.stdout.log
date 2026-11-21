@@ -1,0 +1,25 @@
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+ISOLATED_CUBE_MODEL_RESULT {"rank": 7, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.1520850607194006, "single_request_forward_rate_not_generation_TPS": 5.0760051495400695, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 3, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.152083600871265, "single_request_forward_rate_not_generation_TPS": 5.076007500428432, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 5, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.1520252507179976, "single_request_forward_rate_not_generation_TPS": 5.076101467256765, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 0, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.152016721200198, "single_request_forward_rate_not_generation_TPS": 5.076115203445894, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 2, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.1521046310663223, "single_request_forward_rate_not_generation_TPS": 5.075973634348355, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 4, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.1521810521371663, "single_request_forward_rate_not_generation_TPS": 5.075850573098288, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 1, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.1521569918841124, "single_request_forward_rate_not_generation_TPS": 5.07588931680603, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 6, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 3.1521271020174026, "single_request_forward_rate_not_generation_TPS": 5.075937448638981, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 3295, 16, 1, 1119, 3295, 16]}
+List the integers from 1 through 100 in order, separated by commas. The list is:, 3, ..., 100.<｜end▁of▁sentence｜> no problem.<｜end▁of▁sentence｜> no problem.

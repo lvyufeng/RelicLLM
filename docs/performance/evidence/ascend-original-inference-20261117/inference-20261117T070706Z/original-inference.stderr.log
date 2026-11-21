@@ -1,0 +1,386 @@
+<frozen runpy>:128: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[rank 7] network 8 ranks, tree on npu:7, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 6] network 8 ranks, tree on npu:6, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 5] network 8 ranks, tree on npu:5, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 2] network 8 ranks, tree on npu:2, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 5] layers.0  (0 filled)
+[rank 7] layers.0  (0 filled)
+[rank 6] layers.0  (0 filled)
+[rank 2] layers.0  (0 filled)
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[rank 0] network 8 ranks, tree on npu:0, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank0]:[W1117 15:07:31.288685696 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank 3] network 8 ranks, tree on npu:3, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 1] network 8 ranks, tree on npu:1, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 4] network 8 ranks, tree on npu:4, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 0] layers.0  (0 filled)
+[rank 3] layers.0  (0 filled)
+[rank 1] layers.0  (0 filled)
+[rank 4] layers.0  (0 filled)
+[rank 5] layers.1  (22 filled)
+[rank 0] layers.1  (22 filled)
+[rank 3] layers.1  (22 filled)
+[rank 6] layers.1  (22 filled)
+[rank 4] layers.1  (22 filled)[rank 1] layers.1  (22 filled)
+
+[rank 2] layers.1  (22 filled)
+[rank 7] layers.1  (22 filled)
+[rank6]: Traceback (most recent call last):
+[rank6]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank6]:   File "<frozen runpy>", line 88, in _run_code
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank6]:     sys.exit(main())
+[rank6]:              ^^^^^^
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank6]:     front = load_backbone(
+[rank6]:             ^^^^^^^^^^^^^^
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank6]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank6]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank6]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank6]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank6]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank6]:     decoded = _core().unpack_fp8_to_bf16(
+[rank6]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:     return func(*args, **kwargs)
+[rank6]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank6]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank6]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank6]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank6]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank6]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank6]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank6]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+[rank5]: Traceback (most recent call last):
+[rank5]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank5]:   File "<frozen runpy>", line 88, in _run_code
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank5]:     sys.exit(main())
+[rank5]:              ^^^^^^
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank5]:     front = load_backbone(
+[rank5]:             ^^^^^^^^^^^^^^
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank5]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank5]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank5]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank5]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank5]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank5]:     decoded = _core().unpack_fp8_to_bf16(
+[rank5]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:     return func(*args, **kwargs)
+[rank5]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank5]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank5]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank5]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank5]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank5]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank5]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank5]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank3]:   File "<frozen runpy>", line 88, in _run_code
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank3]:     sys.exit(main())
+[rank3]:              ^^^^^^
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank3]:     front = load_backbone(
+[rank3]:             ^^^^^^^^^^^^^^
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank3]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank3]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank3]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank3]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank3]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank3]:     decoded = _core().unpack_fp8_to_bf16(
+[rank3]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank3]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank3]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank3]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank3]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank3]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank3]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank3]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank1]:   File "<frozen runpy>", line 88, in _run_code
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank1]:     sys.exit(main())
+[rank1]:              ^^^^^^
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank1]:     front = load_backbone(
+[rank1]:             ^^^^^^^^^^^^^^
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank1]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank1]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank1]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank1]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank1]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank1]:     decoded = _core().unpack_fp8_to_bf16(
+[rank1]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank1]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank1]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank1]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank1]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank1]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank1]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank1]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank0]:   File "<frozen runpy>", line 88, in _run_code
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank0]:     sys.exit(main())
+[rank0]:              ^^^^^^
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank0]:     front = load_backbone(
+[rank0]:             ^^^^^^^^^^^^^^
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank0]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank0]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank0]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank0]:     decoded = _core().unpack_fp8_to_bf16(
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank0]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank0]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank0]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank0]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank0]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank0]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank0]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+[rank4]: Traceback (most recent call last):
+[rank4]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank4]:   File "<frozen runpy>", line 88, in _run_code
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank4]:     sys.exit(main())
+[rank4]:              ^^^^^^
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank4]:     front = load_backbone(
+[rank4]:             ^^^^^^^^^^^^^^
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank4]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank4]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank4]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank4]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank4]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank4]:     decoded = _core().unpack_fp8_to_bf16(
+[rank4]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:     return func(*args, **kwargs)
+[rank4]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank4]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank4]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank4]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank4]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank4]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank4]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank4]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank2]:   File "<frozen runpy>", line 88, in _run_code
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank2]:     sys.exit(main())
+[rank2]:              ^^^^^^
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank2]:     front = load_backbone(
+[rank2]:             ^^^^^^^^^^^^^^
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank2]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank2]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank2]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank2]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank2]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank2]:     decoded = _core().unpack_fp8_to_bf16(
+[rank2]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:     return func(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank2]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank2]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank2]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank2]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank2]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank2]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank2]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+[rank7]: Traceback (most recent call last):
+[rank7]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank7]:   File "<frozen runpy>", line 88, in _run_code
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 777, in <module>
+[rank7]:     sys.exit(main())
+[rank7]:              ^^^^^^
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/cli/generate_v41.py", line 581, in main
+[rank7]:     front = load_backbone(
+[rank7]:             ^^^^^^^^^^^^^^
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 1278, in load_backbone
+[rank7]:     report = checkpoint_weights(model, checkpoint, progress=progress, plan=plan)
+[rank7]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 505, in checkpoint_weights
+[rank7]:     _fill_from_original_bytes(parameter, key, checkpoint, plan)
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/loader.py", line 424, in _fill_from_original_bytes
+[rank7]:     staged = online_unpack_module.stage_dense_fp8_weight(
+[rank7]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/RelicLLM/relicllm/models/deepseek_v4_1/online_unpack.py", line 320, in stage_dense_fp8_weight
+[rank7]:     decoded = _core().unpack_fp8_to_bf16(
+[rank7]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:     return func(*args, **kwargs)
+[rank7]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py", line 240, in unpack_fp8_to_bf16
+[rank7]:     implementation.fp8_unpack_bf16(raw, scale_raw, result, (bm, bk))
+[rank7]:   File "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/ascend_unpack.py", line 71, in fp8_unpack_bf16
+[rank7]:     fp8_unpack_bf16_kernel[(math.ceil(raw.numel() / BLOCK),)](
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+[rank7]:     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+[rank7]:                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 690, in run
+[rank7]:     raise RuntimeError("grid should be less than 65536! You can try \"export TRITON_ALL_BLOCKS_PARALLEL=1\" to avoid this problem.")
+[rank7]: RuntimeError: grid should be less than 65536! You can try "export TRITON_ALL_BLOCKS_PARALLEL=1" to avoid this problem.
+W1117 15:08:09.544000 2448099 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2448110 closing signal SIGTERM
+W1117 15:08:09.545000 2448099 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2448111 closing signal SIGTERM
+W1117 15:08:09.545000 2448099 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2448112 closing signal SIGTERM
+W1117 15:08:09.546000 2448099 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2448113 closing signal SIGTERM
+W1117 15:08:09.546000 2448099 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2448115 closing signal SIGTERM
+W1117 15:08:09.546000 2448099 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 2448116 closing signal SIGTERM
+E1117 15:08:10.375000 2448099 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 0 (pid: 2448109) of binary: <workspace>/relic-online-unpack-20261117-0534/venv311/bin/python
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
+    main()
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+relicllm.cli.generate_v41 FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-11-17_15:08:09
+  host      : fleet-host-2
+  rank      : 5 (local_rank: 5)
+  exitcode  : 1 (pid: 2448114)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[2]:
+  time      : 2026-11-17_15:08:10
+  host      : fleet-host-2
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 2448110)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[3]:
+  time      : 2026-11-17_15:08:10
+  host      : fleet-host-2
+  rank      : 2 (local_rank: 2)
+  exitcode  : -15 (pid: 2448111)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 2448111
+[4]:
+  time      : 2026-11-17_15:08:10
+  host      : fleet-host-2
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 2448112)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[5]:
+  time      : 2026-11-17_15:08:10
+  host      : fleet-host-2
+  rank      : 4 (local_rank: 4)
+  exitcode  : 1 (pid: 2448113)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[6]:
+  time      : 2026-11-17_15:08:10
+  host      : fleet-host-2
+  rank      : 6 (local_rank: 6)
+  exitcode  : 1 (pid: 2448115)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[7]:
+  time      : 2026-11-17_15:08:10
+  host      : fleet-host-2
+  rank      : 7 (local_rank: 7)
+  exitcode  : -15 (pid: 2448116)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 2448116
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-11-17_15:08:09
+  host      : fleet-host-2
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 2448109)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

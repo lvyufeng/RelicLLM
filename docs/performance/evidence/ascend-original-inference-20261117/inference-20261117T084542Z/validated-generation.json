@@ -1,0 +1,21 @@
+{
+  "generation_succeeded": true,
+  "token_ids": [
+    11111,
+    16,
+    1
+  ],
+  "text": " Paris.",
+  "prompt_tokens": 5,
+  "logits_shape": [
+    3,
+    129280
+  ],
+  "all_logits_finite": true,
+  "tokens_match_greedy_logits": true,
+  "generation_step_count": 3,
+  "checkpoint_rewritten": false,
+  "official_reference_token_parity_claimed": false,
+  "decode_graphs": false,
+  "owned_cleanup_complete": true
+}

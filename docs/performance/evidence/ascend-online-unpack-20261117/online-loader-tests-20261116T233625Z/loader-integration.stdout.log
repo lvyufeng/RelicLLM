@@ -1,0 +1,8 @@
+...........................................                              [100%]
+=============================== warnings summary ===============================
+tests/test_v41_online_unpack.py::test_the_npu_decode_is_bit_identical_to_the_cpu_decode
+  <workspace>/relic-online-unpack-20261117-0534/source/relic-core/relic_core/kernels/unpack.py:251: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+    row = (indices // columns) % rows
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+43 passed, 1 warning in 7.86s

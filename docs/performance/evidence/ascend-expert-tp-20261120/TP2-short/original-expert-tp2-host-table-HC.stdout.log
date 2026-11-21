@@ -1,0 +1,25 @@
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+ISOLATED_CUBE_MODEL_RESULT {"rank": 0, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4637413849122822, "sustained_single_stream_TPS": 6.494188106747923, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 7, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4637013538740575, "sustained_single_stream_TPS": 6.494293626474139, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 1, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.463674584403634, "sustained_single_stream_TPS": 6.494364191313447, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 3, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4637263640761375, "sustained_single_stream_TPS": 6.494227700485632, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULTISOLATED_CUBE_MODEL_RESULT  {"rank": 5, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.463770605158061, "sustained_single_stream_TPS": 6.494111085870974, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}{"rank": 4, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4637653548270464, "sustained_single_stream_TPS": 6.494124924945696, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+
+ISOLATED_CUBE_MODEL_RESULT {"rank": 6, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.463670423720032, "sustained_single_stream_TPS": 6.494375159093202, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 2, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.463740844745189, "sustained_single_stream_TPS": 6.494189530577349, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+List the integers from 1 through 100 in order, separated by commas. The list is:, 3, ..., 100.<｜end▁of▁sentence｜> no | 0<｜end▁of▁sentence｜> a one

@@ -1,0 +1,87 @@
+{
+  "rank": 7,
+  "profile_steps": 2,
+  "instrumented_step_seconds": [
+    6.844946444034576,
+    6.8908702321350574
+  ],
+  "records": {
+    "hc.mix": {
+      "calls": 160,
+      "inclusive_s": 0.5968274306505919,
+      "exclusive_s": 0.5968274306505919
+    },
+    "hc.pre": {
+      "calls": 162,
+      "inclusive_s": 0.040449753403663635,
+      "exclusive_s": 0.040449753403663635
+    },
+    "activation.fp8_quant": {
+      "calls": 778,
+      "inclusive_s": 0.2775330073200166,
+      "exclusive_s": 0.2775330073200166
+    },
+    "gemm.npu_fp8": {
+      "calls": 576,
+      "inclusive_s": 2.344664183910936,
+      "exclusive_s": 2.344664183910936
+    },
+    "linear.npu_total": {
+      "calls": 576,
+      "inclusive_s": 2.7406006292439997,
+      "exclusive_s": 0.19261226058006287
+    },
+    "unpack.fp8": {
+      "calls": 80,
+      "inclusive_s": 0.034547077026218176,
+      "exclusive_s": 0.034547077026218176
+    },
+    "collective.all_reduce": {
+      "calls": 176,
+      "inclusive_s": 5.707169474568218,
+      "exclusive_s": 5.707169474568218
+    },
+    "attention.total": {
+      "calls": 80,
+      "inclusive_s": 2.7649456947110593,
+      "exclusive_s": 0.6381508433260024
+    },
+    "hc.post": {
+      "calls": 160,
+      "inclusive_s": 0.04710232140496373,
+      "exclusive_s": 0.04710232140496373
+    },
+    "gemm.npu_packed_provider": {
+      "calls": 183,
+      "inclusive_s": 3.3497546389698982,
+      "exclusive_s": 3.3497546389698982
+    },
+    "expert.packed_compute": {
+      "calls": 61,
+      "inclusive_s": 3.4471396184526384,
+      "exclusive_s": 0.05267846817150712
+    },
+    "routed_packed.total": {
+      "calls": 80,
+      "inclusive_s": 3.5193376606330276,
+      "exclusive_s": 0.07219804218038917
+    },
+    "shared_expert.total": {
+      "calls": 80,
+      "inclusive_s": 0.8824043311178684,
+      "exclusive_s": 0.04841870767995715
+    },
+    "moe.total": {
+      "calls": 80,
+      "inclusive_s": 10.03228247910738,
+      "exclusive_s": 0.07950147008523345
+    },
+    "engram.total_boundary": {
+      "calls": 4,
+      "inclusive_s": 0.14360502315685153,
+      "exclusive_s": 0.14360502315685153
+    }
+  },
+  "synchronized_nested_exclusive": true,
+  "instrumented_times_not_used_for_TPS": true
+}

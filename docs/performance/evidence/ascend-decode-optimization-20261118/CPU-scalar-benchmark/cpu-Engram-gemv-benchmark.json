@@ -1,0 +1,85 @@
+{
+  "original_weight_key": "layers.1.engram.wkv.weight",
+  "weight_shape": [
+    25600,
+    6144
+  ],
+  "scale_shape": [
+    800,
+    192
+  ],
+  "input_dtype": "torch.bfloat16",
+  "old_runtime_reference_seconds": 1.0821124510839581,
+  "threads": [
+    {
+      "threads": 4,
+      "median_seconds": 0.27004529209807515,
+      "seconds": [
+        0.27375862188637257,
+        0.2693449021317065,
+        0.2695229332894087,
+        0.27294331695884466,
+        0.27024399815127254,
+        0.26984658604487777
+      ],
+      "parity": {
+        "finite_output_bit_mismatches": 0,
+        "nan_classification_matches": true,
+        "output_elements": 25600
+      }
+    },
+    {
+      "threads": 16,
+      "median_seconds": 0.06965637113898993,
+      "seconds": [
+        0.06956077087670565,
+        0.07085226895287633,
+        0.06965820165351033,
+        0.06963406084105372,
+        0.06992452405393124,
+        0.06965454062446952
+      ],
+      "parity": {
+        "finite_output_bit_mismatches": 0,
+        "nan_classification_matches": true,
+        "output_elements": 25600
+      }
+    },
+    {
+      "threads": 32,
+      "median_seconds": 0.0399497717153281,
+      "seconds": [
+        0.038796918001025915,
+        0.03998297732323408,
+        0.03925851080566645,
+        0.04914906993508339,
+        0.03991656610742211,
+        0.04028216889128089
+      ],
+      "parity": {
+        "finite_output_bit_mismatches": 0,
+        "nan_classification_matches": true,
+        "output_elements": 25600
+      }
+    },
+    {
+      "threads": 64,
+      "median_seconds": 0.025221364572644234,
+      "seconds": [
+        0.022613716777414083,
+        0.03525413293391466,
+        0.02265834715217352,
+        0.027759091928601265,
+        0.022683637216687202,
+        0.028274665120989084
+      ],
+      "parity": {
+        "finite_output_bit_mismatches": 0,
+        "nan_classification_matches": true,
+        "output_elements": 25600
+      }
+    }
+  ],
+  "all_Engram_computation_remains_CPU": true,
+  "not_model_TPS": true
+}

@@ -1,0 +1,9 @@
+{
+  "host": "fleet-host-2",
+  "released": true,
+  "detail": "lease dropped",
+  "hardware_work_complete": true,
+  "final_integrity_receipt": "final-inference-host-check.json",
+  "empty_npu_process_snapshots": 8,
+  "further_hardware_work_requires_a_fresh_fleet_lease": true
+}

@@ -1,0 +1,702 @@
+{
+  "name": "build-prepared-AIV-decode-consumers",
+  "command": [
+    "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "<workspace>/relic-v41-perf-20261118-0938/source/build_prepared_decode_consumers.py"
+  ],
+  "timeout_s": 300,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-21T05:10:57.867551+00:00",
+  "cwd": "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM",
+  "timed_out": false,
+  "ownership_token": "ed0072ea6a50b1eebdc2a50c4ca89674f01fe9c680811a7bfa28b484950efccb",
+  "critical_environment": {
+    "PYTHONPATH": "<workspace>/relic-v41-infer-20261117-1424/python-packages:<workspace>/relic-v41-perf-20261118-0938/source/relic-core:<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "<workspace>/relic-v41-perf-20261118-0938/tmp",
+    "HOME": "<workspace>/relic-v41-perf-20261118-0938/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend",
+    "ASCEND_WORK_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "<workspace>/relic-v41-perf-20261118-0938/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 3379477,
+  "process_group": 3379477,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 3379477,
+        "starttime": 415294393,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379505,
+        "starttime": 415294443,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379506,
+        "starttime": 415294443,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379509,
+        "starttime": 415294444,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379512,
+        "starttime": 415294445,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379526,
+        "starttime": 415294449,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379570,
+        "starttime": 415294496,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379573,
+        "starttime": 415294497,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379595,
+        "starttime": 415294544,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379609,
+        "starttime": 415294548,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3379653,
+        "starttime": 415294597,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379656,
+        "starttime": 415294598,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379662,
+        "starttime": 415294599,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379665,
+        "starttime": 415294599,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3379670,
+        "starttime": 415294629,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379672,
+        "starttime": 415294630,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3379718,
+        "starttime": 415294912,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379719,
+        "starttime": 415294912,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3379733,
+        "starttime": 415294955,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379734,
+        "starttime": 415294955,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379761,
+        "starttime": 415294959,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379762,
+        "starttime": 415294959,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379849,
+        "starttime": 415295007,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379850,
+        "starttime": 415295007,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379855,
+        "starttime": 415295008,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379856,
+        "starttime": 415295008,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379861,
+        "starttime": 415295009,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379862,
+        "starttime": 415295009,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3379865,
+        "starttime": 415295010,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3379866,
+        "starttime": 415295010,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3379899,
+        "starttime": 415295306,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380030,
+        "starttime": 415295357,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380033,
+        "starttime": 415295358,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380036,
+        "starttime": 415295359,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380038,
+        "starttime": 415295360,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380076,
+        "starttime": 415295495,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380103,
+        "starttime": 415295540,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380104,
+        "starttime": 415295541,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380107,
+        "starttime": 415295542,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380110,
+        "starttime": 415295543,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380124,
+        "starttime": 415295547,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380168,
+        "starttime": 415295594,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380171,
+        "starttime": 415295595,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380193,
+        "starttime": 415295641,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380207,
+        "starttime": 415295645,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380251,
+        "starttime": 415295693,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380254,
+        "starttime": 415295694,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380259,
+        "starttime": 415295695,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380260,
+        "starttime": 415295695,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380263,
+        "starttime": 415295696,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380264,
+        "starttime": 415295696,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380268,
+        "starttime": 415295727,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380270,
+        "starttime": 415295727,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380325,
+        "starttime": 415296016,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380326,
+        "starttime": 415296016,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380340,
+        "starttime": 415296059,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380341,
+        "starttime": 415296059,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380368,
+        "starttime": 415296063,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380369,
+        "starttime": 415296063,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380456,
+        "starttime": 415296112,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380457,
+        "starttime": 415296112,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380462,
+        "starttime": 415296113,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380463,
+        "starttime": 415296113,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380468,
+        "starttime": 415296114,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380469,
+        "starttime": 415296114,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380472,
+        "starttime": 415296115,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380473,
+        "starttime": 415296115,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380508,
+        "starttime": 415296400,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380542,
+        "starttime": 415296405,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380636,
+        "starttime": 415296452,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380639,
+        "starttime": 415296453,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380642,
+        "starttime": 415296455,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 3380644,
+        "starttime": 415296455,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 3380667,
+        "starttime": 415296564,
+        "pgid": 3379477,
+        "sid": 3379477,
+        "state": "S",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [
+      {
+        "identity": {
+          "pid": 3379665,
+          "starttime": 415294599,
+          "pgid": 3379477,
+          "sid": 3379477,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3379665"
+      },
+      {
+        "identity": {
+          "pid": 3379865,
+          "starttime": 415295010,
+          "pgid": 3379477,
+          "sid": 3379477,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 3379865"
+      }
+    ],
+    "terminal_reconciliations": [
+      {
+        "identity": {
+          "pid": 3379665,
+          "starttime": 415294599,
+          "pgid": 3379477,
+          "sid": 3379477,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3379665",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 3379865,
+          "starttime": 415295010,
+          "pgid": 3379477,
+          "sid": 3379477,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 3379865",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      }
+    ],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 22.748523694928735,
+  "finished_at": "2026-11-21T05:11:20.616064+00:00"
+}

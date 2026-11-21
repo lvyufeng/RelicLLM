@@ -1,0 +1,35 @@
+{
+  "original_sha256": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
+  "patched_sha256": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
+  "original_bytes": 11564,
+  "patched_bytes": 12169,
+  "dropped_entry": "{\"WARP_STACK_SIZE\", rtLimitType_t::RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE},",
+  "preserved_entries": [
+    "{\"LOW_POWER_TIMEOUT\", rtLimitType_t::RT_LIMIT_TYPE_LOW_POWER_TIMEOUT},",
+    "{\"DVG_WARP_STACK_SIZE\", rtLimitType_t::RT_LIMIT_TYPE_SIMT_DVG_WARP_STACK_SIZE},",
+    "{\"STACK_SIZE\", rtLimitType_t::RT_LIMIT_TYPE_STACK_SIZE}",
+    "{\"load_kernel_binary\", loadKernelBinary, METH_VARARGS,",
+    "{\"get_arch\", getArch, METH_VARARGS, \"Get soc version of NPU\"},",
+    "{\"get_aicore_num\", getAiCoreNum, METH_VARARGS, \"Get the number of AI core\"},",
+    "{\"create_stream\", createStream, METH_VARARGS, \"Create a stream\"},",
+    "{\"read_data_from_file\", readDataFromBinaryFileWrapper, METH_VARARGS, \"Read binary file into the array already allocated\"},",
+    "{\"write_data_to_file\", writeDataToBinaryFileWrapper, METH_VARARGS, \"Write an array to a binary file\"},",
+    "{\"allocate_device_memory\", allocateDeviceMemory, METH_VARARGS, \"Allocate device memory\"},",
+    "{\"allocate_host_memory\", allocateHostMemory, METH_VARARGS, \"Allocate host memory\"},",
+    "{\"copy_memory\", copyMemory, METH_VARARGS, \"Copy data between host and device\"},",
+    "{\"set_device_limit\", setDeviceLimit, METH_VARARGS, \"Set the limit of NPU\"},"
+  ],
+  "unsupported_feature_stays_unavailable": true,
+  "substituted_enumerator": null,
+  "rollback": "restore npu_utils.cpp.orig over the installed npu_utils.cpp; byte-identical to the wheel",
+  "cann_headers_checked": {
+    "cann-9.1.0": {
+      "path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/pkg_inc/runtime/rt_external_base.h",
+      "sha256": "e4f372e3a3804d8061f57f12714c415f8c5ea9d34905f9c726ecdfc0ae9696c6"
+    },
+    "cann-9.2.0": {
+      "path": "/usr/local/Ascend/cann-9.2.0/aarch64-linux/pkg_inc/runtime/rt_external_base.h",
+      "sha256": "0b89cd3b978decfc25950509f8bb162ab1c3212631ff8d44e4734df29e2cb499"
+    }
+  }
+}

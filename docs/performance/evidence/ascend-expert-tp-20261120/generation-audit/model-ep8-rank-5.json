@@ -1,0 +1,470 @@
+{
+  "rank": 5,
+  "dense_contract": "full-scaled-native-bf16",
+  "expert_contract": "original_fp4_tile_ring_native_cube_original_fp8_original_silu_ascending_fp32_combine",
+  "explicit_numerical_test_permission": true,
+  "checkpoint_original_and_not_rewritten": true,
+  "Engram_original_tables_host": true,
+  "host_table_device_Engram": {
+    "installed": true,
+    "backend": "triton",
+    "tables_on_host": true,
+    "complete_Engram_CPU": false,
+    "WKV_and_gate_on_NPU": true,
+    "original_table_objects_and_parameter_sources_unchanged": true,
+    "WKV_output_channel_TP": 8,
+    "TP_rank": 5,
+    "numerical_contract": "original_fp8_operands_native_full_K_BF16_output_original_FP32_Engram_gate",
+    "explicit_device_bytes": 79015938,
+    "device_budget_excludes_graph_pools_and_allocator_caches": true,
+    "graphs": 2,
+    "source_certificates": [
+      {
+        "quantized": true,
+        "original_decode_identity": true,
+        "elements": 19660800,
+        "chunks": 13
+      },
+      {
+        "quantized": true,
+        "original_decode_identity": true,
+        "elements": 19660800,
+        "chunks": 13
+      }
+    ],
+    "source_guard_scope": "metadata and available tensor versions; versionless inference sources require caller immutability",
+    "decode_calls": 74,
+    "passthrough_calls": 0,
+    "prefetched_lookups": 74,
+    "direct_lookups": 0,
+    "lookup_wait_s": 0.0004347008652985096,
+    "pin_reuse_wait_s": 0.0008353269658982754,
+    "lookup_H2D_bytes": 909312,
+    "mask_H2D_bytes": 74,
+    "hidden_state_D2H_bytes": 0,
+    "graph_replays": 74
+  },
+  "HC_decode_fold": {
+    "installed": true,
+    "backend": "triton",
+    "blocks": 40,
+    "fused_scope": "HC collapse and residual fold only",
+    "original_FP32_coefficients_and_BF16_boundaries": true,
+    "projection_normalization_and_Sinkhorn_unchanged": true,
+    "per_block_coverage": [
+      {
+        "block": 0,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 1,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 2,
+        "pre": 30,
+        "post": 27
+      },
+      {
+        "block": 3,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 4,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 5,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 6,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 7,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 8,
+        "pre": 30,
+        "post": 27
+      },
+      {
+        "block": 9,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 10,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 11,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 12,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 13,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 14,
+        "pre": 30,
+        "post": 27
+      },
+      {
+        "block": 15,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 16,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 17,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 18,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 19,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 20,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 21,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 22,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 23,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 24,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 25,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 26,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 27,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 28,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 29,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 30,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 31,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 32,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 33,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 34,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 35,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 36,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 37,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 38,
+        "pre": 24,
+        "post": 24
+      },
+      {
+        "block": 39,
+        "pre": 61,
+        "post": 24
+      }
+    ],
+    "selected_counts_include_eager_and_capture_not_device_replay": true,
+    "pre_selected": 1015,
+    "post_selected": 969,
+    "pre_passthrough": 0,
+    "post_passthrough": 0
+  },
+  "expert_TP_EP": null,
+  "quality_steps": 8,
+  "teacher_forced_reference_tokens": [
+    19,
+    14,
+    223,
+    20,
+    14,
+    223,
+    21,
+    14
+  ],
+  "quality_metrics": [
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.2291728258132935,
+      "RMS_difference": 0.2503873109817505,
+      "relative_L2_difference": 0.08558566123247147,
+      "reference_to_candidate_KL": 0.00017711140390019864,
+      "reference_token": 19,
+      "candidate_greedy_token": 19,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": 0.0010562576353549957
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.185159683227539,
+      "RMS_difference": 0.24052287638187408,
+      "relative_L2_difference": 0.07845839112997055,
+      "reference_to_candidate_KL": 0.0001183544663945213,
+      "reference_token": 14,
+      "candidate_greedy_token": 14,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.00038076145574450493
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.5092277526855469,
+      "RMS_difference": 0.3309207260608673,
+      "relative_L2_difference": 0.0748962014913559,
+      "reference_to_candidate_KL": 0.0014085760340094566,
+      "reference_token": 223,
+      "candidate_greedy_token": 223,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.004918612539768219
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 2.2747721672058105,
+      "RMS_difference": 0.44220075011253357,
+      "relative_L2_difference": 0.14678455889225006,
+      "reference_to_candidate_KL": 0.0010228219907730818,
+      "reference_token": 20,
+      "candidate_greedy_token": 20,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": 0.004495315253734589
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.0864816904067993,
+      "RMS_difference": 0.231849804520607,
+      "relative_L2_difference": 0.0947732925415039,
+      "reference_to_candidate_KL": 9.326493454864249e-05,
+      "reference_token": 14,
+      "candidate_greedy_token": 14,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.0007142676040530205
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.030529499053955,
+      "RMS_difference": 0.2208760529756546,
+      "relative_L2_difference": 0.06625117361545563,
+      "reference_to_candidate_KL": 0.0002670817484613508,
+      "reference_token": 223,
+      "candidate_greedy_token": 223,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.00018931366503238678
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 4.26061487197876,
+      "RMS_difference": 0.6200941801071167,
+      "relative_L2_difference": 0.2794744670391083,
+      "reference_to_candidate_KL": 1.739681829349138e-05,
+      "reference_token": 21,
+      "candidate_greedy_token": 21,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -4.0494545828551054e-05
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 0.8804936408996582,
+      "RMS_difference": 0.19394922256469727,
+      "relative_L2_difference": 0.07398390769958496,
+      "reference_to_candidate_KL": 0.00012193471775390208,
+      "reference_token": 14,
+      "candidate_greedy_token": 14,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": 0.000723615288734436
+    }
+  ],
+  "timed_warmup_steps_excluded": 4,
+  "timed_steps": 16,
+  "timed_context_start": 24,
+  "timed_context_end": 40,
+  "timed_token_ids": [
+    14,
+    223,
+    21,
+    14,
+    77199,
+    223,
+    1457,
+    16,
+    1,
+    1119,
+    3295,
+    16,
+    1,
+    1119,
+    3295,
+    16
+  ],
+  "timed_step_seconds": [
+    0.19947447814047337,
+    0.19394920906051993,
+    0.19971635891124606,
+    0.19386052899062634,
+    0.1946723349392414,
+    0.19250991893932223,
+    0.19981346977874637,
+    0.1924551986157894,
+    0.20625192392617464,
+    0.19259094027802348,
+    0.20041980501264334,
+    0.2065257360227406,
+    0.19166765315458179,
+    0.19539179001003504,
+    0.20666517736390233,
+    0.19384399941191077
+  ],
+  "timed_decode_seconds": 3.1598359420895576,
+  "sustained_single_stream_TPS": 5.063554024079938,
+  "single_stream": true,
+  "batch_size": 1,
+  "NPU_completion_and_host_argmax_included": true,
+  "per_step_quality_copies_excluded": true,
+  "finite_final_logits": true,
+  "observed_EOS_in_timed_tokens": [
+    8,
+    12
+  ],
+  "graph_candidate_eager_FP32_bit_differences": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "expert_body_graph_teacher_FP32_bit_differences": null,
+  "device_selected_MoE": {
+    "installed": true,
+    "stores": 40,
+    "device_routed_calls": 1520,
+    "passthrough_calls": 0,
+    "routing_D2H_calls": 0,
+    "workspace_bytes": 430188,
+    "device_routed_graphs": 40,
+    "projection_mode": "tile_ring",
+    "resident_weight_bank_duplicated": false,
+    "complete_Engram_CPU": false,
+    "numerical_contract": "original_fp4_tile_ring_native_cube_original_fp8_original_silu_ascending_fp32_combine",
+    "native_K_accumulation_changed": true,
+    "fused_epilogue": true,
+    "single_execution_stream_required": true,
+    "physical_graph_pool_footprint_measured": false,
+    "routing_readback_scope": "one-row replaced decode; original passthroughs are not audited",
+    "ascending_expert_FP32_sum_unchanged": true,
+    "original_FP8_activation_quantization_unchanged": true,
+    "whole_matrix_expanded_weight_scratch_bytes": 0,
+    "original_tile_bank_duplicated": false,
+    "global_expanded_weight_scratch_bytes": 196608,
+    "native_consumer": {
+      "library": "<workspace>/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so",
+      "sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
+      "AIV_to_small_GM_ring_to_L1_to_AIC": true,
+      "original_K32_blocks_per_Cube_tile": 4,
+      "activation_L1_preload_requested": false,
+      "activation_L1_capacity_bytes": 524288,
+      "GM_ring_B1_and_MTE1_reuse_fences_preserved": true,
+      "ring_weight_double_buffer_bytes_per_owner": 8192,
+      "global_expanded_weight_scratch_bytes": 196608,
+      "whole_matrix_expanded_weight_scratch_bytes": 0,
+      "native_full_K_accumulation_differs_from_exact_default": true
+    },
+    "original_FP32_SiLU_unchanged": true
+  },
+  "production_defaults_and_serving_guards_unchanged": true,
+  "original_model_artifact": {
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-ep8-host-table-HC-20261120T125200Z/Cube-model-rank-5.json",
+    "sha256": "e40cf432e9f4dfd41ac8d68b0851a599411cf516a7778feb21e58fc19af43fdb",
+    "bytes": 105200
+  },
+  "current_Engram_placement_is_separate_host_table_NPU_compute_owner": true
+}

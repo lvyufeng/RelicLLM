@@ -1,0 +1,8 @@
+// Embed one literal geometry in the source seen by both host and device compilers.
+// CANN's ascendc_compile_definitions applies only to the device compilation.
+#define RELIC_TILE_K_BLOCKS @RELIC_TILE_K_BLOCKS@
+#define RELIC_TILE_OUTPUT_ROWS @RELIC_TILE_OUTPUT_ROWS@
+#define RELIC_TILE_PRELOAD_A @RELIC_TILE_PRELOAD_A@
+#define RELIC_TILE_DIRECT_BITS @RELIC_TILE_DIRECT_BITS@
+#define RELIC_TILE_PREPARED_TABLES @RELIC_TILE_PREPARED_TABLES@
+#include "@CMAKE_CURRENT_SOURCE_DIR@/online_tile_cube.cpp"

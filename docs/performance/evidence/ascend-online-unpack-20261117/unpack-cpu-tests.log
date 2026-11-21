@@ -1,0 +1,4 @@
+...........................................ss..........................  [100%]
+=========================== short test summary info ============================
+SKIPPED [2] tests/test_online_unpack.py:330: physical mixed-device validation requires an explicitly requested accelerator; not a pass
+69 passed, 2 skipped in 12.77s

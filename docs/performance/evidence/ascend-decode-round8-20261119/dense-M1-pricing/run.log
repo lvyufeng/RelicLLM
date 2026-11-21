@@ -1,0 +1,9 @@
+[W1119 18:18:48.442526821 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+wq_a {1: 0.0264, 2: 0.0237, 8: 0.0246, 32: 0.0253} M1 GB/s 497.3
+wq_b {1: 0.0256, 2: 0.0255, 8: 0.026, 32: 0.0262} M1 GB/s 409.4
+wkv {1: 0.0256, 2: 0.0253, 8: 0.1288, 32: 0.0289} M1 GB/s 205.1
+wo_a {1: 0.0279, 2: 0.0285, 8: 0.0287, 32: 0.0287} M1 GB/s 300.5
+wo_b {1: 0.0279, 2: 0.0289, 8: 0.0281, 32: 0.0284} M1 GB/s 375.5
+attention weights total MB 47.71
+M1 total ms 0.1334 GB/s 357.7
+M8 total ms 0.2362 GB/s 202.0

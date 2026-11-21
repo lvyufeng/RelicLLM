@@ -1,0 +1,50 @@
+[
+  {
+    "rank": 0,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  },
+  {
+    "rank": 1,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  },
+  {
+    "rank": 2,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  },
+  {
+    "rank": 3,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  },
+  {
+    "rank": 4,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  },
+  {
+    "rank": 5,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  },
+  {
+    "rank": 6,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  },
+  {
+    "rank": 7,
+    "exact_teacher_control_bits_equal": true,
+    "native_teacher_bits_equal": true,
+    "native_final_bits_equal": true
+  }
+]

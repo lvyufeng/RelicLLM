@@ -1,0 +1,1369 @@
+{
+  "timestamp_UTC": "2026-11-20T14:00:39.750855+00:00",
+  "hostname": "fleet-host-2",
+  "private_live_jobs": [],
+  "private_job_receipts": [
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-candidate-actual-benchmark-20261118T041917Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-raw-SIMD-acceptance-20261118T040450Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-raw-SIMD-fixture-fixed-20261118T041851Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/CPU-raw-wide-thread-sweep-20261118T045730Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/Cube-provider-keyword-acceptance-20261119T011309Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/HC-original-F32-exact-plane-Cube-20261119T023315Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/HC-original-nonlinearity-fused-normalize-20261119T024029Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/HC-static-native-normalize-20261119T024339Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/NPU-graph-adapter-primitives-20261118T041930Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/NPU-graph-primitive-assert-fixed-20261118T043033Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-k128-literal-codec-replay-proof-20261120T023818Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-k128-literal-geometry-proof-20261120T023806Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-k128-native-tile-proof-20261120T023125Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-ring-exhaustive-codec-replay-proof-20261120T022402Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-ring-local-buffer-fence-proof-20261120T022350Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-ring-read-ownership-proof-20261120T020905Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-ring-stable-scratch-proof-20261120T021454Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-tile-ring-buffer-proof-20261120T015630Z/summary.json",
+      "returncode": -15,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-tile-ring-one-vector-proof-20261120T020224Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-vector-lookup-ring-proof-20261120T020619Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/a2-vector-scale-broadcast-proof-20261120T021904Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight-quant-20261119T005213Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight-quant-20261119T011321Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-20261119T014925Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T111800Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T112449Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T114343Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T115321Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T132617Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T141239Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T141929Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-HC-normalize-vector-widen-fused-activation-static-shifts-20261119T164839Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-20261119T020433Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-20261119T130523Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-20261119T130624Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T063041Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T074707Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T091151Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T095533Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T100735Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T121928Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T122859Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T125547Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T125901Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T134005Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T140307Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T150741Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T151314Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T151910Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T152021Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T152609Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T153155Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T155143Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T161953Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T162915Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T163456Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T164008Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T165943Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T173603Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T174313Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T175649Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T180945Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T181511Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T182110Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T183331Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T210419Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-fused-expert-epilogue-20261119T205321Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-device-selected-moe-20261119T201022Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-device-selected-moe-20261119T213127Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-device-selected-moe-20261119T214927Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-original-tile-ring-moe-20261120T025010Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-operand-cache-HC-normalize-20261119T025039Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-operand-cache-HC-normalize-vector-widen-fused-activation-20261119T031910Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-operand-cache-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-20261119T084111Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-operand-cache-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T170455Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-operand-cache-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T171459Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-operand-cache-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T171947Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-graphs-profile-HC-normalize-vector-widen-fused-activation-static-shifts-M1-direct-expert-bodies-20261119T064251Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-Cube-weight_quant-host-overlap-profile-operand-cache-20261119T021739Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-graph-benchmark-20261118T052801Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/actual-model-graph-proof-20261118T051621Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/ascendc-aiv-l1-cube-operand-proof-20261120T013602Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/ascendc-aiv-l1-cube-operand-proof-v2-20261120T013806Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/bounded-original-Cube-weight-cache-tests-20261119T021731Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-k128-literal-geometry-20261120T023755Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-k128-native-tiles-20261120T023115Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-k128-unified-host-device-20261120T023401Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-ring-local-buffer-fences-20261120T022341Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-ring-read-ownership-20261120T020855Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-ring-stable-scratch-20261120T021444Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-tile-ring-buffer-20261120T015620Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-tile-ring-one-vector-20261120T020214Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-vector-lookup-ring-20261120T020609Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-a2-vector-scale-broadcast-20261120T021854Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-local-ascendc-tile-consumer-20261120T013421Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-original-consumer-k256-L1-variants-20261120T095625Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-original-consumer-k256-L1-variants-v2-20261120T101019Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-tile-cube-static-buffers-20261120T014336Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/build-tile-native-a1-b1-20261120T014733Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/certified-bit-lookup-native-Cube-20261119T013433Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/collective-floor-20261118T024745Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/collective-graph-floor-20261118T030609Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/compare-original-consumer-attention-models-20261120T110608Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/compare-original-expert-TP2-EP4-matched-inputs-20261120T135859Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/compare-original-expert-TP2-EP4-models-20261120T131302Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/compare-original-host-table-Engram-HC-models-20261120T083534Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/compare-original-host-table-Engram-HC-models-v2-20261120T084701Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-Engram-bench-20261118T023521Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-exact-tests-20261118T023506Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-prepacked-real-bench-20261118T032519Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/cpu-prepacked-tests-20261118T030555Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/current-bottleneck-baseline-20261120T035802Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/current-bottleneck-tile-20261120T034608Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/decode-profile-20261118T015323Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-grouped-contract-20261119T191301Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-i8-shared-gate-up-20261119T212643Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-moe-fused-cube-20261119T201849Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-moe-fused-cube-k64-20261119T202230Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-moe-pair-diagnostics-20261119T203519Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-moe-paired-preparation-20261119T203145Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-moe-pairs-masked-20261119T203721Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-moe-pairs-persistent-20261119T204229Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-moe-stages-20261119T194141Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-original-i8-stage-20261119T212045Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/device-tile-moe-composition-proof-20261120T024356Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/exact-GEMV-capture-proof-20261118T034431Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/exact-fused-activation-binding-tests-20261119T031902Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/exact-persistent-CPU-worker-tests-20261119T012815Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/expert-graph-actual-allocator-benchmark-20261119T063026Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/expert-graph-reserved-capacity-contract-tests-20261119T063017Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fast-original-activation-bit-benchmark-20261119T061059Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/float-significand-actual-acceptance-20261118T045818Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-HC-decode-fold-both-sequential-probe-20261120T080750Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-HC-decode-fold-probe-20261120T070504Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-HC-decode-fold-sequential-probe-20261120T074204Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-certified-20261119T195939Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-contiguous-20261119T193403Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-large-tiles-20261119T194933Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-parity-20261119T192219Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-parity-v2-20261119T192447Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-parity-v3-20261119T192719Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-row-tiles-20261119T193759Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-device-moe-uint16-20261119T200759Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-original-activation-bit-benchmark-20261119T031427Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-swiglu-original-bytes-20261119T204110Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/fused-swiglu-separate-bytes-20261119T205225Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-decode-isolation-20261118T030052Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-decode-safe-budget-20261118T032243Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-decode-staticshift-20261118T030829Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-original-weight-quant-20261119T210101Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/grouped-original-weight-quant-v2-20261119T210201Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/host-Engram-HCCL-proof-20261118T025357Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/integer-decode-acceptance-20261118T033446Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/integer-decode-hoisted-loads-20261118T034444Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/integer-decode-parent-store-20261118T043045Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/isolated-Cube-runtime-acceptance-20261118T214415Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/mixed-weight-Cube-schema-20261118T212651Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/native-Cube-block32-acceptance-20261118T215819Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/native-Cube-first-compile-20261118T214023Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/native-Cube-permission-preflight-20261118T212215Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/native-Cube-small-tile-compile-20261118T215309Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/native-Cube-tensor-left-first-compile-20261118T214521Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/npu-decode-bench-20261118T024650Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/npu-decode-tests-20261118T023535Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/online-tile-cpu-contract-tests-20261120T023135Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/online-tile-cube-consumer-20261120T011803Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/online-tile-cube-consumer-v2-20261120T012009Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/optimized-model-20261118T032533Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/optimized-model-20261118T050708Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-Engram-persistent-worker-benchmark-20261119T013044Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-FP4-native-weight-Cube-20261118T213125Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-FP4-pair-store-benchmark-20261119T014435Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-M1-routing-forward-contract-fixed-20261119T033903Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-M1-routing-matrix-benchmark-20261119T033447Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-M1-routing-tests-20261119T033439Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-attention-FP8-reuse-probe-20261120T104637Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-batched-weight-quant-20261119T211035Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-k128-host-table-HC-20261120T104734Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-k256-L1-real-comparison-20261120T102453Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-k256-L1-real-comparison-v2-20261120T103051Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-k256-host-table-HC-20261120T104030Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-native-host-table-HC-20261120T105952Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-native-reuse-host-table-HC-20261120T105304Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-TP2-EP4-final-replay-20261120T135906Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-TP2-EP4-real-replay-20261120T122759Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-body-graph-contract-tests-20261119T061627Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-body-graph-matrix-benchmark-20261119T061635Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-ep8-forced-host-table-HC-20261120T133445Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-ep8-host-table-HC-20261120T125200Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-tp2-forced-host-table-HC-20261120T132926Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-tp2-host-table-HC-20261120T124507Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-tp2-host-table-HC-steps64-20261120T130127Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-Engram-prefetch-tests-20261119T014917Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-diagnostic-v4-20261120T064525Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-probe-20261120T062548Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-probe-v2-20261120T063203Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-probe-v3-20261120T063909Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-probe-v5-20261120T070023Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-probe-v6-20261120T071528Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-k256-all-K-byte-scale-corpus-20261120T110616Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-k256-byte-scale-corpus-20261120T105941Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-silu-fused-byte-parity-20261119T214353Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-silu-fused-byte-parity-i32-20261119T214831Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/packed-resident-test-fixed-20261118T025955Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/packed-resident-tests-20261118T025515Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/paired-original-FP4-launch-grid-benchmark-20261119T021535Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/prefetch-decode-NPU-smoke-20261118T044233Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/prefetch-int8-view-NPU-smoke-20261118T045818Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/prefetch-int8-view-actual-benchmark-20261118T045955Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/static-original-FP4-widen-20261119T013855Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/static-original-FP4-widen-safe-tiles-20261119T014125Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-cube-static-buffer-proof-20261120T014345Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-major-actual-GEMV-benchmark-20261118T060921Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-major-constexpr-core-acceptance-20261118T060018Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-major-core-acceptance-20261118T055019Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-major-runtime-acceptance-20261118T060535Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-native-a1-b1-proof-20261120T014743Z/summary.json",
+      "returncode": 1,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-route-runtime-contract-tests-20261120T024411Z/summary.json",
+      "returncode": 4,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/tile-route-runtime-contract-tests-v2-20261120T024558Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/vector-original-FP4-bit-tests-20261119T030859Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    },
+    {
+      "path": "<workspace>/relic-v41-perf-20261118-0938/logs/vector-original-FP4-matrix-benchmark-20261119T030935Z/summary.json",
+      "returncode": 0,
+      "cleanup_complete": true,
+      "live_processes": []
+    }
+  ],
+  "all_eight_NPU_process_tables_empty": true,
+  "checkpoint_stat_identity_unchanged": true,
+  "checkpoint_files_compared": 90,
+  "no_new_full_checkpoint_checksum_claim": true,
+  "CANN_env_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+  "CANN_links": {
+    "/usr/local/Ascend/cann": "/usr/local/Ascend/cann-9.2.0",
+    "/usr/local/Ascend/ascend-toolkit/latest": "/usr/local/Ascend/cann-9.2.0"
+  },
+  "no_shared_configuration_change_or_device_reset": true,
+  "resident_jenkins_identity_sha256": "41b0607de266ce524afe667cc18aa30fcb4ed274f9b545b615019e6fabc1cb39",
+  "resident_agent_command_omitted_from_published_bundle": true
+}

@@ -1,0 +1,233 @@
+[
+  {
+    "key": "layers.0.ffn.experts.0.w1.weight",
+    "variant": "old-expanded-reference",
+    "N": 2304,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 2304,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.012727688066661358,
+    "seconds": [
+      0.012726038228720427,
+      0.012728387955576181,
+      0.012725708074867725,
+      0.012726988177746534,
+      0.012728397734463215,
+      0.012782959267497063
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w1.weight",
+    "variant": "packed-static-group4",
+    "N": 2304,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 2304,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.017918659141287208,
+    "seconds": [
+      0.017918704077601433,
+      0.017908853013068438,
+      0.017918614204972982,
+      0.0178901432082057,
+      0.017930093687027693,
+      0.01797567494213581
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w1.weight",
+    "variant": "integer-grouped-r16-g4",
+    "N": 2304,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 2304,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.030594900948926806,
+    "seconds": [
+      0.030612020753324032,
+      0.03059864090755582,
+      0.030599792022258043,
+      0.030591160990297794,
+      0.03057896113023162,
+      0.030575391836464405
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w1.weight",
+    "variant": "integer-serial-r16-g4",
+    "N": 2304,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 2304,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.05017547169700265,
+    "seconds": [
+      0.05017374688759446,
+      0.05017753690481186,
+      0.05017621722072363,
+      0.050411458127200603,
+      0.050153315998613834,
+      0.05017472617328167
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w2.weight",
+    "variant": "old-expanded-reference",
+    "N": 5120,
+    "K": 2304,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 5120,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.011420388938859105,
+    "seconds": [
+      0.011430919170379639,
+      0.01142519898712635,
+      0.011415468994528055,
+      0.01142024900764227,
+      0.011420528870075941,
+      0.011418228968977928
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w2.weight",
+    "variant": "packed-static-group4",
+    "N": 5120,
+    "K": 2304,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 5120,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.019968837965279818,
+    "seconds": [
+      0.020123778842389584,
+      0.020018608774989843,
+      0.019754416309297085,
+      0.019940818194299936,
+      0.019870467949658632,
+      0.0199968577362597
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w2.weight",
+    "variant": "integer-grouped-r16-g4",
+    "N": 5120,
+    "K": 2304,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 5120,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.030635876581072807,
+    "seconds": [
+      0.03063472220674157,
+      0.0306466119363904,
+      0.030662382021546364,
+      0.030613412149250507,
+      0.03061888087540865,
+      0.030637030955404043
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.ffn.experts.0.w2.weight",
+    "variant": "integer-serial-r16-g4",
+    "N": 5120,
+    "K": 2304,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 5120,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.04531277809292078,
+    "seconds": [
+      0.04531501280143857,
+      0.04531384306028485,
+      0.04531171312555671,
+      0.04531615320593119,
+      0.04530329396948218,
+      0.0453075529076159
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.attn.wq_a.weight",
+    "variant": "old-fp8-reference",
+    "N": 1280,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 1280,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.006237342953681946,
+    "seconds": [
+      0.0062483930960297585,
+      0.006241824012249708,
+      0.006235562730580568,
+      0.00623759301379323,
+      0.006235993001610041,
+      0.0062370928935706615
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.attn.wq_a.weight",
+    "variant": "integer-grouped-r16-g4",
+    "N": 1280,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 1280,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.004371321061626077,
+    "seconds": [
+      0.004387089982628822,
+      0.004363540094345808,
+      0.0043741511180996895,
+      0.004361450206488371,
+      0.004375549964606762,
+      0.004368491005152464
+    ],
+    "whole_model_TPS_claimed": false
+  },
+  {
+    "key": "layers.0.attn.wq_a.weight",
+    "variant": "integer-serial-r16-g4",
+    "N": 1280,
+    "K": 5120,
+    "parity": {
+      "finite_output_bit_mismatches": 0,
+      "finite_elements": 1280,
+      "NaN_and_Inf_classification_matches": true
+    },
+    "median_seconds": 0.006298677995800972,
+    "seconds": [
+      0.0063000931404531,
+      0.006304462905973196,
+      0.006296874023973942,
+      0.006297262851148844,
+      0.006294243037700653,
+      0.006301454268395901
+    ],
+    "whole_model_TPS_claimed": false
+  }
+]

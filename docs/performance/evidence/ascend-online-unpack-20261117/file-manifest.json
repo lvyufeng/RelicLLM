@@ -1,0 +1,307 @@
+{
+  "files": [
+    {
+      "path": "final-core-portable-tests.log",
+      "bytes": 99,
+      "sha256": "0643f6e6cb7d897bee00ae363f46f99715443b9464590e1ca4acd3f2923a3500"
+    },
+    {
+      "path": "final-core-portable-tests.xml",
+      "bytes": 6016,
+      "sha256": "a0847882a4bd32ffbbf87e4e40819ad69d8a922bff914e3e58af0502ee5318f2"
+    },
+    {
+      "path": "final-launch-math-tests.log",
+      "bytes": 99,
+      "sha256": "3f89f52d389dc2f804910c87327cddd9fa40ffb386b9c83b4e266c2a02523d15"
+    },
+    {
+      "path": "final-launch-math-tests.xml",
+      "bytes": 3873,
+      "sha256": "a7c0e75ed4493e40faa78f2330216a307379ece136e7b9161d17693d11a81e75"
+    },
+    {
+      "path": "final-operator-host-check.json",
+      "bytes": 4179,
+      "sha256": "5e5a2c0c6ad0ef8b8cccef09e226ffc64735384e0da8aa6ee9ea631e0d5e671d"
+    },
+    {
+      "path": "final-operator-npu-smi.log",
+      "bytes": 5733,
+      "sha256": "42e9b2de5d82a7bca429196b4d4a18caca6d98d928a4471ade66507a2e276196"
+    },
+    {
+      "path": "fused-stream-environment-20261117T000613Z.json",
+      "bytes": 919,
+      "sha256": "f2ee3fcb94f95251f0d81afe8ce6569e2bcf3d40fe6a044859e9753a5f117411"
+    },
+    {
+      "path": "kernel-env-manifest.json",
+      "bytes": 16137,
+      "sha256": "ad147ff576c74e5e14c54ec5b9961b5dd124142233405d8daf5d9098b94a3bda"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/FINAL-compat-receipt.json",
+      "bytes": 6153,
+      "sha256": "d9b065bc0ef4a95132c9d82faaf09c7776b0c23fdb0d6011ba8b59e2c5142d33"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/apply_patch.py",
+      "bytes": 6954,
+      "sha256": "68dcdd8418cd4eb46948cb96af868f763588174050a3173e6093c85008d82386"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/compile-proof.json",
+      "bytes": 27808,
+      "sha256": "4f5ca02926f5572d4fa8312dd5d895a94cfd6ede7ac342fb0d150a967e3b50a1"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/compile_proof.py",
+      "bytes": 2814,
+      "sha256": "1ef935081eb69e26084eadad42dbd9679df4e2baf13bde2038d9224adbbf5862"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/driver-bootstrap-proof.log",
+      "bytes": 421,
+      "sha256": "756a36dd6c0df03dadaad70ca022372602eda9afd16fa1f79e4d3e1b630d53df"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/driver_bootstrap_proof.py",
+      "bytes": 1781,
+      "sha256": "dd88563117789e5d909dcfd03f4deca2e53e8a4fa28d0ddc27a53eea5b062584"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/make_patch.py",
+      "bytes": 6412,
+      "sha256": "1242ca88191f2e03fa428d43e6ca7661700a8147a9aa5d91fded9cfe8ad3df0a"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/npu_utils-cann92.patch",
+      "bytes": 1416,
+      "sha256": "c08eab8f1c52d675350220f4bc45bfff0e988c22316f2d056cebf1e3757bc14b"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/patch-record.json",
+      "bytes": 2148,
+      "sha256": "64c8207ec8b0def9bb69a85c8a4052b7eada1b953f6a93bfa4cf9d187ca9d528"
+    },
+    {
+      "path": "kernel-env-scripts/triton-cann92-compat/triton-cann92-compat.json",
+      "bytes": 2407,
+      "sha256": "a7da9a23e28c5b87c13b41b86e91e36f9eace45dd04fb667ffe6efc0501af39b"
+    },
+    {
+      "path": "lease-release.json",
+      "bytes": 1112,
+      "sha256": "2ec112ac92b9f767baaf8ff80183ae1f08d61058130e0af1097c62ef384303d1"
+    },
+    {
+      "path": "online-loader-tests-20261116T233625Z/loader-integration.json",
+      "bytes": 3340,
+      "sha256": "92e7140733e0f449a8b9889f6f5a3f379d62c3e53d0ecbf8ff89ef3625f7f6e2"
+    },
+    {
+      "path": "online-loader-tests-20261116T233625Z/loader-integration.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "online-loader-tests-20261116T233625Z/loader-integration.stdout.log",
+      "bytes": 696,
+      "sha256": "b2186e8d33938600a1e2d372fc018a9a1a91e347c1c5ada49e9df83aff7eafa6"
+    },
+    {
+      "path": "online-loader-tests-20261116T233625Z/pytest.xml",
+      "bytes": 6317,
+      "sha256": "489d1f1f7c62d586362960a17dcd6f618dcc8d460fcb25baabfa6b0864d1b52b"
+    },
+    {
+      "path": "online-loader-tests-20261116T233625Z/summary.json",
+      "bytes": 3415,
+      "sha256": "c0c01134aa3341b098778a6023f1bf6325c443d8ca37ba160aef3f03c30c2666"
+    },
+    {
+      "path": "online-loader-tests-20261117T001254Z/loader-integration.json",
+      "bytes": 4196,
+      "sha256": "258fb5f2e7f3cd2dce866b2bc9b737b1fc062c7ae3f0c5d8f7a92438415b7126"
+    },
+    {
+      "path": "online-loader-tests-20261117T001254Z/loader-integration.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "online-loader-tests-20261117T001254Z/loader-integration.stdout.log",
+      "bytes": 1015,
+      "sha256": "36f1cf39f70dab103a80dcbc05ce0209a69684bb6ff2b2a9a40b85755148c9ff"
+    },
+    {
+      "path": "online-loader-tests-20261117T001254Z/pytest.xml",
+      "bytes": 12220,
+      "sha256": "7f2eb7973d5787e790b34112d41bfcac241bad334be68eac119bed77b9d95aa0"
+    },
+    {
+      "path": "online-loader-tests-20261117T001254Z/summary.json",
+      "bytes": 4271,
+      "sha256": "6c8f05c3fa03d43890ce0c098b0f7664ebb2fd3ec8817f72ee1bb61a04cd6830"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261116T232004Z/bench-torch.json",
+      "bytes": 4046,
+      "sha256": "35ab625f6129770ff7e77dc2f045bcc148aeb427feb187424351674301523185"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261116T232004Z/bench-torch.stderr.log",
+      "bytes": 566,
+      "sha256": "080510ef4f4f296d6c28fcbf302c22fce7f7847d05e84f1b8ee152f379639962"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261116T232004Z/bench-torch.stdout.log",
+      "bytes": 1486,
+      "sha256": "f73ab7863ca0f6306e6319a8538434edf0d3f5b79329c7318750f401a54e7f20"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261116T232004Z/benchmark.json",
+      "bytes": 2276,
+      "sha256": "29578bbb69d82ed7c73563fceff7b73aed79cb77378e531c9d500be68bbd4e51"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261116T232004Z/summary.json",
+      "bytes": 4191,
+      "sha256": "563414899701068b1574f500f20d7716641af279c1e202258afddc4f8e2e3ed8"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261117T000213Z/bench-torch.json",
+      "bytes": 3387,
+      "sha256": "8de36b288601140d46f0af5b96a45d50f2fae25788415bd4b954667e736148f4"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261117T000213Z/bench-torch.stderr.log",
+      "bytes": 566,
+      "sha256": "ced50f7ac15966432529378dc4c5baeaec657006fcfd6ff32806de3d626edc53"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261117T000213Z/bench-torch.stdout.log",
+      "bytes": 1915,
+      "sha256": "3bb113c603fa8672c926451936025e71f1d44b8f86e3cff9d878ab6bff4265e1"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261117T000213Z/benchmark.json",
+      "bytes": 2865,
+      "sha256": "6b8bb8a3ed336c2bbf5c1f38f130d3cd306e077a08cc1370e295012fb5e1a447"
+    },
+    {
+      "path": "online-unpack-bench-torch-20261117T000213Z/summary.json",
+      "bytes": 3532,
+      "sha256": "51a20149aaa408822ca89bf366016d309b50f2cbe646755e632f3c96b877e38c"
+    },
+    {
+      "path": "online-unpack-bench-triton-20261117T000114Z/bench-triton.json",
+      "bytes": 4356,
+      "sha256": "5af7a22cc17319be9476f6748af4416987bc7f739e351f623ff5b904a48e53ed"
+    },
+    {
+      "path": "online-unpack-bench-triton-20261117T000114Z/bench-triton.stderr.log",
+      "bytes": 192,
+      "sha256": "b6c28bad9698d3866474a46dbfddfd686d95a5dbab321bc3763a95aa635ec5f8"
+    },
+    {
+      "path": "online-unpack-bench-triton-20261117T000114Z/bench-triton.stdout.log",
+      "bytes": 1927,
+      "sha256": "1e373eab926556d72e22a201c0f3d9f903897683bb02aabaf64016091c2f5a92"
+    },
+    {
+      "path": "online-unpack-bench-triton-20261117T000114Z/benchmark.json",
+      "bytes": 2878,
+      "sha256": "c9ecd7ec6c8ee4909ba3e8eb60f4b7924c7ddff706de0dfaa0f7867c8f9e9cab"
+    },
+    {
+      "path": "online-unpack-bench-triton-20261117T000114Z/summary.json",
+      "bytes": 4502,
+      "sha256": "990502bee43a2f2345cf7145ef378cd6988b0e69f7d263b0dd4a5243ca359300"
+    },
+    {
+      "path": "python-only-core-install-proof.json",
+      "bytes": 602,
+      "sha256": "4f89e7b21c76ccb45a0c8e1f58dab9b8f92b40ff42f4d617e6071d6babfc448d"
+    },
+    {
+      "path": "python-only-core-install.log",
+      "bytes": 5158,
+      "sha256": "e141917379e9c4294af510b574958519d15a7a353f38cfddcb32e67707a45052"
+    },
+    {
+      "path": "rational_unpack_oracle.py",
+      "bytes": 6374,
+      "sha256": "b0a994de95598be2c82ca83e0e30b53dd9b357ac439b95b0f17d8a0a15bc2efc"
+    },
+    {
+      "path": "result-summary.json",
+      "bytes": 5343,
+      "sha256": "655e4da5799cee5874dcc80d854e447a2ee0569b59c8a7f280b2fc1c1b76082f"
+    },
+    {
+      "path": "unpack-cpu-tests.log",
+      "bytes": 327,
+      "sha256": "279fcf0a8793323511473e3cb1b03fdeb67983e7a2303e46553eb64b7f451aba"
+    },
+    {
+      "path": "unpack-cpu-tests.xml",
+      "bytes": 9751,
+      "sha256": "815d160e42ad2ef4d0b235f054a935a8273dab4f07109058aa42a7bff547fa26"
+    },
+    {
+      "path": "unpack-npu-torch-20261116T222606Z/npu-torch.json",
+      "bytes": 3946,
+      "sha256": "b14855898f973bdb7a088241729f56bc2b9f11a27ff506235e4d30c7c10f80ac"
+    },
+    {
+      "path": "unpack-npu-torch-20261116T222606Z/npu-torch.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unpack-npu-torch-20261116T222606Z/npu-torch.stdout.log",
+      "bytes": 729,
+      "sha256": "7ac1e5cf74527250fa1276ed53cd6534fb7ba90796b27c71688f7c88dbfdc889"
+    },
+    {
+      "path": "unpack-npu-torch-20261116T222606Z/pytest.xml",
+      "bytes": 8716,
+      "sha256": "587e1a46e3f6dd3cad982c28b5dd6cc2f0a125a79fbccfdd4ed614bd9caaf8ba"
+    },
+    {
+      "path": "unpack-npu-torch-20261116T222606Z/summary.json",
+      "bytes": 4079,
+      "sha256": "4a23c2a175dee3372f844b307a5b1467c77eba0db1742dbb080243e5372a932b"
+    },
+    {
+      "path": "unpack-npu-triton-20261117T000413Z/npu-triton.json",
+      "bytes": 6941,
+      "sha256": "a25a1138285410a606f589003ada0ed0b4e55c2e1d70e9fdeabba4c9f6c60d6b"
+    },
+    {
+      "path": "unpack-npu-triton-20261117T000413Z/npu-triton.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unpack-npu-triton-20261117T000413Z/npu-triton.stdout.log",
+      "bytes": 779,
+      "sha256": "c8e1be36bef993cbf74f5d562f66e06ef82dd452faff5d86087f74cdd5343192"
+    },
+    {
+      "path": "unpack-npu-triton-20261117T000413Z/pytest.xml",
+      "bytes": 9679,
+      "sha256": "ce31089425383d3563ab0cf3b882a9cba07389664f665a6131767139471a2a98"
+    },
+    {
+      "path": "unpack-npu-triton-20261117T000413Z/summary.json",
+      "bytes": 7075,
+      "sha256": "acf47af48db0d5c17b3dc02348c05f4426a67d48613e5d22746cb5daf8988641"
+    }
+  ],
+  "total_files": 60,
+  "total_bytes": 240135,
+  "note": "Hashes of retained evidence pages/results only; original checkpoint full hashes are a separate prior verification receipt."
+}

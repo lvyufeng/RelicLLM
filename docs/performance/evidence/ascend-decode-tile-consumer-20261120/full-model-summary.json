@@ -1,0 +1,161 @@
+{
+  "name": "actual-model-Cube-weight_quant-host-overlap-graphs-HC-normalize-vector-widen-fused-activation-static-shifts-original-tile-ring-moe",
+  "command": [
+    "<workspace>/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "-m",
+    "torch.distributed.run",
+    "--standalone",
+    "--nnodes=1",
+    "--nproc-per-node=8",
+    "<workspace>/relic-v41-perf-20261118-0938/source/profile_actual_cube.py",
+    "--checkpoint",
+    "<checkpoint>",
+    "--expert-device",
+    "npu:0",
+    "--expert-world",
+    "8",
+    "--expert-pool-rows",
+    "0",
+    "--expert-hot-rows",
+    "0",
+    "--no-expert-batched",
+    "--expert-deal",
+    "id",
+    "--no-decode-graphs",
+    "--threads",
+    "4",
+    "--max-seq-len",
+    "128",
+    "--max-new-tokens",
+    "16",
+    "--temperature",
+    "0",
+    "--prompt",
+    "List the integers from 1 through 100 in order, separated by commas. The list is:"
+  ],
+  "timeout_s": 900,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-20T02:50:10.929378+00:00",
+  "cwd": "<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM",
+  "timed_out": false,
+  "ownership_token": "513e379a39012ea1504e64133af7d6b3a164219198052f4f58f8a55e72bf388a",
+  "critical_environment": {
+    "PYTHONPATH": "<workspace>/relic-v41-infer-20261117-1424/python-packages:<workspace>/relic-v41-perf-20261118-0938/source/relic-core:<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "<workspace>/relic-v41-perf-20261118-0938/tmp",
+    "HOME": "<workspace>/relic-v41-perf-20261118-0938/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend",
+    "ASCEND_WORK_PATH": "<workspace>/relic-v41-perf-20261118-0938/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "<workspace>/relic-v41-perf-20261118-0938/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 3160695,
+  "process_group": 3160695,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 3160695,
+        "starttime": 405809699,
+        "pgid": 3160695,
+        "sid": 3160695,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160705,
+        "starttime": 405810660,
+        "pgid": 3160705,
+        "sid": 3160705,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160706,
+        "starttime": 405810660,
+        "pgid": 3160706,
+        "sid": 3160706,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160707,
+        "starttime": 405810660,
+        "pgid": 3160707,
+        "sid": 3160707,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160708,
+        "starttime": 405810660,
+        "pgid": 3160708,
+        "sid": 3160708,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160709,
+        "starttime": 405810660,
+        "pgid": 3160709,
+        "sid": 3160709,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160710,
+        "starttime": 405810661,
+        "pgid": 3160710,
+        "sid": 3160710,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160711,
+        "starttime": 405810661,
+        "pgid": 3160711,
+        "sid": 3160711,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 3160712,
+        "starttime": 405810661,
+        "pgid": 3160712,
+        "sid": 3160712,
+        "state": "Z",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [],
+    "terminal_reconciliations": [],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 282.15688380226493,
+  "finished_at": "2026-11-20T02:54:53.086299+00:00"
+}

@@ -1,0 +1,750 @@
+<frozen runpy>:128: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[rank 2] network 8 ranks, tree on npu:2, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 5] network 8 ranks, tree on npu:5, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 7] network 8 ranks, tree on npu:7, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[rank 5] layers.0  (0 filled)
+[rank 7] layers.0  (0 filled)
+[rank 5] layers.1  (22 filled)
+[rank 7] layers.1  (22 filled)
+[rank 1] network 8 ranks, tree on npu:1, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 4] network 8 ranks, tree on npu:4, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 3] network 8 ranks, tree on npu:3, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 6] network 8 ranks, tree on npu:6, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 5] layers.2  (47 filled)
+[rank 7] layers.2  (47 filled)
+[rank 5] layers.3  (76 filled)
+[rank 7] layers.3  (76 filled)
+[rank 5] layers.4  (98 filled)
+[rank 2] layers.0  (0 filled)
+[rank 5] layers.5  (120 filled)
+[rank 7] layers.4  (98 filled)
+[rank 5] layers.6  (142 filled)
+[rank 7] layers.5  (120 filled)
+[rank 2] layers.1  (22 filled)
+[rank 5] layers.7  (164 filled)
+[rank 7] layers.6  (142 filled)
+[rank 5] layers.8  (186 filled)
+[rank 7] layers.7  (164 filled)
+[rank 5] layers.9  (215 filled)
+[rank 7] layers.8  (186 filled)
+[rank 5] layers.10  (237 filled)
+[rank 7] layers.9  (215 filled)
+[rank 5] layers.11  (259 filled)
+[rank 7] layers.10  (237 filled)
+[rank 5] layers.12  (281 filled)
+[rank 7] layers.11  (259 filled)
+[rank 5] layers.13  (303 filled)
+[rank 7] layers.12  (281 filled)
+[rank 5] layers.14  (325 filled)
+[rank 7] layers.13  (303 filled)
+[rank 7] layers.14  (325 filled)
+[rank 2] layers.2  (47 filled)
+[rank 2] layers.3  (76 filled)
+[rank 2] layers.4  (98 filled)
+[rank 2] layers.5  (120 filled)
+[rank 2] layers.6  (142 filled)
+[rank 2] layers.7  (164 filled)
+[rank 2] layers.8  (186 filled)
+[rank 2] layers.9  (215 filled)
+[rank 5] layers.15  (357 filled)
+[rank 2] layers.10  (237 filled)
+[rank 5] layers.16  (379 filled)
+[rank 7] layers.15  (357 filled)
+[rank 2] layers.11  (259 filled)
+[rank 5] layers.17  (401 filled)
+[rank 7] layers.16  (379 filled)
+[transformers] You are using a model of type `deepseek_v41` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[rank 2] layers.12  (281 filled)
+[rank 5] layers.18  (423 filled)
+[rank 7] layers.17  (401 filled)
+[rank 2] layers.13  (303 filled)
+[rank 5] layers.19  (445 filled)
+[rank 7] layers.18  (423 filled)
+[rank 2] layers.14  (325 filled)
+[rank 5] layers.20  (467 filled)
+[rank 7] layers.19  (445 filled)
+[rank 5] layers.21  (495 filled)
+[rank 7] layers.20  (467 filled)
+[rank 5] layers.22  (517 filled)
+[rank 7] layers.21  (495 filled)
+[rank 5] layers.23  (539 filled)
+[rank 7] layers.22  (517 filled)
+[rank 5] layers.24  (561 filled)
+[rank 7] layers.23  (539 filled)
+[rank 5] layers.25  (585 filled)
+[rank 7] layers.24  (561 filled)
+[rank 5] layers.26  (607 filled)
+[rank 7] layers.25  (585 filled)
+[rank 5] layers.27  (629 filled)
+[rank 7] layers.26  (607 filled)
+[rank 2] layers.15  (357 filled)
+[rank 5] layers.28  (651 filled)
+[rank 7] layers.27  (629 filled)
+[rank 2] layers.16  (379 filled)
+[rank 5] layers.29  (675 filled)
+[rank 7] layers.28  (651 filled)
+[rank 2] layers.17  (401 filled)
+[rank 5] layers.30  (697 filled)
+[rank 7] layers.29  (675 filled)
+[rank 2] layers.18  (423 filled)
+[rank 5] layers.31  (719 filled)
+[rank 7] layers.30  (697 filled)
+[rank 2] layers.19  (445 filled)
+[rank 3] layers.0  (0 filled)
+[rank 1] layers.0  (0 filled)
+[rank 4] layers.0  (0 filled)
+[rank 5] layers.32  (741 filled)
+[rank 7] layers.31  (719 filled)
+[rank 2] layers.20  (467 filled)
+[rank 5] layers.33  (765 filled)
+[rank 7] layers.32  (741 filled)
+[rank 2] layers.21  (495 filled)
+[rank 5] layers.34  (787 filled)
+[rank 1] layers.1  (22 filled)
+[rank 3] layers.1  (22 filled)
+[rank 2] layers.22  (517 filled)
+[rank 7] layers.33  (765 filled)
+[rank 4] layers.1  (22 filled)
+[rank 5] layers.35  (809 filled)
+[rank 2] layers.23  (539 filled)
+[rank 7] layers.34  (787 filled)
+[rank 5] layers.36  (831 filled)
+[rank 2] layers.24  (561 filled)
+[rank 7] layers.35  (809 filled)
+[rank 5] layers.37  (855 filled)
+[rank 2] layers.25  (585 filled)
+[rank 7] layers.36  (831 filled)
+[rank 5] layers.38  (877 filled)
+[rank 2] layers.26  (607 filled)
+[rank 7] layers.37  (855 filled)
+[rank 5] layers.39  (899 filled)
+[rank 2] layers.27  (629 filled)
+[rank 7] layers.38  (877 filled)
+[rank 5] embed  (921 filled)
+[rank 2] layers.28  (651 filled)
+[rank 7] layers.39  (899 filled)
+[rank 2] layers.29  (675 filled)
+[rank 7] embed  (921 filled)
+[rank 5] norm  (922 filled)
+[rank 5] head  (923 filled)
+[rank 2] layers.30  (697 filled)
+[rank 1] layers.2  (47 filled)
+[rank 3] layers.2  (47 filled)
+[rank 4] layers.2  (47 filled)
+[rank 2] layers.31  (719 filled)
+[rank 7] norm  (922 filled)
+[rank 7] head  (923 filled)
+[rank 1] layers.3  (76 filled)
+[rank 0] network 8 ranks, tree on npu:0, experts on npu:0 x8, context 128, resident checkpoint off, the id expert deal
+[rank 3] layers.3  (76 filled)
+[rank0]:[W1121 12:28:32.072824428 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank 4] layers.3  (76 filled)
+[rank 1] layers.4  (98 filled)
+[rank 3] layers.4  (98 filled)
+[rank 2] layers.32  (741 filled)
+[rank 4] layers.4  (98 filled)
+[rank 1] layers.5  (120 filled)
+[rank 3] layers.5  (120 filled)
+[rank 2] layers.33  (765 filled)
+[rank 4] layers.5  (120 filled)
+[rank 1] layers.6  (142 filled)
+[rank 3] layers.6  (142 filled)
+[rank 2] layers.34  (787 filled)
+[rank 4] layers.6  (142 filled)
+[rank 1] layers.7  (164 filled)
+[rank 2] layers.35  (809 filled)
+[rank 3] layers.7  (164 filled)
+[rank 4] layers.7  (164 filled)
+[rank 1] layers.8  (186 filled)
+[rank 2] layers.36  (831 filled)
+[rank 3] layers.8  (186 filled)
+[rank 4] layers.8  (186 filled)
+[rank 1] layers.9  (215 filled)
+[rank 2] layers.37  (855 filled)
+[rank 3] layers.9  (215 filled)
+[rank 4] layers.9  (215 filled)
+[rank 1] layers.10  (237 filled)
+[rank 2] layers.38  (877 filled)
+[rank 3] layers.10  (237 filled)
+[rank 4] layers.10  (237 filled)
+[rank 6] layers.0  (0 filled)
+[rank 1] layers.11  (259 filled)
+[rank 2] layers.39  (899 filled)
+[rank 3] layers.11  (259 filled)
+[rank 4] layers.11  (259 filled)
+[rank 1] layers.12  (281 filled)
+[rank 2] embed  (921 filled)
+[rank 3] layers.12  (281 filled)
+[rank 4] layers.12  (281 filled)
+[rank 1] layers.13  (303 filled)
+[rank 3] layers.13  (303 filled)
+[rank 4] layers.13  (303 filled)
+[rank 6] layers.1  (22 filled)
+[rank 2] norm  (922 filled)
+[rank 2] head  (923 filled)
+[rank 1] layers.14  (325 filled)
+[rank 3] layers.14  (325 filled)
+[rank 4] layers.14  (325 filled)
+[rank 5] layer 0: original packed HBM residency 902430720 bytes
+[rank 7] layer 0: original packed HBM residency 902430720 bytes
+[rank 5] layer 1: original packed HBM residency 902430720 bytes
+[rank 1] layers.15  (357 filled)
+[rank 7] layer 1: original packed HBM residency 902430720 bytes
+[rank 1] layers.16  (379 filled)
+[rank 3] layers.15  (357 filled)
+[rank 4] layers.15  (357 filled)
+[rank 1] layers.17  (401 filled)
+[rank 5] layer 2: original packed HBM residency 902430720 bytes
+[rank 3] layers.16  (379 filled)
+[rank 4] layers.16  (379 filled)
+[rank 6] layers.2  (47 filled)
+[rank 1] layers.18  (423 filled)
+[rank 3] layers.17  (401 filled)
+[rank 4] layers.17  (401 filled)
+[rank 1] layers.19  (445 filled)
+[rank 6] layers.3  (76 filled)
+[rank 3] layers.18  (423 filled)
+[rank 4] layers.18  (423 filled)
+[rank 1] layers.20  (467 filled)
+[rank 6] layers.4  (98 filled)
+[rank 3] layers.19  (445 filled)
+[rank 7] layer 2: original packed HBM residency 902430720 bytes
+[rank 4] layers.19  (445 filled)
+[rank 6] layers.5  (120 filled)
+[rank 1] layers.21  (495 filled)
+[rank 5] layer 3: original packed HBM residency 902430720 bytes
+[rank 3] layers.20  (467 filled)
+[rank 4] layers.20  (467 filled)
+[rank 2] layer 0: original packed HBM residency 902430720 bytes
+[rank 1] layers.22  (517 filled)
+[rank 6] layers.6  (142 filled)
+[rank 3] layers.21  (495 filled)
+[rank 4] layers.21  (495 filled)
+[rank 1] layers.23  (539 filled)
+[rank 6] layers.7  (164 filled)
+[rank 3] layers.22  (517 filled)
+[rank 4] layers.22  (517 filled)
+[rank 1] layers.24  (561 filled)
+[rank 6] layers.8  (186 filled)
+[rank 3] layers.23  (539 filled)
+[rank 4] layers.23  (539 filled)
+[rank 1] layers.25  (585 filled)
+[rank 7] layer 3: original packed HBM residency 902430720 bytes
+[rank 5] layer 4: original packed HBM residency 902430720 bytes
+[rank 6] layers.9  (215 filled)
+[rank 2] layer 1: original packed HBM residency 902430720 bytes
+[rank 3] layers.24  (561 filled)
+[rank 4] layers.24  (561 filled)
+[rank 1] layers.26  (607 filled)
+[rank 6] layers.10  (237 filled)
+[rank 3] layers.25  (585 filled)
+[rank 4] layers.25  (585 filled)
+[rank 1] layers.27  (629 filled)
+[rank 6] layers.11  (259 filled)
+[rank 3] layers.26  (607 filled)
+[rank 4] layers.26  (607 filled)
+[rank 1] layers.28  (651 filled)
+[rank 6] layers.12  (281 filled)
+[rank 3] layers.27  (629 filled)
+[rank 4] layers.27  (629 filled)
+[rank 1] layers.29  (675 filled)
+[rank 6] layers.13  (303 filled)
+[rank 7] layer 4: original packed HBM residency 902430720 bytes
+[rank 5] layer 5: original packed HBM residency 902430720 bytes
+[rank 2] layer 2: original packed HBM residency 902430720 bytes
+[rank 3] layers.28  (651 filled)
+[rank 4] layers.28  (651 filled)
+[rank 1] layers.30  (697 filled)
+[rank 6] layers.14  (325 filled)
+[rank 3] layers.29  (675 filled)
+[rank 4] layers.29  (675 filled)
+[rank 1] layers.31  (719 filled)
+[rank 3] layers.30  (697 filled)
+[rank 4] layers.30  (697 filled)
+[rank 1] layers.32  (741 filled)
+[rank 3] layers.31  (719 filled)
+[rank 4] layers.31  (719 filled)
+[rank 2] layer 3: original packed HBM residency 902430720 bytes
+[rank 1] layers.33  (765 filled)
+[rank 5] layer 6: original packed HBM residency 902430720 bytes
+[rank 7] layer 5: original packed HBM residency 902430720 bytes
+[rank 4] layers.32  (741 filled)
+[rank 3] layers.32  (741 filled)
+[rank 1] layers.34  (787 filled)
+[rank 4] layers.33  (765 filled)
+[rank 3] layers.33  (765 filled)
+[rank 1] layers.35  (809 filled)
+[rank 0] layers.0  (0 filled)
+[rank 4] layers.34  (787 filled)
+[rank 3] layers.34  (787 filled)
+[rank 1] layers.36  (831 filled)
+[rank 2] layer 4: original packed HBM residency 902430720 bytes
+[rank 4] layers.35  (809 filled)
+[rank 3] layers.35  (809 filled)
+[rank 1] layers.37  (855 filled)
+[rank 5] layer 7: original packed HBM residency 902430720 bytes
+[rank 4] layers.36  (831 filled)
+[rank 0] layers.1  (22 filled)
+[rank 1] layers.38  (877 filled)
+[rank 3] layers.36  (831 filled)
+[rank 7] layer 6: original packed HBM residency 902430720 bytes
+[rank 6] layers.15  (357 filled)
+[rank 4] layers.37  (855 filled)
+[rank 1] layers.39  (899 filled)
+[rank 3] layers.37  (855 filled)
+[rank 6] layers.16  (379 filled)
+[rank 4] layers.38  (877 filled)
+[rank 1] embed  (921 filled)
+[rank 3] layers.38  (877 filled)
+[rank 2] layer 5: original packed HBM residency 902430720 bytes
+[rank 6] layers.17  (401 filled)
+[rank 4] layers.39  (899 filled)
+[rank 3] layers.39  (899 filled)
+[rank 5] layer 8: original packed HBM residency 902430720 bytes
+[rank 6] layers.18  (423 filled)
+[rank 4] embed  (921 filled)
+[rank 1] norm  (922 filled)
+[rank 1] head  (923 filled)
+[rank 3] embed  (921 filled)
+[rank 6] layers.19  (445 filled)
+[rank 7] layer 7: original packed HBM residency 902430720 bytes
+[rank 6] layers.20  (467 filled)
+[rank 4] norm  (922 filled)
+[rank 4] head  (923 filled)
+[rank 6] layers.21  (495 filled)
+[rank 5] layer 9: original packed HBM residency 902430720 bytes
+[rank 6] layers.22  (517 filled)
+[rank 2] layer 6: original packed HBM residency 902430720 bytes
+[rank 3] norm  (922 filled)
+[rank 3] head  (923 filled)
+[rank 6] layers.23  (539 filled)
+[rank 0] layers.2  (47 filled)
+[rank 6] layers.24  (561 filled)
+[rank 0] layers.3  (76 filled)
+[rank 7] layer 8: original packed HBM residency 902430720 bytes
+[rank 6] layers.25  (585 filled)
+[rank 0] layers.4  (98 filled)
+[rank 5] layer 10: original packed HBM residency 902430720 bytes
+[rank 6] layers.26  (607 filled)
+[rank 0] layers.5  (120 filled)
+[rank 2] layer 7: original packed HBM residency 902430720 bytes
+[rank 6] layers.27  (629 filled)
+[rank 0] layers.6  (142 filled)
+[rank 6] layers.28  (651 filled)
+[rank 0] layers.7  (164 filled)
+[rank 7] layer 9: original packed HBM residency 902430720 bytes
+[rank 6] layers.29  (675 filled)
+[rank 0] layers.8  (186 filled)
+[rank 5] layer 11: original packed HBM residency 902430720 bytes
+[rank 6] layers.30  (697 filled)
+[rank 0] layers.9  (215 filled)
+[rank 2] layer 8: original packed HBM residency 902430720 bytes
+[rank 6] layers.31  (719 filled)
+[rank 0] layers.10  (237 filled)
+[rank 1] layer 0: original packed HBM residency 902430720 bytes
+[rank 0] layers.11  (259 filled)
+[rank 6] layers.32  (741 filled)
+[rank 0] layers.12  (281 filled)
+[rank 7] layer 10: original packed HBM residency 902430720 bytes
+[rank 6] layers.33  (765 filled)
+[rank 5] layer 12: original packed HBM residency 902430720 bytes
+[rank 0] layers.13  (303 filled)
+[rank 6] layers.34  (787 filled)
+[rank 4] layer 0: original packed HBM residency 902430720 bytes
+[rank 0] layers.14  (325 filled)
+[rank 6] layers.35  (809 filled)
+[rank 2] layer 9: original packed HBM residency 902430720 bytes
+[rank 1] layer 1: original packed HBM residency 902430720 bytes
+[rank 6] layers.36  (831 filled)
+[rank 6] layers.37  (855 filled)
+[rank 5] layer 13: original packed HBM residency 902430720 bytes
+[rank 7] layer 11: original packed HBM residency 902430720 bytes
+[rank 6] layers.38  (877 filled)
+[rank 4] layer 1: original packed HBM residency 902430720 bytes
+[rank 6] layers.39  (899 filled)
+[rank 3] layer 0: original packed HBM residency 902430720 bytes
+[rank 2] layer 10: original packed HBM residency 902430720 bytes
+[rank 1] layer 2: original packed HBM residency 902430720 bytes
+[rank 6] embed  (921 filled)
+[rank 5] layer 14: original packed HBM residency 902430720 bytes
+[rank 7] layer 12: original packed HBM residency 902430720 bytes
+[rank 6] norm  (922 filled)
+[rank 6] head  (923 filled)
+[rank 0] layers.15  (357 filled)
+[rank 4] layer 2: original packed HBM residency 902430720 bytes
+[rank 0] layers.16  (379 filled)
+[rank 2] layer 11: original packed HBM residency 902430720 bytes
+[rank 1] layer 3: original packed HBM residency 902430720 bytes
+[rank 3] layer 1: original packed HBM residency 902430720 bytes
+[rank 0] layers.17  (401 filled)
+[rank 5] layer 15: original packed HBM residency 902430720 bytes
+[rank 0] layers.18  (423 filled)
+[rank 0] layers.19  (445 filled)
+[rank 7] layer 13: original packed HBM residency 902430720 bytes
+[rank 4] layer 3: original packed HBM residency 902430720 bytes
+[rank 0] layers.20  (467 filled)
+[rank 1] layer 4: original packed HBM residency 902430720 bytes
+[rank 2] layer 12: original packed HBM residency 902430720 bytes
+[rank 0] layers.21  (495 filled)
+[rank 5] layer 16: original packed HBM residency 902430720 bytes
+[rank 3] layer 2: original packed HBM residency 902430720 bytes
+[rank 0] layers.22  (517 filled)
+[rank 0] layers.23  (539 filled)
+[rank 7] layer 14: original packed HBM residency 902430720 bytes
+[rank 0] layers.24  (561 filled)
+[rank 4] layer 4: original packed HBM residency 902430720 bytes
+[rank 1] layer 5: original packed HBM residency 902430720 bytes
+[rank 0] layers.25  (585 filled)
+[rank 2] layer 13: original packed HBM residency 902430720 bytes
+[rank 5] layer 17: original packed HBM residency 902430720 bytes
+[rank 0] layers.26  (607 filled)
+[rank 0] layers.27  (629 filled)
+[rank 3] layer 3: original packed HBM residency 902430720 bytes
+[rank 0] layers.28  (651 filled)
+[rank 7] layer 15: original packed HBM residency 902430720 bytes
+[rank 1] layer 6: original packed HBM residency 902430720 bytes
+[rank 4] layer 5: original packed HBM residency 902430720 bytes
+[rank 0] layers.29  (675 filled)
+[rank 5] layer 18: original packed HBM residency 902430720 bytes
+[rank 2] layer 14: original packed HBM residency 902430720 bytes
+[rank 0] layers.30  (697 filled)
+[rank 6] layer 0: original packed HBM residency 902430720 bytes
+[rank 0] layers.31  (719 filled)
+[rank 3] layer 4: original packed HBM residency 902430720 bytes
+[rank 0] layers.32  (741 filled)
+[rank 1] layer 7: original packed HBM residency 902430720 bytes
+[rank 7] layer 16: original packed HBM residency 902430720 bytes
+[rank 4] layer 6: original packed HBM residency 902430720 bytes
+[rank 0] layers.33  (765 filled)
+[rank 5] layer 19: original packed HBM residency 902430720 bytes
+[rank 0] layers.34  (787 filled)
+[rank 2] layer 15: original packed HBM residency 902430720 bytes
+[rank 6] layer 1: original packed HBM residency 902430720 bytes
+[rank 0] layers.35  (809 filled)
+[rank 0] layers.36  (831 filled)
+[rank 1] layer 8: original packed HBM residency 902430720 bytes
+[rank 0] layers.37  (855 filled)
+[rank 7] layer 17: original packed HBM residency 902430720 bytes
+[rank 5] layer 20: original packed HBM residency 902430720 bytes
+[rank 3] layer 5: original packed HBM residency 902430720 bytes
+[rank 4] layer 7: original packed HBM residency 902430720 bytes
+[rank 0] layers.38  (877 filled)
+[rank 0] layers.39  (899 filled)
+[rank 2] layer 16: original packed HBM residency 902430720 bytes
+[rank 6] layer 2: original packed HBM residency 902430720 bytes
+[rank 0] embed  (921 filled)
+[rank 1] layer 9: original packed HBM residency 902430720 bytes
+[rank 5] layer 21: original packed HBM residency 902430720 bytes
+[rank 7] layer 18: original packed HBM residency 902430720 bytes
+[rank 4] layer 8: original packed HBM residency 902430720 bytes
+[rank 0] norm  (922 filled)
+[rank 0] head  (923 filled)
+[rank 3] layer 6: original packed HBM residency 902430720 bytes
+[rank 2] layer 17: original packed HBM residency 902430720 bytes
+[rank 1] layer 10: original packed HBM residency 902430720 bytes
+[rank 6] layer 3: original packed HBM residency 902430720 bytes
+[rank 5] layer 22: original packed HBM residency 902430720 bytes
+[rank 7] layer 19: original packed HBM residency 902430720 bytes
+[rank 4] layer 9: original packed HBM residency 902430720 bytes
+[rank 3] layer 7: original packed HBM residency 902430720 bytes
+[rank 2] layer 18: original packed HBM residency 902430720 bytes
+[rank 1] layer 11: original packed HBM residency 902430720 bytes
+[rank 5] layer 23: original packed HBM residency 902430720 bytes
+[rank 6] layer 4: original packed HBM residency 902430720 bytes
+[rank 7] layer 20: original packed HBM residency 902430720 bytes
+[rank 4] layer 10: original packed HBM residency 902430720 bytes
+[rank 3] layer 8: original packed HBM residency 902430720 bytes
+[rank 1] layer 12: original packed HBM residency 902430720 bytes
+[rank 2] layer 19: original packed HBM residency 902430720 bytes
+[rank 5] layer 24: original packed HBM residency 902430720 bytes
+[rank 6] layer 5: original packed HBM residency 902430720 bytes
+[rank 7] layer 21: original packed HBM residency 902430720 bytes
+[rank 4] layer 11: original packed HBM residency 902430720 bytes
+[rank 0] layer 0: original packed HBM residency 902430720 bytes
+[rank 1] layer 13: original packed HBM residency 902430720 bytes
+[rank 3] layer 9: original packed HBM residency 902430720 bytes
+[rank 5] layer 25: original packed HBM residency 902430720 bytes
+[rank 2] layer 20: original packed HBM residency 902430720 bytes
+[rank 6] layer 6: original packed HBM residency 902430720 bytes
+[rank 7] layer 22: original packed HBM residency 902430720 bytes
+[rank 4] layer 12: original packed HBM residency 902430720 bytes
+[rank 0] layer 1: original packed HBM residency 902430720 bytes
+[rank 1] layer 14: original packed HBM residency 902430720 bytes
+[rank 3] layer 10: original packed HBM residency 902430720 bytes
+[rank 6] layer 7: original packed HBM residency 902430720 bytes
+[rank 5] layer 26: original packed HBM residency 902430720 bytes
+[rank 2] layer 21: original packed HBM residency 902430720 bytes
+[rank 7] layer 23: original packed HBM residency 902430720 bytes
+[rank 0] layer 2: original packed HBM residency 902430720 bytes
+[rank 4] layer 13: original packed HBM residency 902430720 bytes
+[rank 1] layer 15: original packed HBM residency 902430720 bytes
+[rank 3] layer 11: original packed HBM residency 902430720 bytes
+[rank 6] layer 8: original packed HBM residency 902430720 bytes
+[rank 2] layer 22: original packed HBM residency 902430720 bytes
+[rank 5] layer 27: original packed HBM residency 902430720 bytes
+[rank 0] layer 3: original packed HBM residency 902430720 bytes
+[rank 4] layer 14: original packed HBM residency 902430720 bytes
+[rank 7] layer 24: original packed HBM residency 902430720 bytes
+[rank 1] layer 16: original packed HBM residency 902430720 bytes
+[rank 3] layer 12: original packed HBM residency 902430720 bytes
+[rank 6] layer 9: original packed HBM residency 902430720 bytes
+[rank 2] layer 23: original packed HBM residency 902430720 bytes
+[rank 0] layer 4: original packed HBM residency 902430720 bytes
+[rank 5] layer 28: original packed HBM residency 902430720 bytes
+[rank 4] layer 15: original packed HBM residency 902430720 bytes
+[rank 1] layer 17: original packed HBM residency 902430720 bytes
+[rank 7] layer 25: original packed HBM residency 902430720 bytes
+[rank 0] layer 5: original packed HBM residency 902430720 bytes
+[rank 6] layer 10: original packed HBM residency 902430720 bytes
+[rank 1] layer 18: original packed HBM residency 902430720 bytes
+[rank 2] layer 24: original packed HBM residency 902430720 bytes
+[rank 5] layer 29: original packed HBM residency 902430720 bytes
+[rank 3] layer 13: original packed HBM residency 902430720 bytes
+[rank 4] layer 16: original packed HBM residency 902430720 bytes
+[rank 7] layer 26: original packed HBM residency 902430720 bytes
+[rank 0] layer 6: original packed HBM residency 902430720 bytes
+[rank 1] layer 19: original packed HBM residency 902430720 bytes
+[rank 2] layer 25: original packed HBM residency 902430720 bytes
+[rank 6] layer 11: original packed HBM residency 902430720 bytes
+[rank 5] layer 30: original packed HBM residency 902430720 bytes
+[rank 4] layer 17: original packed HBM residency 902430720 bytes
+[rank 3] layer 14: original packed HBM residency 902430720 bytes
+[rank 7] layer 27: original packed HBM residency 902430720 bytes
+[rank 0] layer 7: original packed HBM residency 902430720 bytes
+[rank 1] layer 20: original packed HBM residency 902430720 bytes
+[rank 4] layer 18: original packed HBM residency 902430720 bytes
+[rank 6] layer 12: original packed HBM residency 902430720 bytes
+[rank 2] layer 26: original packed HBM residency 902430720 bytes
+[rank 5] layer 31: original packed HBM residency 902430720 bytes
+[rank 3] layer 15: original packed HBM residency 902430720 bytes
+[rank 0] layer 8: original packed HBM residency 902430720 bytes
+[rank 1] layer 21: original packed HBM residency 902430720 bytes
+[rank 4] layer 19: original packed HBM residency 902430720 bytes
+[rank 7] layer 28: original packed HBM residency 902430720 bytes
+[rank 6] layer 13: original packed HBM residency 902430720 bytes
+[rank 2] layer 27: original packed HBM residency 902430720 bytes
+[rank 5] layer 32: original packed HBM residency 902430720 bytes
+[rank 3] layer 16: original packed HBM residency 902430720 bytes
+[rank 1] layer 22: original packed HBM residency 902430720 bytes
+[rank 0] layer 9: original packed HBM residency 902430720 bytes
+[rank 2] layer 28: original packed HBM residency 902430720 bytes
+[rank 4] layer 20: original packed HBM residency 902430720 bytes
+[rank 6] layer 14: original packed HBM residency 902430720 bytes
+[rank 5] layer 33: original packed HBM residency 902430720 bytes
+[rank 7] layer 29: original packed HBM residency 902430720 bytes
+[rank 3] layer 17: original packed HBM residency 902430720 bytes
+[rank 1] layer 23: original packed HBM residency 902430720 bytes
+[rank 0] layer 10: original packed HBM residency 902430720 bytes
+[rank 2] layer 29: original packed HBM residency 902430720 bytes
+[rank 6] layer 15: original packed HBM residency 902430720 bytes
+[rank 4] layer 21: original packed HBM residency 902430720 bytes
+[rank 5] layer 34: original packed HBM residency 902430720 bytes
+[rank 7] layer 30: original packed HBM residency 902430720 bytes
+[rank 3] layer 18: original packed HBM residency 902430720 bytes
+[rank 0] layer 11: original packed HBM residency 902430720 bytes
+[rank 1] layer 24: original packed HBM residency 902430720 bytes
+[rank 2] layer 30: original packed HBM residency 902430720 bytes
+[rank 6] layer 16: original packed HBM residency 902430720 bytes
+[rank 4] layer 22: original packed HBM residency 902430720 bytes
+[rank 5] layer 35: original packed HBM residency 902430720 bytes
+[rank 7] layer 31: original packed HBM residency 902430720 bytes
+[rank 0] layer 12: original packed HBM residency 902430720 bytes
+[rank 1] layer 25: original packed HBM residency 902430720 bytes
+[rank 3] layer 19: original packed HBM residency 902430720 bytes
+[rank 2] layer 31: original packed HBM residency 902430720 bytes
+[rank 6] layer 17: original packed HBM residency 902430720 bytes
+[rank 4] layer 23: original packed HBM residency 902430720 bytes
+[rank 5] layer 36: original packed HBM residency 902430720 bytes
+[rank 0] layer 13: original packed HBM residency 902430720 bytes
+[rank 7] layer 32: original packed HBM residency 902430720 bytes
+[rank 1] layer 26: original packed HBM residency 902430720 bytes
+[rank 2] layer 32: original packed HBM residency 902430720 bytes
+[rank 3] layer 20: original packed HBM residency 902430720 bytes
+[rank 6] layer 18: original packed HBM residency 902430720 bytes
+[rank 4] layer 24: original packed HBM residency 902430720 bytes
+[rank 5] layer 37: original packed HBM residency 902430720 bytes
+[rank 0] layer 14: original packed HBM residency 902430720 bytes
+[rank 1] layer 27: original packed HBM residency 902430720 bytes
+[rank 7] layer 33: original packed HBM residency 902430720 bytes
+[rank 2] layer 33: original packed HBM residency 902430720 bytes
+[rank 6] layer 19: original packed HBM residency 902430720 bytes
+[rank 3] layer 21: original packed HBM residency 902430720 bytes
+[rank 4] layer 25: original packed HBM residency 902430720 bytes
+[rank 5] layer 38: original packed HBM residency 902430720 bytes
+[rank 0] layer 15: original packed HBM residency 902430720 bytes
+[rank 1] layer 28: original packed HBM residency 902430720 bytes
+[rank 2] layer 34: original packed HBM residency 902430720 bytes
+[rank 7] layer 34: original packed HBM residency 902430720 bytes
+[rank 6] layer 20: original packed HBM residency 902430720 bytes
+[rank 3] layer 22: original packed HBM residency 902430720 bytes
+[rank 4] layer 26: original packed HBM residency 902430720 bytes
+[rank 5] layer 39: original packed HBM residency 902430720 bytes
+[rank 5] original packed experts resident: 36097228800 bytes on npu:5; no weight rewrite
+[rank 5] loaded in 29.1 s
+[rank 5] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 5] prompt 20 tokens
+[rank 0] layer 16: original packed HBM residency 902430720 bytes
+[rank 1] layer 29: original packed HBM residency 902430720 bytes
+[rank 2] layer 35: original packed HBM residency 902430720 bytes
+[rank 6] layer 21: original packed HBM residency 902430720 bytes
+[rank 7] layer 35: original packed HBM residency 902430720 bytes
+[rank 3] layer 23: original packed HBM residency 902430720 bytes
+[rank 4] layer 27: original packed HBM residency 902430720 bytes
+[rank 0] layer 17: original packed HBM residency 902430720 bytes
+[rank 2] layer 36: original packed HBM residency 902430720 bytes
+[rank 1] layer 30: original packed HBM residency 902430720 bytes
+[rank 6] layer 22: original packed HBM residency 902430720 bytes
+[rank 7] layer 36: original packed HBM residency 902430720 bytes
+[rank 0] layer 18: original packed HBM residency 902430720 bytes
+[rank 3] layer 24: original packed HBM residency 902430720 bytes
+[rank 4] layer 28: original packed HBM residency 902430720 bytes
+[rank 2] layer 37: original packed HBM residency 902430720 bytes
+[rank 1] layer 31: original packed HBM residency 902430720 bytes
+[rank 6] layer 23: original packed HBM residency 902430720 bytes
+[rank 7] layer 37: original packed HBM residency 902430720 bytes
+[rank 0] layer 19: original packed HBM residency 902430720 bytes
+[rank 3] layer 25: original packed HBM residency 902430720 bytes
+[rank 2] layer 38: original packed HBM residency 902430720 bytes
+[rank 4] layer 29: original packed HBM residency 902430720 bytes
+[rank 1] layer 32: original packed HBM residency 902430720 bytes
+[rank 6] layer 24: original packed HBM residency 902430720 bytes
+[rank 0] layer 20: original packed HBM residency 902430720 bytes
+[rank 7] layer 38: original packed HBM residency 902430720 bytes
+[rank 2] layer 39: original packed HBM residency 902430720 bytes
+[rank 2] original packed experts resident: 36097228800 bytes on npu:2; no weight rewrite
+[rank 2] loaded in 31.3 s
+[rank 2] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 2] prompt 20 tokens
+[rank 3] layer 26: original packed HBM residency 902430720 bytes
+[rank 1] layer 33: original packed HBM residency 902430720 bytes
+[rank 4] layer 30: original packed HBM residency 902430720 bytes
+[rank 6] layer 25: original packed HBM residency 902430720 bytes
+[rank 0] layer 21: original packed HBM residency 902430720 bytes
+[rank 7] layer 39: original packed HBM residency 902430720 bytes
+[rank 7] original packed experts resident: 36097228800 bytes on npu:7; no weight rewrite
+[rank 7] loaded in 31.6 s
+[rank 7] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 7] prompt 20 tokens
+[rank 1] layer 34: original packed HBM residency 902430720 bytes
+[rank 3] layer 27: original packed HBM residency 902430720 bytes
+[rank 4] layer 31: original packed HBM residency 902430720 bytes
+[rank 0] layer 22: original packed HBM residency 902430720 bytes
+[rank 6] layer 26: original packed HBM residency 902430720 bytes
+[rank 1] layer 35: original packed HBM residency 902430720 bytes
+[rank 4] layer 32: original packed HBM residency 902430720 bytes
+[rank 3] layer 28: original packed HBM residency 902430720 bytes
+[rank 0] layer 23: original packed HBM residency 902430720 bytes
+[rank 6] layer 27: original packed HBM residency 902430720 bytes
+[rank 1] layer 36: original packed HBM residency 902430720 bytes
+[rank 4] layer 33: original packed HBM residency 902430720 bytes
+[rank 0] layer 24: original packed HBM residency 902430720 bytes
+[rank 3] layer 29: original packed HBM residency 902430720 bytes
+[rank 6] layer 28: original packed HBM residency 902430720 bytes
+[rank 1] layer 37: original packed HBM residency 902430720 bytes
+[rank 0] layer 25: original packed HBM residency 902430720 bytes
+[rank 4] layer 34: original packed HBM residency 902430720 bytes
+[rank 3] layer 30: original packed HBM residency 902430720 bytes
+[rank 6] layer 29: original packed HBM residency 902430720 bytes
+[rank 1] layer 38: original packed HBM residency 902430720 bytes
+[rank 0] layer 26: original packed HBM residency 902430720 bytes
+[rank 4] layer 35: original packed HBM residency 902430720 bytes
+[rank 3] layer 31: original packed HBM residency 902430720 bytes
+[rank 6] layer 30: original packed HBM residency 902430720 bytes
+[rank 1] layer 39: original packed HBM residency 902430720 bytes
+[rank 1] original packed experts resident: 36097228800 bytes on npu:1; no weight rewrite
+[rank 1] loaded in 29.0 s
+[rank 1] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 1] prompt 20 tokens
+[rank 0] layer 27: original packed HBM residency 902430720 bytes
+[rank 4] layer 36: original packed HBM residency 902430720 bytes
+[rank 3] layer 32: original packed HBM residency 902430720 bytes
+[rank 6] layer 31: original packed HBM residency 902430720 bytes
+[rank 0] layer 28: original packed HBM residency 902430720 bytes
+[rank 4] layer 37: original packed HBM residency 902430720 bytes
+[rank 3] layer 33: original packed HBM residency 902430720 bytes
+[rank 6] layer 32: original packed HBM residency 902430720 bytes
+[rank 0] layer 29: original packed HBM residency 902430720 bytes
+[rank 4] layer 38: original packed HBM residency 902430720 bytes
+[rank 3] layer 34: original packed HBM residency 902430720 bytes
+[rank 6] layer 33: original packed HBM residency 902430720 bytes
+[rank 0] layer 30: original packed HBM residency 902430720 bytes
+[rank 4] layer 39: original packed HBM residency 902430720 bytes
+[rank 4] original packed experts resident: 36097228800 bytes on npu:4; no weight rewrite
+[rank 4] loaded in 30.7 s
+[rank 4] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 4] prompt 20 tokens
+[rank 0] layer 31: original packed HBM residency 902430720 bytes
+[rank 6] layer 34: original packed HBM residency 902430720 bytes
+[rank 3] layer 35: original packed HBM residency 902430720 bytes
+[rank 0] layer 32: original packed HBM residency 902430720 bytes
+[rank 6] layer 35: original packed HBM residency 902430720 bytes
+[rank 3] layer 36: original packed HBM residency 902430720 bytes
+[rank 0] layer 33: original packed HBM residency 902430720 bytes
+[rank 6] layer 36: original packed HBM residency 902430720 bytes
+[rank 3] layer 37: original packed HBM residency 902430720 bytes
+[rank 0] layer 34: original packed HBM residency 902430720 bytes
+[rank 6] layer 37: original packed HBM residency 902430720 bytes
+[rank 3] layer 38: original packed HBM residency 902430720 bytes
+[rank 0] layer 35: original packed HBM residency 902430720 bytes
+[rank 6] layer 38: original packed HBM residency 902430720 bytes
+[rank 3] layer 39: original packed HBM residency 902430720 bytes
+[rank 3] original packed experts resident: 36097228800 bytes on npu:3; no weight rewrite
+[rank 3] loaded in 33.2 s
+[rank 3] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 3] prompt 20 tokens
+[rank 0] layer 36: original packed HBM residency 902430720 bytes
+[rank 6] layer 39: original packed HBM residency 902430720 bytes
+[rank 6] original packed experts resident: 36097228800 bytes on npu:6; no weight rewrite
+[rank 6] loaded in 33.5 s
+[rank 6] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 6] prompt 20 tokens
+[rank 0] layer 37: original packed HBM residency 902430720 bytes
+[rank 0] layer 38: original packed HBM residency 902430720 bytes
+[rank 0] layer 39: original packed HBM residency 902430720 bytes
+[rank 0] original packed experts resident: 36097228800 bytes on npu:0; no weight rewrite
+[rank 0] loaded in 29.5 s
+[rank 0] routed experts: AscendTileMajorRoutedExperts on 40 layers, world 8
+[rank 0] prompt 20 tokens
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/decode_pos.py:262: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+  return self._tensor % mod if self._tensor is not None else self._host % mod
+<workspace>/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[rank 1] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 1] decode steps: 2.5 s for 16 tokens (154 ms/token)
+[rank 5] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 5] decode steps: 2.5 s for 16 tokens (154 ms/token)
+[rank 4] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 4] decode steps: 2.5 s for 16 tokens (154 ms/token)
+[rank 3] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 3] decode steps: 2.5 s for 16 tokens (154 ms/token)
+[rank 2] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 2] decode steps: 2.5 s for 16 tokens (154 ms/token)
+[rank 0] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 0] decode steps: 2.5 s for 16 tokens (154 ms/token)
+[rank 7] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 7] decode steps: 2.5 s for 16 tokens (154 ms/token)
+[rank 6] 16 tokens in 234.1 s (14.63 s/token), stopped on isolated_authorized_Cube_probe
+[rank 6] decode steps: 2.5 s for 16 tokens (154 ms/token)

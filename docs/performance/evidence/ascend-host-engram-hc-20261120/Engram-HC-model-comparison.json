@@ -1,0 +1,1627 @@
+{
+  "modes": {
+    "host": {
+      "timed_steps": 16,
+      "slowest_rank_seconds": 2.81655919412151,
+      "TPS": 5.6806901248139505,
+      "ms_per_forward": 176.03494963259436,
+      "timed_context": [
+        24,
+        40
+      ],
+      "timed_tokens": [
+        14,
+        223,
+        21,
+        14,
+        77199,
+        223,
+        1457,
+        16,
+        1,
+        1119,
+        201,
+        15,
+        2454,
+        477,
+        223,
+        20
+      ],
+      "all_rank_teacher_logits_bit_equal": true,
+      "all_rank_final_FP32_logits_bit_equal": true,
+      "all_rank_timed_tokens_equal": true,
+      "all_teacher_greedy_match_original_exact": true
+    },
+    "device": {
+      "timed_steps": 16,
+      "slowest_rank_seconds": 2.6627982980571687,
+      "TPS": 6.008716473821514,
+      "ms_per_forward": 166.42489362857305,
+      "timed_context": [
+        24,
+        40
+      ],
+      "timed_tokens": [
+        14,
+        223,
+        21,
+        14,
+        77199,
+        223,
+        1457,
+        16,
+        1,
+        1119,
+        3295,
+        16,
+        1,
+        1119,
+        3295,
+        16
+      ],
+      "all_rank_teacher_logits_bit_equal": true,
+      "all_rank_final_FP32_logits_bit_equal": true,
+      "all_rank_timed_tokens_equal": true,
+      "all_teacher_greedy_match_original_exact": true
+    },
+    "device-hc": {
+      "timed_steps": 16,
+      "slowest_rank_seconds": 2.6136250561103225,
+      "TPS": 6.121765615383139,
+      "ms_per_forward": 163.35156600689515,
+      "timed_context": [
+        24,
+        40
+      ],
+      "timed_tokens": [
+        14,
+        223,
+        21,
+        14,
+        77199,
+        223,
+        1457,
+        16,
+        1,
+        1119,
+        3295,
+        16,
+        1,
+        1119,
+        3295,
+        16
+      ],
+      "all_rank_teacher_logits_bit_equal": true,
+      "all_rank_final_FP32_logits_bit_equal": true,
+      "all_rank_timed_tokens_equal": true,
+      "all_teacher_greedy_match_original_exact": true
+    },
+    "device-hc-64": {
+      "timed_steps": 64,
+      "slowest_rank_seconds": 10.264790673740208,
+      "TPS": 6.234905516751288,
+      "ms_per_forward": 160.38735427719075,
+      "timed_context": [
+        24,
+        88
+      ],
+      "timed_tokens": [
+        14,
+        223,
+        21,
+        14,
+        77199,
+        223,
+        1457,
+        16,
+        1,
+        1119,
+        3295,
+        16,
+        1,
+        1119,
+        3295,
+        16,
+        342,
+        1309,
+        304,
+        2310,
+        270,
+        18392,
+        538,
+        223,
+        19,
+        1407,
+        223,
+        1457,
+        295,
+        2496,
+        14,
+        17919,
+        513,
+        100396,
+        16,
+        455,
+        2310,
+        344,
+        28,
+        223,
+        19,
+        14,
+        223,
+        20,
+        14,
+        223,
+        21,
+        14,
+        77199,
+        223,
+        1457,
+        16,
+        1,
+        1119,
+        3295,
+        16,
+        342,
+        1309,
+        304,
+        2310,
+        270,
+        18392,
+        538,
+        223
+      ],
+      "all_rank_teacher_logits_bit_equal": true,
+      "all_rank_final_FP32_logits_bit_equal": true,
+      "all_rank_timed_tokens_equal": true,
+      "all_teacher_greedy_match_original_exact": true
+    }
+  },
+  "pairs": {
+    "host_to_device": [
+      {
+        "rank": 0,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      },
+      {
+        "rank": 1,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      },
+      {
+        "rank": 2,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      },
+      {
+        "rank": 3,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      },
+      {
+        "rank": 4,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      },
+      {
+        "rank": 5,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      },
+      {
+        "rank": 6,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      },
+      {
+        "rank": 7,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.4756218194961548,
+            "relative_L2_difference": 0.11341207474470139,
+            "reference_to_candidate_KL_FP64_analysis": 9.353043929764544e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5012269020080566,
+            "relative_L2_difference": 0.1223808005452156,
+            "reference_to_candidate_KL_FP64_analysis": 0.0003527767562783986,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5867748260498047,
+            "relative_L2_difference": 0.11989028751850128,
+            "reference_to_candidate_KL_FP64_analysis": 0.0015191623279613323,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.8158855438232422,
+            "relative_L2_difference": 0.13877154886722565,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007643728129036254,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.5951125621795654,
+            "relative_L2_difference": 0.11134424060583115,
+            "reference_to_candidate_KL_FP64_analysis": 0.0001246497568112732,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.3222980499267578,
+            "relative_L2_difference": 0.08275698125362396,
+            "reference_to_candidate_KL_FP64_analysis": 0.00032514665958319715,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 2.5520224571228027,
+            "relative_L2_difference": 0.2808755338191986,
+            "reference_to_candidate_KL_FP64_analysis": 1.3291537260561828e-05,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 129280,
+            "max_abs_difference": 1.739715814590454,
+            "relative_L2_difference": 0.14141212403774261,
+            "reference_to_candidate_KL_FP64_analysis": 0.0007611649701624954,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 129280,
+        "same_timed_tokens": false,
+        "first_different_timed_output_index": 10
+      }
+    ],
+    "device_to_device-hc": [
+      {
+        "rank": 0,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      },
+      {
+        "rank": 1,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      },
+      {
+        "rank": 2,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      },
+      {
+        "rank": 3,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      },
+      {
+        "rank": 4,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      },
+      {
+        "rank": 5,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      },
+      {
+        "rank": 6,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      },
+      {
+        "rank": 7,
+        "teacher_metrics": [
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          },
+          {
+            "FP32_bit_differences": 0,
+            "max_abs_difference": 0.0,
+            "relative_L2_difference": 0.0,
+            "reference_to_candidate_KL_FP64_analysis": 0.0,
+            "greedy_matches": true
+          }
+        ],
+        "final_logits_FP32_bit_differences": 0,
+        "same_timed_tokens": true,
+        "first_different_timed_output_index": null
+      }
+    ]
+  },
+  "artifact_hashes": {
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-0.json": {
+      "sha256": "a2442d9f316178854acde473c6d0444568b918297b40e1c89ae66e313efca85f",
+      "bytes": 108932
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-0.pt": {
+      "sha256": "adcc3523218decf2a7f6327f2150a0e366a122f066a3d2a2bdd7a5ec976b2e7e",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-0.pt": {
+      "sha256": "bb85d13e5570dd93cb920b59019aa041e5491e01a00a56e6663a0a2462674e39",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-1.json": {
+      "sha256": "8cc74753a30da8c6102aa3e988418b93d35721ada51fd4ca485f03f6d123ef57",
+      "bytes": 108908
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-1.pt": {
+      "sha256": "a1745e61ca8795c4d3c3d20cf833cc4649fbfb006c842ad98d28470daf3ba6b8",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-1.pt": {
+      "sha256": "611a5013a07ff6ce47831dd0d4371338dc499107f141bf2c158a15e98cba6c48",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-2.json": {
+      "sha256": "f5be6bb264fe7f31c23c42ae5c5ece0cd0fccf02b44e5b68450be744f1102ff9",
+      "bytes": 108904
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-2.pt": {
+      "sha256": "45a812a79dbe404d42bc56e28e2e1b92884d066343d06e8a8b1c6f065d5ee3f8",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-2.pt": {
+      "sha256": "9ece0d90790070b0920131b4a4d05d37572a9f7ed9382b9e08bddd0cc305bbb6",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-3.json": {
+      "sha256": "3baa556c9e04cd0f8a98c0c680c3d85b1b201fbff084b80ba9a81b4b90918208",
+      "bytes": 108899
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-3.pt": {
+      "sha256": "853dc27904fbc68104b3b02209a585eeec3086e509c73c39091304e09a76f25b",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-3.pt": {
+      "sha256": "2a23a940d7d427a288e623b96237c02e82b598009cfe9348148f3c7c301c3daf",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-4.json": {
+      "sha256": "c7e2f38b1aef84ba15414e037f6f80001870383c906e0fb73a413c22f27d2964",
+      "bytes": 108897
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-4.pt": {
+      "sha256": "f30cb048f6d378738ef8179b8d5ca3a9be42f68796eb9a38cdbdbd2a96589f7c",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-4.pt": {
+      "sha256": "95ae2bb8655f40e650076336984998b12af425320f1a4d756c186fd899361b50",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-5.json": {
+      "sha256": "b31d408aeeea6a537408beb3457d87ca07fb40495b177a11595a9ee9aa293b24",
+      "bytes": 108907
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-5.pt": {
+      "sha256": "8212f85a1266dfe02d7ba9973a6ab19a869a18d4b5c9d909b9003bf19a4ff84d",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-5.pt": {
+      "sha256": "deba780ff9ff2cdf047a007bd6e9bcedfb8b047445139968420f52bcfcb0fe57",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-6.json": {
+      "sha256": "2cd91f18ec284e2e0df8e1f4986a4e88ebfb135ecc74aef31911c86a1bc9d504",
+      "bytes": 108902
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-6.pt": {
+      "sha256": "f4cdfbf7089052f3653b2d55ac0f1bc6349429a666886e81cd189a4d4bdcc3f2",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-6.pt": {
+      "sha256": "a357f45b54a90495899fe29c1ddbeb6ef81274c2f27ee553006233b80e70abdb",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-model-rank-7.json": {
+      "sha256": "bf1680608a550cc336b51ca11e684440b6c8df08393684313e4de74c06ca76f1",
+      "bytes": 108909
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-quality-logits-rank-7.pt": {
+      "sha256": "814040e6b5203947030d1db8abf824ac01fd7cfd4a25c73a82cce2ca5cba7355",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-host-engram-native-baseline-20261120T074354Z/Cube-final-logits-rank-7.pt": {
+      "sha256": "fe96e287d858004603450c350a8f525e4a64cda18b5c7ab51a4c2dec1fdd14ca",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-0.json": {
+      "sha256": "d7367484449b1e9f0ffe3990ef1e835cadc3112b1e619ae291139fab52e55dc0",
+      "bytes": 109788
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-0.pt": {
+      "sha256": "61c9b618349a8f5c2b0dac258d3dca275d730b57a84f3e6842c00381a4cddb67",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-0.pt": {
+      "sha256": "43dcf84c5e52b1ba8d48935da2a96a919f615128bb661d0951e54ed88b3203c8",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-1.json": {
+      "sha256": "f488af55f18dfa6c29ddeb6d36e3da84fa86a5261a9b76cf1ad9d8e8d97a1565",
+      "bytes": 109788
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-1.pt": {
+      "sha256": "f296d407101dc031d9dd58f03d3f66c846006d4b089b6e7cd703a084de9f46c0",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-1.pt": {
+      "sha256": "e4033025092ee366bded984c4f9dda873fa875128124695c073fd3640be809d3",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-2.json": {
+      "sha256": "0874e226e1d3a454a5031de170287d06d66232d16904af5236c61346bb0d259b",
+      "bytes": 109790
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-2.pt": {
+      "sha256": "7dcc84304ad165a76dd86a71bab820b33108ea19ea9778ee866047c3b21cf9ba",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-2.pt": {
+      "sha256": "2938cdbfa7d385fd11c6773053dbc85402ad241ec15bf518cac3cff230be0b5d",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-3.json": {
+      "sha256": "bfbf760ecd6b1ad5cc4d755d6faa6dc4edf5cdc0ecae7821d1496a8b2ea68c8e",
+      "bytes": 109781
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-3.pt": {
+      "sha256": "78151f452dcd6e7e95bfc6c2ff404011505e53ff4b81b1c3642c313a1968691f",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-3.pt": {
+      "sha256": "b1b808754e59d1889ce52278ac9d67732d3778031a3ed7a7d299f2e346ece5d0",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-4.json": {
+      "sha256": "9def7c36e3f61e458e0945370a0d02a27fd17a295a1e65a667c673bb65f8aeee",
+      "bytes": 109785
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-4.pt": {
+      "sha256": "f029a868669869cdb78bc2cace4323d319d940e11d445a9c21269682fb741bff",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-4.pt": {
+      "sha256": "19bce9b0aad8ea9b07a63aa7de4c736c09bd7d58ff67e722c705cdc0749c2769",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-5.json": {
+      "sha256": "69ca823e3b801b9eb92049cd3a91aee3fdccf89b16c2926c5b4ad40ed365499d",
+      "bytes": 109787
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-5.pt": {
+      "sha256": "da106900a9c9f74e61389330f7e24bc08de7309087d8b05e6217fa240935d69c",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-5.pt": {
+      "sha256": "a4b8990563ad3734206dd5abd2c53974e1e152b68a8de206877b2cba4af11471",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-6.json": {
+      "sha256": "fb7c17bfe769a28d159d15b4a4cda28679fd0082228c3f2dd7f6540daf76908e",
+      "bytes": 109785
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-6.pt": {
+      "sha256": "a826fe1957bcea7f70a7719859856e459fd13d7a6b2deebf029905e7629d6023",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-6.pt": {
+      "sha256": "fdadf4941cfcbe2a8629aa59c3583090f0401c7687f5a0101b38ab5e0f59d2bf",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-model-rank-7.json": {
+      "sha256": "459fd3576ea21fe7a5675310a533f146bc20cfaf994a22fbcd23bba647b9844c",
+      "bytes": 109789
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-quality-logits-rank-7.pt": {
+      "sha256": "49784c24fc550561e5fbf7e18ba50e824c6b631cc6f62e55c0f1f0c37cbe9134",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-engram-native-baseline-20261120T073354Z/Cube-final-logits-rank-7.pt": {
+      "sha256": "a9bde983de35343505e8b0e5c8069a9599ea13b63a661f8584014cdf50bd5fde",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-0.json": {
+      "sha256": "bd922c2f7e8aae2d196b14c225c21bf9c2c8fb3ba86f5ffe1ef54a11eecd964e",
+      "bytes": 113299
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-0.pt": {
+      "sha256": "61c9b618349a8f5c2b0dac258d3dca275d730b57a84f3e6842c00381a4cddb67",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-0.pt": {
+      "sha256": "43dcf84c5e52b1ba8d48935da2a96a919f615128bb661d0951e54ed88b3203c8",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-1.json": {
+      "sha256": "f3ba1cd223ec9932ad50dcf388ed2bbe136e451478b53ebc0cc2b0de9c1ea043",
+      "bytes": 113301
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-1.pt": {
+      "sha256": "f296d407101dc031d9dd58f03d3f66c846006d4b089b6e7cd703a084de9f46c0",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-1.pt": {
+      "sha256": "e4033025092ee366bded984c4f9dda873fa875128124695c073fd3640be809d3",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-2.json": {
+      "sha256": "f1ce1b69cce5155078bf7737d41c7b732a393a31a0a561b0aace825be4d7b7a2",
+      "bytes": 113300
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-2.pt": {
+      "sha256": "7dcc84304ad165a76dd86a71bab820b33108ea19ea9778ee866047c3b21cf9ba",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-2.pt": {
+      "sha256": "2938cdbfa7d385fd11c6773053dbc85402ad241ec15bf518cac3cff230be0b5d",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-3.json": {
+      "sha256": "82327c8bf4ea7340c979344656cbe73c6a3ee8ba6b27bd55ac9678d4d1a32728",
+      "bytes": 113293
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-3.pt": {
+      "sha256": "78151f452dcd6e7e95bfc6c2ff404011505e53ff4b81b1c3642c313a1968691f",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-3.pt": {
+      "sha256": "b1b808754e59d1889ce52278ac9d67732d3778031a3ed7a7d299f2e346ece5d0",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-4.json": {
+      "sha256": "4c54592a380b25f3c40703b09c83785d7e9f2667cae691ba5e54c5972b9dd73a",
+      "bytes": 113299
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-4.pt": {
+      "sha256": "f029a868669869cdb78bc2cace4323d319d940e11d445a9c21269682fb741bff",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-4.pt": {
+      "sha256": "19bce9b0aad8ea9b07a63aa7de4c736c09bd7d58ff67e722c705cdc0749c2769",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-5.json": {
+      "sha256": "5c1157e238f221255023dec7d5edecbeb7d0a1d8383e22af09127f91fb163ec9",
+      "bytes": 113299
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-5.pt": {
+      "sha256": "da106900a9c9f74e61389330f7e24bc08de7309087d8b05e6217fa240935d69c",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-5.pt": {
+      "sha256": "a4b8990563ad3734206dd5abd2c53974e1e152b68a8de206877b2cba4af11471",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-6.json": {
+      "sha256": "0beeb25a705bc07d2db5549b38bde1b2486e620710511dd74da6309ac999133d",
+      "bytes": 113301
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-6.pt": {
+      "sha256": "a826fe1957bcea7f70a7719859856e459fd13d7a6b2deebf029905e7629d6023",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-6.pt": {
+      "sha256": "fdadf4941cfcbe2a8629aa59c3583090f0401c7687f5a0101b38ab5e0f59d2bf",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-model-rank-7.json": {
+      "sha256": "56284fd97489cb130184c69689f5bcbeb0e1cbb3b47cf32f2d1237ee0ae2ac1e",
+      "bytes": 113305
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-quality-logits-rank-7.pt": {
+      "sha256": "49784c24fc550561e5fbf7e18ba50e824c6b631cc6f62e55c0f1f0c37cbe9134",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-20261120T081755Z/Cube-final-logits-rank-7.pt": {
+      "sha256": "a9bde983de35343505e8b0e5c8069a9599ea13b63a661f8584014cdf50bd5fde",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-0.json": {
+      "sha256": "8a391560666bb9e69439f061f9737a6b5be36b479a685656d7a49f9049ecc81f",
+      "bytes": 115076
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-0.pt": {
+      "sha256": "61c9b618349a8f5c2b0dac258d3dca275d730b57a84f3e6842c00381a4cddb67",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-0.pt": {
+      "sha256": "b2479b0efa3cf5b6a5f3ce91950daa250232ce76434eb4b66903db8529cf4c8f",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-1.json": {
+      "sha256": "d69773b95b81bcf1027234d1938a5c4de3aa498f3f8d81f5041d46ee878b4160",
+      "bytes": 115067
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-1.pt": {
+      "sha256": "f296d407101dc031d9dd58f03d3f66c846006d4b089b6e7cd703a084de9f46c0",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-1.pt": {
+      "sha256": "72ef7c27be88cbb4cbca89b7e011282c667ad277231a9a32df7acf86dbf760a0",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-2.json": {
+      "sha256": "aeae2dc0f854929f7ac9d630cc73e5cd1cffcded33138b5483af2793d8da49a5",
+      "bytes": 115078
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-2.pt": {
+      "sha256": "7dcc84304ad165a76dd86a71bab820b33108ea19ea9778ee866047c3b21cf9ba",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-2.pt": {
+      "sha256": "709183e8f7dac32dd7f8cea433fc6b385eba6310820fe84ffc028b6c80023e59",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-3.json": {
+      "sha256": "72fb2b2a1d5de873d726a12c93ee1c25c0d38036c5db3ec359fb57f4d5474d73",
+      "bytes": 115074
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-3.pt": {
+      "sha256": "78151f452dcd6e7e95bfc6c2ff404011505e53ff4b81b1c3642c313a1968691f",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-3.pt": {
+      "sha256": "a9e61cf91c7b85b2e397e12f9224aa47236523cd7ba53f4b5b6ec57c493fa9ad",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-4.json": {
+      "sha256": "6c7a8d4c011d2e915dd9cba4a9a56c1bcbd4c7322a57ee4e95f43ac51c1fdc44",
+      "bytes": 115071
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-4.pt": {
+      "sha256": "f029a868669869cdb78bc2cace4323d319d940e11d445a9c21269682fb741bff",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-4.pt": {
+      "sha256": "58051c038211416ed5369c7022de44213e2ee1bb688c462ddf7fa0c389d1ad79",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-5.json": {
+      "sha256": "b678cb2ac7b4d546c614e44fb4e841c817da21b38debf7eaca14b57b6812376c",
+      "bytes": 115081
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-5.pt": {
+      "sha256": "da106900a9c9f74e61389330f7e24bc08de7309087d8b05e6217fa240935d69c",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-5.pt": {
+      "sha256": "20e6483cb90ff40c113cade8161edb4f542fea9fe3ae3a2ef09c07fe6a46a106",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-6.json": {
+      "sha256": "1d117e59fad550bec3d585b33a74103d8e58e45d42b44ceb358b1e9453d7b017",
+      "bytes": 115080
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-6.pt": {
+      "sha256": "a826fe1957bcea7f70a7719859856e459fd13d7a6b2deebf029905e7629d6023",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-6.pt": {
+      "sha256": "60998f05e12603cd8078ba85f2844df53492de6d54853b54fb60ef84ae8faf2d",
+      "bytes": 518880
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-model-rank-7.json": {
+      "sha256": "a877e895a178a98e5db1764dcc637d5bbb6702e010a9b92f42dd6f3d9176c23f",
+      "bytes": 115081
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-quality-logits-rank-7.pt": {
+      "sha256": "49784c24fc550561e5fbf7e18ba50e824c6b631cc6f62e55c0f1f0c37cbe9134",
+      "bytes": 8276029
+    },
+    "<workspace>/relic-v41-perf-20261118-0938/logs/original-host-table-device-hc-engram-native-baseline-steps64-20261120T083149Z/Cube-final-logits-rank-7.pt": {
+      "sha256": "2b16f37bdec3ec5d37cd7e6d827171e624f644d2ae9dc3abd0045b8aaaa78649",
+      "bytes": 518880
+    }
+  },
+  "all_8_ranks_checked": true,
+  "teacher_steps": 8,
+  "paired_timed_steps": 16,
+  "same_exact_reference_bits_between_pairs": true,
+  "native_Engram_changes_generation_trajectory": true,
+  "HC_only_all_rank_teacher_FP32_bit_differences": 0,
+  "HC_only_all_rank_final_FP32_bit_differences": 0,
+  "HC_only_bit_parity_passed_in_this_full_model_window": true,
+  "64_step_repeat_prefix_16_equal": true,
+  "quality_comparison_CPU_only_not_a_TPS_window": true,
+  "native_Engram_not_a_bit_neutral_change": true,
+  "small_teacher_window_is_not_general_model_quality_acceptance": true,
+  "production_defaults_and_original_checkpoint_unchanged": true,
+  "host_to_device": {
+    "observed_TPS_ratio": 1.0577441018257103,
+    "observed_latency_reduction_ms": 9.610056004021317,
+    "same_timed_token_stream": false,
+    "isolated_same_stream_speedup_not_established": true
+  },
+  "device_to_device-hc": {
+    "observed_TPS_ratio": 1.0188141913591948,
+    "observed_latency_reduction_ms": 3.0733276216778904,
+    "same_timed_token_stream": true,
+    "isolated_same_stream_speedup_not_established": false
+  },
+  "host_to_device-hc": {
+    "observed_TPS_ratio": 1.077644701766519,
+    "observed_latency_reduction_ms": 12.683383625699207,
+    "same_timed_token_stream": false,
+    "isolated_same_stream_speedup_not_established": true
+  }
+}

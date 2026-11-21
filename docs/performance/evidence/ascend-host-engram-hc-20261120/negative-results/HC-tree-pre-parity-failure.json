@@ -1,0 +1,108 @@
+{
+  "comparisons": [
+    {
+      "case": 0,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 1,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 2,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 3,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 4,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 5,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 6,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 7,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 8,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 9,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 10,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 11,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 12,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 13,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 14,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 15,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 16,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 17,
+      "pre_bit_differences": 0,
+      "post_bit_differences": 0
+    },
+    {
+      "case": 18,
+      "pre_bit_differences": 1,
+      "post_bit_differences": 0,
+      "pre_max_abs": 2.9802322387695312e-08,
+      "post_max_abs": 0.0
+    }
+  ],
+  "failure": {
+    "case": 18,
+    "pre_bit_differences": 1,
+    "post_bit_differences": 0,
+    "pre_max_abs": 2.9802322387695312e-08,
+    "post_max_abs": 0.0
+  }
+}

@@ -1,0 +1,67 @@
+.........................................FF.......................       [100%]
+=================================== FAILURES ===================================
+_________ test_npu_inplace_matches_the_reference_dequantization[e8m0] __________
+
+scale_format = 'e8m0'
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    def test_npu_inplace_matches_the_reference_dequantization(scale_format):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(505)
+        x = _blocks(7, 32, generator).to(torch.bfloat16)
+        expected = x.clone()
+        quantize_block_fp4(expected, 32, scale_format, inplace=True, backend="torch")
+        device_x = x.to(NPU_DEVICE)
+        result = quantize_block_fp4(device_x, 32, scale_format, inplace=True, backend="triton")
+        torch.npu.synchronize()
+        assert result is device_x
+>       assert torch.equal(device_x.cpu().view(torch.int16), expected.view(torch.int16))
+E       AssertionError: assert False
+E        +  where False = <built-in method equal of type object at 0xffff94fafb18>(tensor([[     0,  16768, -16000,  16576,      0,  16576,  16640,  16704, -16064,\n         -16192,  16512,  16384, -162...,  16384, -16000,      0,      0, -16384,  16576,\n         -16064,  16832,      0, -16256, -16384]], dtype=torch.int16), tensor([[-32768,  16768, -16000,  16576,      0,  16576,  16640,  16704, -16064,\n         -16192,  16512,  16384, -162...,  16384, -16000,      0, -32768, -16384,  16576,\n         -16064,  16832,      0, -16256, -16384]], dtype=torch.int16))
+E        +    where <built-in method equal of type object at 0xffff94fafb18> = torch.equal
+E        +    and   tensor([[     0,  16768, -16000,  16576,      0,  16576,  16640,  16704, -16064,\n         -16192,  16512,  16384, -162...,  16384, -16000,      0,      0, -16384,  16576,\n         -16064,  16832,      0, -16256, -16384]], dtype=torch.int16) = <built-in method view of Tensor object at 0xffff20d43f70>(torch.int16)
+E        +      where <built-in method view of Tensor object at 0xffff20d43f70> = tensor([[  0.,  16., -16.,   6.,   0.,   6.,   8.,  12., -12.,  -6.,   4.,   2.,\n          -4.,   4.,   8.,   2.,  -2...., -16.,   4.,   2., -16.,   0.,\n           0.,  -2.,   6., -12.,  24.,   0.,  -4.,  -2.]],\n       dtype=torch.bfloat16).view
+E        +        where tensor([[  0.,  16., -16.,   6.,   0.,   6.,   8.,  12., -12.,  -6.,   4.,   2.,\n          -4.,   4.,   8.,   2.,  -2...., -16.,   4.,   2., -16.,   0.,\n           0.,  -2.,   6., -12.,  24.,   0.,  -4.,  -2.]],\n       dtype=torch.bfloat16) = <built-in method cpu of Tensor object at 0xffff20eb51d0>()
+E        +          where <built-in method cpu of Tensor object at 0xffff20eb51d0> = tensor([[  0.,  16., -16.,   6.,   0.,   6.,   8.,  12., -12.,  -6.,   4.,   2.,\n          -4.,   4.,   8.,   2.,  -2....2., -16.,   0.,\n           0.,  -2.,   6., -12.,  24.,   0.,  -4.,  -2.]], device='npu:0',\n       dtype=torch.bfloat16).cpu
+E        +      and   torch.int16 = torch.int16
+E        +    and   tensor([[-32768,  16768, -16000,  16576,      0,  16576,  16640,  16704, -16064,\n         -16192,  16512,  16384, -162...,  16384, -16000,      0, -32768, -16384,  16576,\n         -16064,  16832,      0, -16256, -16384]], dtype=torch.int16) = <built-in method view of Tensor object at 0xffff20eb6ee0>(torch.int16)
+E        +      where <built-in method view of Tensor object at 0xffff20eb6ee0> = tensor([[ -0.,  16., -16.,   6.,   0.,   6.,   8.,  12., -12.,  -6.,   4.,   2.,\n          -4.,   4.,   8.,   2.,  -2...., -16.,   4.,   2., -16.,   0.,\n          -0.,  -2.,   6., -12.,  24.,   0.,  -4.,  -2.]],\n       dtype=torch.bfloat16).view
+E        +      and   torch.int16 = torch.int16
+
+tests/test_block_fp4_quant.py:545: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[W1117 15:41:42.534558858 ToKernelNpu.cpp:40] Warning: Device do not support double dtype now, dtype cast replace with float. (function operator())
+_________ test_npu_inplace_matches_the_reference_dequantization[e4m3] __________
+
+scale_format = 'e4m3'
+
+    @requires_npu
+    @pytest.mark.parametrize("scale_format", ["e8m0", "e4m3"])
+    def test_npu_inplace_matches_the_reference_dequantization(scale_format):
+        if not supports_triton_ascend():
+            pytest.fail("an explicitly requested NPU run requires the installed Triton Ascend backend")
+        generator = torch.Generator().manual_seed(505)
+        x = _blocks(7, 32, generator).to(torch.bfloat16)
+        expected = x.clone()
+        quantize_block_fp4(expected, 32, scale_format, inplace=True, backend="torch")
+        device_x = x.to(NPU_DEVICE)
+        result = quantize_block_fp4(device_x, 32, scale_format, inplace=True, backend="triton")
+        torch.npu.synchronize()
+        assert result is device_x
+>       assert torch.equal(device_x.cpu().view(torch.int16), expected.view(torch.int16))
+E       AssertionError: assert False
+E        +  where False = <built-in method equal of type object at 0xffff94fafb18>(tensor([[-16432,  16796, -15972,  16540,      0,  16540,  16592,  16720, -16048,\n         -16228,  16464,  16336, -163...,  16352, -16032,      0,      0, -16288,  16552,\n         -16032,  16808,  16352, -16216, -16416]], dtype=torch.int16), tensor([[-16432,  16796, -15972,  16540,      0,  16540,  16592,  16720, -16048,\n         -16228,  16464,  16336, -163...,  16352, -16032,      0, -32768, -16288,  16552,\n         -16032,  16808,  16352, -16216, -16416]], dtype=torch.int16))
+E        +    where <built-in method equal of type object at 0xffff94fafb18> = torch.equal
+E        +    and   tensor([[-16432,  16796, -15972,  16540,      0,  16540,  16592,  16720, -16048,\n         -16228,  16464,  16336, -163...,  16352, -16032,      0,      0, -16288,  16552,\n         -16032,  16808,  16352, -16216, -16416]], dtype=torch.int16) = <built-in method view of Tensor object at 0xffff20d42da0>(torch.int16)
+E        +      where <built-in method view of Tensor object at 0xffff20d42da0> = tensor([[ -1.6250,  19.5000, -19.5000,   4.8750,   0.0000,   4.8750,   6.5000,\n          13.0000, -13.0000,  -4.8750, ....0000,   0.0000,  -3.5000,   5.2500, -14.0000,\n          21.0000,   1.7500,  -5.2500,  -1.7500]], dtype=torch.bfloat16).view
+E        +        where tensor([[ -1.6250,  19.5000, -19.5000,   4.8750,   0.0000,   4.8750,   6.5000,\n          13.0000, -13.0000,  -4.8750, ....0000,   0.0000,  -3.5000,   5.2500, -14.0000,\n          21.0000,   1.7500,  -5.2500,  -1.7500]], dtype=torch.bfloat16) = <built-in method cpu of Tensor object at 0xffff20f04eb0>()
+E        +          where <built-in method cpu of Tensor object at 0xffff20f04eb0> = tensor([[ -1.6250,  19.5000, -19.5000,   4.8750,   0.0000,   4.8750,   6.5000,\n          13.0000, -13.0000,  -4.8750, ...00,   5.2500, -14.0000,\n          21.0000,   1.7500,  -5.2500,  -1.7500]], device='npu:0',\n       dtype=torch.bfloat16).cpu
+E        +      and   torch.int16 = torch.int16
+E        +    and   tensor([[-16432,  16796, -15972,  16540,      0,  16540,  16592,  16720, -16048,\n         -16228,  16464,  16336, -163...,  16352, -16032,      0, -32768, -16288,  16552,\n         -16032,  16808,  16352, -16216, -16416]], dtype=torch.int16) = <built-in method view of Tensor object at 0xffff21115540>(torch.int16)
+E        +      where <built-in method view of Tensor object at 0xffff21115540> = tensor([[ -1.6250,  19.5000, -19.5000,   4.8750,   0.0000,   4.8750,   6.5000,\n          13.0000, -13.0000,  -4.8750, ....0000,  -0.0000,  -3.5000,   5.2500, -14.0000,\n          21.0000,   1.7500,  -5.2500,  -1.7500]], dtype=torch.bfloat16).view
+E        +      and   torch.int16 = torch.int16
+
+tests/test_block_fp4_quant.py:545: AssertionError
+2 failed, 64 passed in 66.15s (0:01:06)

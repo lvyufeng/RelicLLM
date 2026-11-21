@@ -1,0 +1,132 @@
+{
+  "milestone": "round 3: attribution of the remaining cost of the 4.934599 TPS candidate",
+  "file_count": 20,
+  "total_bytes": 1677744,
+  "files": [
+    {
+      "path": "benchmark_int4_support_v2.py",
+      "bytes": 4281,
+      "sha256": "b415bc66bfb5e258cf80cc1f1e522f69cd140690f86372ef6e26f3fcd288369c"
+    },
+    {
+      "path": "benchmark_reduce_floor.py",
+      "bytes": 3836,
+      "sha256": "0ab08dde40c862d8d2b9ec5ebc16ec08f5553c2e7b40df2387459979f8333ff5"
+    },
+    {
+      "path": "hardware-4bit-probe/int4-support-probe-v2.json",
+      "bytes": 2277,
+      "sha256": "a60d33aba7c46f630e7657718201a11e4179f34176aac2a840401c882ffbfe91"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-0.json",
+      "bytes": 95983,
+      "sha256": "0c826d5f87197cf460b59bdef6f0c0b3d18a8e9b978826e37cd48c6d93f6df0b"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-1.json",
+      "bytes": 95967,
+      "sha256": "3a89399cfd330b49571655dad4484bf0dfc0907c414781d3ccbb0b64169c27a2"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-2.json",
+      "bytes": 95967,
+      "sha256": "57af9c4c52568fe67f6c7511b94a835adac059fbea972bbad7484bf47c0e3e33"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-3.json",
+      "bytes": 95968,
+      "sha256": "e027b4a4d5c75fb21364d0ad4ffb674bb125d5607c6aa64eed422cf9f43869a6"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-4.json",
+      "bytes": 95972,
+      "sha256": "72f1fabbe89b5cf50e75da109745d3968b24ddf2cc77f9d7fc87fd3c93c7222d"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-5.json",
+      "bytes": 95969,
+      "sha256": "22c448171085d8c71a8433a9c60bd8d9770a36d22136ab3c53e56ceb420afe60"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-6.json",
+      "bytes": 95966,
+      "sha256": "109bdb803ba0e3aaeddfd86a561779f29e4bdff43bbbd55ea031b39aa0058e2b"
+    },
+    {
+      "path": "operand-cache-loses-to-recorded-bodies/Cube-model-rank-7.json",
+      "bytes": 95975,
+      "sha256": "1b1b594c272623649d9f8f30a9d2be96b2084a7db918300be50a6cf70c3ba157"
+    },
+    {
+      "path": "profile_actual_cube.py",
+      "bytes": 26669,
+      "sha256": "0c8a493a4050c756235bacda9eb9dc286a41063459394850745bfc1c23bc293b"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-0.json",
+      "bytes": 109137,
+      "sha256": "9b0955f6a72fbb9976f0e100c484310620ad4f7554312afdcc58b80c70e16708"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-1.json",
+      "bytes": 109110,
+      "sha256": "cf8d2df73f3ed40fc452d9c0ecb875946ece592dd79c6868290405a53f1c5bfd"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-2.json",
+      "bytes": 109113,
+      "sha256": "e0f555b11ea9a24f82de286bb47db6a10a59ee780ebb251bbba5af53037ff100"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-3.json",
+      "bytes": 109105,
+      "sha256": "6911ab9c806bf0582b0240fce7e249aa8b46ff8fb223f3bf8bd25a54870276c2"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-4.json",
+      "bytes": 109115,
+      "sha256": "223da2efbcd6cd9dbe06c7a2fb965eff56ceca72211102ed1df97f86bd70b689"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-5.json",
+      "bytes": 109114,
+      "sha256": "318f1be066c4caa1f34fd290d98ce59b4f50bb4ac1f4ef9b96d8003ca9d85ac3"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-6.json",
+      "bytes": 109111,
+      "sha256": "6338985097e1913483d76924e65cac42077653639b3bbc14058f803a9dd86e6a"
+    },
+    {
+      "path": "timing-ablation/Cube-model-rank-7.json",
+      "bytes": 109109,
+      "sha256": "6b0da156d66dfa22346b94fad2f862b39b125f7f9e0c3242b0905370256a76a0"
+    }
+  ],
+  "verified_candidate_TPS": 4.93459894468458,
+  "exact_baseline_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "timing_ablation": {
+    "numbers_are_wrong_on_purpose": true,
+    "window": "8 forwards after 3 warmups, context 24, all eight ranks",
+    "baseline_TPS": 5.081,
+    "no_routing_host_read_TPS": 5.659,
+    "no_expert_work_TPS": 10.705,
+    "expert_share_of_token": "52.5%",
+    "routing_read_share_of_token": "10.2%"
+  },
+  "findings": [
+    "the routed-expert bodies are half of the token; the forty per-layer routing drains are a tenth more",
+    "captured collectives cost 0.0939 ms each and are about 3.6% of a token, so they are not the bottleneck",
+    "a 4 GiB per-expert decoded-operand cache without recordings measured 3.169 TPS against 4.935 TPS with recordings, so the cache loses",
+    "hardware W4A16 cannot consume the checkpoint's E2M1 codes because that code-to-value map is not two's-complement int4; the INT8 widening is inherent to the original format"
+  ],
+  "numerical_contract": {
+    "exact_default_path": "unchanged",
+    "later_changes_added_zero_FP32_bit_differences": true,
+    "complete_Engram_CPU": true,
+    "serving_guards_changed": false,
+    "checkpoint_rewritten": false
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "objective": "Online original FP8/E8M0-to-BF16 and exact packed E2M1-to-INT8 widening on Ascend 910B",
+  "implementation": {
+    "runtime_branch": "feature/ascend-online-unpack",
+    "runtime_head": "e332730a9d12f26b017f844deb057738f809b0e4",
+    "core_branch": "feature/ascend-online-unpack",
+    "core_head": "aa02338fd8e695ba2be8e886e1587eff9c801f77",
+    "fp4_contract": "INT8 output contains exactly twice each original E2M1 value; retain original per-32-K E8M0 grid divided by two in FP32. No row amax/requantization, zero-point, offline checkpoint rewrite or activation INT8 substitution; FP4 negative-zero sign is lost in INT8 only.",
+    "fp8_contract": "Byte-decoded E4M3FN and original E8M0 scale grid to correctly rounded BF16 including signed zeros, subnormals, NaN classification and overflow. Dense block32x32 and rowwise1x32 layouts explicit.",
+    "runtime_loading": "Auto NPU BF16 load stages original codes, decodes on NPU, retains file codes and tiny host-decoded FP32 scale grid on actual Parameter. Never recovers via numeric FP8 cast. Existing CPU/CUDA load body and reference GEMM/activation quantization unchanged.",
+    "provider": "Torch composition or optional fused Triton Ascend, selected before execution; compiler errors propagate, no runtime execution-error fallback."
+  },
+  "verified_stack": {
+    "hardware": "Ascend910B3 on fleet-host-2, driver26.1.0, CANN9.2.0",
+    "torch": "2.10.0+cpu",
+    "torch_npu": "2.10.0.post7",
+    "torch_lane_python": "3.12.7 (existing private venv unchanged)",
+    "fused_lane_python": "3.11.18 (new private environment; exact Torch/NPU versions unchanged)",
+    "triton_ascend": "3.2.0",
+    "private_vendor_compatibility_patch": "npu_utils.cpp: remove unsupported optional RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE mapping and raise explicit NotImplementedError. Original/patched hashes, rollback and host-bootstrap proof retained; no shared CANN header/driver/library changes."
+  },
+  "actual_acceptance": {
+    "torch_npu_operator_tests": {"passed": 68, "failed": 0, "skipped": 0, "seconds": 6.64},
+    "fused_npu_operator_stream_and_memory_guard_tests": {"passed": 75, "failed": 0, "skipped": 0, "seconds": 18.84},
+    "runtime_online_loader_and_legacy_loader_tests": {"passed": 43, "failed": 0, "skipped": 0, "seconds": 7.86},
+    "expanded_runtime_mma_activation_packing_regression": {"passed": 81, "failed": 0, "skipped": 2, "skip_reason": "CUDA capture tests", "seconds": 10.46},
+    "portable_math_launch_and_packaging_tests": {"passed": 45, "failed": 0, "skipped": 0, "seconds": 1.69},
+    "python_only_package_install": "Succeeded on private Ascend environment, imported installed unpack source and produced no native extensions.",
+    "full_repository_test_suite_run": false
+  },
+  "same_environment_benchmark": {
+    "iterations_per_provider": 20,
+    "timer": "synchronized wall time including Python launch overhead",
+    "fp4_original_weight_key": "layers.0.ffn.experts.0.w1.weight",
+    "fp4_shape": [2304, 2560],
+    "fp4_output_shape": [2304, 5120],
+    "fp4_source_sha256": "84c55fa21fcbf91d97372c49ab1556220d50fd613219b9fe975da493e071d9a4",
+    "fp4_torch_median_ms": 35.75599496252835,
+    "fp4_fused_median_ms": 15.017614932730794,
+    "fp4_unpack_speedup": 2.380936994502262,
+    "fp8_original_weight_key": "layers.0.attn.wkv.weight",
+    "fp8_shape": [512, 5120],
+    "fp8_source_sha256": "a26c48a7a2a9c2cd0a5186d3f21865edde2b32e2ed61948bee17ec1eaa8a5fd0",
+    "fp8_torch_median_ms": 27.728348970413208,
+    "fp8_fused_median_ms": 7.665719138458371,
+    "fp8_unpack_speedup": 3.6171882206461285,
+    "pure_device_event_rate_claimed": false,
+    "model_tps_or_speedup_claimed": false
+  },
+  "research": {
+    "chitu_repository": "https://github.com/thu-pacman/chitu",
+    "chitu_commit": "6461680a462a57b73b37ea19a3b74475516ef2f0",
+    "chitu_source_subset": "144 selected pinned Git-blob-verified files, not all994blobs",
+    "chitu_npu_fp4": "External cinfer_ascendc grouped GEMM/GEMV computeType=fp4; source does not establish binary availability, 910B SoC support or exact Torch2.10 ABI. Not used as a substitute.",
+    "chitu_fp8_boundary_findings": "Inspected soft FP8 source has naive E8M0 byte<<23 path: byte0 produces zero rather than2^-127, byte255 produces infinity rather thanNaN. Independent exact implementation explicitly covers both.",
+    "turing_reference": "Exact E2M1 doubled lookup distinguished from row-requantizing converter; observed static scale/layout contract drift in clean core HEAD was not copied into the new operators."
+  },
+  "not_claimed": [
+    "native FP4/FP8 hardware arithmetic",
+    "NPU routed-expert GEMM provider complete",
+    "original activation-quantizer or reference reduction parity from unpack tests alone",
+    "full-model generated tokens, logits agreement or working service",
+    "offline converted checkpoint"
+  ],
+  "cleanup": {
+    "task_owned_live_processes": 0,
+    "private_python_processes": 0,
+    "npu_compute_processes_on_all_eight_cards": 0,
+    "original_checkpoint_unchanged_by_stat_identity_check": true,
+    "shared_cann_environment_and_targets_unchanged": true,
+    "jenkins_agent_retained": true,
+    "fleet-host-2_lease_released_and_absent_after_confirmation": true,
+    "private_root_retained": "<workspace>/relic-online-unpack-20261117-0534",
+    "further_compute_requires_new_lease": true
+  }
+}

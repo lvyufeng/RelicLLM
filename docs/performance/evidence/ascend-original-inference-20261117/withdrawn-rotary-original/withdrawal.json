@@ -1,0 +1,35 @@
+{
+  "unbound_experimental_fma_withdrawn": true,
+  "working_real_pair_runtime_unchanged": true,
+  "only_four_task_owned_paths_removed": true,
+  "files": [
+    {
+      "absolute_checked_source": "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/rotary.py",
+      "path": "relic_core/kernels/rotary.py",
+      "sha256": "8ed3a92712c40ac1c0c9a1801a85cea3a0f7d3e6fdba5720a29c9adc5fdc776b",
+      "bytes": 21588,
+      "matches_reported_frozen_hash": true
+    },
+    {
+      "absolute_checked_source": "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/_ascend_rotary_kernels.py",
+      "path": "relic_core/kernels/_ascend_rotary_kernels.py",
+      "sha256": "2a9404fb543aa704856a14425d474569a768194dfe9e0959d04af233e40fd960",
+      "bytes": 6800,
+      "matches_reported_frozen_hash": true
+    },
+    {
+      "absolute_checked_source": "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/tests/test_ascend_rotary.py",
+      "path": "tests/test_ascend_rotary.py",
+      "sha256": "b0dac2c14097b2065e52eda233f86f7d313b874989ff02bc50751ac4ae24d913",
+      "bytes": 30370,
+      "matches_reported_frozen_hash": true
+    },
+    {
+      "absolute_checked_source": "<workspace>/relic-v41-infer-20261117-1424/source/relic-core/tests/test_ascend_rotary_math.py",
+      "path": "tests/test_ascend_rotary_math.py",
+      "sha256": "0d5a28a5a0b7cab3669c138ea16463d9a2311946cfa786a861958f16c93ae6c6",
+      "bytes": 26449,
+      "matches_reported_frozen_hash": true
+    }
+  ]
+}

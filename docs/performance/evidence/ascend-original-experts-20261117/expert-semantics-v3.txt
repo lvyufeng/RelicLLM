@@ -1,0 +1,317 @@
+# Original V4.1 expert semantics: the contract a new NPU expert kernel must meet
+
+Read-only audit for task 27. Scope: what the released DeepSeek reference *does* for a routed expert,
+what the port currently implements, and the exact contract a new Ascend expert kernel must satisfy
+if it is to reproduce the reference rather than a better-conditioned computation of the same
+operands. Nothing here was measured on hardware in this round; the sources, the citations and the
+independent scalar oracle are the deliverables.
+
+## Sources, and which are authoritative
+
+| Source | Status in this round |
+| --- | --- |
+| `.coord/original-v41-inference-kernel.py` (591 lines) | **Copied from the released checkpoint's `inference/kernel.py` and read in full.** Authoritative for the quantizers, both GEMM kernels, their scale layouts and their accumulation order. |
+| `.coord/original-v41-inference-model.py` (61,669 bytes) | **Copied from the released `inference/model.py` and read** for `linear()`, `Gate`, `Expert`, `MoE`. Authoritative for the activation quantizer's arguments, the SwiGLU order and the routing. |
+| `relicllm/models/deepseek_v4_1/kernels.py`, `mma.py`, `modules.py`, `loader.py`, `online_unpack.py` | The port. Read for what it implements today. |
+| `.coord/expert_scalar_oracle.py` (new, stdlib only) | Independent exact-rational transcription of the contract. **1668 self-test checks pass, 0 fail** (`python3 .coord/expert_scalar_oracle.py --selftest`). |
+
+The previous rounds' note `docs/superpowers/notes/quantized-activation-path.md` is a *port* record;
+where it and the copied source disagree, the source wins. One such place is recorded below (it
+describes `fast_round_scale` correctly but the port's code spells it differently).
+
+**Not established by any source here:** the intra-`mma` reduction (two 16-halves, truncation,
+window 13, final renormalisation). That is NVIDIA tensor-core behaviour, not source text. The port
+models it in `mma.py`, and its module docstring claims bit parity on 1,142,784/1,142,784 dense
+elements and 11520/11520 on a real `wq_a` against the reference running on a card. Those are the
+port's measured claims, not something this audit re-measured.
+
+## 1. Which linears quantize their activation, and with what
+
+`model.py:182-198` — one `linear()` for every module, dispatching on the weight's dtype:
+
+```python
+if weight.dtype == torch.float4_e2m1fn_x2:
+    x, s = act_quant(x, fp8_block_size, scale_fmt, scale_dtype)
+    return fp4_gemm(x, s, weight, weight.scale, scale_dtype, act_block_size=fp8_block_size)
+elif weight.dtype == torch.float8_e4m3fn:
+    x, s = act_quant(x, fp8_block_size, scale_fmt, scale_dtype)
+    return fp8_gemm(x, s, weight, weight.scale, scale_dtype, block_size=fp8_block_size)
+else:
+    return F.linear(x, weight)
+```
+
+with the module-level constants at `model.py:28-31`: `fp8_block_size = 32`, `scale_fmt = "ue8m0"`,
+`scale_dtype = torch.float8_e8m0fnu`. So:
+
+* **both** weight kinds take the *same* fp8 activation path — the fp4 GEMM is mixed-precision but its
+  activation is fp8 with a block-32 E8M0 scale;
+* the activation block width is **32**, and `act_block_size=fp8_block_size=32` means the fp4 kernel's
+  `n_sub = act_block_size // block_K = 32 // 32 = 1` (`kernel.py:507`), so the activation grid is one
+  exponent per (row, 32-wide K block) — not per 128;
+* weights keep their own formats: dense linears are e4m3 with a 32x32 block grid, routed experts are
+  e2m1 packed with a per-row 32-block grid.
+
+## 2. The activation quantizer, exactly
+
+`kernel.py:40-95` (kernel) and `kernel.py:98-124` (host wrapper). Per (row, block) of 32 elements:
+
+1. `amax = max |x|` over the block, then **`amax = T.max(amax, 1e-4)`** (`kernel.py:74,76`). The
+   floor is why an all-zero block still gets a nonzero scale.
+2. **`s = fast_round_scale(amax, fp8_max_inv)`** with `fp8_max_inv = 1 / 448.0` (`kernel.py:44-46,78`),
+   i.e. `fast_pow2(fast_log2_ceil(amax * fp8_max_inv))` (`kernel.py:36-37`):
+   * `fast_log2_ceil` (`kernel.py:22-27`) reads the **binary32 exponent field** and adds one when the
+     mantissa is non-zero:
+     `((bits >> 23) & 0xFF) - 127 + (man_bits != 0)` — an exact ceiling for a normal input, with no
+     logarithm involved.
+   * `fast_pow2` (`kernel.py:30-33`) reconstructs `2**x` from `(x + 127) << 23` — exact.
+   * The product inside is a **binary32 multiply by the rounded reciprocal** `1/448.0`, not a divide.
+     `fl32(1/448)` is `0.0022321429569274187`, a relative error of `4.4703e-8` against the exact
+     `1/448`; `fl32(1/448) * 448` rounds back to exactly `1.0`.
+3. The quantized value is `T.clamp(x / s, -448, 448)` assigned into an `FP8` tensor
+   (`kernel.py:44-45,57,88-89`) — clamp first, then a conversion to e4m3 (CUDA's float->e4m3
+   conversion is round-to-nearest-even; the oracle models RNE and this audit treats that as the
+   conversion's semantics rather than something the source states).
+4. The scale is stored as `E8M0` via `T.Cast(scale_dtype, s_local[i])` (`kernel.py:91`) with
+   `scale_dtype = FE8M0`. `s` is an exact power of two in `[2**-22, 2**120]` over the reachable
+   amax range (floor `1e-4` .. bf16's largest, `3.3895e38`; measured), so that cast is exact and never saturates the E8M0 byte.
+
+Note that the *quantisation* step divides by `s` (`x / s_local[i]`, `kernel.py:89`) while the *scale*
+step multiplies by the reciprocal (`amax * fp8_max_inv`). Both are exact/irrelevant in their own
+places — `s` is a power of two, so the divide is exact.
+
+## 3. The FP4 expert GEMM, exactly (`kernel.py:477-591`)
+
+Shapes and layouts:
+
+* `A: [M, K] FP8`, `B: [N, K] FP4` packed two-per-byte along K (`kernel.py:511-512,493-494`).
+* `scales_a: [M, ceildiv(K, act_group_size)]`, **`scales_b: [N, ceildiv(K, 32)]`** (`kernel.py:514-515`),
+  asserted on the host as `b_s.shape == (N, K // 32)` (`kernel.py:582`). **The weight grid is one
+  exponent per output row and 32-wide K block** — the per-row layout, not a 32x32 tile grid.
+* `block_M = 32`, `block_N = 128`, **`block_K = 32`** (`kernel.py:504-506`).
+
+Per K block (`kernel.py:534-554`):
+
+```python
+B_shared[i, j] = T.Cast(FP8, T.Cast(FP32, B_fp4_shared[i, j]))   # exact e2m1 -> e4m3, via FP32
+scale_b_frag[i] = T.Cast(FP32, scales_b[bx * block_N + i, k])
+scale_a_frag[i] = T.Cast(FP32, scales_a[by * block_M + i, k // n_sub])
+T.gemm(A_shared, B_shared, C_local, transpose_B=True)
+C_local_accum[i, j] += C_local[i, j] * scale_a_frag[i] * scale_b_frag[j]
+T.clear(C_local)
+```
+
+Four facts that are easy to get wrong:
+
+1. **The mma operand is e4m3 x e4m3.** The nibble is widened through FP32 into FP8 *before* the
+   `T.gemm`. So the routed experts' reduction rule is the same rule as a dense fp8 GEMM's; the
+   weight's storage format only changes how its codes are produced.
+2. **`C_local` is cleared every K block** (`kernel.py:554`), and `C_local_accum` is the fp32
+   accumulator (`kernel.py:483,526`). So the 32-term reduction starts from zero for each block and
+   nothing carries across blocks except the fp32 block sum. A kernel must not merge blocks into one
+   longer reduction.
+3. **The scale expression is left-associative**: `((C_local * s_a) * s_b)`, then one add. This is the
+   same operand order the port's `mma.fp8_block_gemm` uses
+   (`mma.py:606-607,617-618`: `scaled = fragment * sa * sb`, then `out_tile.add_(scaled[...])`).
+4. The final narrowing to bf16 happens **once**, on the whole accumulator
+   (`T.copy(C_local_accum, C_shared)` with `C_shared` in `out_dtype = BF16`, `kernel.py:240,556-557`).
+
+The dense `fp8_gemm_kernel` (`kernel.py:207-274`) is the same skeleton with two layout differences:
+`block_K = group_size` (`kernel.py:223`) and the weight scale indexed as
+`scales_b[(bx * block_N + j) // group_size, k]` (`kernel.py:261-264`), i.e. the 32x32 tile grid.
+
+## 4. Scale application: mul-then-add versus FMA, and why it is (almost) unobservable
+
+`kernel.py:553` is one expression the compiler may contract into an FMA. Both scales are **exact
+powers of two** (E8M0 cast to FP32), so each multiplication is exact whenever the result stays in the
+normal range: `C * 2**a` and `(C * 2**a) * 2**b` lose no bits. Therefore
+`round(exact_product + accumulator)` computed as an FMA and as a separate multiply-then-add are the
+same value. This is proven algebraically and checked by the oracle
+(`_test_block_scale_and_accumulation`): 100 random multi-block cases agree, and the mechanism that
+*can* split them (an inexact addend re-rounding next to a live accumulator) is demonstrated
+separately so the claim is bounded rather than blanket.
+
+The two places it could bite are therefore **not arithmetic-order** but **range edges**:
+
+* the rescaled term lands in the fp32 subnormal range (gradual underflow, and especially a device
+  that flushes subnormals — an FMA keeps bits a multiply would have flushed);
+* the rescaled term overflows fp32.
+
+Both need extreme E8M0 bytes. The oracle's `_test_subnormal_extremes` pins both sides: fragment
+`2**-5` with weight byte `0` gives a term of `2**-132`, exactly representable as an fp32 *subnormal*;
+one octave of activation scale lower (`2**-22`) flushes the same term to zero; and the largest
+pairing of code maxima overflows fp32 rather than wrapping.
+**Do not "improve" the order to `fragment * (s_a * s_b)`:** pre-combining the two scales can overflow
+on its own — an E8M0 scale may reach `2**127` per side, and the oracle shows `2**127 * 2**127`
+raising, while `((fragment * 2**-127) * 2**127) * 2**127` stays finite at `2**127`.
+
+## 5. SwiGLU, routing and where the quantization sits (`model.py:832-908`)
+
+`Expert.forward` (`model.py:843-854`):
+
+```python
+gate = self.w1(x).float()        # quantized linear inside
+up   = self.w3(x).float()        # quantized linear inside
+if self.swiglu_limit > 0:
+    up = torch.clamp(up, min=-limit, max=limit)
+    gate = torch.clamp(gate, max=limit)
+x = F.silu(gate) * up
+if weights is not None: x = weights * x
+return self.w2(x.to(dtype))
+```
+
+So the clamp is applied in **fp32** after both projections, `silu(gate)*up` then the routing weight,
+and the **`w2` operand is `x.to(dtype)` — the bf16-cast activation, quantized after the cast**. The
+quantization is inside each of the three linears, not around the expert: `w1` and `w3` each quantize
+the same `x` independently (two separate `act_quant` calls in the reference, not one shared result),
+which the port reproduces deliberately (`modules.py:155-162`).
+
+Routing (`model.py:811-830`): `scores = linear(x.float(), weight.float()) / gate_temp` — the gate
+weight is **bf16**, so this is a plain `F.linear`, not the quantized path; softmax/sigmoid/softplus
+per `score_func`; the correction bias is added **only to pick** experts, and the weights are gathered
+from the unbiased scores; optional top-k renormalization `weights /= weights.sum(-1, keepdim=True) +
+1e-20` (note `1e-20`, not `norm_eps`); then `weights *= route_scale`.
+
+Routed accumulation (`model.py:891-908`):
+
+```python
+y = torch.zeros_like(x, dtype=torch.float32)
+counts = torch.bincount(indices.flatten(), minlength=self.n_routed_experts).tolist()
+for i in range(self.experts_start_idx, self.experts_end_idx):
+    if counts[i] == 0: continue
+    idx, top = torch.where(indices == i)
+    y[idx] += expert(x[idx], weights[idx, top, None])
+if world_size > 1: dist.all_reduce(y)
+y += self.shared_experts(x)
+return y.type_as(x)
+```
+
+**Experts are accumulated in expert-id order into an fp32 tensor**, each expert's contribution
+already narrowed to bf16 by its own GEMM output, and the shared expert is added afterwards to the
+fp32 sum. The port matches this (`modules.py:292-307` and `loader.py:675-693` walk expert ids in
+order; `expert_forward` returns `LINEAR_DTYPE`).
+
+## 6. The contract for the new NPU expert kernel
+
+### 6.1 Operands
+
+| Operand | Type / shape | Meaning |
+| --- | --- | --- |
+| activation codes `a8` | `uint8 [M, K]`, e4m3 bytes (not int8) | the file drawn by the quantizer in §2, block 32 along K |
+| activation scale | E8M0 byte or fp32 power of two, `[M, K/32]` | one exponent per (row, 32-wide K block) |
+| weight | packed e2m1 `[N, K/2]` uint8 **or** exact `int8 [N, K]` (`2 x e2m1`) | low nibble = even K, high nibble = odd K |
+| weight scale | E8M0 byte `[N, K/32]` | **per output row**, not a tile grid |
+| output | fp32 accumulator, narrowed to bf16 once | `[M, N]` |
+
+### 6.2 Two consistent pairings of representation and scale — pick exactly one
+
+* **(A) Recover the value.** `int8 / 2` is exact (integer halves are exact in fp32). The operand is
+  then the reference's own e2m1 value, so the anchor, cuts, window, running-sum-joins-second-half and
+  final renormalisation are applied **verbatim**, with the file's **original** scale `2**(b-127)` and
+  `F` read off the recovered e4m3 code. This is the recommended form: no bookkeeping to keep in step.
+* **(B) Keep the doubled value.** All products are exactly 2x the reference's, the anchor shifts by
+  `+1` (`F(int8) = floor(log2|v|) - 1`), the reduction is exactly 2x the fragment (truncation onto a
+  power-of-two grid commutes with doubling), and the scale must be **halved** to `2**(b-128)`.
+
+Mixing a value from one pairing with the scale of the other is off by exactly a factor of two per K
+block. The oracle pins A = B = reference and pins the double-correction error (`_test_int8_doubled_units`,
+`_test_official_kernel_contract` cases 3, 3b).
+
+`b = 0` is the edge the halved scale cannot spell in a byte: `2**-128` needs an exponent field of
+−1. Both `2**-127` (the original) and `2**-128` (halved) are **binary32 subnormals**, so the scale must
+be reconstructed as fp32 bits/values (or as an integer exponent used in fp32 arithmetic), and a device
+that flushes fp32 subnormals to zero will turn that whole output row into zeros where the exact
+arithmetic does not. `b = 255` is NaN in both spellings.
+
+### 6.3 The reduction (unchanged from the port's `mma.reduce_block`)
+
+Per output element and per 32-wide K block, starting from zero:
+
+1. two sequential 16-wide halves;
+2. `F(v) = max(true exponent, -6)` read off the e4m3 **encoding** (a subnormal code contributes −6,
+   never −7..−9); a zero operand contributes nothing;
+3. half anchor `A_h = max over k of (F(a_k) + F(w_k))`; cut the half's products toward zero onto
+   `2**(A_h - 13)`;
+4. the first half's **sum** joins the second half as a peer: `A_2 = max(A_2_own, E(sum_first))`;
+5. final renormalisation of the block sum onto `2**(E(total) - 13)`, toward zero;
+6. then `((fragment * s_a) * s_b)` in that order, and one add into the fp32 accumulator;
+7. blocks in K order; the output is narrowed to bf16 once, at the end.
+
+`E(x) = floor(log2|x|)`; a zero sum has no exponent and must not drag the second window down.
+
+## 7. Hazards this audit found, with the evidence
+
+**H1 — reciprocal versus divide in the scale ratio.** The reference multiplies by `fl32(1/448)`
+(relative error `4.47e-8`); the port's `block_fp8_act_quant` divides (`kernels.py:266`). The two agree
+wherever the exact ratio is a power of two (the reciprocal multiplies back to exactly `1.0`) and, as
+the oracle shows, on 20,000 random bf16 amax values and at the binary32 neighbours of every
+`448 * 2**k` for `k` in [−20, 20). **Practically unreachable, but not the same function** — the new
+kernel should use the official spelling, which the quantizer work (task 29) is doing.
+
+**H2 — binary32 `log2` + `ceil` instead of a bit ceiling.** The port's `kernels.py:266` spells the
+scale as `2 ** ceil(log2(amax / 448))`; the reference reads the exponent field. A correctly-rounded
+binary32 `log2` returns the integer itself for the first representable ratio above a power of two
+(the true logarithm is only `1.72e-7` above it, below half an fp32 ulp once the logarithm reaches 4),
+so `ceil(log2(...))` under-counts by one octave **from `2**4` upward** — measured: exponent 4 gives
+`bit_ceil=5` but `log2+ceil=4`. Effect when it fires: the scale is one octave small, so the block's
+larger values clamp at ±448 and quantize to the wrong codes. **Reachability:** activations are bf16,
+whose grid around `448 * 2**k` is `446 / 450` (a 4.46e-3 relative gap) against a ~`1.2e-7` hazard
+window — about 37,000x too coarse to land in it, and the exact pivot itself gives a ratio that is
+exactly a power of two. So this is a latent, unreachable-in-practice difference in the *runtime*
+quantizer; it is **not** unreachable by construction, and the new kernel must not copy it.
+
+**H3 — pre-combining the two scales.** `s_a * s_b` can overflow fp32 on its own (both may be `2**127`)
+where `((C * s_a) * s_b)` survives. Keep the official order.
+
+**H4 — FMA contraction.** Unobservable for exact power-of-two rescales in the normal range; only the
+subnormal/overflow edges and a flush-to-zero device can expose it. A 910B kernel must state which
+fp32 mode it runs in if bit parity at those edges is claimed.
+
+**H5 — the intra-mma reduction is a model, not source.** The two-halves/window-13/truncate rule is
+the port's transcription of NVIDIA tensor-core behaviour. A new kernel reproducing the port's rule
+reproduces *the port's model of the reference*; the port's measured parity (1,142,784/1,142,784) is
+the evidence that the model is right, and this audit did not re-measure it.
+
+**H6 — the device path is a different, known-wrong activation.** `DeviceRoutedExperts` runs
+`moe_single_token_fp4_forward`, which quantizes the **activation to int8** with one scale per row
+(`relic_core/csrc/cuda_kernel_impl.cu`, `x_q` int8 + `x_scale` fp32; documented divergence, 6.7% of
+the output scale on the worst of 69 rows in
+`docs/performance/deepseek_v4_1_flash_device_experts.md:559`). A new NPU expert path must take the
+fp8 block-32 activation, not int8 — the presence of an int8 weight representation does not license an
+int8 activation.
+
+**H7 — negative zero.** E2M1 `-0` widens to e4m3 `0x80`, and its products are zeros which the rule
+excludes by value; an INT8 representation has a single zero. Unobservable except for the sign of a
+zero output. Verified by the oracle.
+
+## 8. What this audit establishes, and what it does not
+
+Established (from the copied released source, read in full, plus the independent oracle):
+
+* the activation quantizer's exact recipe, constants and order of operations (§2);
+* both GEMMs' block structure, scale layouts, per-block accumulator clearing, left-associative scale
+  application, K order and single final bf16 narrowing (§3-4);
+* the SwiGLU clamp order, the `w2`-quantizes-after-cast rule, the routing weight derivation and the
+  expert-id-order fp32 accumulation (§5);
+* the exact INT8 representation contract and the b=0/b=255 edges (§6).
+
+Not established here:
+
+* that any NPU/GPU kernel computes §2-§4 bit for bit — no hardware was used in this round;
+* the intra-mma reduction as *source text* (it is hardware behaviour; see H5);
+* that the INT8 pairings hold under a device with flush-to-zero fp32 or a fused-multiply-add FP32
+  pipeline — the arithmetic argument covers the normal range only (H4);
+* anything about end-to-end logits, tokens or a complete expert executor.
+
+## 9. Reproducing
+
+```bash
+python3 .coord/expert_scalar_oracle.py --selftest
+# expert_scalar_oracle: 1668 checks passed, 0 failed
+```
+
+The oracle is stdlib only (`fractions`, `struct`, `random`, `math`), imports no production module,
+and carries every constant it needs. It is a second statement of the contract, not a wrapper around
+the code under test. Its own expectations were corrected four times during development (a negative
+zero a `Fraction` cannot hold, a mis-computed RNE tie, an "even integer" claim that the widening does
+not satisfy, and fixture scale ranges that overflowed); each correction is a place where the naive
+reading of the rule is wrong, which is why the file is kept.

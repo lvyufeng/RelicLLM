@@ -1,0 +1,371 @@
+{
+  "scope": "original host tables; opt-in NPU Engram; exact-on-tested-consumers HC folds",
+  "native_Engram_is_changed_accumulation_and_changes_generation": true,
+  "Engram_observed_TPS_ratio_not_same_stream_causal_speedup": true,
+  "HC_same_stream_16_step_TPS_ratio": 1.0188141913591948,
+  "64_step_sustained_batch_one_TPS": 6.234905516751288,
+  "target_50_TPS_reached": false,
+  "exact_production_defaults_unchanged": true,
+  "full_teacher_and_final_tensor_artifacts_checksum_pinned_in_comparison_not_copied": true,
+  "optional_incomplete_local_tensor_downloads_excluded": true,
+  "older_bundles_not_rewritten": true,
+  "file_count_excluding_manifest": 71,
+  "bytes_excluding_manifest": 779193,
+  "files": {
+    "64-step-preconditions.json": {
+      "sha256": "3db8b2bd3afb799dfd1511a3c7cde1c3a011e370910b0951a763320643984081",
+      "bytes": 20286,
+      "source": ".coord/engram-hc-final-sources/preconditions.json"
+    },
+    "Engram-HC-model-comparison.json": {
+      "sha256": "0e049893f02755a967895c84f055e04c4e3e4e61e084fcc1c4d046876f065f03",
+      "bytes": 67416,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/Engram-HC-model-comparison.json"
+    },
+    "HC-fold-probe.json": {
+      "sha256": "6613c9b5833b0f5247c0c203e2f763c1a5fef1d6b1b1dd4260897f8a5f1985f5",
+      "bytes": 7495,
+      "source": ".coord/fused-HC-decode-fold-both-sequential-probe-20261120T080750Z/HC-fold-probe.json"
+    },
+    "all-rank-audit-ownership.json": {
+      "sha256": "fd0ab20e077c44a74af6db45405a5a5db5ef864f7079f2ddf055c2941a4cac80",
+      "bytes": 3142,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/summary.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-0.json": {
+      "sha256": "c600739fe7656ff1ec55a09d88ffd125d0fdd7dedaa849d81e059fbee881bfae",
+      "bytes": 12078,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-0.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-1.json": {
+      "sha256": "66ab9da694d37bdcb50fd2e7884ea2c4993aec52d68a1075ac7426e7ecdb584c",
+      "bytes": 12074,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-1.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-2.json": {
+      "sha256": "aa8b2e945f94d3045b9d20b9fdfb21065a2e86c3a88c3e28fee52d72bffcd829",
+      "bytes": 12081,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-2.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-3.json": {
+      "sha256": "1099ee490bf31c4fe383d3a1a29416e6c6f26b0cbbf45fae1d3aee725b95be4b",
+      "bytes": 12082,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-3.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-4.json": {
+      "sha256": "cf16a07b776fa04db069e5c1f70d832f442258dbf73b7e95f0863a31b6d14a43",
+      "bytes": 12077,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-4.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-5.json": {
+      "sha256": "4e0db12e162190e99082255da2e849fd80c0668627bde24ddc7c122904e0b032",
+      "bytes": 12082,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-5.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-6.json": {
+      "sha256": "85ce5fafd0a080be2d0507c05c5f24dc73932bdf3b3c791bb536cdfad74c90a9",
+      "bytes": 12081,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-6.json"
+    },
+    "all-rank-models/model-device-hc-64-rank-7.json": {
+      "sha256": "171685d3d5fee71c954963bc119d087bc5dcd120a2235a58b637063cfa7a2356",
+      "bytes": 12085,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-64-rank-7.json"
+    },
+    "all-rank-models/model-device-hc-rank-0.json": {
+      "sha256": "c4d03831f391f8cf2d9173be560314818efba7b33a9d4db339eb797a5a9a62e0",
+      "bytes": 10303,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-0.json"
+    },
+    "all-rank-models/model-device-hc-rank-1.json": {
+      "sha256": "8573a2403fc449f6a8682b2a10349228d8071098370e2c7e220babab61685045",
+      "bytes": 10307,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-1.json"
+    },
+    "all-rank-models/model-device-hc-rank-2.json": {
+      "sha256": "f1ab60a18611cdb4e996e9e155de2eb4492b579f7ec189b94bfb3964bf605291",
+      "bytes": 10307,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-2.json"
+    },
+    "all-rank-models/model-device-hc-rank-3.json": {
+      "sha256": "e4bf20895e34f8805308029a7e2cb63c2f3ce01ae5d6270d5aaf08ac20bd7dd8",
+      "bytes": 10303,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-3.json"
+    },
+    "all-rank-models/model-device-hc-rank-4.json": {
+      "sha256": "032c30eab3411f2ebac301aa7dc9804c28cce14b31cdcbdb4f8c2b0508668c3e",
+      "bytes": 10306,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-4.json"
+    },
+    "all-rank-models/model-device-hc-rank-5.json": {
+      "sha256": "1e96ccbe9b078c9f4cb1dc1223f33e4e051880c989272e0657eea3d8fed2587e",
+      "bytes": 10305,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-5.json"
+    },
+    "all-rank-models/model-device-hc-rank-6.json": {
+      "sha256": "97455e148ea1a64739296dbd9519d7da9ad4fbdeda460810c66e1c7e60e9ac1b",
+      "bytes": 10306,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-6.json"
+    },
+    "all-rank-models/model-device-hc-rank-7.json": {
+      "sha256": "2c05c76d7803b4507a98d95d12f8b19a4b60ffaeaf314c2f31c5c6f6f76fdff8",
+      "bytes": 10310,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-hc-rank-7.json"
+    },
+    "all-rank-models/model-device-rank-0.json": {
+      "sha256": "2ae4ce8b3f5287dbea58847e7166f8f1e76051942b4befb5f3d88f968c5da2f1",
+      "bytes": 6789,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-0.json"
+    },
+    "all-rank-models/model-device-rank-1.json": {
+      "sha256": "85bd0559193d754a5fe36356d3a0fd74e9e47c86c8a52f1c44eaffa767a8b4be",
+      "bytes": 6792,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-1.json"
+    },
+    "all-rank-models/model-device-rank-2.json": {
+      "sha256": "c665e03a2ffbca2924a165aca4513c498d4d49e4b1eca4ecbe8e9033511adfa8",
+      "bytes": 6793,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-2.json"
+    },
+    "all-rank-models/model-device-rank-3.json": {
+      "sha256": "68b45419bd7c4005f0beaa953f7ee5f8cc51b2686c805d867e442f7a3d46c4fa",
+      "bytes": 6788,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-3.json"
+    },
+    "all-rank-models/model-device-rank-4.json": {
+      "sha256": "7e266b240865f0098f70fff05551a48a3447fe1037256a47e180f14e7670c325",
+      "bytes": 6792,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-4.json"
+    },
+    "all-rank-models/model-device-rank-5.json": {
+      "sha256": "d19c8cb0d1c44c14b61eb207e572b467bde8938fc8189a7fbf85ac698dabc7ce",
+      "bytes": 6792,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-5.json"
+    },
+    "all-rank-models/model-device-rank-6.json": {
+      "sha256": "065e042c698630d90af0382547a95b57b271722fd03a885f786b48af7af2d1ee",
+      "bytes": 6790,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-6.json"
+    },
+    "all-rank-models/model-device-rank-7.json": {
+      "sha256": "6378a07ef074e194cadea828dedcecc10123a76da3f71ed93ca2eba93b128734",
+      "bytes": 6793,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-device-rank-7.json"
+    },
+    "all-rank-models/model-host-rank-0.json": {
+      "sha256": "2fbf20867d7c92629feaa8d2abbb76b0f8e732457eb7c90a6c8b911681ace182",
+      "bytes": 5669,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-0.json"
+    },
+    "all-rank-models/model-host-rank-1.json": {
+      "sha256": "64ffef6acc94f5c5dab37f5c19ba28210b38d3a077a3e683cc5a5da9ac389c80",
+      "bytes": 5668,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-1.json"
+    },
+    "all-rank-models/model-host-rank-2.json": {
+      "sha256": "b9ff058fda7b525a67415b0e31f835ebb720132a1888b55f75b18141022bc022",
+      "bytes": 5665,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-2.json"
+    },
+    "all-rank-models/model-host-rank-3.json": {
+      "sha256": "520656547a1b61d1594da8f5a70ce372f01aca5a61428b4b396dc00fc551812b",
+      "bytes": 5667,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-3.json"
+    },
+    "all-rank-models/model-host-rank-4.json": {
+      "sha256": "3f5a6542f715a6ca1332d61d45cd9b28bce5004c8022ec05d1207297bde87966",
+      "bytes": 5665,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-4.json"
+    },
+    "all-rank-models/model-host-rank-5.json": {
+      "sha256": "24720faa73918783c2eb408ca6830f0266704762c80a242ca260dfda979c3537",
+      "bytes": 5669,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-5.json"
+    },
+    "all-rank-models/model-host-rank-6.json": {
+      "sha256": "1c8ce1ccf41b79cd049d38dbc7f745c44a287b987dc04d3ea74c6f29d48e81b0",
+      "bytes": 5663,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-6.json"
+    },
+    "all-rank-models/model-host-rank-7.json": {
+      "sha256": "0f9abb52854bf2bd8bdb466b9fe9028f0799c9d91464c647d105efacf674c304",
+      "bytes": 5669,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/model-host-rank-7.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-0.json": {
+      "sha256": "5abcf7a7b5549664fa53cb95e2258531d6ffc23429d499eb782dbe2f2b235d62",
+      "bytes": 8652,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-0.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-1.json": {
+      "sha256": "17f0ba5defe9a7bc33b3e355629490e52b028891b8ed69c0a04d2bfcce9aae16",
+      "bytes": 8657,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-1.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-2.json": {
+      "sha256": "2a7010ecbec4abe8104f0784c61d0449a8489ffb3311618005293e94f8de50d5",
+      "bytes": 8656,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-2.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-3.json": {
+      "sha256": "30347ae6a2c04d9ef8143b0e0ffbea365e850a6f35d31ebc457c92e2fc084cac",
+      "bytes": 8658,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-3.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-4.json": {
+      "sha256": "a7f62f1ecd4af43e88faa90c4d40eb1ab92760f6b47f043a6891e618f457ae98",
+      "bytes": 8656,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-4.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-5.json": {
+      "sha256": "7bd7ba210f16bb0dc4cd3f8feef0eac3577d34e8ee35636b34c3afd5b5d7ac2c",
+      "bytes": 8657,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-5.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-6.json": {
+      "sha256": "7e42a6c773cbc2e64fe9afb8e08f564e48fe66d92da075b1cb7e91b70659912b",
+      "bytes": 8656,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-6.json"
+    },
+    "all-rank-operator-probe/device-engram-rank-7.json": {
+      "sha256": "92db58fe74fa9e21f8cab7271523f0d66f93c9938f211c501547cc79f3099be5",
+      "bytes": 8657,
+      "source": ".coord/device-engram-accepted-20261120T071528Z/device-engram-rank-7.json"
+    },
+    "negative-results/HC-tree-post-parity-failure.json": {
+      "sha256": "25bcef53d0341d9401d0ae1d49d9ceaa0d0e9047483c6252449b0b8836ccf74a",
+      "bytes": 438,
+      "source": ".coord/fused-HC-decode-fold-probe-20261120T070504Z/HC-fold-parity-failure.json"
+    },
+    "negative-results/HC-tree-pre-parity-failure.json": {
+      "sha256": "f91fc83cc17293ed18d11bef553b59cf1b9d8a147ff51edf55403fe6c0c8d58f",
+      "bytes": 2056,
+      "source": ".coord/fused-HC-decode-fold-sequential-probe-20261120T074204Z/HC-fold-parity-failure.json"
+    },
+    "negative-results/copysign-capture-fallback.stderr.log": {
+      "sha256": "5acf12ecb7a966430dd0d41353eb3ef7daf75689348f962fead2d54abf143aac",
+      "bytes": 46345,
+      "source": ".coord/device-engram-probe-v2.stderr.log"
+    },
+    "negative-results/native-full-vs-TP-projection.json": {
+      "sha256": "36af5f8b25960b35197a24e40802a3da6a5e05e129776e095f69a0ba651efa51",
+      "bytes": 379,
+      "source": ".coord/device-engram-diagnostic-v4/device-engram-failure-rank-0.json"
+    },
+    "negative-results/native-shape-not-ULP-neutral.json": {
+      "sha256": "8aad8f00febc7fa87b99dbdc4e00ec051cba67dc064a665e37541c812b032366",
+      "bytes": 380,
+      "source": ".coord/device-engram-probe-v5/device-engram-failure-rank-0.json"
+    },
+    "regression.log": {
+      "sha256": "6a9f0e9a5afa66c21bd648f11f8a66fc6f3aba7048a60fbc65b9644c992b7c21",
+      "bytes": 1148,
+      "source": ".coord/engram-hc-regression.log"
+    },
+    "safety/lease-release.json": {
+      "sha256": "acae9c8cc019c6e4d91d61026b5ff89c25312607d09919b53cfac42987b838c1",
+      "bytes": 246,
+      "source": "confirmed tool result, not a new remote operation"
+    },
+    "safety/new-lease-safety-20261120T055851Z.json": {
+      "sha256": "2be8bb91226e42e62ede1182887218ed220cd9580d7672c45b79c750c8e13b44",
+      "bytes": 46308,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/new-lease-safety-20261120T055851Z.json"
+    },
+    "safety/new-lease-safety-20261120T084751Z.json": {
+      "sha256": "1c57221628c0bb2dbc69c1090ade1ec63ba4d00857ee4ed89643985029d1c46e",
+      "bytes": 49726,
+      "source": ".coord/engram-hc-audit-20261120T084701Z/new-lease-safety-20261120T084751Z.json"
+    },
+    "source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py": {
+      "sha256": "d51939d015c0faac206b4b383b358b89f4efa10f5d86f269f193ff6cb5c93a6c",
+      "bytes": 24335,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py"
+    },
+    "source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_hc_decode.py": {
+      "sha256": "24e8ef477bb101d684b575d3d1d46a068e649e89575e15adb42d57cf2df13a83",
+      "bytes": 6450,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_hc_decode.py"
+    },
+    "source-snapshots/bounded_task.py": {
+      "sha256": "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a",
+      "bytes": 27905,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/bounded_task.py"
+    },
+    "source-snapshots/profile_actual_cube.py": {
+      "sha256": "df06b87789be6cdb1f073debf1adc71c98f2f982932669475d674b59470635bc",
+      "bytes": 39458,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/profile_actual_cube.py"
+    },
+    "source-snapshots/profile_device_engram.py": {
+      "sha256": "6c4ce4005dbb5d2d5c100f54175401109b6482758190e1e27e24d347b16d9e90",
+      "bytes": 3882,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/profile_device_engram.py"
+    },
+    "source-snapshots/relic-core/relic_core/kernels/_ascend_hc_decode_fold_kernels.py": {
+      "sha256": "a681394fde1fd027f619d4bfa9ce74b109d4b397a3416cc5c5745a98d6a6c343",
+      "bytes": 2187,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/relic-core/relic_core/kernels/_ascend_hc_decode_fold_kernels.py"
+    },
+    "source-snapshots/relic-core/relic_core/kernels/hc_decode_fold.py": {
+      "sha256": "a514305cfc023e655d0a891c19a875abc368876ca051b33fb69739d3f41f64bf",
+      "bytes": 4079,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/relic-core/relic_core/kernels/hc_decode_fold.py"
+    },
+    "source-snapshots/relic-core/relic_core/kernels/original_fp8_engram.py": {
+      "sha256": "633e84773518acb386103bd35189423d66198d94fc5347f450473083559d1379",
+      "bytes": 4500,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/relic-core/relic_core/kernels/original_fp8_engram.py"
+    },
+    "source-snapshots/run_device_engram_trial.py": {
+      "sha256": "0a1f45dc6c88e1dc20b55aafa735ecb005f8fdc0235e34990d35c1e4284efcda",
+      "bytes": 7107,
+      "source": ".coord/engram-hc-final-sources/source-snapshots/run_device_engram_trial.py"
+    },
+    "sources/build_engram_hc_evidence.py": {
+      "sha256": "2f6e8215725a3b7bd20b48528d01cc978a2a45925b536734e986278e524d05ad",
+      "bytes": 8416,
+      "source": ".coord/build_engram_hc_evidence.py"
+    },
+    "sources/compare_engram_hc_models.py": {
+      "sha256": "9d71ec85437073a4a6b709fdc8eeafc62c3f81363b3cc4e235eba6b9832239b9",
+      "bytes": 9913,
+      "source": ".coord/compare_engram_hc_models.py"
+    },
+    "sources/perf_round2_safety.py": {
+      "sha256": "3d5c6054972f9a35eb2b17af9a4c4e8aef0676a9fe95c9420a1892fa07c84532",
+      "bytes": 4628,
+      "source": ".coord/perf_round2_safety.py"
+    },
+    "sources/probe_device_engram.py": {
+      "sha256": "3ff8ec33193241f99dab389dfe75e366886698b9e9cb8aaf3349ab6775ab8775",
+      "bytes": 13365,
+      "source": ".coord/probe_device_engram.py"
+    },
+    "sources/probe_hc_decode_fold.py": {
+      "sha256": "f73657ecf7aab197d336d4729d7d77ed228b146db76624b019f80c469353727d",
+      "bytes": 5010,
+      "source": ".coord/probe_hc_decode_fold.py"
+    },
+    "tests/test_hc_decode_fold.py": {
+      "sha256": "0fdd27391422d3a03b62d669df41c45c926cea2e74581f97c25c4fb1ca0b5f28",
+      "bytes": 3413,
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_hc_decode_fold.py"
+    },
+    "tests/test_original_fp8_engram.py": {
+      "sha256": "fdea8853ef577bd3ef305014a2ee6bf916c07a32a2f47e0679edee9d5bdec4fc",
+      "bytes": 4998,
+      "source": "/home/<user>/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_original_fp8_engram.py"
+    },
+    "tests/test_v41_ascend_device_engram.py": {
+      "sha256": "97f57bf1999f6adaf3c27cccb005802289ddd39fdcaa0d727c80aec722af524e",
+      "bytes": 11741,
+      "source": "tests/test_v41_ascend_device_engram.py"
+    },
+    "tests/test_v41_ascend_hc_decode.py": {
+      "sha256": "20fdba58888b8a11274809a348cc97dcba3c108d0c08de7fd46c9cd6d488bec6",
+      "bytes": 4441,
+      "source": "tests/test_v41_ascend_hc_decode.py"
+    }
+  }
+}

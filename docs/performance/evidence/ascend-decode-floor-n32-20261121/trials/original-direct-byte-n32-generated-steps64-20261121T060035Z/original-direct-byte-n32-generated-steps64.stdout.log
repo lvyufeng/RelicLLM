@@ -1,0 +1,65 @@
+EXPERT_TP_RESIDENT layer=0 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=1 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=2 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=3 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=4 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=5 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=6 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=7 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=8 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=9 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=10 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=11 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=12 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=13 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=14 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=15 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=16 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=17 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=18 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=19 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=20 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=21 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=22 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=23 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=24 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=25 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=26 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=27 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=28 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=29 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=30 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=31 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=32 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=33 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=34 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=35 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=36 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=37 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=38 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=39 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+ISOLATED_CUBE_MODEL_RESULT {"rank": 2, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.129466013982892, "sustained_single_stream_TPS": 7.872595800255311, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}
+ISOLATED_CUBE_MODEL_RESULTISOLATED_CUBE_MODEL_RESULT  {"rank": 7, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.129467094317079, "sustained_single_stream_TPS": 7.872594754057045, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}{"rank": 0, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.12936695292592, "sustained_single_stream_TPS": 7.8726917324066825, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}
+
+ISOLATED_CUBE_MODEL_RESULT {"rank": 3, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.129438984207809, "sustained_single_stream_TPS": 7.872621976046066, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 6, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.129462183918804, "sustained_single_stream_TPS": 7.872599509300974, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 1, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.12947464408353, "sustained_single_stream_TPS": 7.8725874428525255, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 4, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.129484244156629, "sustained_single_stream_TPS": 7.872578146147758, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 5, "variant": "weight_quant", "timed_steps": 64, "timed_decode_seconds": 8.129463593941182, "sustained_single_stream_TPS": 7.8725981438306265, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834, 29402, 33, 37157, 14, 270, 3967, 344, 13070, 304, 2310, 270, 18392, 538, 223, 19, 1407, 223, 1457, 295, 2496, 14, 17919, 513, 100396, 16, 3841, 734, 260, 28179, 5118, 16, 342, 1309, 304, 5238, 270, 3737, 223, 19, 304, 223, 1457, 295, 2496, 14, 1660, 17919, 513]}
+List the integers from 1 through 100 in order, separated by commas. The list is:, 3, ..., 100.<｜end▁of▁sentence｜> no | 0<｜end▁of▁sentence｜> a one-way? Wait, the user is asking to list the integers from 1 through 100 in order, separated by commas. That's a straightforward request. I need to output the numbers 1 to 100 in order, each separated by

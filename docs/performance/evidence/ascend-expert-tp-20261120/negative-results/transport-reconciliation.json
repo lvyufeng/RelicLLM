@@ -1,0 +1,14 @@
+{
+  "SSH_reply_exit_code": 255,
+  "reason": "server stopped responding",
+  "native_control_owned_receipt_returncode": 0,
+  "native_owned_cleanup_complete": true,
+  "outer_summary_absent_but_original_helper_receipt_persisted_before_print": true,
+  "no_model_replay_after_lost_reply": true,
+  "helper_receipt": {
+    "origin": "<workspace>/relic-v41-perf-20261118-0938/logs/original-expert-native-forced-host-table-HC-20261120T133950Z/original-expert-native-forced-host-table-HC.json",
+    "bytes": 5038,
+    "sha256": "22a78c656243fd6a057a65488a993f617fbb56f8ba8b4b0bed7c7d82b4af3d0a"
+  },
+  "slow_multi_file_download_cancelled_partial_files_excluded": true
+}

@@ -148,6 +148,11 @@ nav:
       - CPU offload and prefetch ceiling: performance/cpu_offload_profile.md
       - Qwen KV cache at 65K: performance/qwen_kv_cache_65k_tg512.md
       - Qwen drafter acceptance: performance/qwen_drafter_acceptance.md
+      - Ascend original-checkpoint generation: performance/ascend_original_inference.md
+      - Ascend exact decode optimization: performance/ascend_decode_optimization.md
+      - Ascend decode interception seams: performance/ascend_decode_seams.md
+      - Ascend original-format experts: performance/ascend_original_experts.md
+      - Ascend original-format online unpack: performance/ascend_online_unpack.md
       - DeepSeek-V4.1 shard audit: performance/deepseek_v4_1_shard_audit.md
       - DeepSeek-V4.1-Flash host run: performance/deepseek_v4_1_flash_host_run.md
       - DeepSeek-V4.1-Flash device experts: performance/deepseek_v4_1_flash_device_experts.md

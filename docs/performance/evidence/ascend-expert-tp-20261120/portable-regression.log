@@ -1,0 +1,13 @@
+..............................s.................s.............s.s....... [ 17%]
+...............................s........................................ [ 35%]
+........................................................................ [ 53%]
+........................................................................ [ 71%]
+........................................................................ [ 88%]
+....s........................................                            [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_v41_cube_experiment.py:689: set RELIC_CUBE_EXPERIMENT_DEVICE=npu:0 on a leased card to run the device case
+SKIPPED [1] tests/test_v41_cube_experiment.py:659: set RELIC_CUBE_EXPERIMENT_DEVICE=npu:0 on a leased card to run the device case
+SKIPPED [2] tests/test_v41_ascend_graphs.py:963: set RELIC_ASCEND_GRAPHS_DEVICE=npu:0 on a leased card to run the NPU graph fixtures
+SKIPPED [1] tests/test_v41_ascend_tile_major_experts.py:680: set RELIC_ASCEND_TILE_MAJOR_DEVICE=npu:0 on a leased card to run the fused case
+SKIPPED [1] tests/test_v41_ascend_packed_experts.py:907: set RELIC_ASCEND_PACKED_EXPERTS_DEVICE=npu:0 on a leased card to run the device case
+399 passed, 6 skipped in 9.33s

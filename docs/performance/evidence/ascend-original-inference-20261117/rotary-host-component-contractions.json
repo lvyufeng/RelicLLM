@@ -1,0 +1,213 @@
+{
+  "torch": "2.10.0+cpu",
+  "cpu_only": true,
+  "sample_count": 4096,
+  "candidate_mismatch_counts_by_component": {
+    "real": {
+      "first": 1323,
+      "second": 0,
+      "unfused": 1031
+    },
+    "imag": {
+      "first": 1049,
+      "second": 345,
+      "unfused": 1055
+    }
+  },
+  "witnesses": [
+    {
+      "operands_bits": [
+        3205100292,
+        3208260940,
+        3184486813,
+        3206803306
+      ],
+      "measured_bits": [
+        3201466575,
+        1054237529
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 3201466576,
+          "second": 3201466575,
+          "unfused": 3201466576
+        },
+        "imag": {
+          "first": 1054237529,
+          "second": 1054237529,
+          "unfused": 1054237529
+        }
+      }
+    },
+    {
+      "operands_bits": [
+        1046072919,
+        1053679947,
+        3205671932,
+        1061486859
+      ],
+      "measured_bits": [
+        3202143286,
+        3179846108
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 3202143285,
+          "second": 3202143286,
+          "unfused": 3202143286
+        },
+        "imag": {
+          "first": 3179846108,
+          "second": 3179846108,
+          "unfused": 3179846108
+        }
+      }
+    },
+    {
+      "operands_bits": [
+        1045641982,
+        3211746241,
+        1060163086,
+        1078302062
+      ],
+      "measured_bits": [
+        1078057852,
+        3155296999
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 1078057852,
+          "second": 1078057852,
+          "unfused": 1078057852
+        },
+        "imag": {
+          "first": 3155297052,
+          "second": 3155296999,
+          "unfused": 3155297024
+        }
+      }
+    },
+    {
+      "operands_bits": [
+        3212461111,
+        3205545704,
+        1044330547,
+        1058655671
+      ],
+      "measured_bits": [
+        1042344398,
+        3207684974
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 1042344398,
+          "second": 1042344398,
+          "unfused": 1042344398
+        },
+        "imag": {
+          "first": 3207684974,
+          "second": 3207684973,
+          "unfused": 3207684973
+        }
+      }
+    },
+    {
+      "operands_bits": [
+        1049581128,
+        3205718013,
+        3203661593,
+        1058300585
+      ],
+      "measured_bits": [
+        1045238638,
+        1054837784
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 1045238639,
+          "second": 1045238638,
+          "unfused": 1045238639
+        },
+        "imag": {
+          "first": 1054837783,
+          "second": 1054837784,
+          "unfused": 1054837784
+        }
+      }
+    },
+    {
+      "operands_bits": [
+        3210050325,
+        3220677541,
+        1040539306,
+        3210370353
+      ],
+      "measured_bits": [
+        3219202685,
+        1055599989
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 3219202684,
+          "second": 3219202685,
+          "unfused": 3219202684
+        },
+        "imag": {
+          "first": 1055599990,
+          "second": 1055599989,
+          "unfused": 1055599989
+        }
+      }
+    },
+    {
+      "operands_bits": [
+        3214244374,
+        3208194893,
+        3215722321,
+        1064159509
+      ],
+      "measured_bits": [
+        1074754031,
+        3186004168
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 1074754030,
+          "second": 1074754031,
+          "unfused": 1074754030
+        },
+        "imag": {
+          "first": 3186004176,
+          "second": 3186004168,
+          "unfused": 3186004168
+        }
+      }
+    },
+    {
+      "operands_bits": [
+        3213594304,
+        1059442161,
+        3204879211,
+        1055802715
+      ],
+      "measured_bits": [
+        1049305590,
+        3210284492
+      ],
+      "candidate_bits": {
+        "real": {
+          "first": 1049305589,
+          "second": 1049305590,
+          "unfused": 1049305590
+        },
+        "imag": {
+          "first": 3210284492,
+          "second": 3210284493,
+          "unfused": 3210284492
+        }
+      }
+    }
+  ],
+  "original_cuda_reference_parity_claimed": false,
+  "sample_source_sha256": "6bbd115e2d06706f539a5c24039cb3a11578d540a85494e10eb7f599d1badeec"
+}

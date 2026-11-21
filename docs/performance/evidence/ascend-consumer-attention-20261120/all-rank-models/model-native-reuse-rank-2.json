@@ -1,0 +1,437 @@
+{
+  "rank": 2,
+  "dense_contract": "full-scaled-native-bf16",
+  "expert_contract": "native SDK full-K BF16 accumulation after original scales, no input requantization",
+  "explicit_numerical_test_permission": true,
+  "checkpoint_original_and_not_rewritten": true,
+  "Engram_original_tables_host": true,
+  "host_table_device_Engram": {
+    "installed": true,
+    "backend": "triton",
+    "tables_on_host": true,
+    "complete_Engram_CPU": false,
+    "WKV_and_gate_on_NPU": true,
+    "original_table_objects_and_parameter_sources_unchanged": true,
+    "WKV_output_channel_TP": 8,
+    "TP_rank": 2,
+    "numerical_contract": "original_fp8_operands_native_full_K_BF16_output_original_FP32_Engram_gate",
+    "explicit_device_bytes": 79015938,
+    "device_budget_excludes_graph_pools_and_allocator_caches": true,
+    "graphs": 2,
+    "source_certificates": [
+      {
+        "quantized": true,
+        "original_decode_identity": true,
+        "elements": 19660800,
+        "chunks": 13
+      },
+      {
+        "quantized": true,
+        "original_decode_identity": true,
+        "elements": 19660800,
+        "chunks": 13
+      }
+    ],
+    "source_guard_scope": "metadata and available tensor versions; versionless inference sources require caller immutability",
+    "decode_calls": 90,
+    "passthrough_calls": 0,
+    "prefetched_lookups": 90,
+    "direct_lookups": 0,
+    "lookup_wait_s": 0.0005488032475113869,
+    "pin_reuse_wait_s": 0.0023604845628142357,
+    "lookup_H2D_bytes": 1105920,
+    "mask_H2D_bytes": 90,
+    "hidden_state_D2H_bytes": 0,
+    "graph_replays": 90
+  },
+  "HC_decode_fold": {
+    "installed": true,
+    "backend": "triton",
+    "blocks": 40,
+    "fused_scope": "HC collapse and residual fold only",
+    "original_FP32_coefficients_and_BF16_boundaries": true,
+    "projection_normalization_and_Sinkhorn_unchanged": true,
+    "per_block_coverage": [
+      {
+        "block": 0,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 1,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 2,
+        "pre": 46,
+        "post": 43
+      },
+      {
+        "block": 3,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 4,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 5,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 6,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 7,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 8,
+        "pre": 46,
+        "post": 43
+      },
+      {
+        "block": 9,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 10,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 11,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 12,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 13,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 14,
+        "pre": 46,
+        "post": 43
+      },
+      {
+        "block": 15,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 16,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 17,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 18,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 19,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 20,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 21,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 22,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 23,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 24,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 25,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 26,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 27,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 28,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 29,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 30,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 31,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 32,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 33,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 34,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 35,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 36,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 37,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 38,
+        "pre": 40,
+        "post": 40
+      },
+      {
+        "block": 39,
+        "pre": 85,
+        "post": 40
+      }
+    ],
+    "selected_counts_include_eager_and_capture_not_device_replay": true,
+    "pre_selected": 1663,
+    "post_selected": 1609,
+    "pre_passthrough": 0,
+    "post_passthrough": 0
+  },
+  "attention_FP8_preparation_reuse": {
+    "installed": true,
+    "backend": "triton",
+    "scope": "one immutable batch-one attention invocation",
+    "original_E4M3_E8M0_quantization_unchanged": true,
+    "no_cache_between_forwards_or_recording_rounds": true,
+    "versionless_inference_inputs_require_explicit_caller_immutability": true,
+    "provider_counts_include_capture_not_device_replay": true,
+    "supported_attention_modules": 40,
+    "scopes": 809,
+    "quantizer_calls": 3236,
+    "reuses": 978,
+    "outside_scope_bypasses": 10572,
+    "unsupported_bypasses": 0,
+    "peak_live_preparations": 4
+  },
+  "quality_steps": 8,
+  "teacher_forced_reference_tokens": [
+    19,
+    14,
+    223,
+    20,
+    14,
+    223,
+    21,
+    14
+  ],
+  "quality_metrics": [
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.2291728258132935,
+      "RMS_difference": 0.2503873109817505,
+      "relative_L2_difference": 0.08558566123247147,
+      "reference_to_candidate_KL": 0.00017711140390019864,
+      "reference_token": 19,
+      "candidate_greedy_token": 19,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": 0.0010562576353549957
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.185159683227539,
+      "RMS_difference": 0.24052287638187408,
+      "relative_L2_difference": 0.07845839112997055,
+      "reference_to_candidate_KL": 0.0001183544663945213,
+      "reference_token": 14,
+      "candidate_greedy_token": 14,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.00038076145574450493
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.5092277526855469,
+      "RMS_difference": 0.3309207260608673,
+      "relative_L2_difference": 0.0748962014913559,
+      "reference_to_candidate_KL": 0.0014085760340094566,
+      "reference_token": 223,
+      "candidate_greedy_token": 223,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.004918612539768219
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 2.2747721672058105,
+      "RMS_difference": 0.44220075011253357,
+      "relative_L2_difference": 0.14678455889225006,
+      "reference_to_candidate_KL": 0.0010228219907730818,
+      "reference_token": 20,
+      "candidate_greedy_token": 20,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": 0.004495315253734589
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.0864816904067993,
+      "RMS_difference": 0.231849804520607,
+      "relative_L2_difference": 0.0947732925415039,
+      "reference_to_candidate_KL": 9.326493454864249e-05,
+      "reference_token": 14,
+      "candidate_greedy_token": 14,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.0007142676040530205
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 1.030529499053955,
+      "RMS_difference": 0.2208760529756546,
+      "relative_L2_difference": 0.06625117361545563,
+      "reference_to_candidate_KL": 0.0002670817484613508,
+      "reference_token": 223,
+      "candidate_greedy_token": 223,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -0.00018931366503238678
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 4.26061487197876,
+      "RMS_difference": 0.6200941801071167,
+      "relative_L2_difference": 0.2794744670391083,
+      "reference_to_candidate_KL": 1.739681829349138e-05,
+      "reference_token": 21,
+      "candidate_greedy_token": 21,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": -4.0494545828551054e-05
+    },
+    {
+      "FP32_bit_differences": 129280,
+      "max_abs_difference": 0.8804936408996582,
+      "RMS_difference": 0.19394922256469727,
+      "relative_L2_difference": 0.07398390769958496,
+      "reference_to_candidate_KL": 0.00012193471775390208,
+      "reference_token": 14,
+      "candidate_greedy_token": 14,
+      "greedy_matches": true,
+      "candidate_minus_reference_logprob_of_reference_token": 0.000723615288734436
+    }
+  ],
+  "timed_steps": 16,
+  "timed_context_start": 24,
+  "timed_context_end": 40,
+  "timed_token_ids": [
+    14,
+    223,
+    21,
+    14,
+    77199,
+    223,
+    1457,
+    16,
+    1,
+    1119,
+    3295,
+    16,
+    1,
+    1119,
+    3295,
+    16
+  ],
+  "timed_decode_seconds": 2.59916919702664,
+  "sustained_single_stream_TPS": 6.155813179958984,
+  "NPU_completion_and_host_argmax_included": true,
+  "observed_EOS_in_timed_tokens": [
+    8,
+    12
+  ],
+  "single_stream": true,
+  "batch_size": 1,
+  "production_defaults_and_serving_guards_unchanged": true,
+  "device_selected_MoE": null,
+  "graph_candidate_eager_FP32_bit_differences": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "expert_body_graph_teacher_FP32_bit_differences": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "original_complete_model_receipt": {
+    "path": "<workspace>/relic-v41-perf-20261118-0938/logs/original-consumer-native-reuse-host-table-HC-20261120T105304Z/Cube-model-rank-2.json",
+    "sha256": "5ee8c598cc1e733a1acf8273615abc4861819e8e4693e0e3784e7d822aa76565",
+    "bytes": 114040
+  },
+  "current_Engram_placement_is_separate_host_table_NPU_compute_owner": true
+}

@@ -1,0 +1,23 @@
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    ASCEND_PYTHON_EXECUTABLE
+
+
+Traceback (most recent call last):
+  File "<workspace>/relic-v41-perf-20261118-0938/source/build_consumer_variants.py", line 55, in <module>
+    main()
+  File "<workspace>/relic-v41-perf-20261118-0938/source/build_consumer_variants.py", line 36, in main
+    handle = ctypes.CDLL(str(library))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11/ctypes/__init__.py", line 376, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: <workspace>/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/lib/librelic_online_tile_cube.so: undefined symbol: aclrtCtxGetCurrentDefaultStream
