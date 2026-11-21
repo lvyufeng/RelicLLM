@@ -4,6 +4,8 @@ Dense/attention/shared-expert TP stays unchanged. EP groups own cyclic expert
 identities; each TP member owns an original output slice of W1/W3 and the matching
 input slice of W2. Down FP32 values are TP-reduced before BF16 narrowing. Only a
 TP leader emits the EP routed sum into the existing global TP8 MoE reduction.
+An explicitly matched compact consumer may reorder those same packed bytes at
+load time; the default original N16 layout and source checkpoint remain intact.
 """
 from __future__ import annotations
 
@@ -18,6 +20,9 @@ from relic_core.kernels.expert_tp_moe import tp_moe_down_partials, finish_tp_moe
 from .ascend_packed_experts import AscendPackedRoutedExperts, _stored_bytes, packed_expert_bytes
 from .ascend_tile_major_experts import pack_code_tiles, pack_scale_tiles
 from .ascend_device_routing import _OWNER
+
+ORIGINAL_BANK_FORMAT = "original-n16"
+COMPACT_BANK_FORMAT = "relic.fp4.cube-n32-k128.v1"
 
 
 @dataclass
@@ -35,6 +40,7 @@ class HybridExpertBank:
     swiglu_limit: float
     banks: dict
     partial: bool = True
+    bank_format: str = ORIGINAL_BANK_FORMAT
 
     @property
     def resident_bytes(self):
@@ -42,7 +48,8 @@ class HybridExpertBank:
 
     @property
     def cache_stats(self):
-        return {"name": f"original-expert-TP/layer{self.layer_id}", "preloaded": True,
+        return {"name": f"expert-TP/{self.bank_format}/layer{self.layer_id}", "preloaded": True,
+                "bank_format": self.bank_format,
                 "retained_bytes": self.resident_bytes, "entries": len(range(self.ep_rank, self.n_experts, self.ep_world)),
                 "owned_experts": len(range(self.ep_rank, self.n_experts, self.ep_world)),
                 "EP_world": self.ep_world, "EP_rank": self.ep_rank, "TP_world": self.tp_world,
@@ -80,12 +87,42 @@ class ExpertTPDispatch:
         if getattr(ascend_packed_experts.packed_expert_forward, "_relic_routed_expert_graph_owner", None) is not None:
             raise RuntimeError("close existing expert-body graphs before releasing their resident weight views")
 
+    @staticmethod
+    def _require_matching_bank_format(bank_format, consumer, backend):
+        if not isinstance(bank_format, str) or bank_format not in (ORIGINAL_BANK_FORMAT, COMPACT_BANK_FORMAT):
+            raise ValueError("choose an explicit supported expert bank format")
+        consumer_format = getattr(consumer, "weight_format", ORIGINAL_BANK_FORMAT)
+        if bank_format == ORIGINAL_BANK_FORMAT:
+            if consumer_format != ORIGINAL_BANK_FORMAT or getattr(consumer, "cube_packed", False):
+                raise ValueError("original expert banks require an original-format consumer")
+            return
+        if (backend != "triton" or consumer is None or not callable(consumer)
+                or consumer_format != COMPACT_BANK_FORMAT
+                or getattr(consumer, "cube_packed", False) is not True
+                or not isinstance(getattr(consumer, "group_k", None), int)
+                or isinstance(getattr(consumer, "group_k", None), bool)
+                or getattr(consumer, "group_k", None) != 4
+                or not isinstance(getattr(consumer, "output_rows", None), int)
+                or isinstance(getattr(consumer, "output_rows", None), bool)
+                or getattr(consumer, "output_rows", None) != 32):
+            raise ValueError("compact expert banks require their explicit N32/K128 Cube consumer and NPU backend")
+
+    @staticmethod
+    def _require_compact_geometry(dim, local_mid, device):
+        if device.type != "npu":
+            raise ValueError("compact expert banks require NPU residency")
+        for n, k in ((local_mid, dim), (dim, local_mid)):
+            if n % 32 or k % 128:
+                raise ValueError("compact expert projections require complete N32/K128 geometry")
+
     def __init__(self, model, *, consumer=None, tp_world=2, backend="triton", rank=None, world=None,
                  reduce_fp32=None, capture_graphs=True, restore_residency=True, reserve_bytes=4 * 2**30,
-                 max_workspace_bytes=512 * 2**20):
+                 max_workspace_bytes=512 * 2**20, bank_format=ORIGINAL_BANK_FORMAT):
         if (backend not in ("torch", "triton") or isinstance(tp_world, bool)
                 or not isinstance(tp_world, int) or tp_world not in (1, 2, 4, 8)):
             raise ValueError("choose explicit original-byte TP geometry and backend")
+        self._require_matching_bank_format(bank_format, consumer, backend)
+        self.bank_format = bank_format
         self._require_no_expert_graph_owner()
         initialized = dist.is_available() and dist.is_initialized()
         self.rank = dist.get_rank() if rank is None and initialized else (0 if rank is None else rank)
@@ -139,6 +176,9 @@ class ExpertTPDispatch:
         geometry = (first.dim, first.inter_dim, first.topk, first.n_experts, first.device)
         if any((store.dim, full_mid, store.topk, store.n_experts, store.device) != geometry for _, store, full_mid in self.entries):
             raise ValueError("shared TP workspace requires identical expert layer geometry")
+        self.geometry = geometry
+        if self.bank_format == COMPACT_BANK_FORMAT:
+            self._require_compact_geometry(first.dim, first.inter_dim // tp_world, first.device)
         group_k = consumer.group_k if consumer is not None else 1
         self.workspace = make_tile_moe_workspace(first.dim, first.inter_dim // tp_world, first.topk,
             device=self.device, group_k=group_k, block_dim=consumer.block_dim if consumer is not None else 24,
@@ -168,17 +208,40 @@ class ExpertTPDispatch:
                     projection=name, tp_rank=self.tp_rank, tp_world=self.tp_world, full_inter_dim=full_mid)
                 if int(scale.min()) < 2 or int(scale.max()) > 252:
                     raise ValueError("the original expert shard is not certified for exact BF16 operands")
-                banks[name][0][slot].copy_(pack_code_tiles(code, n, k))
-                banks[name][1][slot].copy_(pack_scale_tiles(scale, n, k))
+                if self.bank_format == COMPACT_BANK_FORMAT:
+                    from relic_core.kernels.cube_packed_format import convert_fp4_cube
+
+                    if code.device.type != "cpu" or scale.device.type != "cpu":
+                        raise ValueError("compact TP conversion requires original CPU checkpoint bytes")
+                    converted = convert_fp4_cube(code, scale)
+                    if (converted.format != self.bank_format or converted.n != n or converted.k != k
+                            or converted.payload_bytes != n * k // 2 + n * k // 32):
+                        raise ValueError("compact TP conversion changed the declared format, geometry or byte count")
+                    # These old-shaped extents are opaque compatibility views for
+                    # the common MoE validator, NOT original N16 layout semantics.
+                    # Only the explicitly matched Cube-order consumer reads them.
+                    banks[name][0][slot].copy_(converted.codes.reshape(n // 16, k // 32, 16, 16))
+                    banks[name][1][slot].copy_(converted.scales.reshape(n // 16, k // 32, 16))
+                    del converted
+                else:
+                    banks[name][0][slot].copy_(pack_code_tiles(code, n, k))
+                    banks[name][1][slot].copy_(pack_scale_tiles(scale, n, k))
         return HybridExpertBank(store.layer_id, store.dim, local_mid, store.topk, store.n_experts,
-            self.ep_rank, self.ep_world, self.tp_rank, self.tp_world, self.device, store.swiglu_limit, banks)
+            self.ep_rank, self.ep_world, self.tp_rank, self.tp_world, self.device, store.swiglu_limit, banks,
+            bank_format=self.bank_format)
 
     def install(self):
         with self.lock:
             if self.installed or self.closed:
                 raise RuntimeError("use a fresh expert TP owner")
+            self._require_matching_bank_format(self.bank_format, self.consumer, self.backend)
             self._require_no_expert_graph_owner()
-            for ffn, store, _ in self.entries:
+            for ffn, store, full_mid in self.entries:
+                if self.bank_format == COMPACT_BANK_FORMAT:
+                    if ((store.dim, store.inter_dim, store.topk, store.n_experts, store.device) != self.geometry
+                            or store.inter_dim != full_mid):
+                        raise ValueError("compact expert geometry changed before installation")
+                    self._require_compact_geometry(store.dim, full_mid // self.tp_world, store.device)
                 if (ffn.routed is not store or store._arenas is None
                         or getattr(store, _OWNER, None) is not None
                         or getattr(store, "_relic_m1_routed_dispatch_owner", None) is not None):
@@ -290,7 +353,11 @@ class ExpertTPDispatch:
                 "dense_attention_and_shared_expert_TP_unchanged": True,
                 "FP32_down_TP_reduction_before_BF16_narrowing": True,
                 "one_TP_leader_emits_into_original_global_MoE_reduce": True,
-                "original_E2M1_E8M0_bytes_and_FP8_activation_grids_unchanged": True,
+                "source_checkpoint_files_unchanged": True,
+                "bank_format": self.bank_format,
+                "resident_encoding_changed": self.bank_format == COMPACT_BANK_FORMAT,
+                "original_FP8_activation_grids_unchanged": True,
+                "packed_weight_and_scale_resident_byte_count_unchanged": True,
                 "TP_down_partition_and_EP_global_FP32_sum_order_differ": True,
                 "immutable_resident_banks_required_through_capture_and_replay": True,
                 "numerical_contract": CONTRACT, "decode_only": True, "routing_D2H_calls": 0,

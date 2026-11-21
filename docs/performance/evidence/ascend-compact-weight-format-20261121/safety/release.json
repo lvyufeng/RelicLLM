@@ -1,0 +1,8 @@
+{
+  "host": "<leased-910B3-host>",
+  "released": true,
+  "tool": "ts_release",
+  "no_owned_device_jobs_remaining": true,
+  "final_safety_original_sha256": "32dee7d3a90de8690a51535e37d5523bbd51de8b8a9e915d87d5fb322900b5f7",
+  "final_safety_published_sha256": "706ac9b984327ff9e7e574a900ee082cd78f4fc26a29bb40b385b219174737de"
+}

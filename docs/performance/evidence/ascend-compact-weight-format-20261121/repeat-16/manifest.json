@@ -1,0 +1,67 @@
+{
+  "scope": "Independent 16-step compact repeat, not a new matched control pair",
+  "files": [
+    {
+      "path": "rank-0.json",
+      "original_sha256": "21f27ca590d3be07b52d442dbb747473d34c58f602b45e81c19f4643970e63d9",
+      "published_sha256": "21f27ca590d3be07b52d442dbb747473d34c58f602b45e81c19f4643970e63d9",
+      "published_bytes": 114357
+    },
+    {
+      "path": "rank-1.json",
+      "original_sha256": "5b74ce371cc4d1a30b9329118f09f42989caffc3e231556bdee138d5d2b1904c",
+      "published_sha256": "5b74ce371cc4d1a30b9329118f09f42989caffc3e231556bdee138d5d2b1904c",
+      "published_bytes": 114357
+    },
+    {
+      "path": "rank-2.json",
+      "original_sha256": "87aebdd58963074f773bf4ae11aca92578d66612009269ccf9f1e7c1b7896399",
+      "published_sha256": "87aebdd58963074f773bf4ae11aca92578d66612009269ccf9f1e7c1b7896399",
+      "published_bytes": 114358
+    },
+    {
+      "path": "rank-3.json",
+      "original_sha256": "2c97ab94530d432eb2e7afbcde3d64ee127305282c89c9dee8a7c6b4bb82d882",
+      "published_sha256": "2c97ab94530d432eb2e7afbcde3d64ee127305282c89c9dee8a7c6b4bb82d882",
+      "published_bytes": 114357
+    },
+    {
+      "path": "rank-4.json",
+      "original_sha256": "2f826966692f6a4bdb2701ea22021f4a72463a2556795997ef1d6fd3a552c824",
+      "published_sha256": "2f826966692f6a4bdb2701ea22021f4a72463a2556795997ef1d6fd3a552c824",
+      "published_bytes": 114359
+    },
+    {
+      "path": "rank-5.json",
+      "original_sha256": "6bbe7e806a12d7c637b880f334f8d67a3a0dc5eb30b6ee4e8c64ac5ff44fa67a",
+      "published_sha256": "6bbe7e806a12d7c637b880f334f8d67a3a0dc5eb30b6ee4e8c64ac5ff44fa67a",
+      "published_bytes": 114361
+    },
+    {
+      "path": "rank-6.json",
+      "original_sha256": "f0b47afed1d9dc5ba6d3fe7aa0cf069998ee43c961de2f5c8c480ed44037c260",
+      "published_sha256": "f0b47afed1d9dc5ba6d3fe7aa0cf069998ee43c961de2f5c8c480ed44037c260",
+      "published_bytes": 114361
+    },
+    {
+      "path": "rank-7.json",
+      "original_sha256": "3142a15987094961d3c362d33cb23af5aeb9678fdfa3345602bac80524e85ff2",
+      "published_sha256": "3142a15987094961d3c362d33cb23af5aeb9678fdfa3345602bac80524e85ff2",
+      "published_bytes": 114354
+    }
+  ],
+  "summary": {
+    "steps": 16,
+    "excluded_warmups": 4,
+    "context": [
+      24,
+      40
+    ],
+    "critical_rank_seconds": 1.85836367495358,
+    "TPS": 8.609724897038609,
+    "milliseconds_per_token": 116.14772968459874,
+    "same_16_output_prefix_as_64_step_run": true,
+    "packed_expert_payload_bytes_per_rank": 36097228800,
+    "not_a_second_matched_control_pair": true
+  }
+}

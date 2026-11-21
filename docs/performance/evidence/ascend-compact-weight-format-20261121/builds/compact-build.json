@@ -1,0 +1,69 @@
+{
+  "variants": {
+    "original-control": {
+      "library": "<private-compact-root>/cache/original-control/build/lib/librelic_online_tile_cube.so",
+      "sha256": "78f13fbf2620154c1701355e09292052f4e4bca8e82601c15aec9069ea128a62",
+      "cube_packed": false,
+      "group_k": 4,
+      "output_rows": 32,
+      "prepared_tables": true,
+      "source_hashes": {
+        "online_tile_cube.cpp": "0d365aa81960bbdab9a9072b417db86d36a296000af78865daa37cbf52a666d5",
+        "CMakeLists.txt": "e1e32c240c5b23413efbc6ed6f50ecf2c1d8eb72f21448b9052d0a2897590cf1",
+        "kernel_entry.cpp.in": "79c2060dbebe2cba1b8f02869fa3f9acd04969d6fb18e6572bf0827fd3d8cf04"
+      },
+      "source_snapshot": "<private-compact-root>/cache/original-control/source",
+      "configure_command": [
+        "cmake",
+        "-S",
+        "<private-compact-root>/cache/original-control/source",
+        "-B",
+        "<private-compact-root>/cache/original-control/build",
+        "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
+        "-DSOC_VERSION=Ascend910B3",
+        "-DRUN_MODE=npu",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DRELIC_TILE_K_BLOCKS=4",
+        "-DRELIC_TILE_OUTPUT_ROWS=32",
+        "-DRELIC_TILE_PRELOAD_A=0",
+        "-DRELIC_TILE_DIRECT_BITS=0",
+        "-DRELIC_TILE_PREPARED_TABLES=1",
+        "-DRELIC_TILE_CUBE_PACKED=0"
+      ]
+    },
+    "cube-packed": {
+      "library": "<private-compact-root>/cache/cube-packed/build/lib/librelic_online_tile_cube.so",
+      "sha256": "db7b3e3b04b0154ea4cd5b515c7d8cae426521b77e4c4589adccbc015555668c",
+      "cube_packed": true,
+      "group_k": 4,
+      "output_rows": 32,
+      "prepared_tables": true,
+      "source_hashes": {
+        "online_tile_cube.cpp": "0d365aa81960bbdab9a9072b417db86d36a296000af78865daa37cbf52a666d5",
+        "CMakeLists.txt": "e1e32c240c5b23413efbc6ed6f50ecf2c1d8eb72f21448b9052d0a2897590cf1",
+        "kernel_entry.cpp.in": "79c2060dbebe2cba1b8f02869fa3f9acd04969d6fb18e6572bf0827fd3d8cf04"
+      },
+      "source_snapshot": "<private-compact-root>/cache/cube-packed/source",
+      "configure_command": [
+        "cmake",
+        "-S",
+        "<private-compact-root>/cache/cube-packed/source",
+        "-B",
+        "<private-compact-root>/cache/cube-packed/build",
+        "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
+        "-DSOC_VERSION=Ascend910B3",
+        "-DRUN_MODE=npu",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DRELIC_TILE_K_BLOCKS=4",
+        "-DRELIC_TILE_OUTPUT_ROWS=32",
+        "-DRELIC_TILE_PRELOAD_A=0",
+        "-DRELIC_TILE_DIRECT_BITS=0",
+        "-DRELIC_TILE_PREPARED_TABLES=1",
+        "-DRELIC_TILE_CUBE_PACKED=1"
+      ]
+    }
+  },
+  "original_checkpoint_writes": 0,
+  "old_native_libraries_overwritten": false,
+  "no_local_macOS_build_or_benchmark": true
+}

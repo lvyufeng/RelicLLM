@@ -1,0 +1,69 @@
+{
+  "name": "compact-runtime-regression-v2",
+  "command": [
+    "<private-python-root>/venv311/bin/python",
+    "<private-compact-root>/source/run_compact_weight_regression.py",
+    "runtime"
+  ],
+  "timeout_s": 180,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-21T14:15:59.058936+00:00",
+  "cwd": "<private-control-root>/source/RelicLLM",
+  "timed_out": false,
+  "ownership_token": "<withheld-private-token>",
+  "critical_environment": {
+    "PYTHONPATH": "<private-compact-root>/source/relic-core:<private-compact-root>/source/RelicLLM",
+    "PYTHONNOUSERSITE": null,
+    "PYTHONDONTWRITEBYTECODE": null,
+    "ASCEND_RT_VISIBLE_DEVICES": null,
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": null,
+    "TMPDIR": null,
+    "HOME": "/root",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": null,
+    "ASCEND_WORK_PATH": null,
+    "ASCEND_PROCESS_LOG_PATH": null
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 3433049,
+  "process_group": 3433049,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 3433049,
+        "starttime": 418564512,
+        "pgid": 3433049,
+        "sid": 3433049,
+        "state": "Z",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [],
+    "terminal_reconciliations": [],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 6.774059223942459,
+  "finished_at": "2026-11-21T14:16:05.832982+00:00"
+}
