@@ -1,0 +1,33 @@
+........................................ss.s.s.......................... [ 11%]
+............................s.ss.....s...s.....s........................ [ 22%]
+......................s................................................. [ 33%]
+........s.........................sss.ss................................ [ 44%]
+.....................s..s........ssssss................................. [ 55%]
+.......................................................s................ [ 66%]
+...........s.............s................................s............. [ 77%]
+...............................sss.............................s........ [ 88%]
+........................................................................ [ 99%]
+...                                                                      [100%]
+=========================== short test summary info ============================
+SKIPPED [4] tests/test_v41_ascend_activation.py:20: requires a leased RELIC_INFERENCE_TEST_DEVICE=npu:0
+SKIPPED [1] tests/test_v41_host_engram.py:350: set RELIC_ASCEND_ENGRAM_DEVICE=npu:0 to run the device case
+SKIPPED [1] ../relic-core-ascend-online-unpack/tests/test_ascend_unpack_stream.py:20: requires an explicitly requested real Triton Ascend device; not a CPU acceptance test
+SKIPPED [1] tests/test_v41_online_unpack.py:676: requires a working torch_npu stack
+SKIPPED [1] tests/test_v41_online_unpack.py:651: requires a working torch_npu stack
+SKIPPED [1] tests/test_v41_online_unpack.py:633: requires a working torch_npu stack
+SKIPPED [1] tests/test_v41_online_unpack.py:708: requires a working torch_npu stack
+SKIPPED [1] tests/test_v41_ascend_packed_experts.py:907: set RELIC_ASCEND_PACKED_EXPERTS_DEVICE=npu:0 on a leased card to run the device case
+SKIPPED [1] tests/test_v41_ascend_rotary.py:214: set RELIC_ASCEND_ROTARY_DEVICE=npu:0 on a leased card to run the device case
+SKIPPED [3] tests/test_v41_ascend_bindings.py:77: requires a leased RELIC_ASCEND_EXPERTS_DEVICE=npu:0
+SKIPPED [2] tests/test_v41_ascend_bindings.py:33: NPU device registration required for a constructor-only seam check
+SKIPPED [2] tests/test_v41_ascend_graphs.py:963: set RELIC_ASCEND_GRAPHS_DEVICE=npu:0 on a leased card to run the NPU graph fixtures
+SKIPPED [6] ../relic-core-ascend-online-unpack/tests/test_ascend_unpack_guard.py:19: requires an explicitly requested fused Ascend device; not a CPU acceptance test
+SKIPPED [1] tests/test_v41_ascend_experts.py:948: set RELIC_ASCEND_EXPERTS_DEVICE=npu:0 to run the device case
+SKIPPED [1] tests/test_v41_cube_experiment.py:689: set RELIC_CUBE_EXPERIMENT_DEVICE=npu:0 on a leased card to run the device case
+SKIPPED [1] tests/test_v41_cube_experiment.py:659: set RELIC_CUBE_EXPERIMENT_DEVICE=npu:0 on a leased card to run the device case
+SKIPPED [1] tests/test_v41_ascend_tile_major_experts.py:680: set RELIC_ASCEND_TILE_MAJOR_DEVICE=npu:0 on a leased card to run the fused case
+SKIPPED [1] ../relic-core-ascend-online-unpack/tests/test_ascend_unpack_grid.py:30: requires an explicitly leased NPU with the fused Triton backend
+SKIPPED [1] ../relic-core-ascend-online-unpack/tests/test_ascend_unpack_grid.py:66: requires an explicitly leased NPU with the fused Triton backend
+SKIPPED [1] ../relic-core-ascend-online-unpack/tests/test_ascend_unpack_grid.py:48: requires an explicitly leased NPU with the fused Triton backend
+SKIPPED [1] tests/test_v41_ascend_host_engram.py:694: set RELIC_ASCEND_HOST_ENGRAM_DEVICE=npu:0 on a leased card to run the device case
+618 passed, 33 skipped in 11.98s

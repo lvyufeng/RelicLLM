@@ -1,0 +1,40 @@
+{
+  "TPS": {
+    "old-16": 6.4753774519897185,
+    "old-64": 6.437617259282043,
+    "prepared-16": 6.708889969309131,
+    "prepared-64": 6.669335980927184,
+    "n32-16": 7.900509211539289,
+    "n32-64": 7.872578146147758,
+    "global-64": 6.440063975443536
+  },
+  "comparison": {
+    "prepared-16": {
+      "same_autoregressive_token_stream": true,
+      "observed_TPS_ratio": 1.0360616070724433,
+      "observed_ms_saved_per_token": 5.375197273679078
+    },
+    "prepared-64": {
+      "same_autoregressive_token_stream": true,
+      "observed_TPS_ratio": 1.035994485585647,
+      "observed_ms_saved_per_token": 5.397011889726855
+    },
+    "n32-16": {
+      "same_autoregressive_token_stream": true,
+      "observed_TPS_ratio": 1.2200847394790344,
+      "observed_ms_saved_per_token": 27.857032197061926
+    },
+    "n32-64": {
+      "same_autoregressive_token_stream": true,
+      "observed_TPS_ratio": 1.2229024853561656,
+      "observed_ms_saved_per_token": 28.31378504197346
+    },
+    "global-64": {
+      "same_autoregressive_token_stream": true,
+      "observed_TPS_ratio": 1.00038006549053,
+      "observed_ms_saved_per_token": 0.059015794249717146
+    }
+  },
+  "all_rank_compared": true,
+  "target_50_TPS_reached": false
+}

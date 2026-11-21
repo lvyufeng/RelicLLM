@@ -1,0 +1,168 @@
+{
+  "milestone": "round 4: widening tile sweep to 5.151722 TPS and the measured 50-TPS ceiling",
+  "file_count": 22,
+  "total_bytes": 1760146,
+  "files": [
+    {
+      "path": "benchmark_decode_throughput.py",
+      "bytes": 5295,
+      "sha256": "db5fe41f524cc816dc9a95b62a9a9270e66e6acb7c6eeda5310f0ac39838dcef"
+    },
+    {
+      "path": "benchmark_widen_tile_geometries.py",
+      "bytes": 3029,
+      "sha256": "9f5497e802c56762b0b23e6f528366250cb4cec75273dbe65e0b97e6b286ea06"
+    },
+    {
+      "path": "build_round3_evidence.py",
+      "bytes": 4180,
+      "sha256": "45f3601232f87d639d794a615270abfd937278845a8df51ef1a240880b399f46"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-0.json",
+      "bytes": 108440,
+      "sha256": "4c21f28ef21de43147047d3a3b9bfcf16247a8fc11858379bbe4c541f683e933"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-1.json",
+      "bytes": 108417,
+      "sha256": "15339e1acd90f9e744e24ef1764b53bcea4d70f7c7a3e66225c06f9803fdf201"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-2.json",
+      "bytes": 108420,
+      "sha256": "cca6dcfd569bb4a1369d466f40b21e0cb640a4afa72fe4fd83d49ac5f72df128"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-3.json",
+      "bytes": 108414,
+      "sha256": "d2326532adbc562512034c296727babb6b03d0f3f422d73a6fb0c6d1200ed708"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-4.json",
+      "bytes": 108418,
+      "sha256": "4f28b9964cad6ac1e0b9625e82423c3dba9a1ac3ff823b75a7648fd67f18d155"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-5.json",
+      "bytes": 108420,
+      "sha256": "c740f0e1c6069bb863ab99128b10e20c51a269f2358e485472eb8636fd722429"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-6.json",
+      "bytes": 108412,
+      "sha256": "f94268357ec9a7063baf768d2c8a9dafa2ec172f86fd71d55e9fd2d64a52cb5b"
+    },
+    {
+      "path": "candidate-widen-tile-4096/Cube-model-rank-7.json",
+      "bytes": 108420,
+      "sha256": "049ad30a80caa832f0546d7ed697b1c00b25c19a6075d79fe0ff42b5cd92bb9b"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-0.json",
+      "bytes": 109137,
+      "sha256": "9b0955f6a72fbb9976f0e100c484310620ad4f7554312afdcc58b80c70e16708"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-1.json",
+      "bytes": 109110,
+      "sha256": "cf8d2df73f3ed40fc452d9c0ecb875946ece592dd79c6868290405a53f1c5bfd"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-2.json",
+      "bytes": 109113,
+      "sha256": "e0f555b11ea9a24f82de286bb47db6a10a59ee780ebb251bbba5af53037ff100"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-3.json",
+      "bytes": 109105,
+      "sha256": "6911ab9c806bf0582b0240fce7e249aa8b46ff8fb223f3bf8bd25a54870276c2"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-4.json",
+      "bytes": 109115,
+      "sha256": "223da2efbcd6cd9dbe06c7a2fb965eff56ceca72211102ed1df97f86bd70b689"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-5.json",
+      "bytes": 109114,
+      "sha256": "318f1be066c4caa1f34fd290d98ce59b4f50bb4ac1f4ef9b96d8003ca9d85ac3"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-6.json",
+      "bytes": 109111,
+      "sha256": "6338985097e1913483d76924e65cac42077653639b3bbc14058f803a9dd86e6a"
+    },
+    {
+      "path": "timing-ablation-ceiling/Cube-model-rank-7.json",
+      "bytes": 109109,
+      "sha256": "6b0da156d66dfa22346b94fad2f862b39b125f7f9e0c3242b0905370256a76a0"
+    },
+    {
+      "path": "widen-tile-geometries/run.log",
+      "bytes": 844,
+      "sha256": "fa31dcf5fc30e49afbf84737a6ddab4a7ee8a80d94a5657b3810b55bd7739bae"
+    },
+    {
+      "path": "widen-tile-geometries/widen-tile-geometries.json",
+      "bytes": 1530,
+      "sha256": "16b4107aa6cc55546d9d646f985fe531928af00519015728797d3751f9955336"
+    },
+    {
+      "path": "widen-tile-sweep-log/run.log",
+      "bytes": 4993,
+      "sha256": "347cc45ba079018a80a9fae26e837b6d25462d8ba123bba3cf9ec96d0afde0c2"
+    }
+  ],
+  "candidate": {
+    "TPS": 5.151722,
+    "per_token_ms": 194.11,
+    "timed_forwards": 16,
+    "context": [
+      24,
+      40
+    ],
+    "slowest_of_eight_ranks": true,
+    "final_FP32_logits_bit_identical_to_the_4.934599_candidate": true,
+    "teacher_and_graph_vs_eager_bit_differences": "all zero",
+    "expert_body_graphs_per_rank": 1920,
+    "expert_graph_passthroughs": 0
+  },
+  "exact_baseline_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "shortfall_factor": 9.7,
+  "widening_tile": {
+    "default_before": 1024,
+    "default_now": 4096,
+    "per_projection_ms": {
+      "1024": {
+        "w1_w3": 0.4724,
+        "w2": 0.4578
+      },
+      "2048": {
+        "w1_w3": 0.3854,
+        "w2": 0.3835
+      },
+      "4096": {
+        "w1_w3": 0.3478,
+        "w2": 0.3418
+      }
+    },
+    "not_arithmetic_bound": "at tile 512 the arithmetic kernel costs the same as a copy kernel that decodes nothing (0.5428 vs 0.5426 ms)",
+    "ceiling": "8192 aborts the Ascend Triton compiler",
+    "bit_identity": "full byte identity on both geometries at every tile"
+  },
+  "impossibility_bound": {
+    "zero_expert_TPS": 10.705,
+    "zero_expert_ms_per_token": 93.42,
+    "budget_for_50_TPS_ms_per_token": 20.0,
+    "conclusion": "even with all routed-expert work and routing reads removed this configuration is 4.7x short of 50 TPS, so the target needs the whole per-layer chain cut about five times, not expert work alone"
+  },
+  "numerical_contract": {
+    "exact_default_path": "unchanged",
+    "production_default_replaced": false,
+    "complete_Engram_CPU": true,
+    "checkpoint_rewritten": false,
+    "serving_guards_changed": false
+  }
+}

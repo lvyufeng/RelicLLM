@@ -1,0 +1,78 @@
+{
+  "name": "bench-torch",
+  "command": [
+    "/data1/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "tests/bench_online_unpack.py",
+    "--device",
+    "npu:0",
+    "--backend",
+    "torch",
+    "--iterations",
+    "20",
+    "--report",
+    "/data1/relic-online-unpack-20261117-0534/logs/online-unpack-bench-torch-20261117T000213Z/benchmark.json",
+    "--checkpoint",
+    "/data1/relic-v41-20261116-210/checkpoint"
+  ],
+  "timeout_s": 900,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-17T00:02:13.920401+00:00",
+  "cwd": "/data1/relic-online-unpack-20261117-0534/source/relic-core",
+  "timed_out": false,
+  "ownership_token": "2570b4eacb217d885412a941fe64cb0d39a6bb7727e32b081f885df1ad65f4a9",
+  "critical_environment": {
+    "PYTHONPATH": "/data1/relic-online-unpack-20261117-0534/python-packages311:/data1/relic-online-unpack-20261117-0534/source/relic-core:/data1/relic-online-unpack-20261117-0534/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "/data1/relic-online-unpack-20261117-0534/tmp",
+    "HOME": "/data1/relic-online-unpack-20261117-0534/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "/data1/relic-online-unpack-20261117-0534/cache/ascend",
+    "ASCEND_WORK_PATH": "/data1/relic-online-unpack-20261117-0534/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "/data1/relic-online-unpack-20261117-0534/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 2407291,
+  "process_group": 2407291,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 2407291,
+        "starttime": 378881999,
+        "pgid": 2407291,
+        "sid": 2407291,
+        "state": "Z",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [],
+    "terminal_reconciliations": [],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 11.221904332749546,
+  "finished_at": "2026-11-17T00:02:25.142295+00:00"
+}

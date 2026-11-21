@@ -1,0 +1,132 @@
+{
+  "name": "gemm-npu",
+  "command": [
+    "/data1/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_block_gemm.py",
+    "tests/test_block_gemm_math.py",
+    "-q",
+    "-rs",
+    "--junitxml=/data1/relic-expert-gemm-20261117-1046/logs/gemm-npu-20261117T044257Z/pytest.xml"
+  ],
+  "timeout_s": 900,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-17T04:42:57.290169+00:00",
+  "cwd": "/data1/relic-expert-gemm-20261117-1046/source/relic-core",
+  "timed_out": false,
+  "ownership_token": "1f3b18d34646ab796337e2be4b4bef8e4a61272dfb9f4455c72f33c9728a7e46",
+  "critical_environment": {
+    "PYTHONPATH": "/data1/relic-expert-gemm-20261117-1046/source/relic-core:/data1/relic-expert-gemm-20261117-1046/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "/data1/relic-expert-gemm-20261117-1046/tmp",
+    "HOME": "/data1/relic-expert-gemm-20261117-1046/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "/data1/relic-expert-gemm-20261117-1046/cache/ascend",
+    "ASCEND_WORK_PATH": "/data1/relic-expert-gemm-20261117-1046/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "/data1/relic-expert-gemm-20261117-1046/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 2434764,
+  "process_group": 2434764,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 2434764,
+        "starttime": 380566336,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2434788,
+        "starttime": 380567029,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2434797,
+        "starttime": 380567333,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2434817,
+        "starttime": 380567359,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2434873,
+        "starttime": 380567916,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2434876,
+        "starttime": 380567963,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2434886,
+        "starttime": 380568263,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2434906,
+        "starttime": 380568288,
+        "pgid": 2434764,
+        "sid": 2434764,
+        "state": "R",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [],
+    "terminal_reconciliations": [],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 34.640221609734,
+  "finished_at": "2026-11-17T04:43:31.930404+00:00"
+}

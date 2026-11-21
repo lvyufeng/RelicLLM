@@ -1,0 +1,17 @@
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']![WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[ERROR] 2026-11-21-12:15:02 (PID:3357641, Device:0, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:02 (PID:3357644, Device:3, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:03 (PID:3357648, Device:7, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:03 (PID:3357645, Device:4, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:03 (PID:3357647, Device:6, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:03 (PID:3357646, Device:5, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:03 (PID:3357643, Device:2, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:03 (PID:3357642, Device:1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+[ERROR] 2026-11-21-12:15:28 (PID:3357631, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

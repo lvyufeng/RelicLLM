@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-11-17T00:14:24.872167+00:00",
+  "task_owned_live_processes": [],
+  "private_python_processes": [],
+  "receipt_count_checked": 13,
+  "receipts": [
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-loader-tests-20261116T231311Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-loader-tests-20261116T232400Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-loader-tests-20261116T233259Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-loader-tests-20261116T233625Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-loader-tests-20261117T001254Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-unpack-bench-torch-20261116T232004Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-unpack-bench-torch-20261117T000213Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/online-unpack-bench-triton-20261117T000114Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/unpack-npu-torch-20261116T222606Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/unpack-npu-triton-20261116T233510Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/unpack-npu-triton-20261116T235329Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 1,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/unpack-npu-triton-20261116T235859Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    },
+    {
+      "path": "/data1/relic-online-unpack-20261117-0534/logs/unpack-npu-triton-20261117T000413Z/summary.json",
+      "observed_live_processes": [],
+      "recorded_returncode": 0,
+      "recorded_cleanup_complete": true
+    }
+  ],
+  "original_checkpoint_unchanged_by_stat_identity_check": true,
+  "original_checkpoint_path": "/data1/relic-v41-20261116-210/checkpoint",
+  "cann_env_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+  "cann_links": {
+    "/usr/local/Ascend/cann": "/usr/local/Ascend/cann-9.2.0",
+    "/usr/local/Ascend/ascend-toolkit/latest": "/usr/local/Ascend/cann-9.2.0"
+  },
+  "jenkins_agent": "    PID                  STARTED COMMAND\n 115417 Sun Oct 11 22:04:00 2026 java -jar remoting.jar -workDir /home/jenkins/agent-working-dir -jar-cache /home/jenkins/agent-working-dir/remoting/jarCache\n",
+  "no_device_reset_or_shared_cleanup": true,
+  "private_triton_patch_retained": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+  "private_root_retained": "/data1/relic-online-unpack-20261117-0534",
+  "lease_release": "pending fleet tool after final checks"
+}

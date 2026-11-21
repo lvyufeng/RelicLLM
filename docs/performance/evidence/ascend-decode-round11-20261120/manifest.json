@@ -1,0 +1,73 @@
+{
+  "milestone": "round 27: one strided-source copy per rope call was 19.1% of the token; writing the rotated pair once instead took the candidate from 5.10 to 5.59 TPS, bit-identically",
+  "file_count": 6,
+  "total_bytes": 24508389,
+  "files": [
+    {
+      "path": "build_round11_evidence.py",
+      "bytes": 6438,
+      "sha256": "790a4527699e01cbc64fe293f63a83e1755482489b14fae4bb3ac8328f4a620c"
+    },
+    {
+      "path": "kernel-ranking-after/kernel_details.csv",
+      "bytes": 12055074,
+      "sha256": "455ea564d23980a2857ab98e0cd73969d4d5382b67e7c4082e515b758f42c118"
+    },
+    {
+      "path": "kernel-ranking-before/kernel_details.csv",
+      "bytes": 12426020,
+      "sha256": "28bf8de25431c603de7a5ca086a8d81f2fa78d6778cfd001b6320ce637248716"
+    },
+    {
+      "path": "kernel-ranking-before/op_statistic.csv",
+      "bytes": 3773,
+      "sha256": "f4346f4e842bb33683f379219ace4224f21ad0bb4c258b1d4714369c48b258cb"
+    },
+    {
+      "path": "rank_device_time.py",
+      "bytes": 4401,
+      "sha256": "4f4742d61cd6c3450009e275f408b1044d1d07c954f017dbdcb5b4ef13c8e4ac"
+    },
+    {
+      "path": "test_v41_ascend_rotary.py",
+      "bytes": 12683,
+      "sha256": "c9264081ae0143e844eb9d4fc549064af2aee647947e23f6af5c087a6f7d37e1"
+    }
+  ],
+  "before": {
+    "TPS": 5.1042,
+    "ms_per_token": 194.9,
+    "ViewCopy_ms_per_step": 19.73,
+    "ViewCopy_calls_per_step": 264,
+    "kernels_per_step": 13113,
+    "non_collective_device_ms_per_step": 100.3
+  },
+  "after": {
+    "TPS_runs": [
+      5.585,
+      5.5839,
+      5.6041,
+      5.6794
+    ],
+    "mean_TPS": 5.6131,
+    "ms_per_token": 178.6,
+    "ViewCopy_ms_per_step": 0.0,
+    "kernels_per_step": 12841,
+    "non_collective_device_ms_per_step": 81.6
+  },
+  "numerics_unchanged": {
+    "max_abs_difference": 2.173757076263428,
+    "relative_L2_difference": 0.1565176397562027,
+    "reference_to_candidate_KL": 0.001334548112936318,
+    "note": "the three exact-reference measures are identical in every post-change run"
+  },
+  "device_time_note": "the profiles' own total duration sums are not comparable across the two runs -- the later one is polluted by hcom_* rows carrying profiler-inflated durations. The per-kernel figures for the operator families are stable across both (widening 13.78 then 13.84, MatMulV2 6.55 then 6.58) and only those are used.",
+  "where_the_rest_of_the_token_goes": {
+    "non_collective_device_ms": 81.6,
+    "token_ms": 178.6,
+    "unaccounted_ms": 97.0,
+    "reading": "97 ms of the token is not non-collective kernel execution. Part is HCCL collectives, which cost about 8 ms in a captured graph (88 calls at the 0.0939 ms the graph measurement prices them at) and are only profiler-inflated in the recording. The rest is the forty mandatory per-layer routing readbacks: the dispatcher needs the gate's indices on the host to choose which recorded expert bodies to replay, and each readback drains the device pipeline. Removing those syncs means dispatching experts on the card, which is the batched path that cannot promise the current per-expert bit identity."
+  },
+  "target_TPS": 50.0,
+  "target_met": false
+}

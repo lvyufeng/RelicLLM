@@ -1,0 +1,58 @@
+{
+  "milestone": "round 9: the exact path's dense GEMV costs 595 ms/token and its knob is dead",
+  "file_count": 5,
+  "total_bytes": 12246,
+  "files": [
+    {
+      "path": "benchmark_dense_gemv_tiling.py",
+      "bytes": 3949,
+      "sha256": "de913a7ea3ce5c37ad26f69cf8a1c1d24bb91811396707a500b980cfe70d860b"
+    },
+    {
+      "path": "dense-M1-pricing/dense-M1-pricing.json",
+      "bytes": 2312,
+      "sha256": "9ab584a0437f34ca8d0eaa41ba2a62700f7640fa2110b205f46226e0043bd98c"
+    },
+    {
+      "path": "dense-M1-pricing/run.log",
+      "bytes": 608,
+      "sha256": "897bd42eee58606655f3d572e7bb89d0572bb4c4eb6046f8a323d2f2ce084481"
+    },
+    {
+      "path": "dense-gemv-tiling-sweep/dense-gemv-tiling.json",
+      "bytes": 4726,
+      "sha256": "bc8d1991ad8b0ed6b36f8ab393ccac5a718368a53813083b3476bf43ce0c0795"
+    },
+    {
+      "path": "dense-gemv-tiling-sweep/run.log",
+      "bytes": 651,
+      "sha256": "27904b2cb15e0b11ac5486b69279920086310e8b5db0d63996851c6301cfd8e4"
+    }
+  ],
+  "verified_candidate_TPS": 5.151722,
+  "exact_baseline_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "reference_dense_gemv_per_layer_ms": {
+    "group_k_2": 15.3851,
+    "group_k_4": 14.8695,
+    "group_k_8": 14.5912,
+    "group_k_16": 15.2534,
+    "group_k_32": 16.5005
+  },
+  "reference_dense_gemv_per_token_ms": 595.0,
+  "reference_dense_gemv_effective_GB_per_s": 3.27,
+  "plain_matmul_M1_GB_per_s": 357.7,
+  "reference_slower_than_plain_matmul_factor": 111.0,
+  "rows_n_is_at_its_maximum": 16,
+  "best_group_k": 8,
+  "speedup_best_over_default": 1.02,
+  "all_group_k_bit_identical": true,
+  "conclusion": "the scheduling knob is not a lever; the exact control path pays 595 ms per token for its five dense projections alone, which is why the authorized native-Cube accumulation is worth 26x on the full model",
+  "candidate_uses_this_kernel_for_dense": false,
+  "numerical_contract": {
+    "exact_default_path": "unchanged",
+    "complete_Engram_CPU": true,
+    "checkpoint_rewritten": false,
+    "serving_guards_changed": false
+  }
+}

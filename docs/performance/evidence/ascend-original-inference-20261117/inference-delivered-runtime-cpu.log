@@ -1,0 +1,15 @@
+......s.....sss.ss.........................s..........................ss [ 50%]
+.sss.....s.....sss..........s.........................................   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_models_deepseek_v4_1_attention.py:653: a capture needs a card
+SKIPPED [1] tests/test_models_deepseek_v4_1_attention.py:452: a capture needs a card
+SKIPPED [4] tests/test_v41_ascend_activation.py:20: requires a leased RELIC_INFERENCE_TEST_DEVICE=npu:0
+SKIPPED [1] tests/test_v41_ascend_rotary.py:214: set RELIC_ASCEND_ROTARY_DEVICE=npu:0 on a leased card to run the device case
+SKIPPED [3] tests/test_v41_ascend_bindings.py:77: requires a leased RELIC_ASCEND_EXPERTS_DEVICE=npu:0
+SKIPPED [2] tests/test_v41_ascend_bindings.py:33: NPU device registration required for a constructor-only seam check
+SKIPPED [1] tests/test_v41_host_engram.py:350: set RELIC_ASCEND_ENGRAM_DEVICE=npu:0 to run the device case
+SKIPPED [1] tests/test_models_deepseek_v4_1_reference_parity.py:459: no released V4.1 inference tree on this host
+SKIPPED [1] tests/test_models_deepseek_v4_1_reference_parity.py:432: no released V4.1 inference tree on this host
+SKIPPED [1] tests/test_models_deepseek_v4_1_reference_parity.py:412: no released V4.1 inference tree on this host
+SKIPPED [1] tests/test_v41_ascend_experts.py:948: set RELIC_ASCEND_EXPERTS_DEVICE=npu:0 to run the device case
+125 passed, 17 skipped in 2.48s

@@ -1,0 +1,114 @@
+{
+  "milestone": "round 5: stage split of a recorded expert body, and the closed avenues",
+  "file_count": 16,
+  "total_bytes": 899124,
+  "files": [
+    {
+      "path": "benchmark_expert_body_breakdown.py",
+      "bytes": 5267,
+      "sha256": "2d4572507df236a0ee1f7b7611cc090cd47668ecac1555576b5569f7cd43da45"
+    },
+    {
+      "path": "benchmark_expert_body_stages.py",
+      "bytes": 5595,
+      "sha256": "b23074e9590430cae29fdc07b12914d57480c17808cf1879b4f99c510e20cbec"
+    },
+    {
+      "path": "benchmark_widen_wide_access.py",
+      "bytes": 5067,
+      "sha256": "827745df34e6f554aeff95def4d22d461ba96b64cf05dc283d2de3d6ead57b6e"
+    },
+    {
+      "path": "expert-body-stages/expert-body-breakdown-amortized.json",
+      "bytes": 2429,
+      "sha256": "68fcde0b58fef8647048f825f52cdd11c75d556110b7b8aeb9d9e60cc297f8cb"
+    },
+    {
+      "path": "expert-body-stages/run.log",
+      "bytes": 646,
+      "sha256": "4d353720623cb2b38a030c89d8d3cbb0d0094ea8f5917647a6934d7a439c9d26"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-0.json",
+      "bytes": 109137,
+      "sha256": "9b0955f6a72fbb9976f0e100c484310620ad4f7554312afdcc58b80c70e16708"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-1.json",
+      "bytes": 109110,
+      "sha256": "cf8d2df73f3ed40fc452d9c0ecb875946ece592dd79c6868290405a53f1c5bfd"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-2.json",
+      "bytes": 109113,
+      "sha256": "e0f555b11ea9a24f82de286bb47db6a10a59ee780ebb251bbba5af53037ff100"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-3.json",
+      "bytes": 109105,
+      "sha256": "6911ab9c806bf0582b0240fce7e249aa8b46ff8fb223f3bf8bd25a54870276c2"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-4.json",
+      "bytes": 109115,
+      "sha256": "223da2efbcd6cd9dbe06c7a2fb965eff56ceca72211102ed1df97f86bd70b689"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-5.json",
+      "bytes": 109114,
+      "sha256": "318f1be066c4caa1f34fd290d98ce59b4f50bb4ac1f4ef9b96d8003ca9d85ac3"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-6.json",
+      "bytes": 109111,
+      "sha256": "6338985097e1913483d76924e65cac42077653639b3bbc14058f803a9dd86e6a"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-7.json",
+      "bytes": 109109,
+      "sha256": "6b0da156d66dfa22346b94fad2f862b39b125f7f9e0c3242b0905370256a76a0"
+    },
+    {
+      "path": "widen-tile-geometries/run.log",
+      "bytes": 844,
+      "sha256": "fa31dcf5fc30e49afbf84737a6ddab4a7ee8a80d94a5657b3810b55bd7739bae"
+    },
+    {
+      "path": "widen-tile-geometries/widen-tile-geometries.json",
+      "bytes": 1530,
+      "sha256": "16b4107aa6cc55546d9d646f985fe531928af00519015728797d3751f9955336"
+    },
+    {
+      "path": "widen-wide-access-and-byte-identity/run.log",
+      "bytes": 4832,
+      "sha256": "57617b18fae8f9fd5bbd9e354aac8e0804b0c2f4925d2f7afa119a1837a7b8b0"
+    }
+  ],
+  "verified_candidate_TPS": 5.151722,
+  "exact_baseline_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "expert_projection_stage_split_ms": {
+    "fp4_code_widening": 0.212,
+    "activation_decode_to_bf16": 0.247,
+    "transpose_to_KN": 0.051,
+    "native_weight_quant_matmul": 0.043,
+    "sum": 0.552,
+    "note": "three projections per expert body; the matmul is under a tenth of a projection"
+  },
+  "closed_avenues": [
+    "hardware W4A16 cannot consume the original E2M1 codes: the released code-to-value map is not two's-complement int4, so the INT8 widening is inherent to the format",
+    "wider element access buys about 10% (0.2493 ms against 0.2770 ms at two bytes per lane, byte identical) and the four-byte form aborts the Ascend Triton compiler; the released kernel matches a decode-free copy at 64-84 GB/s, so that is the Triton path's cap"
+  ],
+  "impossibility_bound": {
+    "zero_expert_TPS": 10.705,
+    "zero_expert_ms_per_token": 93.42,
+    "budget_for_50_TPS_ms_per_token": 20.0,
+    "conclusion": "with every expert body and routing read removed the token is still 93.4 ms, so 50 TPS needs the whole per-layer chain cut about five times"
+  },
+  "numerical_contract": {
+    "exact_default_path": "unchanged",
+    "complete_Engram_CPU": true,
+    "checkpoint_rewritten": false,
+    "serving_guards_changed": false
+  }
+}

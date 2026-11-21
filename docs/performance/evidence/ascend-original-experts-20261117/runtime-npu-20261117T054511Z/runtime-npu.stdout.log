@@ -1,0 +1,6 @@
+........................................................................ [ 55%]
+....................................ss...................                [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_v41_mma_reduction.py:1132: a capture needs a card
+SKIPPED [1] tests/test_v41_mma_reduction.py:1217: a capture needs a card
+127 passed, 2 skipped in 12.60s

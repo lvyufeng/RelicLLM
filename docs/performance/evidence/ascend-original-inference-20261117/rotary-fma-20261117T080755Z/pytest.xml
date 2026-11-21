@@ -1,0 +1,1310 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="55" skipped="0" tests="109" time="144.433" timestamp="2026-11-17T16:07:55.858481+08:00" hostname="ascend216"><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-0.001-1e-09]" time="0.025"><failure message="AssertionError: 2441 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 1e-09, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2441 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-13, -1.5443e-12,  1.5464e-13,  ...,  4.4761e-13,\n           -1.9206e-13, -2.3212e-12],\n          [...109e-13],\n          [ 1.1899e-12, -9.7656e-13, -1.4578e-13,  ..., -5.3467e-13,\n           -3.5700e-13,  8.8906e-13]]]]), tensor([[[[-1.8074e-13, -1.5443e-12,  1.5464e-13,  ...,  4.4761e-13,\n           -1.9206e-13, -2.3212e-12],\n          [...109e-13],\n          [ 1.1899e-12, -9.7656e-13, -1.4578e-13,  ..., -5.3467e-13,\n           -3.5700e-13,  8.8906e-13]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-0.001-1e-05]" time="0.013"><failure message="AssertionError: 2433 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 1e-05, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2433 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-09, -1.5443e-08,  1.5464e-09,  ...,  4.4761e-09,\n           -1.9206e-09, -2.3212e-08],\n          [...109e-09],\n          [ 1.1899e-08, -9.7656e-09, -1.4578e-09,  ..., -5.3467e-09,\n           -3.5700e-09,  8.8906e-09]]]]), tensor([[[[-1.8074e-09, -1.5443e-08,  1.5464e-09,  ...,  4.4761e-09,\n           -1.9206e-09, -2.3212e-08],\n          [...109e-09],\n          [ 1.1899e-08, -9.7656e-09, -1.4578e-09,  ..., -5.3467e-09,\n           -3.5700e-09,  8.8906e-09]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-0.001-0.5]" time="0.013"><failure message="AssertionError: 2417 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 0.5, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2417 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-9.0371e-05, -7.7215e-04,  7.7319e-05,  ...,  2.2380e-04,\n           -9.6032e-05, -1.1606e-03],\n          [...055e-04],\n          [ 5.9495e-04, -4.8828e-04, -7.2892e-05,  ..., -2.6734e-04,\n           -1.7850e-04,  4.4453e-04]]]]), tensor([[[[-9.0371e-05, -7.7215e-04,  7.7319e-05,  ...,  2.2380e-04,\n           -9.6032e-05, -1.1606e-03],\n          [...055e-04],\n          [ 5.9495e-04, -4.8828e-04, -7.2892e-05,  ..., -2.6734e-04,\n           -1.7850e-04,  4.4453e-04]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-0.001-1.0]" time="0.013"><failure message="AssertionError: 2417 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 1.0, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2417 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-04, -1.5443e-03,  1.5464e-04,  ...,  4.4761e-04,\n           -1.9206e-04, -2.3212e-03],\n          [...109e-04],\n          [ 1.1899e-03, -9.7656e-04, -1.4578e-04,  ..., -5.3467e-04,\n           -3.5700e-04,  8.8906e-04]]]]), tensor([[[[-1.8074e-04, -1.5443e-03,  1.5464e-04,  ...,  4.4761e-04,\n           -1.9206e-04, -2.3212e-03],\n          [...109e-04],\n          [ 1.1899e-03, -9.7656e-04, -1.4578e-04,  ..., -5.3467e-04,\n           -3.5700e-04,  8.8906e-04]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-1.0-1e-09]" time="0.013"><failure message="AssertionError: 2393 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 1e-09, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2393 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-10, -1.5443e-09,  1.5464e-10,  ...,  4.4761e-10,\n           -1.9206e-10, -2.3212e-09],\n          [...109e-10],\n          [ 1.1899e-09, -9.7656e-10, -1.4578e-10,  ..., -5.3467e-10,\n           -3.5700e-10,  8.8906e-10]]]]), tensor([[[[-1.8074e-10, -1.5443e-09,  1.5464e-10,  ...,  4.4761e-10,\n           -1.9206e-10, -2.3212e-09],\n          [...109e-10],\n          [ 1.1899e-09, -9.7656e-10, -1.4578e-10,  ..., -5.3467e-10,\n           -3.5700e-10,  8.8906e-10]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-1.0-1e-05]" time="0.013"><failure message="AssertionError: 2407 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 1e-05, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2407 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ...,  4.4761e-06,\n           -1.9206e-06, -2.3212e-05],\n          [...109e-06],\n          [ 1.1899e-05, -9.7656e-06, -1.4578e-06,  ..., -5.3467e-06,\n           -3.5700e-06,  8.8906e-06]]]]), tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ...,  4.4761e-06,\n           -1.9206e-06, -2.3212e-05],\n          [...109e-06],\n          [ 1.1899e-05, -9.7656e-06, -1.4578e-06,  ..., -5.3467e-06,\n           -3.5700e-06,  8.8906e-06]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-1.0-0.5]" time="0.013"><failure message="AssertionError: 2459 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 0.5, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2459 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-9.0371e-02, -7.7215e-01,  7.7319e-02,  ...,  2.2380e-01,\n           -9.6032e-02, -1.1606e+00],\n          [...055e-01],\n          [ 5.9495e-01, -4.8828e-01, -7.2892e-02,  ..., -2.6734e-01,\n           -1.7850e-01,  4.4453e-01]]]]), tensor([[[[-9.0371e-02, -7.7215e-01,  7.7319e-02,  ...,  2.2380e-01,\n           -9.6032e-02, -1.1606e+00],\n          [...055e-01],\n          [ 5.9495e-01, -4.8828e-01, -7.2892e-02,  ..., -2.6734e-01,\n           -1.7850e-01,  4.4453e-01]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-1.0-1.0]" time="0.013"><failure message="AssertionError: 2459 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 1.0, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2459 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-01, -1.5443e+00,  1.5464e-01,  ...,  4.4761e-01,\n           -1.9206e-01, -2.3212e+00],\n          [...109e-01],\n          [ 1.1899e+00, -9.7656e-01, -1.4578e-01,  ..., -5.3467e-01,\n           -3.5700e-01,  8.8906e-01]]]]), tensor([[[[-1.8074e-01, -1.5443e+00,  1.5464e-01,  ...,  4.4761e-01,\n           -1.9206e-01, -2.3212e+00],\n          [...109e-01],\n          [ 1.1899e+00, -9.7656e-01, -1.4578e-01,  ..., -5.3467e-01,\n           -3.5700e-01,  8.8906e-01]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-7.5-1e-09]" time="0.013"><failure message="AssertionError: 2445 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 1e-09, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2445 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3556e-09, -1.1582e-08,  1.1598e-09,  ...,  3.3571e-09,\n           -1.4405e-09, -1.7409e-08],\n          [...582e-09],\n          [ 8.9242e-09, -7.3242e-09, -1.0934e-09,  ..., -4.0100e-09,\n           -2.6775e-09,  6.6680e-09]]]]), tensor([[[[-1.3556e-09, -1.1582e-08,  1.1598e-09,  ...,  3.3571e-09,\n           -1.4405e-09, -1.7409e-08],\n          [...582e-09],\n          [ 8.9242e-09, -7.3242e-09, -1.0934e-09,  ..., -4.0100e-09,\n           -2.6775e-09,  6.6680e-09]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-7.5-1e-05]" time="0.013"><failure message="AssertionError: 2435 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 1e-05, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2435 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3556e-05, -1.1582e-04,  1.1598e-05,  ...,  3.3571e-05,\n           -1.4405e-05, -1.7409e-04],\n          [...582e-05],\n          [ 8.9242e-05, -7.3242e-05, -1.0934e-05,  ..., -4.0100e-05,\n           -2.6775e-05,  6.6680e-05]]]]), tensor([[[[-1.3556e-05, -1.1582e-04,  1.1598e-05,  ...,  3.3571e-05,\n           -1.4405e-05, -1.7409e-04],\n          [...582e-05],\n          [ 8.9242e-05, -7.3242e-05, -1.0934e-05,  ..., -4.0100e-05,\n           -2.6775e-05,  6.6680e-05]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-7.5-0.5]" time="0.013"><failure message="AssertionError: 2440 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 0.5, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2440 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-6.7778e-01, -5.7911e+00,  5.7989e-01,  ...,  1.6785e+00,\n           -7.2024e-01, -8.7045e+00],\n          [...291e+00],\n          [ 4.4621e+00, -3.6621e+00, -5.4669e-01,  ..., -2.0050e+00,\n           -1.3387e+00,  3.3340e+00]]]]), tensor([[[[-6.7778e-01, -5.7911e+00,  5.7989e-01,  ...,  1.6785e+00,\n           -7.2024e-01, -8.7045e+00],\n          [...291e+00],\n          [ 4.4621e+00, -3.6621e+00, -5.4669e-01,  ..., -2.0050e+00,\n           -1.3387e+00,  3.3340e+00]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-7.5-1.0]" time="0.013"><failure message="AssertionError: 2440 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 1.0, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2440 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3556e+00, -1.1582e+01,  1.1598e+00,  ...,  3.3571e+00,\n           -1.4405e+00, -1.7409e+01],\n          [...582e+00],\n          [ 8.9242e+00, -7.3242e+00, -1.0934e+00,  ..., -4.0100e+00,\n           -2.6775e+00,  6.6680e+00]]]]), tensor([[[[-1.3556e+00, -1.1582e+01,  1.1598e+00,  ...,  3.3571e+00,\n           -1.4405e+00, -1.7409e+01],\n          [...582e+00],\n          [ 8.9242e+00, -7.3242e+00, -1.0934e+00,  ..., -4.0100e+00,\n           -2.6775e+00,  6.6680e+00]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-10000.0-1e-09]" time="0.013"><failure message="AssertionError: 2422 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 1e-09, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2422 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ...,  4.4761e-06,\n           -1.9206e-06, -2.3212e-05],\n          [...109e-06],\n          [ 1.1899e-05, -9.7656e-06, -1.4578e-06,  ..., -5.3467e-06,\n           -3.5700e-06,  8.8906e-06]]]]), tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ...,  4.4761e-06,\n           -1.9206e-06, -2.3212e-05],\n          [...109e-06],\n          [ 1.1899e-05, -9.7656e-06, -1.4578e-06,  ..., -5.3467e-06,\n           -3.5700e-06,  8.8906e-06]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-10000.0-1e-05]" time="0.013"><failure message="AssertionError: 2409 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 1e-05, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2409 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-02, -1.5443e-01,  1.5464e-02,  ...,  4.4761e-02,\n           -1.9206e-02, -2.3212e-01],\n          [...109e-02],\n          [ 1.1899e-01, -9.7656e-02, -1.4578e-02,  ..., -5.3467e-02,\n           -3.5700e-02,  8.8906e-02]]]]), tensor([[[[-1.8074e-02, -1.5443e-01,  1.5464e-02,  ...,  4.4761e-02,\n           -1.9206e-02, -2.3212e-01],\n          [...109e-02],\n          [ 1.1899e-01, -9.7656e-02, -1.4578e-02,  ..., -5.3467e-02,\n           -3.5700e-02,  8.8906e-02]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-10000.0-0.5]" time="0.013"><failure message="AssertionError: 2390 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 0.5, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2390 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-9.0371e+02, -7.7215e+03,  7.7319e+02,  ...,  2.2380e+03,\n           -9.6032e+02, -1.1606e+04],\n          [...055e+03],\n          [ 5.9495e+03, -4.8828e+03, -7.2892e+02,  ..., -2.6734e+03,\n           -1.7850e+03,  4.4453e+03]]]]), tensor([[[[-9.0371e+02, -7.7215e+03,  7.7319e+02,  ...,  2.2380e+03,\n           -9.6032e+02, -1.1606e+04],\n          [...055e+03],\n          [ 5.9495e+03, -4.8828e+03, -7.2892e+02,  ..., -2.6734e+03,\n           -1.7850e+03,  4.4453e+03]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[False-10000.0-1.0]" time="0.013"><failure message="AssertionError: 2390 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 1.0, inverse = False
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2390 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e+03, -1.5443e+04,  1.5464e+03,  ...,  4.4761e+03,\n           -1.9206e+03, -2.3212e+04],\n          [...109e+03],\n          [ 1.1899e+04, -9.7656e+03, -1.4578e+03,  ..., -5.3467e+03,\n           -3.5700e+03,  8.8906e+03]]]]), tensor([[[[-1.8074e+03, -1.5443e+04,  1.5464e+03,  ...,  4.4761e+03,\n           -1.9206e+03, -2.3212e+04],\n          [...109e+03],\n          [ 1.1899e+04, -9.7656e+03, -1.4578e+03,  ..., -5.3467e+03,\n           -3.5700e+03,  8.8906e+03]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-0.001-1e-09]" time="0.013"><failure message="AssertionError: 2436 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 1e-09, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2436 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e-12,  7.9969e-13, -2.7036e-13,  ..., -1.7107e-12,\n           -1.1659e-12,  2.0163e-12],\n          [...339e-12],\n          [-1.5002e-12,  3.4493e-13, -1.4686e-13,  ..., -7.8099e-13,\n            7.7836e-13, -5.5861e-13]]]]), tensor([[[[-1.3334e-12,  7.9969e-13, -2.7036e-13,  ..., -1.7107e-12,\n           -1.1659e-12,  2.0163e-12],\n          [...339e-12],\n          [-1.5002e-12,  3.4493e-13, -1.4686e-13,  ..., -7.8099e-13,\n            7.7836e-13, -5.5861e-13]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-0.001-1e-05]" time="0.013"><failure message="AssertionError: 2413 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 1e-05, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2413 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e-08,  7.9969e-09, -2.7036e-09,  ..., -1.7107e-08,\n           -1.1659e-08,  2.0163e-08],\n          [...339e-08],\n          [-1.5002e-08,  3.4493e-09, -1.4686e-09,  ..., -7.8099e-09,\n            7.7836e-09, -5.5861e-09]]]]), tensor([[[[-1.3334e-08,  7.9969e-09, -2.7036e-09,  ..., -1.7107e-08,\n           -1.1659e-08,  2.0163e-08],\n          [...339e-08],\n          [-1.5002e-08,  3.4493e-09, -1.4686e-09,  ..., -7.8099e-09,\n            7.7836e-09, -5.5861e-09]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-0.001-0.5]" time="0.014"><failure message="AssertionError: 2383 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 0.5, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2383 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-6.6672e-04,  3.9984e-04, -1.3518e-04,  ..., -8.5533e-04,\n           -5.8294e-04,  1.0082e-03],\n          [...696e-04],\n          [-7.5009e-04,  1.7247e-04, -7.3430e-05,  ..., -3.9049e-04,\n            3.8918e-04, -2.7930e-04]]]]), tensor([[[[-6.6672e-04,  3.9984e-04, -1.3518e-04,  ..., -8.5533e-04,\n           -5.8294e-04,  1.0082e-03],\n          [...696e-04],\n          [-7.5009e-04,  1.7247e-04, -7.3430e-05,  ..., -3.9049e-04,\n            3.8918e-04, -2.7930e-04]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-0.001-1.0]" time="0.013"><failure message="AssertionError: 2383 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 0.001, table_scale = 1.0, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2383 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e-03,  7.9969e-04, -2.7036e-04,  ..., -1.7107e-03,\n           -1.1659e-03,  2.0163e-03],\n          [...339e-03],\n          [-1.5002e-03,  3.4493e-04, -1.4686e-04,  ..., -7.8099e-04,\n            7.7836e-04, -5.5861e-04]]]]), tensor([[[[-1.3334e-03,  7.9969e-04, -2.7036e-04,  ..., -1.7107e-03,\n           -1.1659e-03,  2.0163e-03],\n          [...339e-03],\n          [-1.5002e-03,  3.4493e-04, -1.4686e-04,  ..., -7.8099e-04,\n            7.7836e-04, -5.5861e-04]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-1.0-1e-09]" time="0.013"><failure message="AssertionError: 2477 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 1e-09, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2477 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e-09,  7.9969e-10, -2.7036e-10,  ..., -1.7107e-09,\n           -1.1659e-09,  2.0163e-09],\n          [...339e-09],\n          [-1.5002e-09,  3.4493e-10, -1.4686e-10,  ..., -7.8099e-10,\n            7.7836e-10, -5.5861e-10]]]]), tensor([[[[-1.3334e-09,  7.9969e-10, -2.7036e-10,  ..., -1.7107e-09,\n           -1.1659e-09,  2.0163e-09],\n          [...339e-09],\n          [-1.5002e-09,  3.4493e-10, -1.4686e-10,  ..., -7.8099e-10,\n            7.7836e-10, -5.5861e-10]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-1.0-1e-05]" time="0.013"><failure message="AssertionError: 2352 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 1e-05, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2352 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e-05,  7.9969e-06, -2.7036e-06,  ..., -1.7107e-05,\n           -1.1659e-05,  2.0163e-05],\n          [...339e-05],\n          [-1.5002e-05,  3.4493e-06, -1.4686e-06,  ..., -7.8099e-06,\n            7.7836e-06, -5.5861e-06]]]]), tensor([[[[-1.3334e-05,  7.9969e-06, -2.7036e-06,  ..., -1.7107e-05,\n           -1.1659e-05,  2.0163e-05],\n          [...339e-05],\n          [-1.5002e-05,  3.4493e-06, -1.4686e-06,  ..., -7.8099e-06,\n            7.7836e-06, -5.5861e-06]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-1.0-0.5]" time="0.013"><failure message="AssertionError: 2359 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 0.5, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2359 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-6.6672e-01,  3.9984e-01, -1.3518e-01,  ..., -8.5533e-01,\n           -5.8294e-01,  1.0082e+00],\n          [...696e-01],\n          [-7.5009e-01,  1.7247e-01, -7.3430e-02,  ..., -3.9049e-01,\n            3.8918e-01, -2.7930e-01]]]]), tensor([[[[-6.6672e-01,  3.9984e-01, -1.3518e-01,  ..., -8.5533e-01,\n           -5.8294e-01,  1.0082e+00],\n          [...696e-01],\n          [-7.5009e-01,  1.7247e-01, -7.3430e-02,  ..., -3.9049e-01,\n            3.8918e-01, -2.7930e-01]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-1.0-1.0]" time="0.013"><failure message="AssertionError: 2359 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 1.0, table_scale = 1.0, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2359 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e+00,  7.9969e-01, -2.7036e-01,  ..., -1.7107e+00,\n           -1.1659e+00,  2.0163e+00],\n          [...339e+00],\n          [-1.5002e+00,  3.4493e-01, -1.4686e-01,  ..., -7.8099e-01,\n            7.7836e-01, -5.5861e-01]]]]), tensor([[[[-1.3334e+00,  7.9969e-01, -2.7036e-01,  ..., -1.7107e+00,\n           -1.1659e+00,  2.0163e+00],\n          [...339e+00],\n          [-1.5002e+00,  3.4493e-01, -1.4686e-01,  ..., -7.8099e-01,\n            7.7836e-01, -5.5861e-01]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-7.5-1e-09]" time="0.013"><failure message="AssertionError: 2357 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 1e-09, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2357 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.0001e-08,  5.9977e-09, -2.0277e-09,  ..., -1.2830e-08,\n           -8.7440e-09,  1.5122e-08],\n          [...544e-09],\n          [-1.1251e-08,  2.5870e-09, -1.1014e-09,  ..., -5.8574e-09,\n            5.8377e-09, -4.1895e-09]]]]), tensor([[[[-1.0001e-08,  5.9977e-09, -2.0277e-09,  ..., -1.2830e-08,\n           -8.7440e-09,  1.5122e-08],\n          [...544e-09],\n          [-1.1251e-08,  2.5870e-09, -1.1014e-09,  ..., -5.8574e-09,\n            5.8377e-09, -4.1895e-09]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-7.5-1e-05]" time="0.013"><failure message="AssertionError: 2439 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 1e-05, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2439 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.0001e-04,  5.9977e-05, -2.0277e-05,  ..., -1.2830e-04,\n           -8.7440e-05,  1.5122e-04],\n          [...544e-05],\n          [-1.1251e-04,  2.5870e-05, -1.1014e-05,  ..., -5.8574e-05,\n            5.8377e-05, -4.1895e-05]]]]), tensor([[[[-1.0001e-04,  5.9977e-05, -2.0277e-05,  ..., -1.2830e-04,\n           -8.7440e-05,  1.5122e-04],\n          [...544e-05],\n          [-1.1251e-04,  2.5870e-05, -1.1014e-05,  ..., -5.8574e-05,\n            5.8377e-05, -4.1895e-05]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-7.5-0.5]" time="0.013"><failure message="AssertionError: 2457 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 0.5, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2457 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-5.0004e+00,  2.9988e+00, -1.0139e+00,  ..., -6.4150e+00,\n           -4.3720e+00,  7.5612e+00],\n          [...272e+00],\n          [-5.6257e+00,  1.2935e+00, -5.5072e-01,  ..., -2.9287e+00,\n            2.9188e+00, -2.0948e+00]]]]), tensor([[[[-5.0004e+00,  2.9988e+00, -1.0139e+00,  ..., -6.4150e+00,\n           -4.3720e+00,  7.5612e+00],\n          [...272e+00],\n          [-5.6257e+00,  1.2935e+00, -5.5072e-01,  ..., -2.9287e+00,\n            2.9188e+00, -2.0948e+00]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-7.5-1.0]" time="0.013"><failure message="AssertionError: 2457 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 7.5, table_scale = 1.0, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2457 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.0001e+01,  5.9977e+00, -2.0277e+00,  ..., -1.2830e+01,\n           -8.7440e+00,  1.5122e+01],\n          [...544e+00],\n          [-1.1251e+01,  2.5870e+00, -1.1014e+00,  ..., -5.8574e+00,\n            5.8377e+00, -4.1895e+00]]]]), tensor([[[[-1.0001e+01,  5.9977e+00, -2.0277e+00,  ..., -1.2830e+01,\n           -8.7440e+00,  1.5122e+01],\n          [...544e+00],\n          [-1.1251e+01,  2.5870e+00, -1.1014e+00,  ..., -5.8574e+00,\n            5.8377e+00, -4.1895e+00]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-10000.0-1e-09]" time="0.013"><failure message="AssertionError: 2430 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 1e-09, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2430 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e-05,  7.9969e-06, -2.7036e-06,  ..., -1.7107e-05,\n           -1.1659e-05,  2.0163e-05],\n          [...339e-05],\n          [-1.5002e-05,  3.4493e-06, -1.4686e-06,  ..., -7.8099e-06,\n            7.7836e-06, -5.5861e-06]]]]), tensor([[[[-1.3334e-05,  7.9969e-06, -2.7036e-06,  ..., -1.7107e-05,\n           -1.1659e-05,  2.0163e-05],\n          [...339e-05],\n          [-1.5002e-05,  3.4493e-06, -1.4686e-06,  ..., -7.8099e-06,\n            7.7836e-06, -5.5861e-06]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-10000.0-1e-05]" time="0.013"><failure message="AssertionError: 2459 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 1e-05, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2459 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e-01,  7.9969e-02, -2.7036e-02,  ..., -1.7107e-01,\n           -1.1659e-01,  2.0163e-01],\n          [...339e-01],\n          [-1.5002e-01,  3.4493e-02, -1.4686e-02,  ..., -7.8099e-02,\n            7.7836e-02, -5.5861e-02]]]]), tensor([[[[-1.3334e-01,  7.9969e-02, -2.7036e-02,  ..., -1.7107e-01,\n           -1.1659e-01,  2.0163e-01],\n          [...339e-01],\n          [-1.5002e-01,  3.4493e-02, -1.4686e-02,  ..., -7.8099e-02,\n            7.7836e-02, -5.5861e-02]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-10000.0-0.5]" time="0.013"><failure message="AssertionError: 2380 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 0.5, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2380 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-6.6672e+03,  3.9984e+03, -1.3518e+03,  ..., -8.5533e+03,\n           -5.8294e+03,  1.0082e+04],\n          [...696e+03],\n          [-7.5009e+03,  1.7247e+03, -7.3430e+02,  ..., -3.9049e+03,\n            3.8918e+03, -2.7930e+03]]]]), tensor([[[[-6.6672e+03,  3.9984e+03, -1.3518e+03,  ..., -8.5533e+03,\n           -5.8294e+03,  1.0082e+04],\n          [...696e+03],\n          [-7.5009e+03,  1.7247e+03, -7.3430e+02,  ..., -3.9049e+03,\n            3.8918e+03, -2.7930e+03]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula[True-10000.0-1.0]" time="0.013"><failure message="AssertionError: 2380 of 8192 elements differ between ATen's complex multiply and the documented FMA formula&#10;assert False&#10;[+1 more line; full report in element text]">x_scale = 10000.0, table_scale = 1.0, inverse = True
+
+    @pytest.mark.parametrize("table_scale", [1e-9, 1e-5, 0.5, 1.0])
+    @pytest.mark.parametrize("x_scale", [1e-3, 1.0, 7.5, 1e4])
+    @pytest.mark.parametrize("inverse", [False, True])
+    def test_the_aten_reference_is_the_contracted_formula(x_scale, table_scale, inverse):
+        """If a future torch stops contracting, this fails and the note must change.
+    
+        A mismatch here is not an operator bug: the operator would still equal ATen.
+        It means the *reason* recorded in the module docstring no longer holds, which
+        is exactly the kind of quiet drift that a tolerance would hide.
+        """
+        x = make_input((2, 16, 4, 64), scale=x_scale)
+        table = make_table(16, 64, scale=table_scale)
+        reference = aten_rotate(x, table, inverse)
+        formula = formula_rotate(x, table, inverse)
+&gt;       assert same_bits(reference, formula), (
+            f"{num_mismatched_bits(reference, formula)} of {reference.numel()} elements "
+            f"differ between ATen's complex multiply and the documented FMA formula"
+        )
+E       AssertionError: 2380 of 8192 elements differ between ATen's complex multiply and the documented FMA formula
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.3334e+04,  7.9969e+03, -2.7036e+03,  ..., -1.7107e+04,\n           -1.1659e+04,  2.0163e+04],\n          [...339e+04],\n          [-1.5002e+04,  3.4493e+03, -1.4686e+03,  ..., -7.8099e+03,\n            7.7836e+03, -5.5861e+03]]]]), tensor([[[[-1.3334e+04,  7.9969e+03, -2.7036e+03,  ..., -1.7107e+04,\n           -1.1659e+04,  2.0163e+04],\n          [...339e+04],\n          [-1.5002e+04,  3.4493e+03, -1.4686e+03,  ..., -7.8099e+03,\n            7.7836e+03, -5.5861e+03]]]]))
+
+tests/test_ascend_rotary.py:158: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula_near_rope_magnitudes[dtype0]" time="0.021"><failure message="assert False&#10;[+7 more lines; full report in element text]">dtype = torch.float32
+
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    def test_the_aten_reference_is_the_contracted_formula_near_rope_magnitudes(dtype):
+        """The magnitudes the runtime actually uses: unit activations, small angles."""
+        x = make_input((1, 64, 8, 128), scale=1.0, dtype=dtype)
+        table = make_table(64, 128, scale=1e-5)
+        reference = aten_rotate(x, table)
+        # Compare in FP32: a BF16 store would hide the difference this test is about.
+        formula = formula_rotate(x, table)
+&gt;       assert same_bits(reference.to(torch.float32), formula.to(torch.float32))
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ..., -3.6666e-06,\n           -4.9030e-07,  1.5356e-06],\n          [...077e-06],\n          [-1.6812e-05, -7.2532e-06,  1.4669e-05,  ..., -9.9765e-06,\n            1.5222e-05, -1.6317e-06]]]]), tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ..., -3.6666e-06,\n           -4.9030e-07,  1.5356e-06],\n          [...077e-06],\n          [-1.6812e-05, -7.2532e-06,  1.4669e-05,  ..., -9.9765e-06,\n            1.5222e-05, -1.6317e-06]]]]))
+E        +    where tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ..., -3.6666e-06,\n           -4.9030e-07,  1.5356e-06],\n          [...077e-06],\n          [-1.6812e-05, -7.2532e-06,  1.4669e-05,  ..., -9.9765e-06,\n            1.5222e-05, -1.6317e-06]]]]) = &lt;built-in method to of Tensor object at 0xffff3fbca300&gt;(torch.float32)
+E        +      where &lt;built-in method to of Tensor object at 0xffff3fbca300&gt; = tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ..., -3.6666e-06,\n           -4.9030e-07,  1.5356e-06],\n          [...077e-06],\n          [-1.6812e-05, -7.2532e-06,  1.4669e-05,  ..., -9.9765e-06,\n            1.5222e-05, -1.6317e-06]]]]).to
+E        +      and   torch.float32 = torch.float32
+E        +    and   tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ..., -3.6666e-06,\n           -4.9030e-07,  1.5356e-06],\n          [...077e-06],\n          [-1.6812e-05, -7.2532e-06,  1.4669e-05,  ..., -9.9765e-06,\n            1.5222e-05, -1.6317e-06]]]]) = &lt;built-in method to of Tensor object at 0xffff3fb72490&gt;(torch.float32)
+E        +      where &lt;built-in method to of Tensor object at 0xffff3fb72490&gt; = tensor([[[[-1.8074e-06, -1.5443e-05,  1.5464e-06,  ..., -3.6666e-06,\n           -4.9030e-07,  1.5356e-06],\n          [...077e-06],\n          [-1.6812e-05, -7.2532e-06,  1.4669e-05,  ..., -9.9765e-06,\n            1.5222e-05, -1.6317e-06]]]]).to
+E        +      and   torch.float32 = torch.float32
+
+tests/test_ascend_rotary.py:172: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_aten_reference_is_the_contracted_formula_near_rope_magnitudes[dtype1]" time="0.021"><failure message="assert False&#10;[+7 more lines; full report in element text]">dtype = torch.bfloat16
+
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    def test_the_aten_reference_is_the_contracted_formula_near_rope_magnitudes(dtype):
+        """The magnitudes the runtime actually uses: unit activations, small angles."""
+        x = make_input((1, 64, 8, 128), scale=1.0, dtype=dtype)
+        table = make_table(64, 128, scale=1e-5)
+        reference = aten_rotate(x, table)
+        # Compare in FP32: a BF16 store would hide the difference this test is about.
+        formula = formula_rotate(x, table)
+&gt;       assert same_bits(reference.to(torch.float32), formula.to(torch.float32))
+E       assert False
+E        +  where False = same_bits(tensor([[[[-1.7956e-06, -1.5378e-05,  1.5497e-06,  ..., -3.6657e-06,\n           -4.8801e-07,  1.5348e-06],\n          [...014e-06],\n          [-1.6809e-05, -7.2420e-06,  1.4663e-05,  ..., -9.9540e-06,\n            1.5199e-05, -1.5944e-06]]]]), tensor([[[[-1.7956e-06, -1.5378e-05,  1.5497e-06,  ..., -3.6657e-06,\n           -4.8801e-07,  1.5348e-06],\n          [...014e-06],\n          [-1.6809e-05, -7.2420e-06,  1.4663e-05,  ..., -9.9540e-06,\n            1.5199e-05, -1.5944e-06]]]]))
+E        +    where tensor([[[[-1.7956e-06, -1.5378e-05,  1.5497e-06,  ..., -3.6657e-06,\n           -4.8801e-07,  1.5348e-06],\n          [...014e-06],\n          [-1.6809e-05, -7.2420e-06,  1.4663e-05,  ..., -9.9540e-06,\n            1.5199e-05, -1.5944e-06]]]]) = &lt;built-in method to of Tensor object at 0xffff3fbc9310&gt;(torch.float32)
+E        +      where &lt;built-in method to of Tensor object at 0xffff3fbc9310&gt; = tensor([[[[-1.7956e-06, -1.5378e-05,  1.5497e-06,  ..., -3.6657e-06,\n           -4.8801e-07,  1.5348e-06],\n          [...1.6809e-05, -7.2420e-06,  1.4663e-05,  ..., -9.9540e-06,\n            1.5199e-05, -1.5944e-06]]]], dtype=torch.bfloat16).to
+E        +      and   torch.float32 = torch.float32
+E        +    and   tensor([[[[-1.7956e-06, -1.5378e-05,  1.5497e-06,  ..., -3.6657e-06,\n           -4.8801e-07,  1.5348e-06],\n          [...014e-06],\n          [-1.6809e-05, -7.2420e-06,  1.4663e-05,  ..., -9.9540e-06,\n            1.5199e-05, -1.5944e-06]]]]) = &lt;built-in method to of Tensor object at 0xffff3fb71270&gt;(torch.float32)
+E        +      where &lt;built-in method to of Tensor object at 0xffff3fb71270&gt; = tensor([[[[-1.7956e-06, -1.5378e-05,  1.5497e-06,  ..., -3.6657e-06,\n           -4.8801e-07,  1.5348e-06],\n          [...1.6809e-05, -7.2420e-06,  1.4663e-05,  ..., -9.9540e-06,\n            1.5199e-05, -1.5944e-06]]]], dtype=torch.bfloat16).to
+E        +      and   torch.float32 = torch.float32
+
+tests/test_ascend_rotary.py:172: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_unfused_pair_product_is_not_the_reference" time="0.004" /><testcase classname="tests.test_ascend_rotary" name="test_the_operator_rewrites_in_place_and_returns_its_argument[False-dtype0]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_the_operator_rewrites_in_place_and_returns_its_argument[False-dtype1]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_the_operator_rewrites_in_place_and_returns_its_argument[True-dtype0]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_the_operator_rewrites_in_place_and_returns_its_argument[True-dtype1]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_rank_three_tensor_is_batch_sequence_width[False]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_rank_three_tensor_is_batch_sequence_width[True]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_rank_three_batch_is_not_the_sequence" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_the_inverse_direction_undoes_the_forward_one" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_head_slice_of_a_fused_buffer_rotates_in_place" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_strided_width_is_rotated_through_its_own_stride" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_zero_length_batch_returns_immediately" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_the_narrowest_possible_width_is_one_pair" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_single_row_table_rotates_one_decode_position[3-False]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_single_row_table_rotates_one_decode_position[3-True]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_single_row_table_rotates_one_decode_position[4-False]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_single_row_table_rotates_one_decode_position[4-True]" time="0.002" /><testcase classname="tests.test_ascend_rotary" name="test_a_single_row_table_is_still_shape_checked" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_multi_position_tensor_still_requires_the_stacked_table" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_an_odd_width_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_an_unsupported_rank_is_refused[2]" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_an_unsupported_rank_is_refused[5]" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_table_of_the_wrong_shape_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_table_of_the_wrong_dtype_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_non_contiguous_table_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_table_sharing_storage_with_x_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_broadcast_view_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_an_overlapping_layout_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_sliced_head_layout_is_accepted" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_gradient_tracking_tensor_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_an_unsigned_dtype_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_a_non_boolean_inverse_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_an_unknown_backend_is_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_backend_refuses_a_cpu_tensor_by_name" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_non_tensors_are_refused" time="0.001" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape0-False-dtype0]" time="6.768"><failure message="AssertionError: 1048 of 4096 elements differ from ATen's complex multiply for shape (1, 16, 4, 64), dtype torch.float32, inverse=False&#10;assert 1048 == 0">dtype = torch.float32, inverse = False, shape = (1, 16, 4, 64)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 1048 of 4096 elements differ from ATen's complex multiply for shape (1, 16, 4, 64), dtype torch.float32, inverse=False
+E       assert 1048 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape0-False-dtype1]" time="5.732"><failure message="AssertionError: 2 of 4096 elements differ from ATen's complex multiply for shape (1, 16, 4, 64), dtype torch.bfloat16, inverse=False&#10;assert 2 == 0">dtype = torch.bfloat16, inverse = False, shape = (1, 16, 4, 64)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 2 of 4096 elements differ from ATen's complex multiply for shape (1, 16, 4, 64), dtype torch.bfloat16, inverse=False
+E       assert 2 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape0-True-dtype0]" time="1.727"><failure message="AssertionError: 1022 of 4096 elements differ from ATen's complex multiply for shape (1, 16, 4, 64), dtype torch.float32, inverse=True&#10;assert 1022 == 0">dtype = torch.float32, inverse = True, shape = (1, 16, 4, 64)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 1022 of 4096 elements differ from ATen's complex multiply for shape (1, 16, 4, 64), dtype torch.float32, inverse=True
+E       assert 1022 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape0-True-dtype1]" time="1.793" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape1-False-dtype0]" time="1.701"><failure message="AssertionError: 16716 of 65536 elements differ from ATen's complex multiply for shape (2, 32, 8, 128), dtype torch.float32, inverse=False&#10;assert 16716 == 0">dtype = torch.float32, inverse = False, shape = (2, 32, 8, 128)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 16716 of 65536 elements differ from ATen's complex multiply for shape (2, 32, 8, 128), dtype torch.float32, inverse=False
+E       assert 16716 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape1-False-dtype1]" time="1.815" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape1-True-dtype0]" time="1.653"><failure message="AssertionError: 16650 of 65536 elements differ from ATen's complex multiply for shape (2, 32, 8, 128), dtype torch.float32, inverse=True&#10;assert 16650 == 0">dtype = torch.float32, inverse = True, shape = (2, 32, 8, 128)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 16650 of 65536 elements differ from ATen's complex multiply for shape (2, 32, 8, 128), dtype torch.float32, inverse=True
+E       assert 16650 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape1-True-dtype1]" time="1.740" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape2-False-dtype0]" time="0.004"><failure message="AssertionError: 6206 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.float32, inverse=False&#10;assert 6206 == 0">dtype = torch.float32, inverse = False, shape = (1, 64, 4, 96)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 6206 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.float32, inverse=False
+E       assert 6206 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape2-False-dtype1]" time="0.004"><failure message="AssertionError: 1 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.bfloat16, inverse=False&#10;assert 1 == 0">dtype = torch.bfloat16, inverse = False, shape = (1, 64, 4, 96)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 1 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.bfloat16, inverse=False
+E       assert 1 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape2-True-dtype0]" time="0.004"><failure message="AssertionError: 6298 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.float32, inverse=True&#10;assert 6298 == 0">dtype = torch.float32, inverse = True, shape = (1, 64, 4, 96)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 6298 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.float32, inverse=True
+E       assert 6298 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape2-True-dtype1]" time="0.004"><failure message="AssertionError: 2 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.bfloat16, inverse=True&#10;assert 2 == 0">dtype = torch.bfloat16, inverse = True, shape = (1, 64, 4, 96)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 2 of 24576 elements differ from ATen's complex multiply for shape (1, 64, 4, 96), dtype torch.bfloat16, inverse=True
+E       assert 2 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape3-False-dtype0]" time="1.685"><failure message="AssertionError: 26 of 96 elements differ from ATen's complex multiply for shape (1, 8, 2, 6), dtype torch.float32, inverse=False&#10;assert 26 == 0">dtype = torch.float32, inverse = False, shape = (1, 8, 2, 6)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 26 of 96 elements differ from ATen's complex multiply for shape (1, 8, 2, 6), dtype torch.float32, inverse=False
+E       assert 26 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape3-False-dtype1]" time="1.773" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape3-True-dtype0]" time="1.735"><failure message="AssertionError: 18 of 96 elements differ from ATen's complex multiply for shape (1, 8, 2, 6), dtype torch.float32, inverse=True&#10;assert 18 == 0">dtype = torch.float32, inverse = True, shape = (1, 8, 2, 6)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 18 of 96 elements differ from ATen's complex multiply for shape (1, 8, 2, 6), dtype torch.float32, inverse=True
+E       assert 18 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape3-True-dtype1]" time="1.749" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape4-False-dtype0]" time="5.637"><failure message="AssertionError: 3 of 16 elements differ from ATen's complex multiply for shape (1, 4, 2, 2), dtype torch.float32, inverse=False&#10;assert 3 == 0">dtype = torch.float32, inverse = False, shape = (1, 4, 2, 2)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 3 of 16 elements differ from ATen's complex multiply for shape (1, 4, 2, 2), dtype torch.float32, inverse=False
+E       assert 3 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape4-False-dtype1]" time="5.739" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape4-True-dtype0]" time="1.645"><failure message="AssertionError: 3 of 16 elements differ from ATen's complex multiply for shape (1, 4, 2, 2), dtype torch.float32, inverse=True&#10;assert 3 == 0">dtype = torch.float32, inverse = True, shape = (1, 4, 2, 2)
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    @pytest.mark.parametrize("inverse", [False, True])
+    @pytest.mark.parametrize("shape", [
+        (1, 16, 4, 64),      # one step, contiguous
+        (2, 32, 8, 128),     # the runtime's head width
+        (1, 64, 4, 96),      # width the 128-lane tile does not divide: masked tail
+        (1, 8, 2, 6),        # a tile much wider than the head
+        (1, 4, 2, 2),        # exactly one pair
+    ])
+    def test_the_fused_kernel_matches_the_reference_bit_for_bit(dtype, inverse, shape):
+        """The claim that matters on hardware: no tolerance, no ulp of slack."""
+        device = fused_device()
+        x = make_input(shape, scale=1.0, dtype=dtype, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, device=device)
+        expected = cpu_rotate_reference(x, table, inverse)
+        returned = apply_rotary_inplace(x, table, inverse=inverse)
+        assert returned is x
+        mismatches = num_mismatched_bits(x, expected)
+&gt;       assert mismatches == 0, (
+            f"{mismatches} of {expected.numel()} elements differ from ATen's complex "
+            f"multiply for shape {shape}, dtype {dtype}, inverse={inverse}"
+        )
+E       AssertionError: 3 of 16 elements differ from ATen's complex multiply for shape (1, 4, 2, 2), dtype torch.float32, inverse=True
+E       assert 3 == 0
+
+tests/test_ascend_rotary.py:532: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_bit_for_bit[shape4-True-dtype1]" time="1.786" /><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_matches_the_reference_where_an_unfused_pair_does_not" time="0.004"><failure message="RuntimeError: The size of tensor a (8) must match the size of tensor b (128) at non-singleton dimension 2">@requires_npu
+    def test_the_fused_kernel_matches_the_reference_where_an_unfused_pair_does_not():
+        """The user-visible defect: unit activations, a 1e-5 table, FP32 storage.
+    
+        Rounding the pairs to BF16 afterwards hides almost every disagreement, which is
+        why the counterexample is checked in FP32; the BF16 shape above is checked for
+        bit equality on the same magnitudes separately.
+        """
+        device = fused_device()
+        shape = (1, 128, 8, 64)
+        x = make_input(shape, scale=1.0, seed=31, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, seed=32, device=device)
+        expected = cpu_rotate_reference(x, table, False)
+    
+        unfused = x.detach().to("cpu").to(torch.float32).clone()
+        cosine = table.detach().to("cpu")[..., 0]
+        sine = table.detach().to("cpu")[..., 1]
+        a = unfused[..., 0::2]
+        b = unfused[..., 1::2]
+&gt;       unfused[..., 0::2] = a * cosine - b * sine
+                             ^^^^^^^^^^
+E       RuntimeError: The size of tensor a (8) must match the size of tensor b (128) at non-singleton dimension 2
+
+tests/test_ascend_rotary.py:557: RuntimeError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_handles_a_head_slice_of_a_fused_buffer[dtype0]" time="0.034"><failure message="assert 33382 == 0&#10;[+1 more line; full report in element text]">dtype = torch.float32
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    def test_the_fused_kernel_handles_a_head_slice_of_a_fused_buffer(dtype):
+        device = fused_device()
+        batch, sequence, heads, width = 1, 64, 8, 128
+        fused = make_input((batch, sequence, heads, 3, width), seed=33,
+                           dtype=dtype, device=device)
+        table = make_table(sequence, width, scale=1e-5, seed=34, device=device)
+        reference = fused.detach().to("cpu").clone()
+        apply_rotary_inplace(reference[:, :, :, 0, :], table.detach().to("cpu"), backend="torch")
+        apply_rotary_inplace(reference[:, :, :, 1, :], table.detach().to("cpu"),
+                             inverse=True, backend="torch")
+        apply_rotary_inplace(fused[:, :, :, 0, :], table)
+        apply_rotary_inplace(fused[:, :, :, 1, :], table, inverse=True)
+&gt;       assert num_mismatched_bits(fused, reference) == 0
+E       assert 33382 == 0
+E        +  where 33382 = num_mismatched_bits(tensor([[[[[ 5.1171e-06,  1.6429e-06, -6.1871e-06,  ..., -2.1442e-06,\n            -1.0988e-05, -8.7556e-07],\n         ...e-06],\n           [-5.9422e-01,  7.7214e-01,  1.2196e+00,  ..., -2.4378e-01,\n             5.4797e-01,  5.6909e-01]]]]]), tensor([[[[[ 5.1171e-06,  1.6429e-06, -6.1871e-06,  ..., -2.1442e-06,\n            -1.0988e-05, -8.7556e-07],\n         ...e-06],\n           [-5.9422e-01,  7.7214e-01,  1.2196e+00,  ..., -2.4378e-01,\n             5.4797e-01,  5.6909e-01]]]]]))
+
+tests/test_ascend_rotary.py:582: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_handles_a_head_slice_of_a_fused_buffer[dtype1]" time="0.033"><failure message="assert 3 == 0&#10;[+1 more line; full report in element text]">dtype = torch.bfloat16
+
+    @requires_npu
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+    def test_the_fused_kernel_handles_a_head_slice_of_a_fused_buffer(dtype):
+        device = fused_device()
+        batch, sequence, heads, width = 1, 64, 8, 128
+        fused = make_input((batch, sequence, heads, 3, width), seed=33,
+                           dtype=dtype, device=device)
+        table = make_table(sequence, width, scale=1e-5, seed=34, device=device)
+        reference = fused.detach().to("cpu").clone()
+        apply_rotary_inplace(reference[:, :, :, 0, :], table.detach().to("cpu"), backend="torch")
+        apply_rotary_inplace(reference[:, :, :, 1, :], table.detach().to("cpu"),
+                             inverse=True, backend="torch")
+        apply_rotary_inplace(fused[:, :, :, 0, :], table)
+        apply_rotary_inplace(fused[:, :, :, 1, :], table, inverse=True)
+&gt;       assert num_mismatched_bits(fused, reference) == 0
+E       assert 3 == 0
+E        +  where 3 = num_mismatched_bits(tensor([[[[[ 5.1260e-06,  1.6466e-06, -6.1989e-06,  ..., -2.1607e-06,\n            -1.1027e-05, -8.9407e-07],\n         ...9375e-01,  7.7344e-01,  1.2188e+00,  ..., -2.4414e-01,\n             5.4688e-01,  5.7031e-01]]]]], dtype=torch.bfloat16), tensor([[[[[ 5.1260e-06,  1.6466e-06, -6.1989e-06,  ..., -2.1607e-06,\n            -1.1027e-05, -8.9407e-07],\n         ...9375e-01,  7.7344e-01,  1.2188e+00,  ..., -2.4414e-01,\n             5.4688e-01,  5.7031e-01]]]]], dtype=torch.bfloat16))
+
+tests/test_ascend_rotary.py:582: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_loops_over_rows_past_the_grid_limit" time="2.031"><failure message="assert 155 == 0&#10;[+1 more line; full report in element text]">@requires_npu
+    def test_the_fused_kernel_loops_over_rows_past_the_grid_limit():
+        """``sequence * heads`` above 65535 forces the row loop, not a bigger grid."""
+        device = fused_device()
+        shape = (1, 4096, 16, 128)
+        assert shape[1] * shape[2] &gt; 65535
+        x = make_input(shape, scale=1.0, dtype=torch.bfloat16, seed=35, device=device)
+        table = make_table(shape[1], shape[-1], scale=1e-5, seed=36, device=device)
+        expected = cpu_rotate_reference(x, table, False)
+        apply_rotary_inplace(x, table)
+&gt;       assert num_mismatched_bits(x, expected) == 0
+E       assert 155 == 0
+E        +  where 155 = num_mismatched_bits(tensor([[[[ 1.1409e-07,  1.7136e-06,  6.1467e-07,  ...,  9.2760e-07,\n            9.2983e-06, -4.9472e-06],\n          [...7.6890e-06, -1.9372e-06, -4.9770e-06,  ...,  1.2100e-05,\n            5.6028e-06,  7.4133e-07]]]], dtype=torch.bfloat16), tensor([[[[ 1.1409e-07,  1.7136e-06,  6.1467e-07,  ...,  9.2760e-07,\n            9.2983e-06, -4.9472e-06],\n          [...7.6890e-06, -1.9372e-06, -4.9770e-06,  ...,  1.2100e-05,\n            5.6028e-06,  7.4133e-07]]]], dtype=torch.bfloat16))
+
+tests/test_ascend_rotary.py:595: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_kernel_preserves_signed_zeros_and_subnormals" time="0.002"><failure message="RuntimeError: shape '[8, 1, 8]' is invalid for input of size 160">@requires_npu
+    def test_the_fused_kernel_preserves_signed_zeros_and_subnormals():
+        """The zero-sign part of the contract, on the device rather than in emulation."""
+        device = fused_device()
+        values = torch.tensor(
+            [0.0, -0.0, 2.0**-149, -(2.0**-149), 2.0**-126, -(2.0**-126),
+             1.0, -1.0, 65504.0, -65504.0],
+            dtype=torch.float32,
+        )
+        # Width 4: two pairs per row, sequence 8, one head.
+&gt;       x = values.repeat(16).reshape(8, 1, 8)[..., :4].contiguous().to(device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: shape '[8, 1, 8]' is invalid for input of size 160
+
+tests/test_ascend_rotary.py:608: RuntimeError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_fused_backend_refuses_the_torch_reference_on_npu" time="0.002"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'CPU/CUDA'&#10;  Actual message: 'table must be [sequence, width // 2, 2] = (2, 4, 2), got (4, 4, 2)'">@requires_npu
+    def test_the_fused_backend_refuses_the_torch_reference_on_npu():
+        device = fused_device()
+        x = make_input((4, 2, 8), seed=38, device=device)
+        table = make_table(4, 8, scale=1.0, device=device)
+&gt;       with pytest.raises(ValueError, match="CPU/CUDA"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'CPU/CUDA'
+E         Actual message: 'table must be [sequence, width // 2, 2] = (2, 4, 2), got (4, 4, 2)'
+
+tests/test_ascend_rotary.py:620: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_this_hosts_reference_fuses_the_first_product" time="0.002"><failure message="AssertionError: this host's ATen complex multiply contracts differently ('unknown'); the fused kernel assumes the first-product fusion and would disagree by an ulp&#10;assert 'unknown' == 'first'&#10;  &#10;  - first&#10;  + unknown">def test_this_hosts_reference_fuses_the_first_product():
+        """The arithmetic the fused kernel implements, measured on this host's ATen.
+    
+        The kernel commits to one contraction: ``real = fma(a, c, -round32(b*s))`` and
+        ``imag = fma(a, s, +round32(b*c))``, with the second product of each component
+        rounded on its own. That is a property of the ATen kernel *compiled for this
+        host*, not an invariant of complex multiplication -- another architecture or
+        compiler may fuse the other product. If this ever fails, the documented
+        arithmetic no longer describes this host and the NPU kernel's parity claim does
+        not transfer to it; the fix is to decide deliberately, not to loosen the test.
+        """
+        found = reference_contraction()
+&gt;       assert found == "first", (
+            f"this host's ATen complex multiply contracts differently ({found!r}); the "
+            "fused kernel assumes the first-product fusion and would disagree by an ulp"
+        )
+E       AssertionError: this host's ATen complex multiply contracts differently ('unknown'); the fused kernel assumes the first-product fusion and would disagree by an ulp
+E       assert 'unknown' == 'first'
+E         
+E         - first
+E         + unknown
+
+tests/test_ascend_rotary.py:640: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_contraction_probe_can_actually_tell_the_spellings_apart" time="0.002"><failure message="assert False is True">def test_the_contraction_probe_can_actually_tell_the_spellings_apart():
+        """A probe that cannot separate the candidates would always answer 'unknown'."""
+        pairs = torch.tensor([(probe[0], probe[1]) for probe in _CONTRACTION_PROBES],
+                             dtype=torch.float32)
+        angles = torch.tensor([(probe[2], probe[3]) for probe in _CONTRACTION_PROBES],
+                              dtype=torch.float32)
+        observed = _complex_bits(pairs, angles).to(torch.int32)
+        matches = {}
+        for spelling in ("first", "second", "unfused"):
+            candidate = _candidate_bits(pairs, angles, spelling).to(torch.int32)
+            matches[spelling] = torch.equal(candidate, observed)
+&gt;       assert matches["first"] is True
+E       assert False is True
+
+tests/test_ascend_rotary.py:657: AssertionError</failure></testcase><testcase classname="tests.test_ascend_rotary" name="test_the_operator_agrees_with_the_reference_on_a_huge_stride_geometry" time="21.566" /><testcase classname="tests.test_ascend_rotary" name="test_the_index_width_rule_is_conservative_for_ordinary_geometry" time="0.001" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_fma_emulation_matches_the_c_library_where_one_is_available" time="0.149" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_lane_helper_matches_the_reference_formula_on_every_edge_combination" time="32.540" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_lane_helper_matches_the_reference_formula_on_random_bit_patterns" time="2.876" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_inverse_direction_is_the_conjugate_and_matches_the_reference" time="32.143" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_second_product_is_not_fused" time="1.244" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_unfused_product_is_not_the_reference" time="0.762" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_kernel_uses_one_explicit_fma_over_a_pre_rounded_product" time="0.002" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_full_kernel_offers_no_complex_or_float64_operations" time="0.002" /><testcase classname="tests.test_ascend_rotary_math" name="test_casting_the_row_after_the_products_would_lose_the_address" time="0.001" /><testcase classname="tests.test_ascend_rotary_math" name="test_the_kernel_widens_the_row_before_decomposing_it" time="0.003" /></testsuite></testsuites>

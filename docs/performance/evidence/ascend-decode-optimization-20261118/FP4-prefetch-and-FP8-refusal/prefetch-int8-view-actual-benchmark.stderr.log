@@ -1,0 +1,14 @@
+[W1118 13:00:02.545499515 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+Traceback (most recent call last):
+  File "/data1/relic-v41-perf-20261118-0938/source/benchmark_prefetch_decode.py", line 78, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/benchmark_prefetch_decode.py", line 49, in main
+    parity = compare(actual, expected)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/benchmark_integer_decode.py", line 29, in compare
+    raise RuntimeError(f"{mismatches} finite FP32 output bit mismatches")
+RuntimeError: 71 finite FP32 output bit mismatches

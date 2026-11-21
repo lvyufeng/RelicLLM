@@ -1,0 +1,25 @@
+{
+  "revision": "a38556f69529595e70598d0d6203009f5ac3293e",
+  "references": [
+    {
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/a38556f69529595e70598d0d6203009f5ac3293e/vllm_ascend/device/device_op.py#L418-L460",
+      "finding": "A2 explicitly refuses MXFP MoE; its fused GMM1/SwiGLU uses a distinct integer quantization contract"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/a38556f69529595e70598d0d6203009f5ac3293e/vllm_ascend/ops/fused_moe/token_dispatcher.py#L423-L457",
+      "finding": "device routing emits device group counts and permutation metadata"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/a38556f69529595e70598d0d6203009f5ac3293e/vllm_ascend/quantization/methods/w4a8/w4a8_mxfp4.py#L328-L375",
+      "finding": "packed FP4 and raw scale layout, NZ casting and source transposes are explicit; a view is not a format conversion"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/a38556f69529595e70598d0d6203009f5ac3293e/csrc/mc2/dispatch_ffn_combine_bf16/op_kernel/dispatch_ffn_combine_bf16_kernel.hpp#L377-L453",
+      "finding": "device group-count scheduling skips empty groups and coordinates Vector/Cube stages"
+    }
+  ],
+  "CANN_910B_UB_to_L1_API": "the inspected dav_c220 SDK implementation uses a Matmul software service; no direct A5 transfer assumption is made",
+  "implemented_910B_handoff": "AIV original unpack -> bounded GM ring -> AIC L1/L0 -> BF16 Cube",
+  "copied_upstream_kernel_code": false,
+  "upstream_vendor_headers_are_not_blanket_Apache": true
+}

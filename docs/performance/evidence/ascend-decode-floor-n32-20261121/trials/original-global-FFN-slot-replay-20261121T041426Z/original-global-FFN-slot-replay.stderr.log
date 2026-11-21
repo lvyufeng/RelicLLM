@@ -1,0 +1,172 @@
+<frozen runpy>:128: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+[W1121 12:14:41.852906114 ProcessGroupHCCL.cpp:1372] Warning: The watchdog timeout 120000ms(which is set by init_process_group) is less than or equal to HCCL execution timeout 1836000ms! The plog may not be recorded. (function ProcessGroupHCCL)
+[rank0]:[W1121 12:14:41.858272761 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank3]:     if __name__=='__main__':main()
+[rank3]:                             ^^^^^^
+[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank3]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank3]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+[rank5]: Traceback (most recent call last):
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank5]:     if __name__=='__main__':main()
+[rank5]:                             ^^^^^^
+[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:     return func(*args, **kwargs)
+[rank5]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank5]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank5]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank0]:     if __name__=='__main__':main()
+[rank0]:                             ^^^^^^
+[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank0]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank0]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank2]:     if __name__=='__main__':main()
+[rank2]:                             ^^^^^^
+[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:     return func(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank2]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank2]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+[rank7]: Traceback (most recent call last):
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank7]:     if __name__=='__main__':main()
+[rank7]:                             ^^^^^^
+[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:     return func(*args, **kwargs)
+[rank7]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank7]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank7]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank1]:     if __name__=='__main__':main()
+[rank1]:                             ^^^^^^
+[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank1]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank1]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+[rank6]: Traceback (most recent call last):
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank6]:     if __name__=='__main__':main()
+[rank6]:                             ^^^^^^
+[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:     return func(*args, **kwargs)
+[rank6]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank6]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank6]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+[rank4]: Traceback (most recent call last):
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 75, in <module>
+[rank4]:     if __name__=='__main__':main()
+[rank4]:                             ^^^^^^
+[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:     return func(*args, **kwargs)
+[rank4]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py", line 62, in main
+[rank4]:     raise RuntimeError('global FP32 slot alignment or post-reduction narrowing failed')
+[rank4]: RuntimeError: global FP32 slot alignment or post-reduction narrowing failed
+W1121 12:15:06.078000 3357631 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3357641 closing signal SIGTERM
+W1121 12:15:06.080000 3357631 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3357642 closing signal SIGTERM
+W1121 12:15:06.080000 3357631 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3357643 closing signal SIGTERM
+W1121 12:15:06.080000 3357631 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3357644 closing signal SIGTERM
+W1121 12:15:06.081000 3357631 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3357645 closing signal SIGTERM
+W1121 12:15:06.081000 3357631 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3357647 closing signal SIGTERM
+W1121 12:15:06.081000 3357631 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3357648 closing signal SIGTERM
+E1121 12:15:06.578000 3357631 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 5 (pid: 3357646) of binary: /data1/relic-online-unpack-20261117-0534/venv311/bin/python
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
+    main()
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/data1/relic-v41-perf-20261118-0938/source/probe_global_ffn_slots.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 0 (local_rank: 0)
+  exitcode  : -15 (pid: 3357641)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3357641
+[2]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 1 (local_rank: 1)
+  exitcode  : -15 (pid: 3357642)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3357642
+[3]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 2 (local_rank: 2)
+  exitcode  : -15 (pid: 3357643)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3357643
+[4]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 3 (local_rank: 3)
+  exitcode  : -15 (pid: 3357644)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3357644
+[5]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 4 (local_rank: 4)
+  exitcode  : -15 (pid: 3357645)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3357645
+[6]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 6 (local_rank: 6)
+  exitcode  : -15 (pid: 3357647)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3357647
+[7]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 7 (local_rank: 7)
+  exitcode  : -15 (pid: 3357648)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3357648
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-11-21_12:15:06
+  host      : ascend216
+  rank      : 5 (local_rank: 5)
+  exitcode  : 1 (pid: 3357646)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

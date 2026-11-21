@@ -1,0 +1,198 @@
+{
+  "selected_owned_receipts": [
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/analyze-current-TP2-timeline-20261121T045444Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/build-original-N32-consumer-20261121T054427Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/build-original-N32-consumer-v2-20261121T054937Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/build-original-direct-bit-consumers-20261121T031623Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/build-prepared-AIV-decode-consumers-20261121T051057Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/compare-final-original-consumers-20261121T060626Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/compare-original-direct-byte-models-20261121T035537Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/compare-original-full-FFN-HC-models-20261121T044240Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-FP32-coefficient-probe-20261121T035418Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-generated-tp2-20261121T035641Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-HC-coefficient-matched-tp2-20261121T040145Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-N32-TP2-replay-20261121T055442Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-N32-consumer-gates-20261121T054439Z",
+      "returncode": 1,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-N32-consumer-gates-v2-20261121T054948Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-decode-real-output-floor-tp2-20261121T031148Z",
+      "returncode": 1,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-decode-real-output-floor-tp2-20261121T032049Z",
+      "returncode": 1,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-decode-real-output-floor-tp2-20261121T032958Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-AIV-TP2-replay-20261121T034210Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-bit-consumer-probes-20261121T033517Z",
+      "returncode": 1,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-bit-consumer-probes-n8-20261121T033900Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-bits-TP2-replay-20261121T034130Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-bits-generated-20261121T034301Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-n32-generated-20261121T055523Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-n32-generated-steps64-20261121T060035Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-20261121T034823Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-generated-steps64-20261121T053103Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-old-matched-20261121T040643Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-prepared-generated-20261121T052008Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-direct-byte-prepared-generated-steps64-20261121T052535Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-20261121T042806Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-generated-tp2-steps64-20261121T045619Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-matched-tp2-20261121T043318Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-slot-replay-20261121T041426Z",
+      "returncode": 1,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-global-FFN-slot-replay-v2-20261121T042732Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-prepared-AIV-TP2-replay-20261121T051923Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-prepared-AIV-decode-probes-20261121T051405Z",
+      "returncode": 1,
+      "cleanup_complete": true
+    },
+    {
+      "directory": "/data1/relic-v41-perf-20261118-0938/logs/original-prepared-AIV-decode-probes-v2-20261121T051618Z",
+      "returncode": 0,
+      "cleanup_complete": true
+    }
+  ],
+  "previous_frozen_bundles_not_modified": true,
+  "full_quality_tensors_remain_remote_and_are_verified_by_complete_audits": true,
+  "raw_profiles_remain_remote_with_hashes": true,
+  "target_50_TPS_claimed": false
+}

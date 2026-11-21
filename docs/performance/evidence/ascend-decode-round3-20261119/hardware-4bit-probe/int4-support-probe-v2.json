@@ -1,0 +1,49 @@
+{
+  "torch": "2.10.0+cpu",
+  "torch_npu": "2.10.0.post7",
+  "geometry": {
+    "x": [
+      1,
+      5120
+    ],
+    "weight": [
+      5120,
+      2304
+    ],
+    "group": 32
+  },
+  "schema": "Unknown keyword argument 'no_such_kwarg' for operator 'npu::npu_weight_quant_batchmatmul'. Schema: npu::npu_weight_quant_batchmatmul(Tensor x, Tensor weight, Tensor antiquant_scale, Tensor? antiquant_offset=None, Tensor? quant_scale=None, Tensor? quant_offset=None, Tensor? bias=None, int antiquant_group_size=0, int inner_precise=0, int? weight_dtype=None) -> Tensor",
+  "attempts": {
+    "int8_control": {
+      "weight_shape": [
+        5120,
+        2304
+      ],
+      "weight_dtype": "torch.int8",
+      "accepted": false,
+      "error": "RuntimeError: npu_weight_quant_batchmatmul:../third_party/op-plugin/op_plugin/ops/opapi/WeightQuantBatchMatmulV2KernelNpuOpApi.cpp:177 NPU function error: call aclnnWeightQuantBatchMatmulV2 failed, error code is 161002\n[ERROR] 2026-11-19-16:38:53 (PID:2862173, Device:0, RankID:-1) ERR00100 PTA call acl api failed"
+    },
+    "uint8_two_codes_per_byte_along_K": {
+      "weight_shape": [
+        5120,
+        1152
+      ],
+      "weight_dtype": "torch.uint8",
+      "accepted": false,
+      "error": "RuntimeError: npu_weight_quant_batchmatmul:../third_party/op-plugin/op_plugin/ops/opapi/WeightQuantBatchMatmulV2KernelNpuOpApi.cpp:177 NPU function error: call aclnnWeightQuantBatchMatmulV2 failed, error code is 161002\n[ERROR] 2026-11-19-16:38:53 (PID:2862173, Device:0, RankID:-1) ERR00100 PTA call acl api failed"
+    },
+    "int4_explicit": {
+      "accepted": false,
+      "error": "RuntimeError: self scalar_type:Int4is not surpported.\n[ERROR] 2026-11-19-16:38:53 (PID:2862173, Device:0, RankID:-1) ERR01002 OPS invalid type"
+    },
+    "uint8_as_int8_along_K": {
+      "weight_shape": [
+        5120,
+        1152
+      ],
+      "weight_dtype": "torch.int8",
+      "accepted": false,
+      "error": "RuntimeError: npu_weight_quant_batchmatmul:../third_party/op-plugin/op_plugin/ops/opapi/WeightQuantBatchMatmulV2KernelNpuOpApi.cpp:177 NPU function error: call aclnnWeightQuantBatchMatmulV2 failed, error code is 161002\n[ERROR] 2026-11-19-16:38:53 (PID:2862173, Device:0, RankID:-1) ERR00100 PTA call acl api failed"
+    }
+  }
+}

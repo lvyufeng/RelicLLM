@@ -1,0 +1,171 @@
+{
+  "milestone": "vllm-ascend-informed original-byte native tile consumer; validated, slower than the best known native baseline",
+  "file_count": 25,
+  "files": [
+    {
+      "path": "Cube-model-rank-0.json",
+      "bytes": 100362,
+      "sha256": "f161a1e129c704221d0a50117f5d5b52e74706c229702d3ff0f16185d65b993c"
+    },
+    {
+      "path": "Cube-model-rank-1.json",
+      "bytes": 100341,
+      "sha256": "fc237b35ea3d038e48b02c529c571b1ef7f3b4741848039e88c4bc351f659d42"
+    },
+    {
+      "path": "Cube-model-rank-2.json",
+      "bytes": 100346,
+      "sha256": "433eed28a563a3c03b480024e721f4411cd08ee51adaa4094557ea64f41145d0"
+    },
+    {
+      "path": "Cube-model-rank-3.json",
+      "bytes": 100353,
+      "sha256": "b7dd1de73b62d5af5004eb7a80996159554e48a9f9e73bb957f7c201ae44c19c"
+    },
+    {
+      "path": "Cube-model-rank-4.json",
+      "bytes": 100347,
+      "sha256": "898b078c005e7dee9e4b4dc908312c3ce4f1ec74a5779d6aa1b4c360a4ad0d00"
+    },
+    {
+      "path": "Cube-model-rank-5.json",
+      "bytes": 100343,
+      "sha256": "563001e8856f00381792a7b92b9ef1eee00511b7fa0a655648097a58598b95a1"
+    },
+    {
+      "path": "Cube-model-rank-6.json",
+      "bytes": 100349,
+      "sha256": "ce3c5672fb7c174692764890d042fade9357e3a8f6b231dc9af7fc8ad3e3ccb5"
+    },
+    {
+      "path": "Cube-model-rank-7.json",
+      "bytes": 100343,
+      "sha256": "835037645da167fa92ec3ae99a73f57df730b5550f74d2f61c2b5a7d9ca96fcc"
+    },
+    {
+      "path": "full-model-summary.json",
+      "bytes": 5126,
+      "sha256": "bde96ec496d4907ee1c6b5c0018b5b93842d3ba7d8e9423327cf590bb8021bd0"
+    },
+    {
+      "path": "full-model-preconditions.json",
+      "bytes": 19018,
+      "sha256": "1e0e5bf396275103d85232bd66b0673a6821e4f799c83fbe7c5b038403397bb4"
+    },
+    {
+      "path": "online-tile-cube-consumer-v2.stdout.log",
+      "bytes": 1915,
+      "sha256": "a33ec0590f36aeb9106741f38cf7c10e8568d7a744b5cef1cef9270c3c75aae2"
+    },
+    {
+      "path": "a2-k128-literal-geometry-proof.stdout.log",
+      "bytes": 3014,
+      "sha256": "66d7e5b481b977b1b89e825da7eafcdd78abb1657fd655b94dd9d1a9973e049d"
+    },
+    {
+      "path": "a2-k128-literal-codec-replay-proof.stdout.log",
+      "bytes": 378,
+      "sha256": "da97bc64fe910d44da9efd83a767612aff4e54764c054953a34662fb0713ca42"
+    },
+    {
+      "path": "device-tile-moe-composition-proof.stdout.log",
+      "bytes": 627,
+      "sha256": "2368bf7339107c1497eaaf6bfb437c2b4bc9d3c321a3ba3fbd1976dc38f69888"
+    },
+    {
+      "path": "online-tile-cpu-contract-tests.stdout.log",
+      "bytes": 99,
+      "sha256": "d5c9bc07602b47433972c4647e71a5f71cda790bab5022bbeceda0d6f657c603"
+    },
+    {
+      "path": "tile-route-runtime-contract-tests-v2.stdout.log",
+      "bytes": 99,
+      "sha256": "6e8ab278d0f954beb5b5d8a2da6322246d4ae6505c52622495278073bc4c8dcb"
+    },
+    {
+      "path": "new-lease-safety-20261120T025855Z.json",
+      "bytes": 45838,
+      "sha256": "1a462efddaba5a025a9426df270db85319aebbd3e73fd59953a0f6dacdf6cb36"
+    },
+    {
+      "path": "source-online_tile_cube.cpp",
+      "bytes": 17036,
+      "sha256": "e5be9b286d15fc5aa491077ad4a4c85d5cff8a2d5ff26fa6594baa12e7c7ca3b"
+    },
+    {
+      "path": "source-CMakeLists.txt",
+      "bytes": 1065,
+      "sha256": "624d6e724a81771b25a67edc1b441668a56fbfa028158c8a7b54db2369ec1fd0"
+    },
+    {
+      "path": "source-kernel_entry.cpp.in",
+      "bytes": 271,
+      "sha256": "47dcef159e11488e231d518f80ae4acb7b4329a436d0146a63899b13e6015ee3"
+    },
+    {
+      "path": "source-ascendc_online_tile_cube.py",
+      "bytes": 4687,
+      "sha256": "5e46f6be0badab4389c9a62a449669121c1235e4d7140443c91eff01177b292b"
+    },
+    {
+      "path": "source-ascendc_tile_moe.py",
+      "bytes": 9794,
+      "sha256": "8e3bd9e9878735f41bf3b43560d0261959d20a79b6ee2ff41b50d1409c575a58"
+    },
+    {
+      "path": "source-ascend_tile_routing.py",
+      "bytes": 5126,
+      "sha256": "375c707a1aae37892a1ba6c2ab616c1930818a3a5024fb191e6d56388545b57c"
+    },
+    {
+      "path": "comparison.json",
+      "bytes": 1555,
+      "sha256": "9d2ca91856a16cd0cc39a16f0ceff33c07121d4382c04bd33bcee68e59c567a9"
+    },
+    {
+      "path": "upstream-source-notes.json",
+      "bytes": 1592,
+      "sha256": "c677b411bfcbea9e02a142c0f76f057929c920bfa8d8f15b6e6dbf1cf05806c8"
+    }
+  ],
+  "total_bytes": 920024,
+  "results": {
+    "upstream_revision": "a38556f69529595e70598d0d6203009f5ac3293e",
+    "native_library_sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
+    "all_eight_rank_receipts_validated": true,
+    "timed_forwards": 16,
+    "excluded_warmups": 4,
+    "timed_context": [
+      24,
+      40
+    ],
+    "slowest_rank_seconds": 3.3492809371091425,
+    "sustained_batch_one_single_stream_TPS": 4.777144796282764,
+    "earlier_same_scenario_native_baseline_TPS": 5.723331908921318,
+    "earlier_same_scenario_I8_stage_TPS": 3.8213687151906504,
+    "comparisons_are_separate_recorded_runs_not_a_same_hour_causal_ablation": true,
+    "timed_token_ids_match_both_earlier_native_runs": true,
+    "teacher_greedy_matches": 64,
+    "teacher_positions_compared": 64,
+    "maximum_original_exact_logit_abs_difference": 2.1737570762634277,
+    "maximum_original_exact_reference_to_candidate_KL": 0.001334548112936318,
+    "native_K_accumulation_changed": true,
+    "exact_default_unchanged": true,
+    "complete_Engram_CPU": true,
+    "serving_guards_unchanged": true,
+    "device_routing_D2H": 0,
+    "total_model_D2H_is_not_zero": true,
+    "shared_workspace_bytes": 430188,
+    "tile_ring_bytes": 196608,
+    "whole_selected_matrix_staging_bytes": 0,
+    "checkpoint_packed_bank_bytes_per_rank": 36097228800,
+    "physical_graph_pool_footprint_measured": false,
+    "target_50_TPS_achieved": false,
+    "replace_best_known_native_path": false,
+    "source_hashes_match_the_measured_bindings": true,
+    "lease_released": true,
+    "lease_release_confirmation": "ts_release returned released=true and lease dropped"
+  },
+  "projection_microbenchmarks_are_not_model_TPS": true,
+  "native_sources_and_current_bindings_match_full_model_source_hashes": true
+}

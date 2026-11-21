@@ -1,0 +1,249 @@
+# Final review: original-format Ascend block GEMM and routed-expert store
+
+Read-only review of the continuation from online unpack to original-format expert execution.
+No source was modified, no remote work, no lease, no device operation. Local torch is not installed
+in any environment reachable from this reviewer, so the CPU portables were read rather than re-run;
+the numerical claims below are checked by reading both transcriptions, by a pure-Python re-derivation
+of the quantizer equivalence, and by the receipts' own recorded source hashes.
+
+## Verdict
+
+**ACCEPTED** for the scope stated in the task (operator-level original-format expert execution on
+Ascend 910B, one expert row at a time). **No arithmetic defect found, and no open must-fix.** The one
+must-fix this review raised (M1) and the one non-blocking defect it recommended fixing (N2) have both
+been closed by the lead; both closures are re-verified below against the current sources.
+
+This document was corrected after its first circulation. Two statements in the original version were
+wrong and are retracted here rather than deleted, so a reader who saw the first version can see what
+changed: the FP32 classification of `2**-127` (Erratum E1) and the scope of the quantizer-equivalence
+claim (Erratum E2). Neither erratum weakens the acceptance; E2 narrows a claim to what the evidence
+actually supports.
+
+## Must-fix status
+
+### M1. CLOSED -- the store's docstring claimed a loader fallback that does not exist
+
+The first version of the docstring said a store that raises in `__init__` "is caught by
+`load_backbone` and degrades to the host path". That was false: `loader.py:1190` starts the NPU
+branch and every `raise` in it (`:1194`, `:1196`, `:1198`, `:1200`) plus `AscendRoutedExperts(...)`'s
+constructor run **before** the `try:` at `loader.py:1212`, which is the only thing that degrades to
+`None` and thus to `CheckpointRoutedExperts`. On an NPU device a missing Triton backend
+(`_resolve_backend`'s `RuntimeError`), a non-fp4 tree, a `hot/pool/batched` option, a non-`id` deal,
+or a world mismatch all propagate and abort the load. The behaviour is the right one -- silently
+falling back to 40 layers of host-side dense experts on an NPU would be a catastrophic "plausible
+wrong answer" -- so the sentence was what needed to go.
+
+Re-verified in the current source (`ascend_experts.py:346-350`):
+
+> Construction is cheap and does no I/O ... so a run that never routes an expert pays nothing. NPU
+> construction or execution errors propagate by name; unlike the CUDA arena, this provider does not
+> silently fall back to the host store and change the execution device.
+
+That matches `loader.py`'s actual control flow (unchanged), so M1 is closed as a documentation fix.
+
+### N2. CLOSED -- `backend="torch"` on an NPU tensor is now refused by name
+
+`relic_core/kernels/block_fp8_quant.py:145-148` now refuses the Torch reference on NPU
+(`"the Torch FP8 reference is CPU/CUDA-only; NPU execution requires the fused backend"`) instead of
+letting it die inside the unsupported `float8_e4m3fn` cast, matching `block_gemm._prepare`'s existing
+refusal. Pinned by an actual device test, `tests/test_block_fp8_quant.py:440-444`
+(`test_npu_explicit_torch_backend_is_refused_before_an_unsupported_cast`, under `@requires_npu`),
+which is part of the accepted 44-case quantizer run below. Closed.
+
+## What I verified, and how
+
+### Operand semantics and the paired A/B compensation (read + re-derived)
+
+* FP4 store: `INT8 = 2 * E2M1` with the file's E8M0 grid **halved** (`fp4_int8_scale`), and
+  `block_gemm` recovering `(bi * 0.5) * (half_scale * 2.0)` = `bare_value * original_scale`. Checked
+  against `online_unpack.Fp4ExpertInt8.to_float32` and against `fp4_int8_block_gemm`'s
+  `bv = bi * 0.5` / `sb * 2` pair; the two are the same quantity, and the scale doubling is exact --
+  **corrected by E1 below**: `2**-128` and `2**-127` are *subnormal* FP32 values, not normal ones, and
+  the doubling is still exact (shifting a subnormal left by one loses nothing), so no rounding is
+  introduced by the recovery. The stored bits survive either way, because the operator decodes the
+  grid through a host table and never asks the card for a float8 cast.
+* FP4 nominal exponents: magnitude `{0,1,2,3,4,6,8,12}` -> `{-1,0,0,1,1,2,2}` + sentinel for zero is
+  `floor(log2(E2M1))` for every one of the sixteen codes. I checked each code by hand; the bin edges
+  (`>=2`, `>=4`, `>=8`) are correct for a value set that is *bare* `{0,.5,1,1.5,2,3,4,6}`.
+* Activation side is the released quantizer: block 32, `clamp_min(1e-4)`, `2**ceil(log2(amax * (1/448)))`
+  by bit construction, exact reciprocal rescale, E4M3 RNE, `0x7F`/`255` NaN pair for non-finite
+  blocks. This matches the accepted transcription of the released kernel in
+  `relic_core/kernels/ops.py:238-240` (`fast_round_scale` = `fast_pow2(fast_log2_ceil(amax * fp8_max_inv))`
+  with `1.0/448.0`) operation for operation, including the multiply-not-divide by 448 and the
+  exact-bit ceiling. No INT8 activation, no row amax, no W8A8 path anywhere in the new code.
+* Two-half reduction: first half anchored by `max` nominal pair, cut toward zero onto `2**(anchor-13)`,
+  first sum joining the second window as a peer, one final renormalisation, then `(fragment * s_a) * s_b`
+  and a sequential FP32 accumulation in ascending K. Matches `mma.fp8_block_gemm`'s order
+  (`mma.py:589-604`) and `modules.expert_forward`'s SwiGLU placement. The FP32 accumulation is sound
+  rather than lucky: products of a 4-bit and a 2/4-bit significand are exact in FP32, the cut terms are
+  whole grid units summing below `2**19`, so every reduction step is exact and the only rounding is the
+  per-block scale multiply and the cross-K add -- which is the reference's rounding too.
+
+### Quantizer spelling: what is actually established (corrected by E2)
+
+The port's CPU oracle (`kernels.block_fp8_act_quant`) divides by `448` and spells the ceiling as
+`pow(2, ceil(log2(...)))`; the released spelling multiplies by `fp32(1/448)` and takes the ceiling off
+the exponent bits. Those are not the same function in general, and a block whose amax sits on an
+octave boundary is where they would part.
+
+**What I ran, and what it does not prove.** I enumerated all 18,094 finite BF16 magnitudes `>= 1e-4`,
+200,000 random FP32 `amax`, and the family `448 * 2**k * (1 + d)` for
+`d in {0, +-2**-24, +-2**-23, +-2**-20}`, `k in [-20, 20]`, comparing the bit-ceiling of
+`f32(amax * f32(1/448))` against the bit-ceiling of `f32(amax / 448)`, and found zero disagreements.
+That models the two *idealized* spellings -- in particular it takes the ceiling of the real `log2`
+exactly, which is what the released bit trick does.
+
+It does **not** model the port's actual old path, whose ceiling is `ceil` of a **fp32-rounded**
+`torch.log2`. A rounded log is not the ideal ceiling of the bit quotient, and per task 27 that path
+can under-count an octave near `2**k`. So the original version of this review over-claimed when it
+concluded the two spellings "cannot disagree on any FP32 activation" -- that conclusion is withdrawn.
+The BF16 sweep is also not the evidence that matters for it, for the same reason.
+
+**What is safe to claim.**
+
+* The production Ascend path uses the official bit-ceiling (`_scale_exponent_from_bits` /
+  `fast_log2_ceil` in `relic_core/kernels/ops.py:238-240`), so what runs is the released arithmetic,
+  and the operator contract is the pinned original one. That is the property the acceptance needs.
+* Agreement with the port's *old* oracle is pinned **on the BF16 activation grid**, by a test that
+  ran the two real implementations against each other on a fixture grid that includes octave
+  boundaries (`448`, `448 * 2**-3`, `448 * 2**6`, `1e-4`, `3.0e38`) --
+  `tests/test_v41_ascend_experts.py:619-645`, part of the accepted runtime run. That is empirical
+  torch-on-torch evidence, not my scalar audit.
+* Off that grid, and in general for arbitrary FP32 `amax`, no equivalence between the old
+  `log2`+`ceil` spelling and the released bit spelling is claimed here. The store's dtype contract
+  already scopes the supported case: the released tree is BF16 and `LINEAR_DTYPE` is BF16, and the
+  store's own docstring says the agreement is stated on the BF16 grid.
+
+### Receipts (verified, including source provenance)
+
+All numbers below are read out of the archived artifacts under
+`docs/performance/evidence/ascend-original-experts-20261117/` by parsing the `pytest.xml` /
+`report.json` files, not from the task narrative:
+
+| Receipt | Tally | Notes |
+| --- | --- | --- |
+| `quant-npu-20261117T054459Z` | **44 passed, 0 failed, 0 skipped, 7.50 s** | final run, includes the new N2 guard test |
+| `runtime-npu-20261117T054511Z` | **127 passed, 0 failed, 2 skipped, 12.60 s** -- pytest's `tests=129` counts the two skips, so the pass count is 127 | final run |
+| `gemm-npu-20261117T044257Z` | **31 passed, 0 failed, 0 skipped, 30.49 s** | core operators |
+| `gemm-cpu-20261117T044243Z` | **31 passed, 0 failed, 0 skipped, 10.37 s** | CPU oracle path |
+| `quant-cpu-20261117T034711Z` | 43 passed, 0 failed, **4 skipped**, 6.13 s | skips are the device-only cases |
+| `runtime-cpu-20261117T034942Z` | 40 passed, 0 failed, 1 skipped, 6.96 s | skip is a device-only case |
+| `original-expert-20261117T054529Z/report.json` | experts (0, 127, 383), 1 row, **0 / 5120 FP32 bit mismatches, max abs error 0.0**, warm median NPU **111.612 ms** vs CPU **588.682 ms** | `checkpoint_rewritten: false` |
+
+* The two runtime skips are the pre-existing CUDA-graph capture tests ("a capture needs a card"), not
+  skipped NPU cases.
+* The 31 core cases are the fp4 and fp8 GEMMs against the test file's own scalar oracle
+  (independent `fragment()`/`oracle()` transcription), all 256 E4M3 codes crossed with all 16 E2M1
+  values, every E8M0 byte 0..255 on both scales, sentinel tail guards, refusals, plus the five
+  AST-executed bit tests. The "2 invalid FP32 scale contract" cases are present as the `fp4`/`fp8`
+  parametrisation of `test_fp32_scale_grid_cannot_silently_be_a_different_quantizer`.
+* **Source provenance holds for the final runs too**: the nine `tested_source_hashes` recorded in the
+  *final* original-checkpoint report (`original-expert-20261117T054529Z`) are byte-identical to the
+  current worktree files (I re-hashed all nine: MATCH), so the archived receipts describe the code as
+  it stands after the M1/N2 fixes, not an earlier revision. The weight payloads' own SHA-256 values
+  are recorded per tensor, so the "original checkpoint, unmodified" claim is checkable.
+* The original-checkpoint run's oracle is `CheckpointRoutedExperts quantized=True`, i.e. the accepted
+  CPU `mma.fp8_block_gemm` path on e4m3-cast E2M1 codes with the file's original per-row grid, and the
+  NPU side is the new INT8x2 + halved-grid operator. 0/5120 bit mismatches on real released expert
+  bytes is the strongest evidence available that the paired compensation is right end to end.
+* The report's own disclaimers are present and correct: no full-model forward, no tokens, no native
+  FP4/FP8 arithmetic, no checkpoint rewrite.
+
+### Runtime seams (CPU/CUDA preserved)
+
+* `mma.py` is purely additive (`attach_source_codes`), `kernels.quantized_linear` gains only an
+  `x.device.type == "npu"` branch, `loader.py` only the auto-online-fill predicate + `_fill_from_original_bytes`
+  + the `on_device` NPU branch. `git diff --stat` over tracked files is **172 insertions, 0 deletions**,
+  so the CUDA/CPU load body, the reference reduction and the activation-quantization semantics are
+  byte-identical. `capabilities.py` / `factory.py` are untouched: the `v41` Ascend serving guard still
+  refuses the model, so nothing here relaxes a capability.
+* `test_v41_ascend_bindings.py:21-28` pins that a CPU linear cannot enter the NPU binding;
+  `:53-61` pins the EP seam (rank 3 of world 8 -> `npu:3`, `backend="triton"`, `partial=True`, CUDA
+  arena forbidden); `:64-72` pins the three by-name refusals; `:83-103` pins NPU-vs-CPU **bit equality**
+  on real codes while monkeypatching `e8m0_exponent`/`codes_from_scale` to raise if the hot path tries
+  float64 recovery; `:106-111` pins the explicit "needs original codes" error instead of a fallback.
+* Expert accumulation matches the reference store exactly: FP32 `y`, ascending expert id, each
+  contribution narrowed by its own GEMM, routing weight applied to the intermediate before the
+  `w2` cast-and-quantize. `y.index_put_` is equivalent to `y[rows] +=` because a row appears at most
+  once per expert (topk is without-replacement, and a repeat is refused at `_routing`).
+* Memory: `ResidentExpert.nbytes` = INT8 codes + FP32 half-grids; the docstring's arithmetic checks
+  out (11,796,480 B + 1,474,560 B per projection, `3 * 13,271,040 = 37.97 MiB`; `384 * 37.97 MiB = 14.24 GiB`
+  against `25.31 GiB` dense). One process-wide 512 MiB budget (~13 experts) is pinned by
+  `test_the_default_cache_is_one_shared_byte_budget`, keyed by checkpoint identity + layer + device,
+  with an oversized expert streamed rather than evicting the cache.
+
+## Non-blocking observations
+
+1. **E8M0 NaN byte differs from the incumbent.** For scale byte 255 the new operator returns NaN
+   (`_e8m0_values` -> NaN; the fused `_scale_e8m0` -> `0x7fc00000`), while `mma.e8m0_exponent` reads
+   the byte as exponent 128 and `exp2` gives **+inf**. The reachable case agrees anyway (a non-finite
+   activation block carries `0x7F` codes, so the output is NaN either way), and a real grid never
+   holds 255, so this is a corrupt-input difference only. The operator docstring explains the NaN
+   choice for the FP32-grid form but not for the byte form; one sentence would close it. A strict
+   "the two transcriptions agree" statement should be read as scoped to valid grids.
+2. **CLOSED (`backend="torch"` on an NPU tensor).** Originally: `_select_backend` returned `None` for
+   `"torch"` without looking at the device, so the Torch reference would run on NPU and die inside the
+   `.to(float8_e4m3fn)` cast this stack rejects (`561103`). Now refused by name at
+   `block_fp8_quant.py:145-148` and pinned by an actual device test
+   (`tests/test_block_fp8_quant.py:440-444`). See N2 above.
+3. **`fp4_int8_block_gemm` cannot tell a halved grid from an original one.** Passing the *original*
+   FP32 grid would silently produce a 2x answer, because `_original_float_scale(half=True)` maps the
+   exponent back one octave. In practice the pairing is enforced at the producer
+   (`fp4_expert_int8` always pairs `fp4_int8_scale`'s output with the widened values, and the two
+   travel as one `Fp4ExpertInt8`), so this is a raw-API sharp edge rather than a live risk. Worth a
+   docstring sentence, or an API that takes `Fp4ExpertInt8` instead of the two tensors.
+4. **Receipts do not record the private interpreter/patch provenance.** `critical_environment` shows
+   WHAT was set but not the venv path, extension hashes, or the private `npu_utils.cpp` compatibility
+   patch SHA that the fused Triton lane needs on CANN 9.2. That patch is documented in the earlier
+   frozen receipt and the task states no new vendor patch was made, but a reader of *this* phase's
+   evidence cannot reconstruct the stack. Recording the interpreter, extension-manifest and patch
+   hashes in the acceptance report would make this phase self-contained.
+5. **`expert_forward_ascend` quantizes `x` twice** (`quantize(x)` for `w1`, again for `w3`). That is
+   faithful to the reference's two separate `Linear` calls and the docstring says the sharing is
+   deliberately not taken; it is also ~2x the activation-quantization cost per expert. Fine for now,
+   mentioned only because it is on the per-expert critical path.
+6. **The `cpu_warm_median_seconds` / `npu_warm_median_seconds` pair is not a speedup.** The CPU side is
+   the host dense-weight path and the NPU side is the byte-store path, and the CPU figure includes the
+   host decode on a cache miss. The report wisely does not label it a speedup; it should stay that way
+   in any document that quotes it.
+7. The reference `mma.fp8_block_gemm` is an accepted model of the released GPU behaviour, not a
+   TileLang hardware parity measurement. Everything above inherits that boundary: 0/5120 bit equality
+   against `mma` establishes that the two transcriptions agree, not that either matches a card.
+
+## Acceptance boundary
+
+This review supports: the operator reproduces the reference reduction bit for bit against the port's
+accepted transcription on CPU fixtures and on real released expert bytes under the fused NPU path; the
+activation and weight encodings are the checkpoint's original ones; CPU/CUDA behaviour and the serving
+guard are unchanged; and the memory bound is global and enforced.
+
+It does not support, and the code does not claim: native FP4/FP8 arithmetic, W8A8 or any INT8
+activation, an offline-rewritten checkpoint, a whole-model run, tokens, TPS, or a relaxed `v41`
+capability guard. The new executor is one expert row at a time and is not graph-capturable (it reads
+routing indices on the host once per call), and no multi-NPU single-process expert path exists.
+
+## Errata to the first version of this review
+
+### E1. `2**-127` is a subnormal FP32 value, not a normal one
+
+The first version said the FP4 half-scale doubling is exact "(`2**-128 * 2 == 2**-127` is a normal
+FP32 value)". The classification was wrong: `2**-128` is `0x00200000` and `2**-127` is `0x00400000`,
+and **both are subnormal** -- the smallest normal FP32 is `2**-126` = `0x00800000`. The conclusion was
+right for the wrong reason: doubling a subnormal by two is still exact (it only shifts the exponent
+field by one, and both endpoints are inside the subnormal range), so the recovery introduces no
+rounding. Two follow-ons, both already stated in the operator docstrings and unchanged by this
+correction: FP32 subnormal products in this range are the edge a flush-to-zero device would lose, so
+no bit-parity claim is made for a flushed device; and the grid's stored bytes survive regardless,
+because it is decoded through a host table rather than by a device float8 cast.
+
+### E2. The quantizer-equivalence claim was wider than its evidence
+
+The first version concluded from a scalar sweep that the released bit-ceiling spelling and the port's
+old `pow(2, ceil(log2(...)))` spelling "cannot disagree on any FP32 activation -- not just on BF16
+ones". That is withdrawn. My sweep took the ceiling of the real `log2` exactly (which is what the bit
+trick computes), so it did not model the old path's `ceil` of a **fp32-rounded** `torch.log2`; a
+rounded log is a different function from the ideal ceiling of the quotient, and task 27 established
+that the old spelling can under-count an octave near `2**k`. The safe and sufficient claims are the
+three listed in the quantizer section above: production runs the official bit spelling, agreement
+with the old oracle is pinned on the BF16 activation grid by a real torch-on-torch test, and no
+all-FP32 equivalence is asserted. This erratum narrows a claim; it does not change the acceptance.

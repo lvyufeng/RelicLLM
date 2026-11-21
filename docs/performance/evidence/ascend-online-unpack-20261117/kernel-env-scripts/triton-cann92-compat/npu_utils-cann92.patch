@@ -1,0 +1,32 @@
+--- a/triton/backends/ascend/npu_utils.cpp
++++ b/triton/backends/ascend/npu_utils.cpp
+@@ -318,7 +318,6 @@
+ 
+ static const std::unordered_map<std::string, rtLimitType_t> LimitTypeMap = {
+ 	{"LOW_POWER_TIMEOUT", rtLimitType_t::RT_LIMIT_TYPE_LOW_POWER_TIMEOUT},
+-	{"WARP_STACK_SIZE", rtLimitType_t::RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE},
+ 	{"DVG_WARP_STACK_SIZE", rtLimitType_t::RT_LIMIT_TYPE_SIMT_DVG_WARP_STACK_SIZE},
+ 	{"STACK_SIZE", rtLimitType_t::RT_LIMIT_TYPE_STACK_SIZE}
+   };
+@@ -331,9 +330,20 @@
+ 	  return NULL;
+ 	}
+   
++	// CANN 9.1/9.2 do not declare RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE, so this limit
++	// cannot be expressed against the installed runtime. Keep it explicitly
++	// unavailable rather than guessing an equivalent enumerator: a silent remap
++	// would change device-limit semantics. Remove this branch when a CANN release
++	// declares the symbol and restore the map entry in the same change.
++	if (std::string(type_str) == "WARP_STACK_SIZE") {
++	  PyErr_SetString(PyExc_NotImplementedError,
++	                  "WARP_STACK_SIZE is unsupported: the installed CANN runtime does not "
++	                  "declare RT_LIMIT_TYPE_SIMT_WARP_STACK_SIZE");
++	  return NULL;
++	}
+ 	auto it = LimitTypeMap.find(type_str);
+ 	if (it == LimitTypeMap.end()) {
+-	  printf("Invalid limit type: %s.\n", type_str);
++	  PyErr_Format(PyExc_ValueError, "Invalid limit type: %s.", type_str);
+ 	  return NULL;
+ 	}
+   

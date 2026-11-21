@@ -1,0 +1,90 @@
+EXPERT_TP_RESIDENT layer=0 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=1 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=2 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=3 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=4 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=5 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=6 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=7 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=8 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=9 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=10 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=11 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=12 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=13 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=14 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=15 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=16 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=17 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=18 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=19 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=20 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=21 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=22 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=23 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=24 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=25 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=26 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=27 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=28 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=29 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=30 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=31 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=32 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=33 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=34 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=35 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=36 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=37 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=38 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=39 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[2026-11-21 12:52:30] [WARNING] [3369182] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-11-21 12:52:30] [INFO] [3372886] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank3/ascend216_3369185_20261121125229445_ascend_pt
+|[2026-11-21 12:52:30] [INFO] [3372900] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank0/ascend216_3369182_20261121125229438_ascend_pt
+[2026-11-21 12:52:30] [INFO] [3372903] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank2/ascend216_3369184_20261121125229444_ascend_pt
+[2026-11-21 12:52:30] [INFO] [3372906] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank4/ascend216_3369186_20261121125229438_ascend_pt
+[2026-11-21 12:52:30] [INFO] [3372917] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank1/ascend216_3369183_20261121125229442_ascend_pt
+[2026-11-21 12:52:30] [INFO] [3372920] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank5/ascend216_3369187_20261121125229441_ascend_pt
+[2026-11-21 12:52:30] [INFO] [3372918] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank7/ascend216_3369189_20261121125229441_ascend_pt
+|[2026-11-21 12:52:30] [INFO] [3372949] profiler.py: Start parsing profiling data in sync mode at: /data1/relic-v41-perf-20261118-0938/logs/current-profile-tp2-host-table-NPU-Engram-HC-20261121T044729Z/profiler-rank6/ascend216_3369188_20261121125229447_ascend_pt
+||||||////////--------\\\\\\\\||||||||////////--------\\\\\\\\||||||||////////--------\\\\\\\\||||||||////////--------\\\\\\\\||||||||[2026-11-21 12:52:47] [INFO] [3372996] profiler.py: CANN profiling data parsed in a total time of 0:00:17.024080
+[2026-11-21 12:52:47] [INFO] [3372999] profiler.py: CANN profiling data parsed in a total time of 0:00:17.024416
+[2026-11-21 12:52:47] [INFO] [3373020] profiler.py: CANN profiling data parsed in a total time of 0:00:17.023555
+////////[2026-11-21 12:52:48] [INFO] [3372910] profiler.py: CANN profiling data parsed in a total time of 0:00:18.026547
+[2026-11-21 12:52:48] [INFO] [3373001] profiler.py: CANN profiling data parsed in a total time of 0:00:18.026696
+[2026-11-21 12:52:49] [INFO] [3373033] profiler.py: CANN profiling data parsed in a total time of 0:00:18.026677
+[2026-11-21 12:52:49] [INFO] [3373037] profiler.py: CANN profiling data parsed in a total time of 0:00:18.027348
+--------\[2026-11-21 12:52:50] [INFO] [3372906] profiler.py: All profiling data parsed in a total time of 0:00:19.583462
+\\\\\[2026-11-21 12:52:50] [INFO] [3372900] profiler.py: All profiling data parsed in a total time of 0:00:19.678242
+ISOLATED_CUBE_MODEL_RESULT {"rank": 4, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4717468740418553, "sustained_single_stream_TPS": 6.473154742514732, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+\[2026-11-21 12:52:50] [INFO] [3372918] profiler.py: All profiling data parsed in a total time of 0:00:19.838554
+[2026-11-21 12:52:50] [INFO] [3373017] profiler.py: CANN profiling data parsed in a total time of 0:00:20.031089
+||||[2026-11-21 12:52:51] [INFO] [3372886] profiler.py: All profiling data parsed in a total time of 0:00:20.768382
+|ISOLATED_CUBE_MODEL_RESULT {"rank": 0, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.471754814032465, "sustained_single_stream_TPS": 6.473133948871455, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+[2026-11-21 12:52:51] [INFO] [3372949] profiler.py: All profiling data parsed in a total time of 0:00:20.756193
+ISOLATED_CUBE_MODEL_RESULT {"rank": 7, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4717400236986578, "sustained_single_stream_TPS": 6.473172682642388, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+[2026-11-21 12:52:51] [INFO] [3372917] profiler.py: All profiling data parsed in a total time of 0:00:20.818043
+List the integers from 1 through 100 in order, separated by commas. The list is:, 3, ..., 100.<｜end▁of▁sentence｜> no | 0<｜end▁of▁sentence｜> a one
+[2026-11-21 12:52:51] [INFO] [3372903] profiler.py: All profiling data parsed in a total time of 0:00:20.915727
+/ISOLATED_CUBE_MODEL_RESULT {"rank": 3, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.471734563820064, "sustained_single_stream_TPS": 6.473186981401438, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 2, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4718033438548446, "sustained_single_stream_TPS": 6.4730068594565315, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 1, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.471803493797779, "sustained_single_stream_TPS": 6.473006466795203, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 6, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4716833741404116, "sustained_single_stream_TPS": 6.473321044029109, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}
+-[2026-11-21 12:52:53] [INFO] [3372920] profiler.py: All profiling data parsed in a total time of 0:00:22.920489
+ISOLATED_CUBE_MODEL_RESULT {"rank": 5, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4717524643056095, "sustained_single_stream_TPS": 6.473140102439379, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 223, 18, 1, 260, 834]}

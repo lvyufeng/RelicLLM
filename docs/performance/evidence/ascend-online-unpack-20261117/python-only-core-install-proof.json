@@ -1,0 +1,10 @@
+{
+  "python": "/data1/relic-online-unpack-20261117-0534/venv311/bin/python",
+  "package_path": "/data1/relic-online-unpack-20261117-0534/python-only-install-proof/relic_core/__init__.py",
+  "unpack_path": "/data1/relic-online-unpack-20261117-0534/python-only-install-proof/relic_core/kernels/unpack.py",
+  "unpack_sha256": "5b8d4cc0d55ccb977e24a5356e8066c906dcb44fab493955b8d5f33b5839fcb9",
+  "native_extensions_built": false,
+  "cuda_extensions_constructed": false,
+  "installation_target": "/data1/relic-online-unpack-20261117-0534/python-only-install-proof",
+  "shared_environment_modified": false
+}

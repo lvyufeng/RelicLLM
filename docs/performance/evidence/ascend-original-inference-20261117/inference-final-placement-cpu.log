@@ -1,0 +1,5 @@
+..s..........sss.s......................                                 [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_v41_host_engram.py:350: set RELIC_ASCEND_ENGRAM_DEVICE=npu:0 to run the device case
+SKIPPED [4] tests/test_v41_ascend_activation.py:20: requires a leased RELIC_INFERENCE_TEST_DEVICE=npu:0
+35 passed, 5 skipped in 1.40s

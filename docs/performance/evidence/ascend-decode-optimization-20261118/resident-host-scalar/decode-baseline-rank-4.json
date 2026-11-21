@@ -1,0 +1,934 @@
+{
+  "rank": 4,
+  "device": "npu:4",
+  "prompt_tokens": 20,
+  "prefill_seconds": 98.46797151025385,
+  "warmup_steps": 2,
+  "warmup_seconds": [
+    6.451861615758389,
+    6.027728472836316
+  ],
+  "instrumented_steps_excluded_from_benchmark": 2,
+  "timed_steps": 16,
+  "decode_seconds": 98.73742133192718,
+  "decode_token_per_second": 0.16204595769432284,
+  "step_seconds": [
+    6.176076299045235,
+    6.02907198201865,
+    6.244476581923664,
+    5.951768837869167,
+    6.35786741739139,
+    6.308176102116704,
+    6.3254220322705805,
+    6.084733207244426,
+    5.9304975206032395,
+    6.287125527393073,
+    6.145272246096283,
+    6.201146872248501,
+    6.423245278652757,
+    5.963784601073712,
+    6.197105104103684,
+    6.111506493296474
+  ],
+  "all_timed_token_ids": [
+    14,
+    223,
+    21,
+    14,
+    223,
+    22,
+    14,
+    223,
+    23,
+    14,
+    223,
+    24,
+    14,
+    223,
+    25,
+    14
+  ],
+  "context_start": 24,
+  "context_end": 40,
+  "single_stream": true,
+  "batch_size": 1,
+  "graphs": false,
+  "fixed_length_may_continue_after_eos": true,
+  "observed_eos": [],
+  "final_logits_finite_and_greedy_verified": true,
+  "host_Engram_enabled": true,
+  "original_checkpoint_rewritten": false,
+  "reference_reduction_enabled": "1",
+  "cache_initial": {
+    "name": "ascend-experts",
+    "budget_bytes": 536870912,
+    "retained_bytes": 0,
+    "entries": 0,
+    "hits": 0,
+    "misses": 0,
+    "evictions": 0,
+    "streamed": 0,
+    "hit_rate": null
+  },
+  "cache_before_timed": {
+    "name": "ascend-experts",
+    "budget_bytes": 536870912,
+    "retained_bytes": 0,
+    "entries": 0,
+    "hits": 0,
+    "misses": 0,
+    "evictions": 0,
+    "streamed": 0,
+    "hit_rate": null
+  },
+  "cache_after_timed": {
+    "name": "ascend-experts",
+    "budget_bytes": 536870912,
+    "retained_bytes": 0,
+    "entries": 0,
+    "hits": 0,
+    "misses": 0,
+    "evictions": 0,
+    "streamed": 0,
+    "hit_rate": null
+  },
+  "packed_residency": [
+    {
+      "name": "ascend-packed-experts/layer0",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 27,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 57146900480,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer1",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 34,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 56234639360,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer2",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 30,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 55322378240,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer3",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 26,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 54410117120,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer4",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 12,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 53497012224,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer5",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 7,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 52584751104,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer6",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 15,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 51672489984,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer7",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 26,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 50760228864,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer8",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 9,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 49848107008,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer9",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 28,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 48935845888,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer10",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 29,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 48023584768,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer11",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 3,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 47111323648,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer12",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 4,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 46199062528,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer13",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 20,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 45286801408,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer14",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 26,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 44374540288,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer15",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 32,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 43462279168,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer16",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 21,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 42550018048,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer17",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 37,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 41637756928,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer18",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 10,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 40725729280,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer19",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 15,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 39813468160,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer20",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 8,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 38901207040,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer21",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 18,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 37988945920,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer22",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 9,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 37076684800,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer23",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 28,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 36164448256,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer24",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 24,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 35252187136,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer25",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 9,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 34339926016,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer26",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 25,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 33427664896,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer27",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 17,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 32515403776,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer28",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 21,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 31603142656,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer29",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 25,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 30690881536,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer30",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 58,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 29778620416,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer31",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 22,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 28866359296,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer32",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 12,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 27954331648,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer33",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 11,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 27042070528,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer34",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 22,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 26129809408,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer35",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 34,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 25217572864,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer36",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 16,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 24305311744,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer37",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 13,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 23393050624,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer38",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 33,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 22480789504,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    },
+    {
+      "name": "ascend-packed-experts/layer39",
+      "budget_bytes": 13787332608,
+      "retained_bytes": 902430720,
+      "entries": 48,
+      "hits": 11,
+      "misses": 0,
+      "evictions": 0,
+      "streamed": 0,
+      "hit_rate": null,
+      "required_bytes": 902430720,
+      "owned_experts": 48,
+      "preloaded": true,
+      "headroom": {
+        "free_bytes": 21568528384,
+        "required_bytes": 902430720,
+        "reserve_bytes": 12884901888
+      }
+    }
+  ],
+  "host_engram_states": [
+    {
+      "rank": 4,
+      "world": 8,
+      "wire": "int8",
+      "backend": "hccl",
+      "verified": true,
+      "verify_always": false,
+      "calls": 21,
+      "verified_calls": 1,
+      "host_computes": 0,
+      "gathers": 2,
+      "broadcasts": 21,
+      "bytes_gathered": 31744,
+      "bytes_broadcast": 1638400,
+      "verification": {
+        "raw": [
+          "hash_ids"
+        ],
+        "digest": [
+          "x",
+          "result"
+        ],
+        "bytes_per_rank": {
+          "x": 819200,
+          "hash_ids": 3840,
+          "result": 819200
+        },
+        "shape": [
+          1,
+          20,
+          4,
+          5120
+        ],
+        "dtype": "torch.bfloat16"
+      }
+    },
+    {
+      "rank": 4,
+      "world": 8,
+      "wire": "int8",
+      "backend": "hccl",
+      "verified": true,
+      "verify_always": false,
+      "calls": 21,
+      "verified_calls": 1,
+      "host_computes": 0,
+      "gathers": 2,
+      "broadcasts": 21,
+      "bytes_gathered": 31744,
+      "bytes_broadcast": 1638400,
+      "verification": {
+        "raw": [
+          "hash_ids"
+        ],
+        "digest": [
+          "x",
+          "result"
+        ],
+        "bytes_per_rank": {
+          "x": 819200,
+          "hash_ids": 3840,
+          "result": 819200
+        },
+        "shape": [
+          1,
+          20,
+          4,
+          5120
+        ],
+        "dtype": "torch.bfloat16"
+      }
+    }
+  ],
+  "npu_allocated_bytes": 43936684544,
+  "npu_reserved_bytes": 44419776512,
+  "npu_peak_allocated_bytes": 43963565056
+}

@@ -1,0 +1,15 @@
+{"group_k": 1, "shared_input": true, "BF16_bit_differences": 0, "routing_d2h": 0}
+{"group_k": 1, "shared_input": false, "BF16_bit_differences": 0, "routing_d2h": 0}
+{"group_k": 2, "shared_input": true, "BF16_bit_differences": 0, "routing_d2h": 0}
+{"group_k": 2, "shared_input": false, "BF16_bit_differences": 0, "routing_d2h": 0}
+{"group_k": 4, "shared_input": true, "BF16_bit_differences": 0, "routing_d2h": 0}
+{"group_k": 4, "shared_input": false, "BF16_bit_differences": 0, "routing_d2h": 0}
+{"graph_ids": [14, 10, 6, 4, 2, 0], "BF16_bit_differences": 0}
+{"graph_ids": [0, -1, -1, -1, -1, -1], "BF16_bit_differences": 0}
+{"graph_ids": [-1, -1, -1, -1, -1, -1], "BF16_bit_differences": 0}
+{"projection_geometry": [2304, 5120], "group_k": 1, "timed_replays": 16, "synchronized_projection_ms": 103.99829410016537, "global_expanded_weight_scratch_bytes": 0, "output_bytes": 27648, "finite": true}
+{"projection_geometry": [2304, 5120], "group_k": 2, "timed_replays": 16, "synchronized_projection_ms": 91.3778378162533, "global_expanded_weight_scratch_bytes": 0, "output_bytes": 27648, "finite": true}
+{"projection_geometry": [2304, 5120], "group_k": 4, "timed_replays": 16, "synchronized_projection_ms": 85.4630178946536, "global_expanded_weight_scratch_bytes": 0, "output_bytes": 27648, "finite": true}
+{"projection_geometry": [5120, 2304], "group_k": 1, "timed_replays": 16, "synchronized_projection_ms": 102.60063674650155, "global_expanded_weight_scratch_bytes": 0, "output_bytes": 61440, "finite": true}
+{"projection_geometry": [5120, 2304], "group_k": 2, "timed_replays": 16, "synchronized_projection_ms": 90.12445327243768, "global_expanded_weight_scratch_bytes": 0, "output_bytes": 61440, "finite": true}
+{"projection_geometry": [5120, 2304], "group_k": 4, "timed_replays": 16, "synchronized_projection_ms": 84.24354862654582, "global_expanded_weight_scratch_bytes": 0, "output_bytes": 61440, "finite": true}

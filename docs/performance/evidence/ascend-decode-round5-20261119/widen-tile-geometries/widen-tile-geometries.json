@@ -1,0 +1,55 @@
+{
+  "tiles": [
+    1024,
+    2048,
+    4096
+  ],
+  "geometries": {
+    "w1_w3": {
+      "rows": 2304,
+      "packed_cols": 2560,
+      "packed_bytes": 5898240,
+      "widened_bytes": 11796480,
+      "tiles": {
+        "1024": {
+          "median_seconds": 0.0004724329337477684,
+          "effective_GB_per_s": 37.45445911153857,
+          "full_byte_identity_with_released_widening": true
+        },
+        "2048": {
+          "median_seconds": 0.000385393388569355,
+          "effective_GB_per_s": 45.91339790670975,
+          "full_byte_identity_with_released_widening": true
+        },
+        "4096": {
+          "median_seconds": 0.00034777214750647545,
+          "effective_GB_per_s": 50.88021029536452,
+          "full_byte_identity_with_released_widening": true
+        }
+      }
+    },
+    "w2": {
+      "rows": 5120,
+      "packed_cols": 1152,
+      "packed_bytes": 5898240,
+      "widened_bytes": 11796480,
+      "tiles": {
+        "1024": {
+          "median_seconds": 0.00045783305540680885,
+          "effective_GB_per_s": 38.64884763350542,
+          "full_byte_identity_with_released_widening": true
+        },
+        "2048": {
+          "median_seconds": 0.0003835218958556652,
+          "effective_GB_per_s": 46.137444018735344,
+          "full_byte_identity_with_released_widening": true
+        },
+        "4096": {
+          "median_seconds": 0.0003418233245611191,
+          "effective_GB_per_s": 51.76568925692526,
+          "full_byte_identity_with_released_widening": true
+        }
+      }
+    }
+  }
+}

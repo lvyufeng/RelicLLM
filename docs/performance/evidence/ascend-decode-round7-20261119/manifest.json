@@ -1,0 +1,42 @@
+{
+  "milestone": "round 7: the host is blocked on the device, not working",
+  "file_count": 3,
+  "total_bytes": 249983,
+  "files": [
+    {
+      "path": "dispatch-host-timing/Cube-model-rank-0.json",
+      "bytes": 108921,
+      "sha256": "e45313de9d100d100afd3655a0639d067a1bc3977388d2c8e2ad23ae12a38fb5"
+    },
+    {
+      "path": "profile_actual_cube.py",
+      "bytes": 32010,
+      "sha256": "12c6be59772537acf3cce0859c5c2bfc2bd9dd48f4d6726e9e8925fae0a092b5"
+    },
+    {
+      "path": "replay-latency-and-bit-identity/Cube-model-rank-0.json",
+      "bytes": 109052,
+      "sha256": "9d66c42bef4e43a39e8761fdb60743a2e631db547b9dc7081be8d26d1eafe381"
+    }
+  ],
+  "verified_candidate_TPS": 5.158406,
+  "verified_candidate_per_token_ms": 193.86,
+  "exact_baseline_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "host_dispatch_split_per_token_ms": {
+    "wall_whole_forward": 190.92,
+    "routed_store_forward_inclusive": 201.96,
+    "blocked_in_device_to_host_routing_read": 169.48,
+    "other_host_work_non_blocking": 32.47,
+    "routing_calls": 50.0,
+    "store_forward_calls": 50.0
+  },
+  "correction": "the routing read blocks the host for 169.5 ms of a 194 ms token, but the ablation that removed it saved only 20.1 ms: the host is waiting for device work that happens anyway, so the transfer is not the cost",
+  "caveat": "isolated replay timings are pipelined throughput and therefore a lower bound on the in-situ cost, which is why the expert ablation's 103 ms exceeds the 25 ms the isolated replays suggest",
+  "numerical_contract": {
+    "exact_default_path": "unchanged",
+    "complete_Engram_CPU": true,
+    "checkpoint_rewritten": false,
+    "serving_guards_changed": false
+  }
+}

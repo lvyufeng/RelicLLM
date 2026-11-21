@@ -1,0 +1,19 @@
+[W1120 18:24:58.608593525 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+Traceback (most recent call last):
+  File "/data1/relic-v41-perf-20261118-0938/source/probe_consumer_variants.py", line 189, in <module>
+    main()
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/probe_consumer_variants.py", line 152, in main
+    bt, st = pack_expert_tile_bank(code, scale)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/online_tile_cube.py", line 34, in pack_expert_tile_bank
+    pairs = [pack_tile_major(code, scale) for code, scale in zip(codes, scales)]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/online_tile_cube.py", line 34, in <listcomp>
+    pairs = [pack_tile_major(code, scale) for code, scale in zip(codes, scales)]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/tile_major_packed_gemv.py", line 212, in pack_tile_major
+    raise ValueError("packed weight and scale bytes must be [N, K // 2] and [N, K // 32]")
+ValueError: packed weight and scale bytes must be [N, K // 2] and [N, K // 32]

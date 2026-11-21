@@ -1,0 +1,6 @@
+.......................................ssss                              [100%]
+=========================== short test summary info ============================
+SKIPPED [2] tests/test_block_fp8_quant.py:387: requires RELIC_BLOCK_FP8_QUANT_TEST_DEVICE=npu:0 on a real Ascend host
+SKIPPED [1] tests/test_block_fp8_quant.py:408: requires RELIC_BLOCK_FP8_QUANT_TEST_DEVICE=npu:0 on a real Ascend host
+SKIPPED [1] tests/test_block_fp8_quant.py:439: requires RELIC_BLOCK_FP8_QUANT_TEST_DEVICE=npu:0 on a real Ascend host
+39 passed, 4 skipped in 6.12s

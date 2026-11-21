@@ -1,0 +1,13 @@
+{
+  "rank": 0,
+  "layer": 1,
+  "step": 2,
+  "full_output_bit_differences": 0,
+  "full_native_vs_TP_KV_bit_differences": 5,
+  "full_native_vs_TP_KV_max_BF16_ULP": 12,
+  "gate_only_bit_differences_given_actual_KV": 0,
+  "eager_local_projection_vs_captured_shard_bit_differences": 0,
+  "lookup_input_bit_differences": 0,
+  "hidden_input_bit_differences": 0,
+  "finite_actual": true
+}

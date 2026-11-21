@@ -1,0 +1,20 @@
+{
+  "captured": 48,
+  "graphs": 48,
+  "pool_bytes": 4194304,
+  "pool_bytes_metric": "max of the non-negative allocator deltas (memory_allocated, and memory_reserved when the backend exposes it) across the recording round; allocator accounting, not a measured physical footprint of the graphs",
+  "allocated_delta": 1024,
+  "reserved_delta": 4194304,
+  "memory_reserved_available": true,
+  "physical_footprint_measured": false,
+  "capture_seconds": 0.5847828071564436,
+  "warmup": 1,
+  "layers": [
+    {
+      "layer_id": 0,
+      "experts": 48,
+      "backend": "triton",
+      "swiglu_limit": 8.0
+    }
+  ]
+}

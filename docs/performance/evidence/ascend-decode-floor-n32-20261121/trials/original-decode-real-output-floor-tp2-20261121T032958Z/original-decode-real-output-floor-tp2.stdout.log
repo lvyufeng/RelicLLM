@@ -1,0 +1,66 @@
+EXPERT_TP_RESIDENT layer=0 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=1 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=2 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=3 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=4 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=5 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=6 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=7 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=8 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=9 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=10 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=11 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=12 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=13 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=14 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=15 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=16 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=17 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=18 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=19 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=20 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=21 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=22 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=23 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=24 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=25 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=26 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=27 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=28 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=29 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=30 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=31 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=32 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=33 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=34 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=35 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=36 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=37 TP=2 EP=4 bytes=902430720
+EXPERT_TP_RESIDENT layer=38 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+EXPERT_TP_RESIDENT layer=39 TP=2 EP=4 bytes=902430720
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+[WARNING] Please DO NOT tune args ['enable_fp_fusion']!
+{"non_expert_floor": {"routed_output_replay": {"rank": 0, "timed_steps": 16, "context": [24, 40], "wall_seconds": 0.9248377070762217, "ms_per_forward": 57.80235669226386, "timed_step_seconds": [0.057788976933807135, 0.05822562938556075, 0.05738395405933261, 0.057932067196816206, 0.05741769401356578, 0.05858592176809907, 0.0574582340195775, 0.058027817867696285, 0.05760488472878933, 0.05786041682586074, 0.0570941218174994, 0.058455020654946566, 0.057393454015254974, 0.058110859245061874, 0.057435113936662674, 0.05804626923054457], "actual_output_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16], "all_40_layer_conditioning_and_routes_verified": true, "full_model_FP32_logits_bit_equal_to_real_baseline": true, "final_KV_compression_and_hash_bytes_equal": true, "real_output_D2D_staging_included": true, "not_generation_TPS_or_achieved_model_performance": true, "retained_shared_expert_and_global_MoE_reduce": true}, "complete_FFN_output_replay": {"rank": 0, "timed_steps": 16, "context": [24, 40], "wall_seconds": 0.854188181925565, "ms_per_forward": 53.38676137034781, "timed_step_seconds": [0.052938854321837425, 0.05346554610878229, 0.052803703118115664, 0.053324506152421236, 0.05365234799683094, 0.053574728313833475, 0.0529379528015852, 0.05358014814555645, 0.05286894226446748, 0.05362706817686558, 0.05271102208644152, 0.054969966877251863, 0.05269912211224437, 0.05378156900405884, 0.05345089687034488, 0.053759579081088305], "actual_output_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16], "all_40_layer_conditioning_and_routes_verified": true, "full_model_FP32_logits_bit_equal_to_real_baseline": true, "final_KV_compression_and_hash_bytes_equal": true, "real_output_D2D_staging_included": true, "not_generation_TPS_or_achieved_model_performance": true, "retained_shared_expert_and_global_MoE_reduce": false}}}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 5, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.461927345022559, "single_request_forward_rate_not_generation_TPS": 6.498973266757143, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 4, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.461507831234485, "single_request_forward_rate_not_generation_TPS": 6.500080884152925, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 2, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.461823423858732, "single_request_forward_rate_not_generation_TPS": 6.4992476084743505, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 1, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4623173368163407, "single_request_forward_rate_not_generation_TPS": 6.497943933046112, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 0, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4618359128944576, "single_request_forward_rate_not_generation_TPS": 6.499214637415984, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 6, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.461048767901957, "single_request_forward_rate_not_generation_TPS": 6.5012933545563145, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 3, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.461741603910923, "single_request_forward_rate_not_generation_TPS": 6.4994636214382115, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+ISOLATED_CUBE_MODEL_RESULT {"rank": 7, "variant": "weight_quant", "timed_steps": 16, "timed_decode_seconds": 2.4608451980166137, "single_request_forward_rate_not_generation_TPS": 6.501831164713507, "timed_token_ids": [14, 223, 21, 14, 77199, 223, 1457, 16, 1, 1119, 369, 16, 1, 1119, 3295, 16]}
+List the integers from 1 through 100 in order, separated by commas. The list is:, 3, ..., 100.<｜end▁of▁sentence｜> no |.<｜end▁of▁sentence｜> no problem.

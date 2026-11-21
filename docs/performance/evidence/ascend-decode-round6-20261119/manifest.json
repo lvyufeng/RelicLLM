@@ -1,0 +1,93 @@
+{
+  "milestone": "round 6: one-replay-at-a-time attribution of the per-layer chain",
+  "file_count": 11,
+  "total_bytes": 1017022,
+  "files": [
+    {
+      "path": "profile_actual_cube.py",
+      "bytes": 28959,
+      "sha256": "1ffe676d7ce03b9a087a93e8c8afca09c709f5ef06aedae27cbeaa4afea42627"
+    },
+    {
+      "path": "replay-latency-and-bit-identity/Cube-model-rank-0.json",
+      "bytes": 109052,
+      "sha256": "9d66c42bef4e43a39e8761fdb60743a2e631db547b9dc7081be8d26d1eafe381"
+    },
+    {
+      "path": "run_actual_cube.py",
+      "bytes": 6097,
+      "sha256": "a02f34bc9d096a519dcbc78ddd4910557acc55bdfdef6464089bc9c9a5d901df"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-0.json",
+      "bytes": 109137,
+      "sha256": "9b0955f6a72fbb9976f0e100c484310620ad4f7554312afdcc58b80c70e16708"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-1.json",
+      "bytes": 109110,
+      "sha256": "cf8d2df73f3ed40fc452d9c0ecb875946ece592dd79c6868290405a53f1c5bfd"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-2.json",
+      "bytes": 109113,
+      "sha256": "e0f555b11ea9a24f82de286bb47db6a10a59ee780ebb251bbba5af53037ff100"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-3.json",
+      "bytes": 109105,
+      "sha256": "6911ab9c806bf0582b0240fce7e249aa8b46ff8fb223f3bf8bd25a54870276c2"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-4.json",
+      "bytes": 109115,
+      "sha256": "223da2efbcd6cd9dbe06c7a2fb965eff56ceca72211102ed1df97f86bd70b689"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-5.json",
+      "bytes": 109114,
+      "sha256": "318f1be066c4caa1f34fd290d98ce59b4f50bb4ac1f4ef9b96d8003ca9d85ac3"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-6.json",
+      "bytes": 109111,
+      "sha256": "6338985097e1913483d76924e65cac42077653639b3bbc14058f803a9dd86e6a"
+    },
+    {
+      "path": "timing-ablation-and-ceiling/Cube-model-rank-7.json",
+      "bytes": 109109,
+      "sha256": "6b0da156d66dfa22346b94fad2f862b39b125f7f9e0c3242b0905370256a76a0"
+    }
+  ],
+  "verified_candidate_TPS": 5.151722,
+  "exact_baseline_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "isolated_replay_latency": {
+    "layer_A_ms": 1.3863178342580795,
+    "layer_B_ms": 0.1438375748693943,
+    "one_expert_body_ms": 0.8318552561104298,
+    "per_token_counts": {
+      "layer_A": 40,
+      "layer_B": 40,
+      "expert_bodies": 30
+    },
+    "per_token_ms": {
+      "layer_A": 55.4,
+      "layer_B": 5.8,
+      "expert_bodies": 25.0,
+      "total_replays": 86.2
+    },
+    "probe_run_final_logits_bit_identical_to_the_candidate": true
+  },
+  "conclusions": [
+    "the attention half of a layer is 28% of the token and is device work inside a recording",
+    "the structurally similar B recording costs ten times less, so replay or launch overhead is not what makes A expensive",
+    "the ablation's expert saving exceeds the measured replays plus routing reads, so most of it is serialization the dispatch introduces between expert replays"
+  ],
+  "numerical_contract": {
+    "exact_default_path": "unchanged",
+    "complete_Engram_CPU": true,
+    "checkpoint_rewritten": false,
+    "serving_guards_changed": false
+  }
+}

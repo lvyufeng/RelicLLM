@@ -1,0 +1,104 @@
+{
+  "name": "bench-torch",
+  "command": [
+    "/data1/relic-v41-20261116-210/venv/bin/python",
+    "tests/bench_online_unpack.py",
+    "--device",
+    "npu:0",
+    "--backend",
+    "torch",
+    "--iterations",
+    "10",
+    "--report",
+    "/data1/relic-online-unpack-20261117-0534/logs/online-unpack-bench-torch-20261116T232004Z/benchmark.json",
+    "--checkpoint",
+    "/data1/relic-v41-20261116-210/checkpoint"
+  ],
+  "timeout_s": 900,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-16T23:20:04.193324+00:00",
+  "cwd": "/data1/relic-online-unpack-20261117-0534/source/relic-core",
+  "timed_out": false,
+  "ownership_token": "a213a2bbde641c188db10f123c51e594bbb729104c9b673bf52e574510e68b83",
+  "critical_environment": {
+    "PYTHONPATH": "/data1/relic-online-unpack-20261117-0534/python-packages:/data1/relic-online-unpack-20261117-0534/source/relic-core:/data1/relic-online-unpack-20261117-0534/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe:",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": null,
+    "DEEPSEEK_FORCE_TORCH_GEMM": "1",
+    "DEEPSEEK_FP8_IMPL": "torch",
+    "DEEPSEEK_FP4_IMPL": "torch",
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "/data1/relic-online-unpack-20261117-0534/tmp",
+    "HOME": "/data1/relic-online-unpack-20261117-0534/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "/data1/relic-online-unpack-20261117-0534/cache/ascend",
+    "ASCEND_WORK_PATH": "/data1/relic-online-unpack-20261117-0534/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "/data1/relic-online-unpack-20261117-0534/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 2389612,
+  "process_group": 2389612,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 2389612,
+        "starttime": 378629026,
+        "pgid": 2389612,
+        "sid": 2389612,
+        "state": "R",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [
+      {
+        "identity": {
+          "pid": 2389612,
+          "starttime": 378629026,
+          "pgid": 2389612,
+          "sid": 2389612,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 2389612"
+      }
+    ],
+    "terminal_reconciliations": [
+      {
+        "identity": {
+          "pid": 2389612,
+          "starttime": 378629026,
+          "pgid": 2389612,
+          "sid": 2389612,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 2389612",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      }
+    ],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 0,
+  "elapsed_s": 12.069939060602337,
+  "finished_at": "2026-11-16T23:20:16.263286+00:00"
+}

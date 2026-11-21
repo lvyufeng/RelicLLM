@@ -1,0 +1,5 @@
+{"ids": [0, 2, 4, 6, 10, 14], "FP32_output_bit_differences": 0, "max_abs": 0.0, "routing_d2h": 0}
+{"ids": [0, 1, 3, 5, 7, 9], "FP32_output_bit_differences": 0, "max_abs": 0.0, "routing_d2h": 0}
+{"ids": [1, 3, 5, 7, 9, 11], "FP32_output_bit_differences": 0, "max_abs": 0.0, "routing_d2h": 0}
+{"ids": [0, 2, 4, 1, 3, 5], "FP32_output_bit_differences": 0, "max_abs": 0.0, "routing_d2h": 0}
+{"whole_tile_moe_graph_replays": 32, "workspace_bytes": 205932, "whole_matrix_expanded_weight_scratch_bytes": 0, "FP32_output_bit_differences": 0, "native_library_sha256": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287"}

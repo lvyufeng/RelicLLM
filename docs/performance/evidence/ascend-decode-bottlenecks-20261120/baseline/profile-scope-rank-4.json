@@ -1,0 +1,18 @@
+{
+  "rank": 4,
+  "all_ranks_profiled": true,
+  "profile_directory": "/data1/relic-v41-perf-20261118-0938/logs/current-bottleneck-baseline-20261120T035802Z/profiler-rank4",
+  "steps": 4,
+  "context_start": 24,
+  "context_end": 28,
+  "token_ids": [
+    14,
+    223,
+    21,
+    14
+  ],
+  "same_token_ids_as_uninstrumented_window": true,
+  "profile_wall_ms_per_forward": 181.8392638815567,
+  "event_scope_receipt": "/data1/relic-v41-perf-20261118-0938/logs/current-bottleneck-baseline-20261120T035802Z/decode-scopes-rank-4.json",
+  "note": "actual captured graph and routed path; kernel/dependency attribution, not a TPS window"
+}

@@ -1,0 +1,5 @@
+{
+  "API": "quantize_decode_fp8_fast",
+  "same_original_input_batteries": true,
+  "no_changed_activation_precision": true
+}

@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-11-17T04:10:12.075409+00:00",
+  "torch": "2.10.0+cpu",
+  "torch_npu": "2.10.0.post7",
+  "device": "Ascend910B3",
+  "checkpoint": "/data1/relic-v41-20261116-210/checkpoint",
+  "rows": 1,
+  "dim": 5120,
+  "inter_dim": 2304,
+  "source_payloads": {
+    "layers.0.ffn.experts.0.w1.weight": {
+      "shape": [
+        2304,
+        2560
+      ],
+      "bytes": 5898240,
+      "sha256": "84c55fa21fcbf91d97372c49ab1556220d50fd613219b9fe975da493e071d9a4"
+    },
+    "layers.0.ffn.experts.0.w1.scale": {
+      "shape": [
+        2304,
+        160
+      ],
+      "bytes": 368640,
+      "sha256": "4df334ae5e4ade9cc3930a2bdc1037f11c86c2d9e983265a2b99fc934523f124"
+    },
+    "layers.0.ffn.experts.0.w2.weight": {
+      "shape": [
+        5120,
+        1152
+      ],
+      "bytes": 5898240,
+      "sha256": "45bf4d6f7d2c9e6b6bd6b12e8cafcbae83dca2b769061c6c952ee9274df77079"
+    },
+    "layers.0.ffn.experts.0.w2.scale": {
+      "shape": [
+        5120,
+        72
+      ],
+      "bytes": 368640,
+      "sha256": "2952c7e29c793783ce608363d9cc81149821a94e8f5d988fd2591c4730f18a17"
+    },
+    "layers.0.ffn.experts.0.w3.weight": {
+      "shape": [
+        2304,
+        2560
+      ],
+      "bytes": 5898240,
+      "sha256": "5d97e59e44062ca5935797ed44940f805e5f42805622c2af9c515a3aa9b28589"
+    },
+    "layers.0.ffn.experts.0.w3.scale": {
+      "shape": [
+        2304,
+        160
+      ],
+      "bytes": 368640,
+      "sha256": "1b0736c3398262d06c130802ee3bee11eb21cbdf96c60639a00a9d262d5ad365"
+    }
+  },
+  "cpu_reference": "CheckpointRoutedExperts quantized=True, original E4M3 activation and stored scales",
+  "npu_provider": "online original INT8x2 + original half-scale, fused block32 two-half reduction",
+  "nan_classification_equal": true,
+  "float32_bit_mismatches": 0,
+  "elements": 5120,
+  "max_absolute_error": 0.0,
+  "warm_equals_cold_bits": true,
+  "cpu_expert_seconds": 0.3967558899894357,
+  "npu_cold_expert_seconds": 35.493350504897535,
+  "npu_warm_expert_seconds": 0.037704710848629475,
+  "cache": {
+    "name": "ascend-experts",
+    "budget_bytes": 134217728,
+    "retained_bytes": 39813120,
+    "entries": 1,
+    "hits": 1,
+    "misses": 1,
+    "evictions": 0,
+    "streamed": 0,
+    "hit_rate": 0.5
+  },
+  "full_model_forward_claimed": false,
+  "generated_tokens_claimed": false,
+  "native_fp4_fp8_arithmetic_claimed": false,
+  "checkpoint_rewritten": false
+}

@@ -1,0 +1,32 @@
+{
+  "started_at": "2026-11-16T23:48:22.429462+00:00",
+  "target": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+  "expected_original_sha256": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
+  "expected_patched_sha256": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
+  "enum_substitution": null,
+  "shared_environment_modified": false,
+  "device_work": false,
+  "installed_sha256_before": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
+  "backup": "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel",
+  "backup_sha256": "2d6e58513486c70e47a8a4149418f750f59568ffa9feb2c45ba3479016554f53",
+  "installed_sha256_after": "92cbdcaa5d2ba02f8dd7b05363428f8ab0cd94d943264dd06cd1457ed4ee7d50",
+  "recompile": {
+    "command": "g++ -std=c++17 -fPIC -c /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp -o /data1/relic-online-unpack-20261117-0534/tmp/npu_utils_installed.o -I /data1/relic-online-unpack-20261117-0534/python311-base/python/include/python3.11 -I /usr/local/Ascend/cann-9.2.0/aarch64-linux/pkg_inc",
+    "returncode": 0,
+    "object_bytes": 419656,
+    "stderr_sha256": "f20973679a8477b2b582f145d4774f0e59d4d66527f778552c9d647c5c1b7347"
+  },
+  "preserved_mappings": 3,
+  "unsupported_name_raises": "NotImplementedError",
+  "invalid_name_raises": "ValueError",
+  "rollback_command": "cp -p /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp && sha256sum /data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+  "files_touched": [
+    "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp",
+    "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/npu_utils.cpp.orig.wheel"
+  ],
+  "cann_headers_or_libraries_touched": false,
+  "torch_or_torch_npu_touched": false,
+  "kernel_files_touched": false,
+  "finished_at": "2026-11-16T23:48:24.338458+00:00",
+  "returncode": 0
+}

@@ -1,0 +1,630 @@
+{
+  "rank": 5,
+  "world": 8,
+  "real_original_expert_layer": 0,
+  "expert_count": 8,
+  "real_geometry": [
+    5120,
+    2304,
+    6
+  ],
+  "changed_input_graph_replays": 32,
+  "eager_vs_captured_TP_FP32_bits_equal": true,
+  "all_physical_rank_global_outputs_equal": true,
+  "native_TP_partial_accumulation_is_explicit_changed_reduction_experiment": true,
+  "original_FP4_E8M0_and_activation_quantization_unchanged": true,
+  "FP32_TP_down_reduce_precedes_original_BF16_per_expert_narrowing": true,
+  "not_model_TPS": true,
+  "original_resident_bytes_per_rank": 18800640,
+  "controller": {
+    "installed": true,
+    "expert_TP": 2,
+    "expert_EP": 4,
+    "TP_rank": 1,
+    "EP_rank": 2,
+    "physical_world": 8,
+    "dense_attention_and_shared_expert_TP_unchanged": true,
+    "FP32_down_TP_reduction_before_BF16_narrowing": true,
+    "one_TP_leader_emits_into_original_global_MoE_reduce": true,
+    "original_E2M1_E8M0_bytes_and_FP8_activation_grids_unchanged": true,
+    "TP_down_partition_and_EP_global_FP32_sum_order_differ": true,
+    "immutable_resident_banks_required_through_capture_and_replay": true,
+    "numerical_contract": "original_fp4_expert_TP_FP32_down_reduce_before_BF16_ascending_expert_combine",
+    "decode_only": true,
+    "routing_D2H_calls": 0,
+    "resident_bytes": 18800640,
+    "shared_workspace_bytes": 571500,
+    "graphs": 1,
+    "calls": 68,
+    "graph_allocator_budget_is_not_a_physical_memory_measurement": true,
+    "restore_residency_default": false,
+    "per_layer_residency": [
+      {
+        "name": "original-expert-TP/layer0",
+        "preloaded": true,
+        "retained_bytes": 18800640,
+        "entries": 2,
+        "owned_experts": 2,
+        "EP_world": 4,
+        "EP_rank": 2,
+        "TP_world": 2,
+        "TP_rank": 1,
+        "local_inter_dim": 1152,
+        "misses": 0,
+        "evictions": 0
+      }
+    ]
+  },
+  "records": [
+    {
+      "step": 0,
+      "expert_ids": [
+        1,
+        7,
+        3,
+        6,
+        2,
+        5
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 1,
+      "expert_ids": [
+        5,
+        7,
+        3,
+        4,
+        2,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 2,
+      "expert_ids": [
+        2,
+        1,
+        4,
+        5,
+        6,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 1,
+      "TP_vs_EP8_max_abs": 9.5367431640625e-07,
+      "TP_vs_EP8_relative_L2": 1.3377100316347423e-08,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 3,
+      "expert_ids": [
+        4,
+        3,
+        6,
+        0,
+        1,
+        2
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 4,
+      "expert_ids": [
+        4,
+        5,
+        2,
+        6,
+        7,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 5,
+      "expert_ids": [
+        0,
+        1,
+        2,
+        6,
+        7,
+        4
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 6,
+      "expert_ids": [
+        2,
+        1,
+        7,
+        3,
+        4,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 7,
+      "expert_ids": [
+        4,
+        7,
+        0,
+        3,
+        1,
+        5
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 8,
+      "expert_ids": [
+        0,
+        4,
+        2,
+        5,
+        6,
+        3
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 9,
+      "expert_ids": [
+        7,
+        6,
+        2,
+        5,
+        3,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 1,
+      "TP_vs_EP8_max_abs": 2.384185791015625e-07,
+      "TP_vs_EP8_relative_L2": 2.0749156559585202e-10,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 10,
+      "expert_ids": [
+        7,
+        0,
+        3,
+        2,
+        5,
+        6
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 11,
+      "expert_ids": [
+        1,
+        2,
+        7,
+        6,
+        0,
+        5
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 12,
+      "expert_ids": [
+        1,
+        7,
+        4,
+        3,
+        5,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 13,
+      "expert_ids": [
+        6,
+        5,
+        0,
+        1,
+        2,
+        7
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 14,
+      "expert_ids": [
+        1,
+        3,
+        4,
+        5,
+        0,
+        2
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 15,
+      "expert_ids": [
+        3,
+        4,
+        2,
+        5,
+        7,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 2,
+      "TP_vs_EP8_max_abs": 3.0517578125e-05,
+      "TP_vs_EP8_relative_L2": 4.5699277961830376e-07,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 16,
+      "expert_ids": [
+        1,
+        2,
+        6,
+        4,
+        7,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 17,
+      "expert_ids": [
+        2,
+        3,
+        0,
+        6,
+        5,
+        7
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 18,
+      "expert_ids": [
+        3,
+        0,
+        4,
+        7,
+        5,
+        6
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 1,
+      "TP_vs_EP8_max_abs": 4.76837158203125e-07,
+      "TP_vs_EP8_relative_L2": 6.160781218511602e-09,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 19,
+      "expert_ids": [
+        4,
+        1,
+        3,
+        7,
+        2,
+        5
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 20,
+      "expert_ids": [
+        7,
+        6,
+        0,
+        4,
+        1,
+        5
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 21,
+      "expert_ids": [
+        4,
+        6,
+        0,
+        1,
+        5,
+        7
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 22,
+      "expert_ids": [
+        3,
+        5,
+        7,
+        2,
+        6,
+        4
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 23,
+      "expert_ids": [
+        7,
+        1,
+        2,
+        5,
+        0,
+        6
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 1,
+      "TP_vs_EP8_max_abs": 0.0001220703125,
+      "TP_vs_EP8_relative_L2": 1.5945739733069786e-06,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 24,
+      "expert_ids": [
+        5,
+        3,
+        0,
+        2,
+        1,
+        6
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 25,
+      "expert_ids": [
+        2,
+        1,
+        5,
+        0,
+        4,
+        7
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 2,
+      "TP_vs_EP8_max_abs": 0.0009765625,
+      "TP_vs_EP8_relative_L2": 8.557401542930165e-07,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 26,
+      "expert_ids": [
+        5,
+        7,
+        3,
+        2,
+        1,
+        4
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 27,
+      "expert_ids": [
+        4,
+        1,
+        6,
+        2,
+        0,
+        5
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 28,
+      "expert_ids": [
+        0,
+        4,
+        2,
+        5,
+        1,
+        7
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 29,
+      "expert_ids": [
+        3,
+        0,
+        1,
+        5,
+        7,
+        2
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 30,
+      "expert_ids": [
+        7,
+        6,
+        5,
+        4,
+        3,
+        0
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    },
+    {
+      "step": 31,
+      "expert_ids": [
+        2,
+        3,
+        0,
+        6,
+        7,
+        4
+      ],
+      "captured_vs_eager_TP_FP32_bit_differences": 0,
+      "TP_vs_EP8_FP32_bit_differences": 0,
+      "TP_vs_EP8_max_abs": 0.0,
+      "TP_vs_EP8_relative_L2": 0.0,
+      "all_physical_rank_outputs_equal": true
+    }
+  ],
+  "consumer_mode": "n32",
+  "consumer": {
+    "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-n32-20261121-v2/build/lib/librelic_online_tile_cube.so",
+    "sha256": "094d79b3e30aa945bb4f2dcc7de7106f6de1a64c081ca0bb003cc75588ece81d",
+    "AIV_to_small_GM_ring_to_L1_to_AIC": true,
+    "original_K32_blocks_per_Cube_tile": 4,
+    "native_output_rows_per_tile": 32,
+    "source_checkpoint_tile_rows_unchanged": 16,
+    "activation_L1_preload_requested": false,
+    "direct_original_BF16_bit_decoder": false,
+    "immutable_decode_tables_prepared_once_per_device": true,
+    "decode_table_bytes_per_device": 26624,
+    "decode_table_devices_prepared": [
+      "npu:5"
+    ],
+    "decode_tables_contain_no_checkpoint_weight_or_routing_values": true,
+    "activation_L1_capacity_bytes": 524288,
+    "GM_ring_B1_and_MTE1_reuse_fences_preserved": true,
+    "ring_weight_double_buffer_bytes_per_owner": 16384,
+    "global_expanded_weight_scratch_bytes": 393216,
+    "whole_matrix_expanded_weight_scratch_bytes": 0,
+    "native_full_K_accumulation_differs_from_exact_default": true
+  },
+  "synchronized_routed_TP_body_ms": [
+    1.5082410536706448,
+    1.4949208125472069,
+    1.4773700386285782,
+    1.4843200333416462,
+    1.4713997952640057,
+    1.4750100672245026,
+    1.482631079852581,
+    1.4711199328303337,
+    1.461330335587263,
+    1.4856508933007717,
+    1.4816797338426113,
+    1.4773807488381863,
+    1.477119978517294,
+    1.4648810029029846,
+    1.4640800654888153,
+    1.4865100383758545,
+    1.4821006916463375,
+    1.4791800640523434,
+    1.4811609871685505,
+    1.465930137783289,
+    1.4654602855443954,
+    1.4595412649214268,
+    1.486090011894703,
+    1.46903982385993,
+    1.469319686293602,
+    1.468729693442583,
+    1.4786608517169952,
+    1.4851600863039494,
+    1.4662602916359901,
+    1.478901132941246,
+    1.4671003445982933,
+    1.469440758228302
+  ],
+  "timing_scope": "routed projections/epilogue/FP32 subgroup reduction, not shared FFN or model TPS"
+}

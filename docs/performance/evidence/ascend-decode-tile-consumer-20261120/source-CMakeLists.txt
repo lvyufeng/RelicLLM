@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.16)
+project(relic_online_tile_cube LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(RUN_MODE npu CACHE STRING "Private hardware build")
+set(SOC_VERSION Ascend910B3 CACHE STRING "Explicit verified SoC")
+if(NOT DEFINED ASCEND_CANN_PACKAGE_PATH)
+    message(FATAL_ERROR "Pass the existing CANN root explicitly; do not install or modify CANN")
+endif()
+include(${ASCEND_CANN_PACKAGE_PATH}/aarch64-linux/tikcpp/ascendc_kernel_cmake/ascendc.cmake)
+set(RELIC_TILE_K_BLOCKS 1 CACHE STRING "Original K32 blocks consumed per native Cube tile")
+if(NOT RELIC_TILE_K_BLOCKS MATCHES "^(1|2|4)$")
+    message(FATAL_ERROR "RELIC_TILE_K_BLOCKS must preserve 1, 2 or 4 original K32 blocks")
+endif()
+# One generated source entry embeds the geometry before including the kernel.
+# Both the host workspace query and the device compiler see the same literal.
+configure_file(kernel_entry.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/online_tile_cube_entry.cpp @ONLY)
+ascendc_library(relic_online_tile_cube SHARED ${CMAKE_CURRENT_BINARY_DIR}/online_tile_cube_entry.cpp)

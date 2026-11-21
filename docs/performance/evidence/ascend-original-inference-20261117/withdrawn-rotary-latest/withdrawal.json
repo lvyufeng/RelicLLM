@@ -1,0 +1,31 @@
+{
+  "reason": "Unrequested, unbound experimental FMA operator; cross-architecture ATen parity unproven. Working real-pair NPU runtime and FP4/FP8 kernels are retained.",
+  "agent_acknowledged_frozen": true,
+  "only_four_new_untracked_files_removed": true,
+  "files": [
+    {
+      "absolute_checked_source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/rotary.py",
+      "path": "relic_core/kernels/rotary.py",
+      "sha256": "6de26662e95a18f7d6c4bd8594df21af1087217768cd49d141d7c3fda101c977",
+      "bytes": 25958
+    },
+    {
+      "absolute_checked_source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/_ascend_rotary_kernels.py",
+      "path": "relic_core/kernels/_ascend_rotary_kernels.py",
+      "sha256": "e1a569684aa0ca2c0f8a4590077960474b0d92c4e39f0c2dd4c955c0aa96c4d5",
+      "bytes": 7223
+    },
+    {
+      "absolute_checked_source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascend_rotary.py",
+      "path": "tests/test_ascend_rotary.py",
+      "sha256": "62132639908918400791f1a694ff5adef80c90307386f1432aea40b8213515f2",
+      "bytes": 35528
+    },
+    {
+      "absolute_checked_source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascend_rotary_math.py",
+      "path": "tests/test_ascend_rotary_math.py",
+      "sha256": "0d5a28a5a0b7cab3669c138ea16463d9a2311946cfa786a861958f16c93ae6c6",
+      "bytes": 26449
+    }
+  ]
+}

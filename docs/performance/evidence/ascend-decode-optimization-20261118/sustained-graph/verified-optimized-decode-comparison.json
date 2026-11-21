@@ -1,0 +1,682 @@
+{
+  "single_stream": true,
+  "batch_size": 1,
+  "context_start": 24,
+  "context_end": 40,
+  "prompt_tokens": 20,
+  "timed_steps": 16,
+  "warmup_and_instrumentation_excluded": true,
+  "NPU_completion_and_host_greedy_pick_included": true,
+  "slowest_rank_decode_seconds": 82.28727347310632,
+  "sustained_single_stream_TPS": 0.19444076009188987,
+  "meets_50_TPS": false,
+  "initial_control_TPS": 0.09199268670410482,
+  "initial_control_timing_caveat": "initial profiler performed an unused model Gumbel sample; corrected optimized driver resets state and sets model.temperature=0 like normal generate",
+  "whole_model_speed_ratio_against_initial_control": 2.1136545420975694,
+  "rank_comparisons": [
+    {
+      "rank": 0,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 0,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 22,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 0,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 22,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28664296725765,
+      "step_median_seconds": 5.155428421450779
+    },
+    {
+      "rank": 1,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 1,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 1,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28643795568496,
+      "step_median_seconds": 5.15543765691109
+    },
+    {
+      "rank": 2,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 2,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 2,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28695025015622,
+      "step_median_seconds": 5.155258255312219
+    },
+    {
+      "rank": 3,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 3,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 3,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28644482605159,
+      "step_median_seconds": 5.155411101877689
+    },
+    {
+      "rank": 4,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 4,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 4,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28693578997627,
+      "step_median_seconds": 5.1554878272581846
+    },
+    {
+      "rank": 5,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 5,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 5,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28727347310632,
+      "step_median_seconds": 5.155268715927377
+    },
+    {
+      "rank": 6,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 6,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 6,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28647349728271,
+      "step_median_seconds": 5.1553300763480365
+    },
+    {
+      "rank": 7,
+      "timed_greedy_token_ids_equal": true,
+      "final_finite_FP32_logit_bit_mismatches": 0,
+      "logit_elements": 129280,
+      "packed_expert_HBM_bytes": 36097228800,
+      "CPU_Engram_byte_proof_states": [
+        {
+          "rank": 7,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        },
+        {
+          "rank": 7,
+          "world": 8,
+          "wire": "int8",
+          "backend": "hccl",
+          "verified": true,
+          "verify_always": false,
+          "calls": 22,
+          "verified_calls": 1,
+          "host_computes": 0,
+          "gathers": 2,
+          "broadcasts": 22,
+          "bytes_gathered": 31744,
+          "bytes_broadcast": 1679360,
+          "verification": {
+            "raw": [
+              "hash_ids"
+            ],
+            "digest": [
+              "x",
+              "result"
+            ],
+            "bytes_per_rank": {
+              "x": 819200,
+              "hash_ids": 3840,
+              "result": 819200
+            },
+            "shape": [
+              1,
+              20,
+              4,
+              5120
+            ],
+            "dtype": "torch.bfloat16"
+          }
+        }
+      ],
+      "decode_seconds": 82.28672292781994,
+      "step_median_seconds": 5.1554000517353415
+    }
+  ]
+}

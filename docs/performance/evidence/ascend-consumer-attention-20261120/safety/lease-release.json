@@ -1,0 +1,6 @@
+{
+  "host": "ts-216",
+  "released": true,
+  "detail": "lease dropped",
+  "confirmed_by": "ts-fleet-bridge.ts_release after final idle/checkpoint/CANN/CI safety receipt"
+}

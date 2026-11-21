@@ -1,0 +1,70 @@
+{
+  "variants": {
+    "k128-prepared-float": {
+      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build/lib/librelic_online_tile_cube.so",
+      "sha256": "ad08f3f08a5c41f5ec4d29d77e63235f1c536b0295475d176638eb49ee8e33db",
+      "group_k": 4,
+      "direct_bits": false,
+      "prepared_tables": true,
+      "source_hashes": {
+        "online_tile_cube.cpp": "a4d83268caecf196e34b85c764bcae8226f98c28fd2b6ae3754f558aee396fc2",
+        "CMakeLists.txt": "86be2c39ec75f4edf5313f6208220b592400fa518e0e42354b0fcf6c7a949662",
+        "kernel_entry.cpp.in": "399be95050a81365e43d5042e97e9a92101383b58bed6652814e01b481b5f33c"
+      },
+      "source_snapshot": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/source",
+      "configure_command": [
+        "cmake",
+        "-S",
+        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/source",
+        "-B",
+        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-float-20261121-v1/build",
+        "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
+        "-DSOC_VERSION=Ascend910B3",
+        "-DRUN_MODE=npu",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DRELIC_TILE_K_BLOCKS=4",
+        "-DRELIC_TILE_PRELOAD_A=0",
+        "-DRELIC_TILE_DIRECT_BITS=0",
+        "-DRELIC_TILE_PREPARED_TABLES=1"
+      ],
+      "original_binaries_unchanged": true
+    },
+    "k128-prepared-bits": {
+      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build/lib/librelic_online_tile_cube.so",
+      "sha256": "192a35ed93ab591c2420b9f3857e24a64fcec771883ab3e51c8e9d12c7ead4a0",
+      "group_k": 4,
+      "direct_bits": true,
+      "prepared_tables": true,
+      "source_hashes": {
+        "online_tile_cube.cpp": "a4d83268caecf196e34b85c764bcae8226f98c28fd2b6ae3754f558aee396fc2",
+        "CMakeLists.txt": "86be2c39ec75f4edf5313f6208220b592400fa518e0e42354b0fcf6c7a949662",
+        "kernel_entry.cpp.in": "399be95050a81365e43d5042e97e9a92101383b58bed6652814e01b481b5f33c"
+      },
+      "source_snapshot": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/source",
+      "configure_command": [
+        "cmake",
+        "-S",
+        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/source",
+        "-B",
+        "/data1/relic-v41-perf-20261118-0938/cache/online-tile-k128-prepared-bits-20261121-v1/build",
+        "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
+        "-DSOC_VERSION=Ascend910B3",
+        "-DRUN_MODE=npu",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DRELIC_TILE_K_BLOCKS=4",
+        "-DRELIC_TILE_PRELOAD_A=0",
+        "-DRELIC_TILE_DIRECT_BITS=1",
+        "-DRELIC_TILE_PREPARED_TABLES=1"
+      ],
+      "original_binaries_unchanged": true
+    }
+  },
+  "original_binary_hashes": {
+    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-cube-k128-v2/lib/librelic_online_tile_cube.so": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
+    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v2/lib/librelic_online_tile_cube.so": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894",
+    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765",
+    "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so": "83b91e5740ddc92003871908cd69517c8e5d7a9e6dadfffcd75aae8d87ba3510"
+  },
+  "no_source_or_binary_overwrite": true,
+  "runtime_device_queries_and_acceptance_are_deferred_until_torch_npu_is_loaded": true
+}

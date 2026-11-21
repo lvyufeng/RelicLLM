@@ -1,0 +1,90 @@
+{
+  "original_checkpoint_projection_keys": [
+    "layers.0.attn.wq_a.weight",
+    "layers.0.attn.wkv.weight"
+  ],
+  "k": 5120,
+  "weight_shapes_KN": [
+    [
+      5120,
+      1280
+    ],
+    [
+      5120,
+      512
+    ]
+  ],
+  "changed_input_graph_replays": 32,
+  "BF16_projection_bit_differences": 0,
+  "original_E4M3_E8M0_quantization_unchanged": true,
+  "reuse": {
+    "installed": true,
+    "backend": "triton",
+    "scope": "one immutable batch-one attention invocation",
+    "original_E4M3_E8M0_quantization_unchanged": true,
+    "no_cache_between_forwards_or_recording_rounds": true,
+    "versionless_inference_inputs_require_explicit_caller_immutability": true,
+    "provider_counts_include_capture_not_device_replay": true,
+    "supported_attention_modules": 0,
+    "scopes": 3,
+    "quantizer_calls": 3,
+    "reuses": 3,
+    "outside_scope_bypasses": 0,
+    "unsupported_bypasses": 0,
+    "peak_live_preparations": 1
+  },
+  "fused": {
+    "installed": true,
+    "fused_calls": 9,
+    "decoded_activation_reuses": 12,
+    "stale_misses": 0,
+    "CPU_bypasses": 0,
+    "original_E4M3_E8M0_contract_unchanged": true,
+    "complete_Engram_CPU": true,
+    "global_registry_of_activations": false,
+    "operator": "quantize_decode_fp8_fast"
+  },
+  "paired_synchronized_seconds": {
+    "base": [
+      9.497115388512611e-05,
+      9.289011359214783e-05,
+      9.073084220290184e-05,
+      9.028101339936256e-05,
+      8.963001891970634e-05,
+      8.936086669564247e-05,
+      8.937111124396324e-05,
+      8.916016668081284e-05,
+      8.927099406719208e-05,
+      8.869078010320663e-05,
+      8.857995271682739e-05,
+      8.899113163352013e-05,
+      8.874107152223587e-05,
+      8.889008313417435e-05,
+      8.784141391515732e-05,
+      8.779112249612808e-05
+    ],
+    "reuse": [
+      0.00010056095197796822,
+      8.418085053563118e-05,
+      8.226046338677406e-05,
+      7.821992039680481e-05,
+      7.855100557208061e-05,
+      7.913028821349144e-05,
+      7.856125012040138e-05,
+      7.833074778318405e-05,
+      7.797032594680786e-05,
+      7.809977978467941e-05,
+      7.854122668504715e-05,
+      7.7779870480299e-05,
+      7.801083847880363e-05,
+      7.958104833960533e-05,
+      7.891980931162834e-05,
+      7.804995402693748e-05
+    ]
+  },
+  "paired_mean_ms": {
+    "base": 0.08969948976300657,
+    "reuse": 0.080421770690009
+  },
+  "only_projection_pair_not_model_TPS": true
+}

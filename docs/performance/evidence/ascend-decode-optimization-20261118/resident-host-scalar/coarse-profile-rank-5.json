@@ -1,0 +1,87 @@
+{
+  "rank": 5,
+  "profile_steps": 2,
+  "instrumented_step_seconds": [
+    6.845399026758969,
+    6.890736260917038
+  ],
+  "records": {
+    "hc.mix": {
+      "calls": 160,
+      "inclusive_s": 0.5446633561514318,
+      "exclusive_s": 0.5446633561514318
+    },
+    "hc.pre": {
+      "calls": 162,
+      "inclusive_s": 0.03877923311665654,
+      "exclusive_s": 0.03877923311665654
+    },
+    "activation.fp8_quant": {
+      "calls": 774,
+      "inclusive_s": 0.25916462671011686,
+      "exclusive_s": 0.25916462671011686
+    },
+    "gemm.npu_fp8": {
+      "calls": 576,
+      "inclusive_s": 2.3345062215812504,
+      "exclusive_s": 2.3345062215812504
+    },
+    "linear.npu_total": {
+      "calls": 576,
+      "inclusive_s": 2.7096731578931212,
+      "exclusive_s": 0.183091820217669
+    },
+    "unpack.fp8": {
+      "calls": 80,
+      "inclusive_s": 0.03223929926753044,
+      "exclusive_s": 0.03223929926753044
+    },
+    "collective.all_reduce": {
+      "calls": 176,
+      "inclusive_s": 5.9998365780338645,
+      "exclusive_s": 5.9998365780338645
+    },
+    "attention.total": {
+      "calls": 80,
+      "inclusive_s": 2.8054141476750374,
+      "exclusive_s": 0.5994681301526725
+    },
+    "hc.post": {
+      "calls": 160,
+      "inclusive_s": 0.04410487599670887,
+      "exclusive_s": 0.04410487599670887
+    },
+    "routed_packed.total": {
+      "calls": 80,
+      "inclusive_s": 3.3784993276931345,
+      "exclusive_s": 0.06427728198468685
+    },
+    "shared_expert.total": {
+      "calls": 80,
+      "inclusive_s": 0.8683869815431535,
+      "exclusive_s": 0.045952368061989546
+    },
+    "moe.total": {
+      "calls": 80,
+      "inclusive_s": 10.059053387492895,
+      "exclusive_s": 0.07184224668890238
+    },
+    "engram.total_boundary": {
+      "calls": 4,
+      "inclusive_s": 0.14385778456926346,
+      "exclusive_s": 0.14385778456926346
+    },
+    "gemm.npu_packed_provider": {
+      "calls": 177,
+      "inclusive_s": 3.2287798579782248,
+      "exclusive_s": 3.2287798579782248
+    },
+    "expert.packed_compute": {
+      "calls": 59,
+      "inclusive_s": 3.3142220457084477,
+      "exclusive_s": 0.04530910449102521
+    }
+  },
+  "synchronized_nested_exclusive": true,
+  "instrumented_times_not_used_for_TPS": true
+}

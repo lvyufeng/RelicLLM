@@ -1,0 +1,164 @@
+{"variant": "k256", "configure": ["cmake", "-S", "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/csrc/ascend/online_tile_cube", "-B", "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0", "-DSOC_VERSION=Ascend910B3", "-DRUN_MODE=npu", "-DCMAKE_BUILD_TYPE=Release", "-DRELIC_TILE_K_BLOCKS=8", "-DRELIC_TILE_PRELOAD_A=0"]}
+-- The CXX compiler identification is GNU 10.3.1
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1
+[  2%] Creating directories for 'relic_online_tile_cube_precompile'
+[  4%] No download step for 'relic_online_tile_cube_precompile'
+[  7%] No update step for 'relic_online_tile_cube_precompile'
+[  9%] No patch step for 'relic_online_tile_cube_precompile'
+[ 11%] Performing configure step for 'relic_online_tile_cube_precompile'
+-- The C compiler identification is GNU 10.3.1
+-- The CXX compiler identification is GNU 10.3.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_precompile-prefix/src/relic_online_tile_cube_precompile-build
+[ 14%] Performing build step for 'relic_online_tile_cube_precompile'
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 16%] No install step for 'relic_online_tile_cube_precompile'
+[ 19%] Completed 'relic_online_tile_cube_precompile'
+[ 19%] Built target relic_online_tile_cube_precompile
+[ 21%] Creating directories for 'relic_online_tile_cube_preprocess'
+[ 23%] No download step for 'relic_online_tile_cube_preprocess'
+[ 26%] No update step for 'relic_online_tile_cube_preprocess'
+[ 28%] No patch step for 'relic_online_tile_cube_preprocess'
+[ 30%] Performing configure step for 'relic_online_tile_cube_preprocess'
+-- The C compiler identification is GNU 10.3.1
+-- The CXX compiler identification is GNU 10.3.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build
+[ 33%] Performing build step for 'relic_online_tile_cube_preprocess'
+[ 66%] Building CXX object CMakeFiles/preprocess_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o
+[ 66%] Building CXX object CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o
+[ 66%] Built target preprocess_obj
+[100%] Building CXX object CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o
+[100%] Built target aiv_obj
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aiv_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aiv_obj_text
+[100%] Built target aic_obj
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_preprocess-prefix/src/relic_online_tile_cube_preprocess-build/CMakeFiles/aic_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o[100%] Built target merge_aic_obj_text
+[100%] Built target _host_cpp
+[ 35%] No install step for 'relic_online_tile_cube_preprocess'
+[ 38%] Completed 'relic_online_tile_cube_preprocess'
+[ 38%] Built target relic_online_tile_cube_preprocess
+[ 40%] Creating directories for 'relic_online_tile_cube_aiv_device'
+[ 42%] Creating directories for 'relic_online_tile_cube_aic_device'
+[ 45%] No download step for 'relic_online_tile_cube_aiv_device'
+[ 47%] No download step for 'relic_online_tile_cube_aic_device'
+[ 50%] No update step for 'relic_online_tile_cube_aic_device'
+[ 52%] No update step for 'relic_online_tile_cube_aiv_device'
+[ 54%] No patch step for 'relic_online_tile_cube_aic_device'
+[ 57%] No patch step for 'relic_online_tile_cube_aiv_device'
+[ 59%] Performing configure step for 'relic_online_tile_cube_aic_device'
+[ 61%] Performing configure step for 'relic_online_tile_cube_aiv_device'
+-- The C compiler identification is GNU 10.3.1
+-- The C compiler identification is GNU 10.3.1
+-- The CXX compiler identification is GNU 10.3.1
+-- The CXX compiler identification is GNU 10.3.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Generating done
+-- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build
+[ 64%] Performing build step for 'relic_online_tile_cube_aiv_device'
+[ 66%] Performing build step for 'relic_online_tile_cube_aic_device'
+[100%] Building CXX object CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aic_device-prefix/src/relic_online_tile_cube_aic_device-build/CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aic_device_dir/device.o
+[100%] Built target merge_device_obj
+[ 69%] No install step for 'relic_online_tile_cube_aic_device'
+[ 71%] Completed 'relic_online_tile_cube_aic_device'
+[ 71%] Built target relic_online_tile_cube_aic_device
+[ 73%] Creating directories for 'relic_online_tile_cube_host'
+[ 76%] No download step for 'relic_online_tile_cube_host'
+[ 78%] No update step for 'relic_online_tile_cube_host'
+[ 80%] No patch step for 'relic_online_tile_cube_host'
+[ 83%] Performing configure step for 'relic_online_tile_cube_host'
+-- The C compiler identification is GNU 10.3.1
+-- The CXX compiler identification is GNU 10.3.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_host-prefix/src/relic_online_tile_cube_host-build
+[ 85%] Performing build step for 'relic_online_tile_cube_host'
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aiv_device-prefix/src/relic_online_tile_cube_aiv_device-build/CMakeFiles/device_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/auto_gen/relic_online_tile_cube/auto_gen_online_tile_cube_entry.cpp.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aiv_device_dir/device.o
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o
+[100%] Built target merge_device_obj
+[ 88%] No install step for 'relic_online_tile_cube_aiv_device'
+[ 90%] Completed 'relic_online_tile_cube_aiv_device'
+[ 90%] Built target relic_online_tile_cube_aiv_device
+/usr/local/Ascend/cann-9.2.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aic_device_dir/device.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_aiv_device_dir/device.o -static -o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_merge_obj_dir/device.o
+[ 90%] Built target relic_online_tile_cube_merge_obj
+[ 92%] Building CXX object CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
+[ 92%] Built target relic_online_tile_cube_host_stub_obj
+[100%] Built target host_bisheng_obj
+[ 95%] Performing install step for 'relic_online_tile_cube_host'
+[100%] Built target host_bisheng_obj
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_host_dir/./objects-Release/host_bisheng_obj/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o
+[ 97%] Completed 'relic_online_tile_cube_host'
+[ 97%] Built target relic_online_tile_cube_host
+[100%] Linking CXX shared library lib/librelic_online_tile_cube.so
+/usr/local/Ascend/cann-9.2.0/bin/ascendc_pack_kernel /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_merge_obj_dir/device.o 0 /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,librelic_online_tile_cube.so -o lib/librelic_online_tile_cube.so CMakeFiles/relic_online_tile_cube_host_stub_obj.dir/auto_gen/relic_online_tile_cube/host_stub.cpp.o /data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/relic_online_tile_cube_host_dir/objects-Release/host_bisheng_obj/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-20261120-v1/online_tile_cube_entry.cpp.o    -L/usr/local/Ascend/cann-9.2.0/lib64  -L/usr/local/Ascend/cann-9.2.0/tools/simulator/Ascend910B3/lib  /usr/local/Ascend/cann-9.2.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
+[100%] Built target relic_online_tile_cube

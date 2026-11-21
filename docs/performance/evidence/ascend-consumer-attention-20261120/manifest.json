@@ -1,0 +1,407 @@
+{
+  "scope": "original K32 consumer grain/L1 and immutable call-scoped attention preparation",
+  "K128_to_K256_TPS_ratio": 1.1340003565143622,
+  "K256_not_faster_than_native_control": true,
+  "attention_reuse_observed_TPS_ratio": 1.001012106835961,
+  "attention_reuse_effective_speedup_not_established": true,
+  "L1_preload_effective_speedup_not_established": true,
+  "native_reduction_experiment_not_exact_default": true,
+  "original_checkpoint_quantization_and_production_defaults_unchanged": true,
+  "all_8_rank_teacher_final_FP32_tensor_artifacts_compared_and_checksum_pinned_not_copied": true,
+  "timed_source_snapshots_separate_from_post_trial_metadata_hardening": true,
+  "older_bundles_not_rewritten": true,
+  "file_count_excluding_manifest": 78,
+  "bytes_excluding_manifest": 858168,
+  "files": {
+    "K256-corpus-ownership.json": {
+      "sha256": "9a7351927f40bb85cc5fa29613548f19286c39e28420f6d95cc5752ef0be2a98",
+      "bytes": 3112,
+      "source": ".coord/consumer-all-K-corpus-20261120T110616Z/summary.json"
+    },
+    "K256-original-byte-scale-corpus.json": {
+      "sha256": "ccae5f24dcad04d820004155855b97e71dbb8135c3bad19a9dc5ce532061e973",
+      "bytes": 6280,
+      "source": ".coord/consumer-all-K-corpus-20261120T110616Z/K256-original-byte-scale-corpus.json"
+    },
+    "all-rank-audit-ownership.json": {
+      "sha256": "4c933ed5809c2081186a735a3f6e473686c2e2a577ada9d3edebf93f3d7e0d2f",
+      "bytes": 3146,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/summary.json"
+    },
+    "all-rank-models/model-k128-rank-0.json": {
+      "sha256": "1d1d17345b661be684a6ceb28c7d2d940a2e5df2699a4c7e11fccabb4105fdca",
+      "bytes": 11578,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-0.json"
+    },
+    "all-rank-models/model-k128-rank-1.json": {
+      "sha256": "32c1cd5a8db869a3fe4c45e60ffb232eee1c2aa10b67fdd5f1d3f1fc4c0e7841",
+      "bytes": 11577,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-1.json"
+    },
+    "all-rank-models/model-k128-rank-2.json": {
+      "sha256": "1bdaf771215c7ff00646cb1e2b0ccfb4cf412af5a6feb71b0c925a4c1a125387",
+      "bytes": 11580,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-2.json"
+    },
+    "all-rank-models/model-k128-rank-3.json": {
+      "sha256": "dfc823ddb22a5bba70c956de28e6e9f8b908c68697013ce3907e60e012e95627",
+      "bytes": 11577,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-3.json"
+    },
+    "all-rank-models/model-k128-rank-4.json": {
+      "sha256": "115a77052da035e5114cd8d7e9756259b0d7c8c3d3a262f99ce103a742d88e4d",
+      "bytes": 11579,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-4.json"
+    },
+    "all-rank-models/model-k128-rank-5.json": {
+      "sha256": "b940f2608c08a5f8a268b4f01947595d18113b75d21e2cdbf37a476aaeeb7aa5",
+      "bytes": 11576,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-5.json"
+    },
+    "all-rank-models/model-k128-rank-6.json": {
+      "sha256": "06337242d30f78910cc11789749a975b2b454a2a794fc900c0b9f6c96df101d5",
+      "bytes": 11579,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-6.json"
+    },
+    "all-rank-models/model-k128-rank-7.json": {
+      "sha256": "ffb870a3035033e77c6b8635d578af8d6ad8ce809ddab58748f0906474c0bbf2",
+      "bytes": 11579,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k128-rank-7.json"
+    },
+    "all-rank-models/model-k256-rank-0.json": {
+      "sha256": "c6631fd4c8887af49ee96dae7a369a4db5366148ea9e7646a1087066c23db988",
+      "bytes": 11550,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-0.json"
+    },
+    "all-rank-models/model-k256-rank-1.json": {
+      "sha256": "ebd91fe58b5acce64787c93b0983b80204811e77e436d5f915980ccb98dbc104",
+      "bytes": 11548,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-1.json"
+    },
+    "all-rank-models/model-k256-rank-2.json": {
+      "sha256": "bc98823810d80ce4a17d3bb3ac11003e09a0cde31b29b7ec45062963e894a855",
+      "bytes": 11550,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-2.json"
+    },
+    "all-rank-models/model-k256-rank-3.json": {
+      "sha256": "399f945fc41b9a9fa634dd89b72f4ce7d539e33411a353bc5b62ddca8e93d5b8",
+      "bytes": 11549,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-3.json"
+    },
+    "all-rank-models/model-k256-rank-4.json": {
+      "sha256": "b4fa6febc3e3aacca91c6381e711656ff9855a03c7b7046ee9100158f08c9467",
+      "bytes": 11549,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-4.json"
+    },
+    "all-rank-models/model-k256-rank-5.json": {
+      "sha256": "3766eb15b0e07daab73852002ab90b1b5fed47e1ba59d23c765bd1560ad1fa61",
+      "bytes": 11549,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-5.json"
+    },
+    "all-rank-models/model-k256-rank-6.json": {
+      "sha256": "696125f969395611ccbcc2d024a915031300e5671f51721782376907d976d9a4",
+      "bytes": 11548,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-6.json"
+    },
+    "all-rank-models/model-k256-rank-7.json": {
+      "sha256": "682f55c611e20ea32dbdf7f8d06eac0900089f66458e493cb96eaccf800e5bce",
+      "bytes": 11548,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-k256-rank-7.json"
+    },
+    "all-rank-models/model-native-rank-0.json": {
+      "sha256": "285c454547eeb8221c9aef7d1725c31059fa976f183f238e342923e5b40f5569",
+      "bytes": 9930,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-0.json"
+    },
+    "all-rank-models/model-native-rank-1.json": {
+      "sha256": "30dbf0ca148f5883812611c8a194883a42ab35728966f3af81f42e92c4eced4b",
+      "bytes": 9928,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-1.json"
+    },
+    "all-rank-models/model-native-rank-2.json": {
+      "sha256": "85eafae2c76a4657d24666ba3b425dec6f444f1614663d7f51493f63fd98a916",
+      "bytes": 9929,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-2.json"
+    },
+    "all-rank-models/model-native-rank-3.json": {
+      "sha256": "7296af61ce96af0428658136f7d24c93750ec531d96fdc50139a6c4d5608102a",
+      "bytes": 9927,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-3.json"
+    },
+    "all-rank-models/model-native-rank-4.json": {
+      "sha256": "a26c94404e95ea579f8ab0e73715973ca405a515af176ff7eb6e64681d635056",
+      "bytes": 9929,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-4.json"
+    },
+    "all-rank-models/model-native-rank-5.json": {
+      "sha256": "38d8bcc4cb3a2621da8535eceda339754e22aa5715f3c3a51ded27f3ad90b877",
+      "bytes": 9930,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-5.json"
+    },
+    "all-rank-models/model-native-rank-6.json": {
+      "sha256": "be6f2729672c6e8b8500066a1f2bfc7f8db91772546a328a26170aa2a4ad55eb",
+      "bytes": 9930,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-6.json"
+    },
+    "all-rank-models/model-native-rank-7.json": {
+      "sha256": "a5c05568f66d7b4bc814a4940abfbb16ba9ebe0fc17a8aa1782680163ff37d97",
+      "bytes": 9931,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-rank-7.json"
+    },
+    "all-rank-models/model-native-reuse-rank-0.json": {
+      "sha256": "6e203dba7de3f070e3862443a3e2611d96437938de708fa37c471e204b54ea72",
+      "bytes": 10506,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-0.json"
+    },
+    "all-rank-models/model-native-reuse-rank-1.json": {
+      "sha256": "c5398bb017352c17191c86c7a3d2af99ed9a5d4996229caee277a83940822643",
+      "bytes": 10505,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-1.json"
+    },
+    "all-rank-models/model-native-reuse-rank-2.json": {
+      "sha256": "ecf131dae45343ea87bee34e31fb922efbf4564849ad25911338eb001f837483",
+      "bytes": 10506,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-2.json"
+    },
+    "all-rank-models/model-native-reuse-rank-3.json": {
+      "sha256": "3c9b195f793fc3b94b6c40ff91048e98d57481143013934389f2be06e15fbe7e",
+      "bytes": 10506,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-3.json"
+    },
+    "all-rank-models/model-native-reuse-rank-4.json": {
+      "sha256": "671c3ca070b3a18f9883aae52bb69531a6f95d1e7ffad0089426831c1ce7fb4d",
+      "bytes": 10507,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-4.json"
+    },
+    "all-rank-models/model-native-reuse-rank-5.json": {
+      "sha256": "258550c18b9dceec8b6e13423537f2d55348e7a50ce314ba737e4c79aae68971",
+      "bytes": 10506,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-5.json"
+    },
+    "all-rank-models/model-native-reuse-rank-6.json": {
+      "sha256": "4d5ea3f59344a2c6e99056015061f7f7759b11e9f6a351b41647a19f10b8adfa",
+      "bytes": 10506,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-6.json"
+    },
+    "all-rank-models/model-native-reuse-rank-7.json": {
+      "sha256": "5b5216a5f2573ed22ffd5cb105f9173f6637d8d9629fbf78ccb16814f3430a6b",
+      "bytes": 10509,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/model-native-reuse-rank-7.json"
+    },
+    "attention-FP8-reuse-probe.json": {
+      "sha256": "faafef45be4e29d08a50a73e6ceb7f6549e77784d24e0b42e41ec889d8cb3458",
+      "bytes": 2395,
+      "source": ".coord/attention-fp8-reuse-operator-20261120T104637Z/attention-FP8-reuse-probe.json"
+    },
+    "attention-probe-ownership.json": {
+      "sha256": "151d7ad2e6d6fa7bde1bf39f7b4b9f4d8007ec5320221b8f086d53490e1acd97",
+      "bytes": 3787,
+      "source": ".coord/attention-fp8-reuse-operator-20261120T104637Z/summary.json"
+    },
+    "consumer-attention-model-comparison.json": {
+      "sha256": "532c17c975cb9740a28902b3814430482f3c42ed53ad70a9ed529211b8a66330",
+      "bytes": 31371,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/consumer-attention-model-comparison.json"
+    },
+    "final-source-hardening/README.md.txt": {
+      "sha256": "1ad3feaae7d5a26ff35ffe6f09484306c2195e3632045f2fc5b5a53bcc37d7eb",
+      "bytes": 6980,
+      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/csrc/ascend/online_tile_cube/README.md"
+    },
+    "final-source-hardening/ascend_attention_reuse.py": {
+      "sha256": "38f14ff57dc1669cdfb929d73ddd8222cfbafa1ff66a493841d8aefa2260dc94",
+      "bytes": 8594,
+      "source": "relicllm/models/deepseek_v4_1/ascend_attention_reuse.py"
+    },
+    "final-source-hardening/ascendc_online_tile_cube.py": {
+      "sha256": "99f9adf68073259847b8cfc7ac485456601fcb19534447e2b2013770f51ac663",
+      "bytes": 6502,
+      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/ascendc_online_tile_cube.py"
+    },
+    "final-source-hardening/ascendc_tile_moe.py": {
+      "sha256": "a78c60a29446880a64fa8ed4ae73b65685566d8627cdaeac9c98b0e4e5d2b04d",
+      "bytes": 9797,
+      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/relic_core/kernels/ascendc_tile_moe.py"
+    },
+    "native-reuse-preconditions.json": {
+      "sha256": "3ba94bef877e9368f2d5b53b310cdad5402dba08cb54d45784c68483063eadd8",
+      "bytes": 21257,
+      "source": ".coord/consumer-model-source-snapshots/preconditions.json"
+    },
+    "negative-results/build-original-consumer-k256-L1-variants.stderr.log": {
+      "sha256": "4fd71a946fc2210329a99a38f0b62af55705907d9b5d0dd08261ecda1cf5dae5",
+      "bytes": 934,
+      "source": ".coord/consumer-variants-build-failure-20261120T095625Z/build-original-consumer-k256-L1-variants.stderr.log"
+    },
+    "negative-results/build-original-consumer-k256-L1-variants.stdout.log": {
+      "sha256": "5949d8328dbc47541ba18de968daf49f9526d5e8e5f81b77f33e1a056ebf9936",
+      "bytes": 13986,
+      "source": ".coord/consumer-variants-build-failure-20261120T095625Z/build-original-consumer-k256-L1-variants.stdout.log"
+    },
+    "negative-results/initial-row-grid-probe-mismatch.stderr.log": {
+      "sha256": "04d51f15dbd5074b03a16c4ed5e39f80ac863748c8968750ad71ea75dec2f2d2",
+      "bytes": 1601,
+      "source": ".coord/consumer-k256-L1-real-comparison.stderr.log"
+    },
+    "operator-variants/consumer-variants-dynamic-validation.json": {
+      "sha256": "4ff15146127f00f4c6414b6d07656e7e58da9476c60fcb7072b4a0bb80db474e",
+      "bytes": 3927,
+      "source": ".coord/consumer-variants-operator-20261120T103051Z/consumer-variants-dynamic-validation.json"
+    },
+    "operator-variants/consumer-variants-real-projection-comparison.json": {
+      "sha256": "04246f45ce7240bbed25c40d93f87c6ad299fdc7a5d67a11bdbea621b0cfd0ff",
+      "bytes": 53294,
+      "source": ".coord/consumer-variants-operator-20261120T103051Z/consumer-variants-real-projection-comparison.json"
+    },
+    "operator-variants/summary.json": {
+      "sha256": "89afdad7ec9b7e4cfc3ce98d33e4d45cf1d4a3abaadc976a8e5ff0f0828c15b2",
+      "bytes": 3795,
+      "source": ".coord/consumer-variants-operator-20261120T103051Z/summary.json"
+    },
+    "regression.log": {
+      "sha256": "ff1345f311394544c6cdfaa6f8de22a1ff0d1b75600457016e30f1fb7260a0dc",
+      "bytes": 1228,
+      "source": ".coord/consumer-attention-regression.log"
+    },
+    "safety/lease-release.json": {
+      "sha256": "cb8e5366cbdb83368ce04e6764db88b5db6dc226f579ff542c2be8e631dcd7ad",
+      "bytes": 171,
+      "source": "confirmed tool result"
+    },
+    "safety/new-lease-safety-20261120T094505Z.json": {
+      "sha256": "e4c9c2fd52583598a32d329fce64d2fad27428e2e5a1e1857b9906a3d0c62f1d",
+      "bytes": 49717,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/new-lease-safety-20261120T094505Z.json"
+    },
+    "safety/new-lease-safety-20261120T110713Z.json": {
+      "sha256": "5ddd4b4fe700694737c40dc4e51a429e88d8f4fba55cdb3aacb5c26eabb6228c",
+      "bytes": 52391,
+      "source": ".coord/consumer-attention-audit-20261120T110608Z/new-lease-safety-20261120T110713Z.json"
+    },
+    "sources/build_consumer_attention_evidence.py": {
+      "sha256": "f3001088d07ec633bc361e20ce6b197ac5f3c893b2ad3eabef0420e1cc1f2c7f",
+      "bytes": 8707,
+      "source": ".coord/build_consumer_attention_evidence.py"
+    },
+    "sources/build_consumer_variants.py": {
+      "sha256": "32e8841b611e56ee5edb07a4e6c2a71ac3cabaef7f50c6b08bd81ddfd8733804",
+      "bytes": 2750,
+      "source": ".coord/build_consumer_variants.py"
+    },
+    "sources/compare_consumer_attention_models.py": {
+      "sha256": "5a5c311d6ce73f45ae46284965bee41b8e4bec030f84dff77e6d8921e7674389",
+      "bytes": 7182,
+      "source": ".coord/compare_consumer_attention_models.py"
+    },
+    "sources/probe_attention_fp8_reuse.py": {
+      "sha256": "03f37f586c084e8451787543340d3d43cfe942fdff39cfa04bf6a5d47355dbc5",
+      "bytes": 4696,
+      "source": ".coord/probe_attention_fp8_reuse.py"
+    },
+    "sources/probe_consumer_variants.py": {
+      "sha256": "3fd2c469f62741312f53901c00afc841e0b477770662b1235a8a6f8dc9f186c9",
+      "bytes": 11092,
+      "source": ".coord/probe_consumer_variants.py"
+    },
+    "sources/probe_k256_corpus.py": {
+      "sha256": "fa7a73c3a0c7a4d33c513d52d02198dd92d6d6ba8f1472d5d23fb75cb359a015",
+      "bytes": 3341,
+      "source": ".coord/probe_k256_corpus.py"
+    },
+    "tests/test_ascendc_online_tile_cube.py": {
+      "sha256": "31e21c6f19d020e9a4b087ec21ace9da4d47cb72c683669af656de6282f6acf4",
+      "bytes": 5899,
+      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascendc_online_tile_cube.py"
+    },
+    "tests/test_ascendc_tile_moe.py": {
+      "sha256": "ab091810fcb11c63043e0d3a07a1fdd6324218461ff806d4c659e68139160c0e",
+      "bytes": 4860,
+      "source": "/Users/lvyufeng/Projects/RelicLLM/.agents/worktrees/relic-core-ascend-online-unpack/tests/test_ascendc_tile_moe.py"
+    },
+    "tests/test_v41_ascend_attention_reuse.py": {
+      "sha256": "093025eae9907f58da51ff6aee4553c3cd617b2dfed903836252f5357986f39f",
+      "bytes": 6136,
+      "source": "tests/test_v41_ascend_attention_reuse.py"
+    },
+    "timed-source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_attention_reuse.py": {
+      "sha256": "52b4733c17cdaf55b321436f3da5e3addcbadb294ea0b7e9c5ec27396795be80",
+      "bytes": 8540,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_attention_reuse.py"
+    },
+    "timed-source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py": {
+      "sha256": "d51939d015c0faac206b4b383b358b89f4efa10f5d86f269f193ff6cb5c93a6c",
+      "bytes": 24335,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py"
+    },
+    "timed-source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_hc_decode.py": {
+      "sha256": "24e8ef477bb101d684b575d3d1d46a068e649e89575e15adb42d57cf2df13a83",
+      "bytes": 6450,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/RelicLLM/relicllm/models/deepseek_v4_1/ascend_hc_decode.py"
+    },
+    "timed-source-snapshots/bounded_task.py": {
+      "sha256": "7101c6d6637fd0a1a91d6730ace772ba3c5dc91b7c3d3424aa2ef6b1f9d6442a",
+      "bytes": 27905,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/bounded_task.py"
+    },
+    "timed-source-snapshots/profile_actual_cube.py": {
+      "sha256": "df06b87789be6cdb1f073debf1adc71c98f2f982932669475d674b59470635bc",
+      "bytes": 39458,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/profile_actual_cube.py"
+    },
+    "timed-source-snapshots/profile_device_engram.py": {
+      "sha256": "aa11d0d5da28d6450fed198f4c4e2dfcdf8eb28a889c70016e9d0f51863dc003",
+      "bytes": 4746,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/profile_device_engram.py"
+    },
+    "timed-source-snapshots/relic-core/relic_core/csrc/ascend/online_tile_cube/CMakeLists.txt": {
+      "sha256": "f3bcd9094d6ec4b780045a4d40c8346a85991f6701561308e23442d2af7e04a4",
+      "bytes": 1292,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/csrc/ascend/online_tile_cube/CMakeLists.txt"
+    },
+    "timed-source-snapshots/relic-core/relic_core/csrc/ascend/online_tile_cube/kernel_entry.cpp.in": {
+      "sha256": "b47525f391d173d26d4a7fe535d2436f5ca976e6e711717509e3e49143eb981e",
+      "bytes": 323,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/csrc/ascend/online_tile_cube/kernel_entry.cpp.in"
+    },
+    "timed-source-snapshots/relic-core/relic_core/csrc/ascend/online_tile_cube/online_tile_cube.cpp": {
+      "sha256": "262c843eb638622c86f718a9fc3b6fe07f8c9442041a48d0ca785c532fd53573",
+      "bytes": 19545,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/csrc/ascend/online_tile_cube/online_tile_cube.cpp"
+    },
+    "timed-source-snapshots/relic-core/relic_core/kernels/_ascend_hc_decode_fold_kernels.py": {
+      "sha256": "a681394fde1fd027f619d4bfa9ce74b109d4b397a3416cc5c5745a98d6a6c343",
+      "bytes": 2187,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/kernels/_ascend_hc_decode_fold_kernels.py"
+    },
+    "timed-source-snapshots/relic-core/relic_core/kernels/ascendc_online_tile_cube.py": {
+      "sha256": "b67c22f0ab8e30cb59d8e8d4f93e6f37c6df943eb4ef0397b040f0fee3378f7d",
+      "bytes": 6489,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/kernels/ascendc_online_tile_cube.py"
+    },
+    "timed-source-snapshots/relic-core/relic_core/kernels/ascendc_tile_moe.py": {
+      "sha256": "a78c60a29446880a64fa8ed4ae73b65685566d8627cdaeac9c98b0e4e5d2b04d",
+      "bytes": 9797,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/kernels/ascendc_tile_moe.py"
+    },
+    "timed-source-snapshots/relic-core/relic_core/kernels/hc_decode_fold.py": {
+      "sha256": "a514305cfc023e655d0a891c19a875abc368876ca051b33fb69739d3f41f64bf",
+      "bytes": 4079,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/kernels/hc_decode_fold.py"
+    },
+    "timed-source-snapshots/relic-core/relic_core/kernels/original_fp8_engram.py": {
+      "sha256": "633e84773518acb386103bd35189423d66198d94fc5347f450473083559d1379",
+      "bytes": 4500,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/relic-core/relic_core/kernels/original_fp8_engram.py"
+    },
+    "timed-source-snapshots/run_consumer_variant_model.py": {
+      "sha256": "891586567160759d6588b45672889f4e9831173cddd8879466b435caaca53a59",
+      "bytes": 3986,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/run_consumer_variant_model.py"
+    },
+    "timed-source-snapshots/run_device_engram_trial.py": {
+      "sha256": "0a1f45dc6c88e1dc20b55aafa735ecb005f8fdc0235e34990d35c1e4284efcda",
+      "bytes": 7107,
+      "source": ".coord/consumer-model-source-snapshots/source-snapshots/run_device_engram_trial.py"
+    }
+  }
+}

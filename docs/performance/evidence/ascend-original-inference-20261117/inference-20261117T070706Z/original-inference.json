@@ -1,0 +1,1750 @@
+{
+  "name": "original-inference",
+  "command": [
+    "/data1/relic-online-unpack-20261117-0534/venv311/bin/python",
+    "-m",
+    "torch.distributed.run",
+    "--standalone",
+    "--nnodes=1",
+    "--nproc-per-node=8",
+    "-m",
+    "relicllm.cli.generate_v41",
+    "--checkpoint",
+    "/data1/relic-v41-20261116-210/checkpoint",
+    "--expert-device",
+    "npu:0",
+    "--expert-world",
+    "8",
+    "--expert-pool-rows",
+    "0",
+    "--expert-hot-rows",
+    "0",
+    "--no-expert-batched",
+    "--expert-deal",
+    "id",
+    "--no-decode-graphs",
+    "--threads",
+    "4",
+    "--max-seq-len",
+    "128",
+    "--max-new-tokens",
+    "4",
+    "--temperature",
+    "0",
+    "--prompt",
+    "The capital of France is",
+    "--dump-logits",
+    "/data1/relic-v41-infer-20261117-1424/logs/inference-20261117T070706Z/generated-logits.pt"
+  ],
+  "timeout_s": 1200,
+  "cleanup_graces_s": [
+    30,
+    20,
+    10
+  ],
+  "started_at": "2026-11-17T07:07:06.041139+00:00",
+  "cwd": "/data1/relic-v41-infer-20261117-1424/source/RelicLLM",
+  "timed_out": false,
+  "ownership_token": "e1d200e2f67d1286ddd01be444d6835bad7ba492ddbf73b2e01ba795491a420d",
+  "critical_environment": {
+    "PYTHONPATH": "/data1/relic-v41-infer-20261117-1424/python-packages:/data1/relic-v41-infer-20261117-1424/source/relic-core:/data1/relic-v41-infer-20261117-1424/source/RelicLLM:/usr/local/Ascend/cann-9.2.0/python/site-packages:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RELICLLM_ASCEND_DISPATCH": null,
+    "DEEPSEEK_V41_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_V41_PIN_RESIDENT_EXPERTS": "0",
+    "DEEPSEEK_FORCE_TORCH_GEMM": null,
+    "DEEPSEEK_FP8_IMPL": null,
+    "DEEPSEEK_FP4_IMPL": null,
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "TMPDIR": "/data1/relic-v41-infer-20261117-1424/tmp",
+    "HOME": "/data1/relic-v41-infer-20261117-1424/home",
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.2.0",
+    "LD_LIBRARY_PATH": "/usr/local/Ascend/cann-9.2.0/lib64:/usr/local/Ascend/cann-9.2.0/lib64/plugin/opskernel:/usr/local/Ascend/cann-9.2.0/lib64/plugin/nnengine:/usr/local/Ascend/cann-9.2.0/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/lib:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/examples:/usr/local/Ascend/nnal/atb/latest/atb/cxx_abi_1/tests/atbopstest:/usr/local/Ascend/nnal/asdsip/latest//lib:",
+    "ASCEND_CACHE_PATH": "/data1/relic-v41-infer-20261117-1424/cache/ascend",
+    "ASCEND_WORK_PATH": "/data1/relic-v41-infer-20261117-1424/cache/ascend-work",
+    "ASCEND_PROCESS_LOG_PATH": "/data1/relic-v41-infer-20261117-1424/logs/ascend"
+  },
+  "generation_success_claimed": false,
+  "serving_success_claimed": false,
+  "pid": 2448099,
+  "process_group": 2448099,
+  "cleanup": {
+    "complete": true,
+    "live_owned_processes": [],
+    "processes_seen": [
+      {
+        "pid": 2448099,
+        "starttime": 381431211,
+        "pgid": 2448099,
+        "sid": 2448099,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448109,
+        "starttime": 381432161,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448110,
+        "starttime": 381432161,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448111,
+        "starttime": 381432161,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448112,
+        "starttime": 381432161,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448113,
+        "starttime": 381432161,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448114,
+        "starttime": 381432162,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448115,
+        "starttime": 381432162,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2448116,
+        "starttime": 381432162,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "Z",
+        "uid": 0
+      },
+      {
+        "pid": 2449090,
+        "starttime": 381433337,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449093,
+        "starttime": 381433341,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449096,
+        "starttime": 381433346,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449110,
+        "starttime": 381433406,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449118,
+        "starttime": 381433410,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449149,
+        "starttime": 381433417,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449151,
+        "starttime": 381433419,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449159,
+        "starttime": 381433420,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2449193,
+        "starttime": 381433427,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2449194,
+        "starttime": 381433428,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2449206,
+        "starttime": 381433490,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449226,
+        "starttime": 381433499,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2449331,
+        "starttime": 381433582,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449348,
+        "starttime": 381433582,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2449389,
+        "starttime": 381433589,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449390,
+        "starttime": 381433590,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2449425,
+        "starttime": 381433597,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449426,
+        "starttime": 381433598,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2449483,
+        "starttime": 381433666,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2449484,
+        "starttime": 381433666,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450267,
+        "starttime": 381433831,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450268,
+        "starttime": 381433832,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450275,
+        "starttime": 381433843,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450276,
+        "starttime": 381433843,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450277,
+        "starttime": 381433853,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450278,
+        "starttime": 381433853,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450279,
+        "starttime": 381433853,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450280,
+        "starttime": 381433853,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450290,
+        "starttime": 381435273,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450295,
+        "starttime": 381435290,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450314,
+        "starttime": 381435355,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450343,
+        "starttime": 381435363,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450345,
+        "starttime": 381435364,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450346,
+        "starttime": 381435365,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450368,
+        "starttime": 381435372,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450370,
+        "starttime": 381435377,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450382,
+        "starttime": 381435438,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450402,
+        "starttime": 381435447,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450408,
+        "starttime": 381435460,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450429,
+        "starttime": 381435470,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450555,
+        "starttime": 381435554,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450561,
+        "starttime": 381435563,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450563,
+        "starttime": 381435563,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450571,
+        "starttime": 381435577,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450638,
+        "starttime": 381435610,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450704,
+        "starttime": 381435630,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450722,
+        "starttime": 381435634,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450725,
+        "starttime": 381435635,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450726,
+        "starttime": 381435635,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450780,
+        "starttime": 381435642,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450786,
+        "starttime": 381435643,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450787,
+        "starttime": 381435645,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450794,
+        "starttime": 381435645,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450796,
+        "starttime": 381435648,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450818,
+        "starttime": 381435657,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450828,
+        "starttime": 381435692,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450854,
+        "starttime": 381435701,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450856,
+        "starttime": 381435703,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450876,
+        "starttime": 381435712,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2450882,
+        "starttime": 381435716,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2450903,
+        "starttime": 381435726,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451137,
+        "starttime": 381435829,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451140,
+        "starttime": 381435833,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451145,
+        "starttime": 381435837,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451146,
+        "starttime": 381435838,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451349,
+        "starttime": 381435884,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451350,
+        "starttime": 381435884,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451356,
+        "starttime": 381435897,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451364,
+        "starttime": 381435901,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451396,
+        "starttime": 381435907,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451398,
+        "starttime": 381435907,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451409,
+        "starttime": 381435909,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451426,
+        "starttime": 381435911,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451461,
+        "starttime": 381435916,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451462,
+        "starttime": 381435916,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451463,
+        "starttime": 381435918,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451480,
+        "starttime": 381435956,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451482,
+        "starttime": 381435958,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451524,
+        "starttime": 381435965,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451529,
+        "starttime": 381435967,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451531,
+        "starttime": 381435969,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451552,
+        "starttime": 381435979,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2451556,
+        "starttime": 381436029,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451802,
+        "starttime": 381436097,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451803,
+        "starttime": 381436098,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451808,
+        "starttime": 381436102,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451809,
+        "starttime": 381436102,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451838,
+        "starttime": 381436112,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2451939,
+        "starttime": 381436121,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452020,
+        "starttime": 381436140,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452030,
+        "starttime": 381436150,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452031,
+        "starttime": 381436152,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452044,
+        "starttime": 381436169,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452058,
+        "starttime": 381436171,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452066,
+        "starttime": 381436172,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452070,
+        "starttime": 381436172,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452140,
+        "starttime": 381436178,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452143,
+        "starttime": 381436180,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452144,
+        "starttime": 381436180,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452145,
+        "starttime": 381436181,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452163,
+        "starttime": 381436224,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452164,
+        "starttime": 381436225,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452209,
+        "starttime": 381436234,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452210,
+        "starttime": 381436234,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452211,
+        "starttime": 381436234,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452233,
+        "starttime": 381436244,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452293,
+        "starttime": 381436293,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452532,
+        "starttime": 381436362,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452540,
+        "starttime": 381436365,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452541,
+        "starttime": 381436365,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452543,
+        "starttime": 381436366,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452544,
+        "starttime": 381436366,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452566,
+        "starttime": 381436375,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452746,
+        "starttime": 381436416,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452747,
+        "starttime": 381436416,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452752,
+        "starttime": 381436424,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452760,
+        "starttime": 381436438,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452789,
+        "starttime": 381436444,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452792,
+        "starttime": 381436445,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452807,
+        "starttime": 381436447,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452824,
+        "starttime": 381436448,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452856,
+        "starttime": 381436453,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452859,
+        "starttime": 381436454,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452866,
+        "starttime": 381436457,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452879,
+        "starttime": 381436487,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452881,
+        "starttime": 381436488,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452920,
+        "starttime": 381436497,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452921,
+        "starttime": 381436497,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2452929,
+        "starttime": 381436508,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2452952,
+        "starttime": 381436517,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453012,
+        "starttime": 381436556,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453267,
+        "starttime": 381436627,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453269,
+        "starttime": 381436628,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453287,
+        "starttime": 381436632,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453299,
+        "starttime": 381436637,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453300,
+        "starttime": 381436637,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453301,
+        "starttime": 381436637,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453496,
+        "starttime": 381436668,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453497,
+        "starttime": 381436668,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453511,
+        "starttime": 381436688,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453519,
+        "starttime": 381436705,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453549,
+        "starttime": 381436709,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453550,
+        "starttime": 381436709,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453580,
+        "starttime": 381436712,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453605,
+        "starttime": 381436714,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453629,
+        "starttime": 381436718,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453630,
+        "starttime": 381436719,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453631,
+        "starttime": 381436721,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453646,
+        "starttime": 381436740,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453647,
+        "starttime": 381436740,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453692,
+        "starttime": 381436750,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453693,
+        "starttime": 381436750,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453700,
+        "starttime": 381436760,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2453721,
+        "starttime": 381436769,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2453778,
+        "starttime": 381436820,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454132,
+        "starttime": 381436903,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454161,
+        "starttime": 381436913,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454162,
+        "starttime": 381436914,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454164,
+        "starttime": 381436915,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454165,
+        "starttime": 381436916,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454168,
+        "starttime": 381436918,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454201,
+        "starttime": 381436932,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454202,
+        "starttime": 381436932,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454250,
+        "starttime": 381436971,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454268,
+        "starttime": 381436984,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454269,
+        "starttime": 381436984,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454315,
+        "starttime": 381436993,
+        "pgid": 2448112,
+        "sid": 2448112,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454320,
+        "starttime": 381436994,
+        "pgid": 2448114,
+        "sid": 2448114,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454321,
+        "starttime": 381436994,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454324,
+        "starttime": 381436996,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454367,
+        "starttime": 381437003,
+        "pgid": 2448115,
+        "sid": 2448115,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454369,
+        "starttime": 381437004,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454370,
+        "starttime": 381437005,
+        "pgid": 2448109,
+        "sid": 2448109,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454393,
+        "starttime": 381437014,
+        "pgid": 2448110,
+        "sid": 2448110,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454401,
+        "starttime": 381437016,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454420,
+        "starttime": 381437025,
+        "pgid": 2448113,
+        "sid": 2448113,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454427,
+        "starttime": 381437041,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454447,
+        "starttime": 381437050,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2454506,
+        "starttime": 381437111,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454884,
+        "starttime": 381437183,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "S",
+        "uid": 0
+      },
+      {
+        "pid": 2454904,
+        "starttime": 381437193,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2455103,
+        "starttime": 381437564,
+        "pgid": 2448111,
+        "sid": 2448111,
+        "state": "R",
+        "uid": 0
+      },
+      {
+        "pid": 2455105,
+        "starttime": 381437565,
+        "pgid": 2448116,
+        "sid": 2448116,
+        "state": "R",
+        "uid": 0
+      }
+    ],
+    "ownership_errors": [],
+    "signals_sent": [],
+    "ownership_observations": [
+      {
+        "identity": {
+          "pid": 2450343,
+          "starttime": 381435363,
+          "pgid": 2448114,
+          "sid": 2448114,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 2450343"
+      },
+      {
+        "identity": {
+          "pid": 2450402,
+          "starttime": 381435447,
+          "pgid": 2448111,
+          "sid": 2448111,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 2450402"
+      },
+      {
+        "identity": {
+          "pid": 2453299,
+          "starttime": 381436637,
+          "pgid": 2448114,
+          "sid": 2448114,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 2453299"
+      },
+      {
+        "identity": {
+          "pid": 2453550,
+          "starttime": 381436709,
+          "pgid": 2448109,
+          "sid": 2448109,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 2453550"
+      },
+      {
+        "identity": {
+          "pid": 2453580,
+          "starttime": 381436712,
+          "pgid": 2448112,
+          "sid": 2448112,
+          "state": "R",
+          "uid": 0
+        },
+        "event": "token_unreadable",
+        "reason": "observed owned process lost its token: 2453580"
+      }
+    ],
+    "terminal_reconciliations": [
+      {
+        "identity": {
+          "pid": 2450343,
+          "starttime": 381435363,
+          "pgid": 2448114,
+          "sid": 2448114,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 2450343",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 2450402,
+          "starttime": 381435447,
+          "pgid": 2448111,
+          "sid": 2448111,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 2450402",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 2453299,
+          "starttime": 381436637,
+          "pgid": 2448114,
+          "sid": 2448114,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 2453299",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 2453550,
+          "starttime": 381436709,
+          "pgid": 2448109,
+          "sid": 2448109,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 2453550",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      },
+      {
+        "identity": {
+          "pid": 2453580,
+          "starttime": 381436712,
+          "pgid": 2448112,
+          "sid": 2448112,
+          "state": "R",
+          "uid": 0
+        },
+        "reason": "observed owned process lost its token: 2453580",
+        "terminal_proof": "original identity rechecked as absent from procfs"
+      }
+    ],
+    "launcher_reaped": true,
+    "limitations": [
+      "external harness SIGKILL cannot run cleanup",
+      "unobserved descendants that clear the token can escape attribution"
+    ]
+  },
+  "returncode": 1,
+  "elapsed_s": 84.1867668251507,
+  "finished_at": "2026-11-17T07:08:30.227941+00:00"
+}

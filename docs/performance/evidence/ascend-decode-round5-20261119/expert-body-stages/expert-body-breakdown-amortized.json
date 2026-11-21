@@ -1,0 +1,85 @@
+{
+  "repeats": 200,
+  "projections": {
+    "w1_or_w3": {
+      "activation_decode_only": {
+        "per_call_ms": 0.24695142870768905,
+        "total_s": 0.04939028574153781,
+        "repeats": 200
+      },
+      "widen_only": {
+        "per_call_ms": 0.21166709018871188,
+        "total_s": 0.042333418037742376,
+        "repeats": 200
+      },
+      "transpose_to_KN_only": {
+        "per_call_ms": 0.05103254457935691,
+        "total_s": 0.010206508915871382,
+        "repeats": 200
+      },
+      "half_scale_build_only": {
+        "per_call_ms": 0.34404203528538346,
+        "total_s": 0.06880840705707669,
+        "repeats": 200
+      },
+      "matmul_only": {
+        "per_call_ms": 0.042799790389835835,
+        "total_s": 0.008559958077967167,
+        "repeats": 200
+      },
+      "whole_projection": {
+        "per_call_ms": 15.170707565266639,
+        "total_s": 3.034141513053328,
+        "repeats": 200
+      }
+    },
+    "w2": {
+      "activation_decode_only": {
+        "per_call_ms": 0.24323060410097241,
+        "total_s": 0.04864612082019448,
+        "repeats": 200
+      },
+      "widen_only": {
+        "per_call_ms": 0.20396579056978226,
+        "total_s": 0.04079315811395645,
+        "repeats": 200
+      },
+      "transpose_to_KN_only": {
+        "per_call_ms": 0.043839351274073124,
+        "total_s": 0.008767870254814625,
+        "repeats": 200
+      },
+      "half_scale_build_only": {
+        "per_call_ms": 0.33565878635272384,
+        "total_s": 0.06713175727054477,
+        "repeats": 200
+      },
+      "matmul_only": {
+        "per_call_ms": 0.041513333562761545,
+        "total_s": 0.008302666712552309,
+        "repeats": 200
+      },
+      "whole_projection": {
+        "per_call_ms": 15.16920014983043,
+        "total_s": 3.033840029966086,
+        "repeats": 200
+      }
+    }
+  },
+  "projection_of_body": {
+    "w1_or_w3": {
+      "whole_projection_ms": 15.170707565266639,
+      "widen_plus_transpose_plus_halfscale_plus_matmul_ms": 0.6495414604432881,
+      "if_layout_and_scale_were_precomputed_ms": 0.5014183092862368
+    },
+    "w2": {
+      "whole_projection_ms": 15.16920014983043,
+      "widen_plus_transpose_plus_halfscale_plus_matmul_ms": 0.6249772617593408,
+      "if_layout_and_scale_were_precomputed_ms": 0.4887097282335162
+    }
+  },
+  "expert_body": {
+    "whole_three_projections_ms": 45.51061528036371,
+    "with_layout_and_scale_precomputed_ms": 1.4915463468059897
+  }
+}

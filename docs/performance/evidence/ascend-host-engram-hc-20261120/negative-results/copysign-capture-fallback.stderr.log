@@ -1,0 +1,437 @@
+<frozen runpy>:128: RuntimeWarning: 'torch.distributed.run' found in sys.modules after import of package 'torch.distributed', but prior to execution of 'torch.distributed.run'; this may result in unpredictable behaviour
+[W1120 14:32:24.318712585 ProcessGroupHCCL.cpp:1372] Warning: The watchdog timeout 180000ms(which is set by init_process_group) is less than or equal to HCCL execution timeout 1836000ms! The plog may not be recorded. (function ProcessGroupHCCL)
+[rank0]:[W1120 14:32:30.348235666 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank0]:[W1120 14:32:33.136212631 VariableFallbackKernel.cpp:257] Warning: CAUTION: The operator 'aten::copysign.out' is not currently supported on the NPU backend and will fall back to run on the CPU. This may have performance implications. (function npu_cpu_fallback)
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187977, Device:1, RankID:1) ERR00100 PTA call acl api failed.
+[PID: 3187977] 2026-11-20-14:32:33.510.459 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187977 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470611721584, stream=<torch_npu.npu.Stream device=npu:1 npu_stream=0xaaaafc7f3a38>, pool=((0, 1),), device=1
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187978, Device:2, RankID:2) ERR00100 PTA call acl api failed.
+[PID: 3187978] 2026-11-20-14:32:33.511.396 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187978 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470270327984, stream=<torch_npu.npu.Stream device=npu:2 npu_stream=0xaaab213e4178>, pool=((0, 1),), device=2
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187979, Device:3, RankID:3) ERR00100 PTA call acl api failed.
+[PID: 3187979] 2026-11-20-14:32:33.511.696 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187979 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470121381136, stream=<torch_npu.npu.Stream device=npu:3 npu_stream=0xaaaaf2d3e768>, pool=((0, 1),), device=3
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187980, Device:4, RankID:4) ERR00100 PTA call acl api failed.
+[PID: 3187980] 2026-11-20-14:32:33.512.747 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187980 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470386572656, stream=<torch_npu.npu.Stream device=npu:4 npu_stream=0xaaab0bf512d8>, pool=((0, 1),), device=4
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187981, Device:5, RankID:5) ERR00100 PTA call acl api failed.
+[PID: 3187981] 2026-11-20-14:32:33.523.609 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187981 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470118120912, stream=<torch_npu.npu.Stream device=npu:5 npu_stream=0xaaab050a3ea8>, pool=((0, 1),), device=5
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187982, Device:6, RankID:6) ERR00100 PTA call acl api failed.
+[PID: 3187982] 2026-11-20-14:32:33.523.794 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187982 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470469885296, stream=<torch_npu.npu.Stream device=npu:6 npu_stream=0xaaab177acd68>, pool=((0, 1),), device=6
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187983, Device:7, RankID:7) ERR00100 PTA call acl api failed.
+[PID: 3187983] 2026-11-20-14:32:33.524.257 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187983 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470401612976, stream=<torch_npu.npu.Stream device=npu:7 npu_stream=0xaaab31d1e0e8>, pool=((0, 1),), device=7
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+NPUGraph: ERROR — capture failed: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[ERROR] 2026-11-20-14:32:33 (PID:3187976, Device:0, RankID:0) ERR00100 PTA call acl api failed.
+[PID: 3187976] 2026-11-20-14:32:33.524.695 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+TraceBack (most recent call last):
+        rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+        Synchronous memory copy failed. Reason: The current thread 3187976 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+        rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+, graph_id=281470673194160, stream=<torch_npu.npu.Stream device=npu:0 npu_stream=0xaaaae7023628>, pool=((0, 1),), device=0
+NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank0]:     main()
+[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank0]:     actual = manager._forward(entry, x, ids, mask)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank0]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank0]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank0]:     body()
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank0]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank0]:                                   ^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank0]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank0]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank0]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank0]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank0]: [ERROR] 2026-11-20-14:32:33 (PID:3187976, Device:0, RankID:0) ERR00100 PTA call acl api failed.
+[rank0]: [PID: 3187976] 2026-11-20-14:32:33.524.695 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank0]: TraceBack (most recent call last):
+[rank0]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank0]:         Synchronous memory copy failed. Reason: The current thread 3187976 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank0]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+[rank5]: Traceback (most recent call last):
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank5]:     main()
+[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:     return func(*args, **kwargs)
+[rank5]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank5]:     actual = manager._forward(entry, x, ids, mask)
+[rank5]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank5]:     return func(*args, **kwargs)
+[rank5]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank5]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank5]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank5]:     body()
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank5]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank5]:                                   ^^^^^^^^^^^^^^^^^
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank5]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank5]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank5]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank5]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank5]: [ERROR] 2026-11-20-14:32:33 (PID:3187981, Device:5, RankID:5) ERR00100 PTA call acl api failed.
+[rank5]: [PID: 3187981] 2026-11-20-14:32:33.523.609 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank5]: TraceBack (most recent call last):
+[rank5]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank5]:         Synchronous memory copy failed. Reason: The current thread 3187981 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank5]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank3]:     main()
+[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank3]:     actual = manager._forward(entry, x, ids, mask)
+[rank3]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank3]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank3]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank3]:     body()
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank3]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank3]:                                   ^^^^^^^^^^^^^^^^^
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank3]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank3]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank3]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank3]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank3]: [ERROR] 2026-11-20-14:32:33 (PID:3187979, Device:3, RankID:3) ERR00100 PTA call acl api failed.
+[rank3]: [PID: 3187979] 2026-11-20-14:32:33.511.696 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank3]: TraceBack (most recent call last):
+[rank3]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank3]:         Synchronous memory copy failed. Reason: The current thread 3187979 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank3]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank2]:     main()
+[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:     return func(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank2]:     actual = manager._forward(entry, x, ids, mask)
+[rank2]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank2]:     return func(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank2]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank2]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank2]:     body()
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank2]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank2]:                                   ^^^^^^^^^^^^^^^^^
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank2]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank2]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank2]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank2]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank2]: [ERROR] 2026-11-20-14:32:33 (PID:3187978, Device:2, RankID:2) ERR00100 PTA call acl api failed.
+[rank2]: [PID: 3187978] 2026-11-20-14:32:33.511.396 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank2]: TraceBack (most recent call last):
+[rank2]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank2]:         Synchronous memory copy failed. Reason: The current thread 3187978 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank2]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+[rank4]: Traceback (most recent call last):
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank4]:     main()
+[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:     return func(*args, **kwargs)
+[rank4]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank4]:     actual = manager._forward(entry, x, ids, mask)
+[rank4]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank4]:     return func(*args, **kwargs)
+[rank4]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank4]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank4]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank4]:     body()
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank4]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank4]:                                   ^^^^^^^^^^^^^^^^^
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank4]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank4]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank4]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank4]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank4]: [ERROR] 2026-11-20-14:32:33 (PID:3187980, Device:4, RankID:4) ERR00100 PTA call acl api failed.
+[rank4]: [PID: 3187980] 2026-11-20-14:32:33.512.747 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank4]: TraceBack (most recent call last):
+[rank4]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank4]:         Synchronous memory copy failed. Reason: The current thread 3187980 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank4]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+[rank7]: Traceback (most recent call last):
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank7]:     main()
+[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:     return func(*args, **kwargs)
+[rank7]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank7]:     actual = manager._forward(entry, x, ids, mask)
+[rank7]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank7]:     return func(*args, **kwargs)
+[rank7]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank7]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank7]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank7]:     body()
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank7]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank7]:                                   ^^^^^^^^^^^^^^^^^
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank7]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank7]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank7]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank7]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank7]: [ERROR] 2026-11-20-14:32:33 (PID:3187983, Device:7, RankID:7) ERR00100 PTA call acl api failed.
+[rank7]: [PID: 3187983] 2026-11-20-14:32:33.524.257 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank7]: TraceBack (most recent call last):
+[rank7]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank7]:         Synchronous memory copy failed. Reason: The current thread 3187983 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank7]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+[rank6]: Traceback (most recent call last):
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank6]:     main()
+[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:     return func(*args, **kwargs)
+[rank6]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank6]:     actual = manager._forward(entry, x, ids, mask)
+[rank6]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank6]:     return func(*args, **kwargs)
+[rank6]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank6]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank6]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank6]:     body()
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank6]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank6]:                                   ^^^^^^^^^^^^^^^^^
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank6]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank6]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank6]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank6]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank6]: [ERROR] 2026-11-20-14:32:33 (PID:3187982, Device:6, RankID:6) ERR00100 PTA call acl api failed.
+[rank6]: [PID: 3187982] 2026-11-20-14:32:33.523.794 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank6]: TraceBack (most recent call last):
+[rank6]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank6]:         Synchronous memory copy failed. Reason: The current thread 3187982 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank6]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 158, in <module>
+[rank1]:     main()
+[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py", line 102, in main
+[rank1]:     actual = manager._forward(entry, x, ids, mask)
+[rank1]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in _forward
+[rank1]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank1]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 247, in _record
+[rank1]:     body()
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 316, in <lambda>
+[rank1]:     entry.graph = _record(lambda: self._body(entry), self.graph_pool, 1, self.graph_api)
+[rank1]:                                   ^^^^^^^^^^^^^^^^^
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_device_engram.py", line 256, in _body
+[rank1]:     entry.output = original_engram_gate(entry.x, complete, entry.channel_weight, entry.mask,
+[rank1]:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/original_fp8_engram.py", line 61, in original_engram_gate
+[rank1]:     gate = torch.sigmoid(torch.copysign(dot.abs().clamp_min(clamp_value).sqrt(), dot))
+[rank1]:                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]: RuntimeError: copy_between_host_and_device_opapi:../torch_npu/csrc/aten/ops/op_api/CopyKernelOpApi.cpp:92 NPU function error: aclrtMemcpy, error code is 107030
+[rank1]: [ERROR] 2026-11-20-14:32:33 (PID:3187977, Device:1, RankID:1) ERR00100 PTA call acl api failed.
+[rank1]: [PID: 3187977] 2026-11-20-14:32:33.510.459 Not_Supported(EE1016): Synchronizing a stream failed. Reason: Stream (stream_id=42) during the capture stage is not supported.
+[rank1]: TraceBack (most recent call last):
+[rank1]:         rtStreamSynchronize execution failed, reason=stream is captured[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+[rank1]:         Synchronous memory copy failed. Reason: The current thread 3187977 is in the capture state and the current operation cannot be performed. Check whether the mode set by the aclmdlRICaptureBegin API supports the current operation. This operation is supported only in the RELAXED mode. The mode set using the aclmdlRICaptureBegin API is GLOBAL(0), and the capture mode of the current thread is GLOBAL(0).
+[rank1]:         rtMemcpy execution failed, reason=operation not permitted when a stream is capturing and the specified capture mode is not relaxed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:76]
+
+W1120 14:32:39.703000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187976 closing signal SIGTERM
+W1120 14:32:39.703000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187977 closing signal SIGTERM
+W1120 14:32:39.704000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187978 closing signal SIGTERM
+W1120 14:32:39.704000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187979 closing signal SIGTERM
+W1120 14:32:39.704000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187981 closing signal SIGTERM
+W1120 14:32:39.705000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187982 closing signal SIGTERM
+W1120 14:32:39.705000 3187966 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 3187983 closing signal SIGTERM
+E1120 14:32:40.221000 3187966 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 4 (pid: 3187980) of binary: /data1/relic-online-unpack-20261117-0534/venv311/bin/python
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 995, in <module>
+    main()
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/data1/relic-v41-perf-20261118-0938/source/probe_device_engram.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-11-20_14:32:40
+  host      : ascend216
+  rank      : 0 (local_rank: 0)
+  exitcode  : -15 (pid: 3187976)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3187976
+[2]:
+  time      : 2026-11-20_14:32:40
+  host      : ascend216
+  rank      : 1 (local_rank: 1)
+  exitcode  : -15 (pid: 3187977)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3187977
+[3]:
+  time      : 2026-11-20_14:32:40
+  host      : ascend216
+  rank      : 2 (local_rank: 2)
+  exitcode  : -15 (pid: 3187978)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3187978
+[4]:
+  time      : 2026-11-20_14:32:40
+  host      : ascend216
+  rank      : 3 (local_rank: 3)
+  exitcode  : -15 (pid: 3187979)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3187979
+[5]:
+  time      : 2026-11-20_14:32:40
+  host      : ascend216
+  rank      : 5 (local_rank: 5)
+  exitcode  : 1 (pid: 3187981)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[6]:
+  time      : 2026-11-20_14:32:40
+  host      : ascend216
+  rank      : 6 (local_rank: 6)
+  exitcode  : -15 (pid: 3187982)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3187982
+[7]:
+  time      : 2026-11-20_14:32:40
+  host      : ascend216
+  rank      : 7 (local_rank: 7)
+  exitcode  : -15 (pid: 3187983)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 3187983
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-11-20_14:32:39
+  host      : ascend216
+  rank      : 4 (local_rank: 4)
+  exitcode  : 1 (pid: 3187980)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

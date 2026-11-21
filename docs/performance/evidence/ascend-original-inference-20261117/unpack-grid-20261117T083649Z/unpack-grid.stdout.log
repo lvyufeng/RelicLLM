@@ -1,0 +1,43 @@
+......................................................................F. [ 67%]
+..................................                                       [100%]
+=================================== FAILURES ===================================
+_______ test_scale_forced_grid_stride_preserves_all_bits_and_tail_guard ________
+
+device = device(type='npu', index=0)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xffff20eae890>
+
+    def test_scale_forced_grid_stride_preserves_all_bits_and_tail_guard(device, monkeypatch):
+        monkeypatch.setattr(ascend_unpack, "MAX_PROGRAMS", 2)
+        count = 4097
+        host = (torch.arange(count, dtype=torch.int32) % 256).to(torch.uint8)
+        expected = fp4_int8_scale(host, backend="torch")
+        raw = host.to(device)
+        guard = 64
+        storage = torch.full((count + 2 * guard,), -85.0, dtype=torch.float32, device=device)
+        output = storage[guard:-guard]
+        assert ascend_unpack._grid(count) == (2,)
+>       assert fp4_int8_scale(raw, backend="triton", out=output) is output
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_ascend_unpack_grid.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (tensor([  0,   1,   2,  ..., 254, 255,   0], device='npu:0', dtype=torch.uint8),)
+kwargs = {'backend': 'triton', 'out': tensor([-85., -85., -85.,  ..., -85., -85., -85.], device='npu:0')}
+
+    @functools.wraps(func)
+    def decorate_context(*args, **kwargs):
+        # pyrefly: ignore [bad-context-manager]
+        with ctx_factory():
+>           return func(*args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fp4_int8_scale() got an unexpected keyword argument 'out'
+
+/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py:124: TypeError
+=============================== warnings summary ===============================
+tests/test_online_unpack.py::test_frontend_torch_chunks_cross_matrix_and_batch_boundaries
+  /data1/relic-v41-infer-20261117-1424/source/relic-core/relic_core/kernels/unpack.py:251: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:437.)
+    row = (indices // columns) % rows
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 failed, 105 passed, 1 warning in 64.19s (0:01:04)

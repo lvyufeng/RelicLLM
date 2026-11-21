@@ -1,0 +1,122 @@
+{
+  "rank": 5,
+  "profile_steps": 2,
+  "instrumented_step_seconds": [
+    11.926903808955103,
+    11.717732653953135
+  ],
+  "records": {
+    "hc.mix": {
+      "calls": 160,
+      "inclusive_s": 0.6058047618716955,
+      "exclusive_s": 0.6058047618716955
+    },
+    "hc.pre": {
+      "calls": 162,
+      "inclusive_s": 0.04257412254810333,
+      "exclusive_s": 0.04257412254810333
+    },
+    "activation.fp8_quant": {
+      "calls": 833,
+      "inclusive_s": 0.30649971636012197,
+      "exclusive_s": 0.30649971636012197
+    },
+    "gemm.npu_fp8": {
+      "calls": 576,
+      "inclusive_s": 2.354544019792229,
+      "exclusive_s": 2.354544019792229
+    },
+    "linear.npu_total": {
+      "calls": 576,
+      "inclusive_s": 2.77025544969365,
+      "exclusive_s": 0.20367857348173857
+    },
+    "unpack.fp8": {
+      "calls": 80,
+      "inclusive_s": 0.03581993281841278,
+      "exclusive_s": 0.03581993281841278
+    },
+    "collective.all_reduce": {
+      "calls": 176,
+      "inclusive_s": 9.040802451316267,
+      "exclusive_s": 9.040802451316267
+    },
+    "attention.total": {
+      "calls": 80,
+      "inclusive_s": 2.7958322195336223,
+      "exclusive_s": 0.6788558796979487
+    },
+    "hc.post": {
+      "calls": 160,
+      "inclusive_s": 0.049717067275196314,
+      "exclusive_s": 0.049717067275196314
+    },
+    "routed_experts.total": {
+      "calls": 80,
+      "inclusive_s": 5.374328261241317,
+      "exclusive_s": 0.07988341012969613
+    },
+    "shared_expert.total": {
+      "calls": 80,
+      "inclusive_s": 0.8965090797282755,
+      "exclusive_s": 0.05225747264921665
+    },
+    "moe.total": {
+      "calls": 80,
+      "inclusive_s": 15.274016686715186,
+      "exclusive_s": 0.08794186869636178
+    },
+    "engram.lookup": {
+      "calls": 4,
+      "inclusive_s": 0.10922527499496937,
+      "exclusive_s": 0.10922527499496937
+    },
+    "gemm.cpu_reference": {
+      "calls": 4,
+      "inclusive_s": 4.638602040242404,
+      "exclusive_s": 4.638602040242404
+    },
+    "engram.cpu_compute": {
+      "calls": 4,
+      "inclusive_s": 4.7552814274095,
+      "exclusive_s": 0.00745411217212677
+    },
+    "engram.total_boundary": {
+      "calls": 4,
+      "inclusive_s": 4.7575385621748865,
+      "exclusive_s": 0.0022571347653865814
+    },
+    "unpack.fp4": {
+      "calls": 177,
+      "inclusive_s": 2.702342875301838,
+      "exclusive_s": 2.702342875301838
+    },
+    "unpack.half_scale": {
+      "calls": 177,
+      "inclusive_s": 0.06208362150937319,
+      "exclusive_s": 0.06208362150937319
+    },
+    "expert.host_read_transfer_unpack": {
+      "calls": 59,
+      "inclusive_s": 2.973328821361065,
+      "exclusive_s": 0.2089023245498538
+    },
+    "expert.cache_access": {
+      "calls": 59,
+      "inclusive_s": 2.986770387273282,
+      "exclusive_s": 0.013441565912216902
+    },
+    "gemm.npu_fp4": {
+      "calls": 177,
+      "inclusive_s": 2.1814316953532398,
+      "exclusive_s": 2.1814316953532398
+    },
+    "expert.compute": {
+      "calls": 59,
+      "inclusive_s": 2.307674463838339,
+      "exclusive_s": 0.06136349868029356
+    }
+  },
+  "synchronized_nested_exclusive": true,
+  "instrumented_times_not_used_for_TPS": true
+}

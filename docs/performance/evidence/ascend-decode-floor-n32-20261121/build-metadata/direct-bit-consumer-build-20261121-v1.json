@@ -1,0 +1,35 @@
+{
+  "report": "/data1/relic-v41-perf-20261118-0938/logs/build-original-direct-bit-consumers-20261121T031623Z/direct-bit-consumer-build.json",
+  "variants": {
+    "k128-direct-bits": {
+      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k128-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
+      "sha256": "712fdfdad1a0c8c431fc4a50cc2207c2b9b92b5a41210664ee8f77b6cd104765",
+      "group_k": 4,
+      "direct_bits": true,
+      "source_hashes": {
+        "online_tile_cube.cpp": "7ffa21dd71de88ac4a1470d3de916519a78930bb3d32f1d93341c035ec9325dc",
+        "CMakeLists.txt": "79f7eadffe35be64bf04c2cf21ba0ade168e6a6e8f598b8511af073cfaef0ad6",
+        "kernel_entry.cpp.in": "d2219d9bf078225c9d4856a4bc1ac599662452d440a548090e5431f8821d0b55"
+      },
+      "preload_activation": false,
+      "no_original_binary_overwrite": true
+    },
+    "k256-direct-bits": {
+      "library": "/data1/relic-v41-perf-20261118-0938/cache/online-tile-consumer-k256-direct-bits-20261121-v1/lib/librelic_online_tile_cube.so",
+      "sha256": "83b91e5740ddc92003871908cd69517c8e5d7a9e6dadfffcd75aae8d87ba3510",
+      "group_k": 8,
+      "direct_bits": true,
+      "source_hashes": {
+        "online_tile_cube.cpp": "7ffa21dd71de88ac4a1470d3de916519a78930bb3d32f1d93341c035ec9325dc",
+        "CMakeLists.txt": "79f7eadffe35be64bf04c2cf21ba0ade168e6a6e8f598b8511af073cfaef0ad6",
+        "kernel_entry.cpp.in": "d2219d9bf078225c9d4856a4bc1ac599662452d440a548090e5431f8821d0b55"
+      },
+      "preload_activation": false,
+      "no_original_binary_overwrite": true
+    }
+  },
+  "original_binary_hashes": {
+    "online-tile-cube-k128-v2": "0cd9111e373859c5b8d4ec09089a952467f26b6c88a3fb387842b11c0725b287",
+    "online-tile-consumer-k256-20261120-v2": "74f02ea70143da14fb3d06a5cef47e62f42a8d574257c32b8b5120575aab8894"
+  }
+}

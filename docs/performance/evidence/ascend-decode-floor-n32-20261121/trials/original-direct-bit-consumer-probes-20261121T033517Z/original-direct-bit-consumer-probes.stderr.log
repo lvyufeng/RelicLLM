@@ -1,0 +1,63 @@
+[W1121 11:35:22.626311246 NPUCachingAllocator.cpp:204] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+Traceback (most recent call last):
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py", line 310, in compile
+    next_module = compile_ir(module, metadata)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/compiler.py", line 778, in <lambda>
+    lambda src, metadata: linalg_to_bin_enable_npu_compile_A2_A3(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/backends/ascend/compiler.py", line 549, in linalg_to_bin_enable_npu_compile_A2_A3
+    ret = subprocess.run(cmd_list, capture_output=True, check=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/python311-base/python/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/local/Ascend/cann-9.2.0/bin/bishengir-compile', '/data1/relic-v41-perf-20261118-0938/tmp/tmpe6so_ulf/kernel.ttadapter.mlir', '--target=Ascend910B3', '--enable-auto-multi-buffer=True', '--enable-auto-bind-sub-block=True', '--enable-hfusion-compile=true', '--enable-hivm-compile=true', '--enable-triton-kernel-compile=true', '-o', '/data1/relic-v41-perf-20261118-0938/tmp/tmpe6so_ulf/kernel']' returned non-zero exit status 1.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data1/relic-v41-perf-20261118-0938/source/probe_direct_bit_decoders.py", line 179, in <module>
+    main()
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/probe_direct_bit_decoders.py", line 80, in main
+    state = entry(op, x, bt, st, ids, 4016)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/probe_direct_bit_decoders.py", line 33, in entry
+    state["graph"] = _record(body, state["pool"], 2, api)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/RelicLLM/relicllm/models/deepseek_v4_1/ascend_graphs.py", line 242, in _record
+    body()
+  File "/data1/relic-v41-perf-20261118-0938/source/probe_direct_bit_decoders.py", line 30, in body
+    state["out"] = op(x, b, s, ids, world=1, certified_bf16_operands=True, scratch=ring, accumulation=accum)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-v41-perf-20261118-0938/source/relic-core/relic_core/kernels/direct_aiv_gemv.py", line 72, in __call__
+    original_bit_aiv_gemv_kernel[(min(groups * tiles, self.block_dim),)](
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 353, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/runtime/jit.py", line 660, in run
+    kernel = self.compile(
+             ^^^^^^^^^^^^^
+  File "/data1/relic-online-unpack-20261117-0534/venv311/lib/python3.11/site-packages/triton/compiler/compiler.py", line 320, in compile
+    raise MLIRCompilationError(stage_name, error_detail)
+triton.compiler.errors.MLIRCompilationError: 
+///------------------[ERROR][Triton][BEG]------------------
+[ConvertLinalgRToBinary] encounters error:
+[NOTE] Ub overflow detected; automatically set enable-code-motion to false and retrying compilation.
+[NOTE] Ub overflow detected; automatically set enable-auto-multi-buffer to false and retrying compilation.
+[NOTE] Due to Ub overflow, automatically set enable-code-motion to false, set enable-auto-multi-buffer to false; compilation still failed.
+loc("/data1/relic-v41-perf-20261118-0938/tmp/tmpe6so_ulf/kernel.ttadapter.mlir":2:1): error: Failed to run BiShengHIR pipeline
+
+loc("/data1/relic-v41-perf-20261118-0938/tmp/tmpe6so_ulf/kernel.ttadapter.mlir":3:3): error: ub overflow, requires 1652736 bits while 1572864 bits available! (possible reason: tiling basic block is too large or block number is more than what user expect due to multi-buffer feature is enabled and some ops need extra local buffer.)
+[ERROR] Failed to run BiShengIR pipeline
+
+
+[INFO]: The compiled kernel cache is in /data1/relic-v41-perf-20261118-0938/cache/triton/mQ8SmCOrrYMViAR9Ojkzyd-0quAAPzZ7mppilrphUNE
+
+///------------------[ERROR][Triton][END]------------------
+
