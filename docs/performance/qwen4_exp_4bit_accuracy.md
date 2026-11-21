@@ -1344,7 +1344,7 @@ inside decode. In the new complete 8K/128 run, depths 3/4 remained greedy-identi
 The native-total 128-output run subsequently completed: depth 3 measured **72.679 tok/s excluding
 setup/cleanup, 56.289 including cleanup**; depth 4 measured **71.964 / 66.560 tok/s**. Both delivered
 all 128 greedy ids with matching callbacks and every rank, at 262016 + 128 = 262144 logical positions.
-Evidence: [complete native 128-output results](../../tests/data/qwen4_exp/r361_exact_startup_native256k.jsonl).
+Evidence: [complete native 128-output results](https://github.com/lvyufeng/RelicLLM/blob/master/tests/data/qwen4_exp/r361_exact_startup_native256k.jsonl).
 These are short-output qualifications, not a hardware ceiling or a universal production rate.
 
 The extended 512-output test then **failed at output index 464**. Its earlier fast timing is not a
@@ -1361,7 +1361,7 @@ also matched the previous plain 512-token reference without redefining the answe
 captured one-query tail steps. Plain measured 37.001 tok/s excluding setup. The 512-output run's
 2.147 tokens/trunk step is lower than the earlier 128-output workload's 2.702; throughput depends on
 proposal acceptance as well as the kernel path. Evidence: [corrected complete native 512-output
-result](../../tests/data/qwen4_exp/r362_norm_fixed_native512.jsonl). **100 tok/s remains unachieved.**
+result](https://github.com/lvyufeng/RelicLLM/blob/master/tests/data/qwen4_exp/r362_norm_fixed_native512.jsonl). **100 tok/s remains unachieved.**
 
 A complete two-host PD handoff has separately passed at **8192 input + 128 output**. The receiving
 TP8 host did not repeat prefill; all 128 outputs equal the source/plain reference, with every rank and
@@ -1377,5 +1377,5 @@ prototype transferred the rank-local copies in 17.290 seconds of payload phases 
 link; deduplicated wire transport and asynchronous prefill overlap are not yet implemented. PD does
 not add GPUs to single-request decode. Two complete replicas generally provide more aggregate
 capacity for this prefill-dominated workload. The detailed scope, byte accounting and theoretical
-analysis are in [the roofline and PD report](../../tests/data/qwen4_exp/r362_roofline_pd_report.md).
+analysis are in [the roofline and PD report](https://github.com/lvyufeng/RelicLLM/blob/master/tests/data/qwen4_exp/r362_roofline_pd_report.md).
 
