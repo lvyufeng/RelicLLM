@@ -37,7 +37,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from relic_core.kernels.ops import act_quant, fp4_act_quant, sparse_attn
+from relic_core.kernels.ops import sparse_attn
+from relicllm.models.deepseek_v4_1.ascend_activation import act_quant, fp4_act_quant
 from relicllm.models.deepseek_v4_1 import mma
 from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.decode_pos import Pos, publish, write_row
@@ -139,6 +140,8 @@ def precompute_freqs_cis(
     beta_fast: int,
     beta_slow: int,
     device: torch.device | None = None,
+    *,
+    pairs: bool | None = None,
 ) -> torch.Tensor:
     """Rotary frequencies as complex exponentials, one row per position.
 
@@ -161,6 +164,15 @@ def precompute_freqs_cis(
     still hold the object they were handed, so the next call for the same key builds a *second* 268 MB
     table beside it rather than reusing the live one. Sixteen leaves room for that without ever
     reaching for it.
+
+    **The table is complex on an old device and a real `(cos, sin)` pair on an NPU.** Ascend has no
+    complex dtype or complex arithmetic in torch_npu 2.10, so a table built for an NPU is
+    `[seqlen, dim // 2, 2]` float32, contiguous, with `[..., 0]` the cosine and `[..., 1]` the sine.
+    It is not a second computation of the angles: the host `torch.polar` product is built first and
+    `view_as_real` reinterprets it, so the pair form carries exactly the bits the complex form did.
+    `pairs` forces one form or the other and defaults to what the destination device needs; it
+    exists so a test can build the NPU table on a host with no card, which is the only way the
+    portable oracle can compare the two forms. `apply_rotary_emb` dispatches on the dtype.
     """
     freqs = 1.0 / (base ** (torch.arange(0, dim, 2, dtype=torch.float32) / dim))
     if original_seq_len > 0:
@@ -177,6 +189,18 @@ def precompute_freqs_cis(
     table = torch.polar(
         torch.ones_like(torch.outer(torch.arange(seqlen), freqs)), torch.outer(torch.arange(seqlen), freqs)
     )
+    if pairs is None:
+        # Ascend has no complex dtype, so a model built on an NPU takes the real pair form.
+        # The decision is made here, on the host, where `torch.polar` still runs: the complex
+        # table is the same one every other device gets, and `view_as_real` only reinterprets
+        # its storage as float32 (cos, sin) columns. Deriving cos/sin a second way would be a
+        # second rounding of the same angle, which is why the host complex value is reused
+        # rather than recomputed.
+        pairs = device is not None and torch.device(device).type == "npu"
+    if pairs:
+        # `[seqlen, dim // 2, 2]`, contiguous float32, with `[..., 0]` the cosine and
+        # `[..., 1]` the sine -- the same real values `torch.polar` just computed.
+        table = torch.view_as_real(table).contiguous()
     return table if device is None else table.to(device)
 
 
@@ -186,7 +210,15 @@ def apply_rotary_emb(x: torch.Tensor, freqs_cis: torch.Tensor, inverse: bool = F
     Accepts `[b, s, d]` and `[b, s, h, d]`; `inverse` conjugates the rotation, which is how the
     attention output has the query's rotation removed again so the KV cache can stay in one shared
     rotated form rather than two.
+
+    Two table forms are accepted, decided by the table's dtype rather than by a flag. A complex
+    table is the old-device path and runs the code below unchanged. A real `[s, d // 2, 2]` table is
+    the NPU path -- Ascend has no complex arithmetic -- and is handed to
+    :func:`apply_rotary_emb_pairs`; both produce the same rotation, and on the model's BF16
+    activations the same bits (see that function's note on the FP32 last-ulp boundary).
     """
+    if not torch.is_complex(freqs_cis):
+        return apply_rotary_emb_pairs(x, freqs_cis, inverse)
     y = x
     x = torch.view_as_complex(x.float().unflatten(-1, (-1, 2)))
     if inverse:
@@ -197,6 +229,72 @@ def apply_rotary_emb(x: torch.Tensor, freqs_cis: torch.Tensor, inverse: bool = F
         freqs_cis = freqs_cis.view(1, x.size(1), 1, x.size(-1))
     y.copy_(torch.view_as_real(x * freqs_cis).flatten(-2))
     return y
+
+
+def apply_rotary_emb_pairs(
+    x: torch.Tensor, freqs: torch.Tensor, inverse: bool = False
+) -> torch.Tensor:
+    """The same rotation as :func:`apply_rotary_emb`, on a real `(cos, sin)` table.
+
+    `freqs` is `[s, d // 2, 2]` (`[..., 0]` cosine, `[..., 1]` sine), the form
+    :func:`precompute_freqs_cis` returns for an NPU: adjacent elements of `x` are one complex
+    number and are rotated as `even * cos - odd * sin`, `even * sin + odd * cos`, with `inverse`
+    negating the sine (the conjugate the complex path spells as `.conj()`).
+
+    Everything is computed in FP32 and written back with `copy_` into `x`'s own storage, which is
+    the complex path's arithmetic -- `x.float()` in, the product in FP32, one narrowing on the way
+    back out. The write goes through strided `[..., 0::2]` / `[..., 1::2]` views, so the in-place
+    contract holds for the `q[..., -rope:]` slices the model rotates, which are not contiguous.
+
+    Bit parity has one seam and it is not in the rotation: a complex multiply in ATen is not the
+    same sequence of FP32 operations as the two real products above, so on FP32 inputs the two
+    forms can differ by an ulp. On BF16 inputs -- the model's activations -- the difference never
+    survived the narrowing on the corpus that was compared, and that is the claim the tests make;
+    an FP32 input sitting exactly on a BF16 tie could in principle land either way, so this is not
+    stated as universal bit parity.
+    """
+    if x.size(-1) % 2:
+        raise ValueError(
+            f"the rotated width {x.size(-1)} is odd; rotary pairs adjacent elements, so it has to be even"
+        )
+    if x.ndim not in (3, 4):
+        raise ValueError(f"rotary expects [b, s, d] or [b, s, h, d], got {x.ndim}-dimensional input")
+    if freqs.ndim == 2 and x.size(1) == 1:
+        # A compressed/indexer decode picks one positional row, just as the
+        # complex path accepts [d/2] and reshapes it to a one-position table.
+        freqs = freqs.unsqueeze(0)
+    if freqs.ndim != 3 or freqs.size(-1) != 2 or freqs.size(-2) != x.size(-1) // 2:
+        raise ValueError(
+            f"the rotary table must be [s, {x.size(-1) // 2}, 2], got {tuple(freqs.shape)}"
+        )
+    if x.size(1) != freqs.size(0):
+        raise ValueError(
+            f"the rotary table has {freqs.size(0)} rows but the input has {x.size(1)} positions"
+        )
+    cosine = freqs[..., 0].to(torch.float32)
+    sine = freqs[..., 1].to(torch.float32)
+    if inverse:
+        sine = -sine
+    if x.ndim == 3:
+        cosine, sine = cosine.unsqueeze(0), sine.unsqueeze(0)
+    else:
+        cosine, sine = cosine.unsqueeze(0).unsqueeze(2), sine.unsqueeze(0).unsqueeze(2)
+    even, odd = x[..., 0::2], x[..., 1::2]
+    even_f32, odd_f32 = even.float(), odd.float()
+    # Both products are formed before the write. That is not decoration: for an FP32 `x`, `.float()`
+    # returns `even`/`odd` themselves rather than a copy, so any write that landed between the two
+    # products would feed the second one a half-rotated operand.
+    new_even = even_f32 * cosine - odd_f32 * sine
+    new_odd = even_f32 * sine + odd_f32 * cosine
+    # One copy into the destination rather than two through the strided `[..., 0::2]` / `[..., 1::2]`
+    # views. The values are identical either way -- this is a data move, not a computation -- but on
+    # Ascend a `copy_` whose source is strided is a format-converting ViewCopy, measured at about
+    # ninety microseconds on one of these rope slices, and rope runs several times per layer. Writing
+    # the interleaved pair once keeps the source contiguous and the copy a plain move. The strided
+    # views are still how the operands are read, which is what leaves the in-place contract intact
+    # for the `q[..., -rope:]` slices the model rotates.
+    x.copy_(torch.stack((new_even, new_odd), dim=-1).flatten(-2))
+    return x
 
 
 def _is_continuation(pos: Pos, seqlen: int) -> bool:

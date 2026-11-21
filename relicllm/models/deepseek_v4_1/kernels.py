@@ -118,9 +118,10 @@ def fp4_act_quant_e4m3(
     indexer path wants. The reference's `fp4_quant_kernel` branches on the scale dtype, and the
     branch that stores **E4M3** differs in two ways that are not cosmetic:
 
-    * The scale is `e4m3(amax / 6)` -- a rounding of the *ratio*, not of the amax -- where E8M0
-      stores `2**round(log2(amax / 6))`. So the two branches agree on the packed nibbles for most
-      inputs and disagree on the scale for all of them.
+    * The scale is `e4m3(amax / 6)` -- a rounding of the *ratio*, not of the amax. The
+      released E8M0 branch uses the bit ceiling of `amax * fl32(1/6)`; the legacy
+      CPU/CUDA port retains its existing rounded-power-of-two implementation.
+      The NPU binding uses the source-derived ceiling in relic-core.
     * The amax floor is `6 * 2**-9` rather than `6 * 2**-126`, which is high enough that an all-zero
       block still gets a **nonzero** scale. That is the point of the branch: a zero scale cannot be
       divided out on the way back, and the compressed-KV cache is read back on every step.
@@ -132,6 +133,9 @@ def fp4_act_quant_e4m3(
     accepted, and `inplace=True` quantizes and dequantizes back into `x`, as the reference's
     `inplace` does.
     """
+    if x.device.type == "npu":
+        from .ascend_activation import fp4_quant_npu
+        return fp4_quant_npu(x, block_size, inplace, scale_format="e4m3")
     n = x.size(-1)
     if n == 0 or block_size <= 0 or n % block_size:
         # `n == 0` is called out separately because it is the one ragged width that passes both
@@ -334,6 +338,13 @@ def quantized_linear(
     if not quantized:
         return F.linear(x, weight)
     emulate = _reference_reduction_enabled() if emulate_reduction is None else emulate_reduction
+    if x.device.type == "npu":
+        # Original byte codes/grid enter the NPU operator directly. No native
+        # float8 cast, float64 exponent walk or source-code recovery is needed.
+        from .ascend_linear import quantized_linear_ascend
+        return quantized_linear_ascend(
+            x, weight, block_size=block_size, emulate_reduction=emulate
+        )
     if emulate:
         # Both halves of what the rule runs on, as `loader.fill` left them on the parameter. Nothing
         # is derived here: the recovery is a device sync and this runs inside the captured decode
@@ -341,12 +352,36 @@ def quantized_linear(
         # at load because it did not describe the weight -- that refusal is reported at load, by key.
         codes = mma.attached_codes(weight)
         scale = mma.attached_scale(weight)
+        flat = x.reshape(-1, x.shape[-1])
+        use_cpu_gemv = x.device.type == "cpu" and flat.shape[0] == 1 and os.environ.get(
+            "DEEPSEEK_V41_CPU_EXACT_GEMV", "0"
+        ).lower() in {"1", "true", "yes", "on"}
         if codes is None or scale is None:
+            if use_cpu_gemv:
+                raise RuntimeError("the compiled CPU GEMV requires original E4M3 codes and the scale grid")
             _note_declined(weight, "no e4m3 codes recovered from the file's grid are attached to it")
         else:
-            flat = x.reshape(-1, x.shape[-1])
             act_codes, act_scale = block_fp8_act_quant(flat, block_size)
-            out = mma.fp8_block_gemm(act_codes, act_scale, codes, scale, block_size)
+            if use_cpu_gemv:
+                if block_size != 32:
+                    raise ValueError("the exact compiled CPU decode GEMV uses original block_size=32")
+                grid_rows = 1 if scale.shape[0] == weight.shape[0] else 32
+                threads = int(os.environ.get("DEEPSEEK_V41_CPU_GEMV_THREADS", "4"))
+                implementation = os.environ.get("DEEPSEEK_V41_CPU_GEMV_IMPL", "scalar")
+                if implementation == "raw_simd":
+                    from relic_core.kernels.cpu_raw_simd_gemv import fp8_raw_simd_gemv
+                    out = fp8_raw_simd_gemv(
+                        act_codes, act_scale, codes, scale, block_rows=grid_rows, threads=threads
+                    )
+                elif implementation == "scalar":
+                    from relic_core.kernels.cpu_block_gemv import fp8_block_gemv
+                    out = fp8_block_gemv(
+                        act_codes, act_scale, codes, scale, block_rows=grid_rows, threads=threads
+                    )
+                else:
+                    raise ValueError("DEEPSEEK_V41_CPU_GEMV_IMPL must be 'scalar' or 'raw_simd'")
+            else:
+                out = mma.fp8_block_gemm(act_codes, act_scale, codes, scale, block_size)
             return out.to(x.dtype).reshape(*x.shape[:-1], weight.shape[0])
     act, act_scale = block_fp8_act_quant(x, block_size)
     dequant_act = act.to(torch.float32) * act_scale.repeat_interleave(block_size, dim=-1)

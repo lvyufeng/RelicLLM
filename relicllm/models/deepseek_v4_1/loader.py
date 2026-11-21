@@ -63,6 +63,7 @@ memory, and uninitialized memory that happens to be finite is not detectable at 
 
 from __future__ import annotations
 
+import os
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
@@ -77,6 +78,7 @@ from relicllm.models.deepseek_v4_1.config import V41TextConfig
 from relicllm.models.deepseek_v4_1.device_experts import DeviceRoutedExperts
 from relicllm.models.deepseek_v4_1.kernels import dequant_fp4_weight, dequant_fp8_weight
 from relicllm.models.deepseek_v4_1 import mma
+from relicllm.models.deepseek_v4_1 import online_unpack as online_unpack_module
 from relicllm.models.deepseek_v4_1 import resident_bank
 from relicllm.models.deepseek_v4_1.modules import (
     Backbone,
@@ -366,6 +368,77 @@ class LoadReport:
         return "; ".join(parts)
 
 
+def _unpacks_online(
+    parameter: torch.Tensor,
+    checkpoint: V41Checkpoint,
+    key: str,
+    online_unpack: bool | None,
+) -> bool:
+    """Whether `key` is filled by decoding the file's own bytes, on the parameter's device.
+
+    Three answers, and the middle one is the only one a launcher normally gives: `online_unpack=None`
+    means "where it is required" -- an NPU bf16 parameter, which is the device with no float8 cast and
+    the dtype the decode produces -- while an explicit `True` or `False` is a caller pinning the path
+    for a test or a comparison. A key the checkpoint did not quantize is never decoded from bytes: it
+    has no grid and no codes, and its stored dtype is already the value.
+
+    A packed-fp4 key reaching here is refused rather than decoded by `stage_dense_fp8_weight`: V4.1's
+    routed experts and Engram tables are stores (`CheckpointRoutedExperts`, `CheckpointEngramTable`),
+    not parameters this walk fills, so an fp4 key here means a tree that named one as a parameter and
+    the grid would be per-row rather than square.
+    """
+    if not checkpoint.is_quantized(key):
+        return False
+    if online_unpack is False:
+        return False
+    if online_unpack is True:
+        return True
+    return online_unpack_module.is_online_unpack_parameter(parameter)
+
+
+def _fill_from_original_bytes(
+    parameter: torch.Tensor,
+    key: str,
+    checkpoint: V41Checkpoint,
+    plan: "ShardPlan | None",
+) -> None:
+    """Fill one quantized weight by staging its stored bytes and decoding them on its own device.
+
+    The difference from `checkpoint.weight(key, dtype=parameter.dtype)` is *where* the expansion
+    happens and *which* codes the parameter ends up carrying. Here the stored E4M3/E8M0 bytes are
+    cut for this rank and moved as bytes, and the decode runs on the destination device; the metadata
+    attached afterwards are those same bytes (`mma.attach_source_codes`), not a quotient recovered by
+    casting the dense weight to `float8_e4m3fn` -- a cast torch_npu 2.10 answers with
+    `aclnnInplaceCopy` error 561103, which is what failed the first checkpoint-backed NPU load.
+
+    The dtype is a refusal rather than a conversion: the operator decodes to BF16 once, and a
+    parameter that wants fp32 has an exact contract -- the product of a four-bit significand and a
+    power of two is exact in fp32 -- that a BF16 intermediate would round. An fp32 parameter keeps
+    the CPU expansion it always had; saying `online_unpack=True` about one is an error, not a hint.
+    """
+    if parameter.dtype != torch.bfloat16:
+        raise ValueError(
+            f"{key}: online unpack decodes the file's bytes to bfloat16, and this parameter is "
+            f"{parameter.dtype}; refusing to satisfy it through a BF16 intermediate, which would "
+            "round a value the fp32 path keeps exactly"
+        )
+    staged = online_unpack_module.stage_dense_fp8_weight(
+        checkpoint, key, plan=plan, device=parameter.device
+    )
+    if tuple(staged.decoded.shape) != tuple(parameter.shape):
+        raise ValueError(
+            f"{key} decodes to {tuple(staged.decoded.shape)} and the tree at this name is "
+            f"{tuple(parameter.shape)}"
+        )
+    parameter.copy_(staged.decoded)
+    # The parameter itself, never a `.detach()` of it: `attach_scale`/`attach_codes` hang the pair on
+    # the tensor object through `setattr`, and a fresh `detach()` is a new wrapper that does not carry
+    # them -- the metadata would be written onto a temporary and die with it, leaving the GEMM to
+    # report that no codes were recovered. This is the same object the module hands to
+    # `quantized_linear`, and the same one `loader.fill` attaches to on the legacy path.
+    mma.attach_source_codes(parameter, staged.codes, staged.scale)
+
+
 def checkpoint_weights(
     module: torch.nn.Module,
     checkpoint: V41Checkpoint,
@@ -374,6 +447,7 @@ def checkpoint_weights(
     skip: Callable[[str], bool] | None = None,
     progress: Callable[[str], None] | None = None,
     plan: "ShardPlan | None" = None,
+    online_unpack: bool | None = None,
 ) -> LoadReport:
     """Copy every parameter `module` names out of the checkpoint, expanding what is quantized.
 
@@ -394,6 +468,15 @@ def checkpoint_weights(
 
     Raises only through the caller's own check on `missing`. Filling is to the parameter's own dtype
     and device, so `Head`, which is fp32 where the file is bf16, keeps full precision in the logits.
+
+    `online_unpack` chooses how a quantized weight is expanded, and `None` -- the launcher's answer --
+    means "where it is required": an NPU bf16 parameter takes
+    `online_unpack.stage_dense_fp8_weight`, which stages the stored E4M3/E8M0 bytes to the
+    parameter's device and decodes them there, while CPU and CUDA parameters keep the host expansion
+    below unchanged. `True` pins the staging path (an fp32 parameter then raises rather than being
+    rounded through BF16) and `False` pins the incumbent one. The NPU path exists because the
+    incumbent one ends in a `float8_e4m3fn` cast that torch_npu 2.10 rejects on 910B3 (error 561103);
+    `_fill_from_original_bytes` and `mma.attach_source_codes` carry the details.
 
     An fp8 weight also leaves here with two things hung on it: the scale grid the file stored beside
     it (`mma.attach_scale`, on the weight's own device) and the e4m3 codes that grid implies
@@ -419,6 +502,10 @@ def checkpoint_weights(
             report.bytes_read += checkpoint.nbytes(key)
             if checkpoint.is_quantized(key):
                 report.quantized.append(key)
+            if _unpacks_online(parameter, checkpoint, key, online_unpack):
+                _fill_from_original_bytes(parameter, key, checkpoint, plan)
+                report.loaded.append(key)
+                continue
             value = checkpoint.weight(key, dtype=parameter.dtype)
             if plan is not None:
                 value = plan.local_value(key, value)
@@ -880,6 +967,26 @@ class LoadedBackbone:
         cache[:, : saved.shape[1]].copy_(saved)
 
 
+#: Environment switch for the tile-major expert residency. Read in one place so the default path is
+#: testable and so the optional class is imported only when it is actually selected -- an unguarded
+#: reference to a lazily imported class is a NameError on the default path, which is exactly the
+#: regression that made a full-model run die at load with no Python traceback in the device log.
+TILE_MAJOR_EXPERTS_ENV = "DEEPSEEK_V41_ASCEND_TILE_MAJOR"
+
+
+def tile_major_experts_enabled() -> bool:
+    """Whether the NPU packed-expert store should keep its bytes in tile-major order.
+
+    Same bytes, only permuted, so residency layout is an exact option rather than a numerical
+    one. It remains off by default. Native Cube consumers using these banks are separate,
+    explicitly selected reduction experiments; their benchmark gains are not exact-default
+    or serving-capability claims.
+    """
+    # Stripped as well as lowered: an exported value with stray whitespace is a typo, and reading
+    # it as "off" would make the switch silently do nothing.
+    return os.environ.get(TILE_MAJOR_EXPERTS_ENV, "0").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def load_backbone(
     config: V41TextConfig,
     checkpoint: V41Checkpoint,
@@ -1038,6 +1145,11 @@ def load_backbone(
     resident bank it is a memcpy; against `/mnt/data3` at 213 MiB/s it is about 5 extra minutes of
     startup, and `expert_rank` already exists to make the four ranks stagger rather than collide.
     """
+    if resident_engram and device is not None and str(device).split(":", 1)[0] == "npu":
+        raise ValueError(
+            "--resident-engram is unsupported for NPU backbones: it copies the large host tables "
+            "per rank; keep the mmap-backed host Engram instead"
+        )
     if resident_experts is None:
         resident_experts = resident_bank.enabled()
     if resident_experts:
@@ -1101,6 +1213,70 @@ def load_backbone(
         else:
             ranks = None
         owned = ranks if ranks is not None else list(range(expert_world))
+        if base.type == "npu":
+            # The original FP4/FP8 provider is separate from the CUDA arena: it
+            # stages unchanged bytes and shares one process-wide bounded cache.
+            # A single process driving several NPUs is not implemented here;
+            # tensor/expert-parallel runs drive one cyclic expert share per rank.
+            from .ascend_experts import AscendRoutedExperts
+            if config.expert_dtype != "fp4":
+                raise ValueError("the online NPU expert store requires original FP4 expert weights")
+            if world == 1 and expert_world != 1:
+                raise ValueError("multiple NPU expert devices require a matching tensor-parallel world")
+            if expert_hot_rows or expert_pool_rows or expert_batched:
+                raise ValueError("NPU expert execution does not use CUDA hot/pool/batched arena options")
+            if expert_deal not in {None, "id"}:
+                raise ValueError("the NPU expert store uses the cyclic expert-id deal")
+            import os
+            packed_resident = os.environ.get("DEEPSEEK_V41_ASCEND_PACKED_RESIDENT", "0").lower() in {
+                "1", "true", "yes", "on"
+            }
+            provider = AscendRoutedExperts
+            provider_kwargs = {}
+            if packed_resident:
+                from .ascend_packed_experts import AscendPackedRoutedExperts
+                provider = AscendPackedRoutedExperts
+                # The tile-major residency is the same checkpoint bytes permuted so that a decode
+                # step's slice is one contiguous run instead of a strided gather across HBM. It is
+                # opt-in and byte-identical: the store's own tests compare it to this provider at
+                # FP32 bits, and it inherits the arithmetic rather than re-implementing it.
+                tile_major = tile_major_experts_enabled()
+                if tile_major:
+                    from .ascend_tile_major_experts import AscendTileMajorRoutedExperts
+                    provider = AscendTileMajorRoutedExperts
+                # The tile-major store dispatches through relic-core's own tile operator and takes no
+                # row-major `packed_gemv`, so the variant selection below applies only to the
+                # row-major provider. Passing it anyway is a TypeError, not a silent fallback.
+                variant = "split" if tile_major else os.environ.get(
+                    "DEEPSEEK_V41_ASCEND_PACKED_GEMV", "split")
+                if tile_major:
+                    pass
+                elif variant == "grouped":
+                    from relic_core.kernels.decode_grouped_gemv import fp4_packed_grouped_decode_gemv
+                    group_k = int(os.environ.get("DEEPSEEK_V41_ASCEND_GROUP_K", "4"))
+                    rows_n = int(os.environ.get("DEEPSEEK_V41_ASCEND_ROWS_N", "16"))
+                    from functools import partial
+                    provider_kwargs["packed_gemv"] = partial(
+                        fp4_packed_grouped_decode_gemv, variant="grouped", group_k=group_k, rows_n=rows_n
+                    )
+                elif variant == "prefetch":
+                    from relic_core.kernels.decode_prefetch_gemv import fp4_packed_prefetch_decode_gemv
+                    group_k = int(os.environ.get("DEEPSEEK_V41_ASCEND_GROUP_K", "4"))
+                    rows_n = int(os.environ.get("DEEPSEEK_V41_ASCEND_ROWS_N", "16"))
+                    from functools import partial
+                    provider_kwargs["packed_gemv"] = partial(
+                        fp4_packed_prefetch_decode_gemv, group_k=group_k, rows_n=rows_n
+                    )
+                elif variant != "split":
+                    raise ValueError("DEEPSEEK_V41_ASCEND_PACKED_GEMV must be 'split', 'grouped' or 'prefetch'")
+            return provider(
+                checkpoint, layer_id, n_experts=n_experts, dim=config.dim,
+                inter_dim=config.moe_inter_dim, topk=_moe_shape(config, layer_id)[1],
+                swiglu_limit=config.swiglu_limit or 0.0,
+                device=torch.device("npu", first + rank if world > 1 else first),
+                dtype=LINEAR_DTYPE, rank=rank if world > 1 else 0,
+                world=world, backend="triton", **provider_kwargs,
+            )
         try:
             instance = DeviceRoutedExperts(
                 checkpoint,
@@ -1178,8 +1354,38 @@ def load_backbone(
         counted.subtract([_group_of(key)])
     report.unloaded_groups = {group: count for group, count in counted.items() if count > 0}
 
+    # Packed HBM residency is explicit and starts only after the dense tree has
+    # been loaded, so admission accounts for the real backbone allocations.
+    from .ascend_packed_experts import AscendPackedRoutedExperts
+    packed_stores = [store for store in routed.values() if isinstance(store, AscendPackedRoutedExperts)]
+    if packed_stores:
+        required = sum(store.required_bytes for store in packed_stores)
+        reserve = max(store.reserve_bytes for store in packed_stores)
+        target = packed_stores[0].device
+        if any(store.device != target for store in packed_stores):
+            raise ValueError("one packed expert-parallel process must own exactly one physical NPU")
+        with torch.npu.device(target):
+            free, _ = torch.npu.mem_get_info()
+        if int(free) < required + reserve:
+            raise RuntimeError(
+                f"original packed expert residency needs {required} bytes plus {reserve} bytes "
+                f"of headroom after dense loading, but {int(free)} bytes are free on {target}"
+            )
+        # Validate all layer payloads before the first arena is allocated.
+        for store in packed_stores:
+            store._validate_checkpoint_bytes()
+        for store in packed_stores:
+            store.preload()
+            if progress is not None:
+                progress(f"layer {store.layer_id}: original packed HBM residency {store.resident_bytes} bytes")
+        if progress is not None:
+            progress(f"original packed experts resident: {required} bytes on {target}; no weight rewrite")
+
+    # Engram hashing and the full Engram module stay on the host for an NPU
+    # backbone. Only current small activations/results cross that boundary.
+    hash_device = torch.device("cpu") if device is not None and torch.device(device).type == "npu" else device
     front_end = (
-        EngramHashIds(hasher, max_batch_size=max_batch_size, max_seq_len=max_seq_len, device=device)
+        EngramHashIds(hasher, max_batch_size=max_batch_size, max_seq_len=max_seq_len, device=hash_device)
         if hasher is not None
         else None
     )

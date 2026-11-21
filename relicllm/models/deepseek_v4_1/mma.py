@@ -693,6 +693,60 @@ def attached_codes(weight: torch.Tensor) -> torch.Tensor | None:
     return getattr(weight, CODES_ATTR, None)
 
 
+def attach_source_codes(
+    weight: torch.Tensor, codes: torch.Tensor, scale: torch.Tensor
+) -> None:
+    """Hang the **file's own** e4m3 codes and grid on the weight, instead of recovering them.
+
+    :func:`attach_scale` plus :func:`attach_codes` is the pair the GEMMs read; this writes the same
+    pair from the bytes the checkpoint stores. That is the same metadata by a shorter road, and on a
+    device with no float8 cast it is the only road: :func:`codes_from_scale` divides the dense weight
+    by its grid and casts the quotient to ``float8_e4m3fn``, which torch_npu 2.10 rejects with
+    ``aclnnInplaceCopy`` error **561103** on a 910B3. A loader that has just staged those bytes does
+    not need to cast anything -- the codes *are* the bytes.
+
+    It is also the more exact answer rather than a shortcut around a check. A dense weight's values
+    admit two power-of-two grids (``224 * 2**E == 448 * 2**(E - 1)``), so the recovery has to verify
+    its round-trip to know it picked the file's octave, and the reduction rule reads the octave.
+    Handed the file's codes there is nothing to decide, and the ``torch.equal`` synchronisation
+    inside :func:`codes_from_scale` -- forbidden in the captured decode body -- does not happen.
+
+    ``codes`` must be the stored bytes reinterpreted as ``float8_e4m3fn`` (a ``.view``, not a
+    ``.to``), contiguous, on the weight's device and shaped like it. ``scale`` goes through
+    :func:`attach_scale`, which does not inspect its argument, so the caller is responsible for
+    handing the grid that belongs to this weight: a mismatched pair is a plausible wrong answer, not
+    an error, and this helper is load-time plumbing rather than a second validator of the file.
+
+    Hand ``scale`` here as **FP32 powers of two**, which is the form :func:`e8m0_exponent` accepts
+    without casting anything: the stored E8M0 container is also accepted, but on a device that
+    rejects float8 casts (the reason this helper exists) converting it would be the same failure it
+    is avoiding, and handing over its bytes as integers would read exponents as 0..255. Decoding that
+    tiny grid to FP32 where it is still a host tensor is the caller's job -- see
+    ``online_unpack._e8m0_grid_fp32``.
+    """
+    if not isinstance(codes, torch.Tensor):
+        raise TypeError(f"source codes must be a torch.Tensor, got {type(codes).__name__}")
+    if codes.dtype != torch.float8_e4m3fn:
+        raise TypeError(
+            f"source codes must be the stored bytes viewed as float8_e4m3fn, got {codes.dtype}; "
+            "a numeric cast here would recover values rather than read them"
+        )
+    if tuple(codes.shape) != tuple(weight.shape):
+        raise ValueError(
+            f"source codes are {tuple(codes.shape)} and the weight they belong to is "
+            f"{tuple(weight.shape)}"
+        )
+    if codes.device != weight.device:
+        raise ValueError(
+            f"source codes are on {codes.device} and the weight on {weight.device}; the GEMM reads "
+            "them on the weight's device"
+        )
+    if not codes.is_contiguous():
+        raise ValueError("source codes must be contiguous")
+    attach_scale(weight, scale)
+    attach_codes(weight, codes)
+
+
 def codes_from_scale(
     dense: torch.Tensor,
     scale: torch.Tensor,
