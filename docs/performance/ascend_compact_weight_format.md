@@ -5,7 +5,10 @@ represented values, E2M1 nibbles, E8M0 K32 scale bytes and FP8 activation grid d
 physical byte order does change, explicitly, and is not silently substituted into the original
 loader or consumer.
 
-## Measured result
+## Measured result (2026-11-21)
+
+The [scale-LUT follow-up](<#scale-lut-follow-up-2026-11-22>) below adds an explicitly certified
+N32/N64 K128 consumer. The original measurement remains a separately frozen milestone.
 
 On one freshly leased eight-card Ascend910B3 64-GiB/card server, using the same full 40-layer model,
 TP2/EP4 expert placement, native provider, host-resident original Engram tables and NPU WKV/HC
@@ -118,3 +121,128 @@ back to a consumer that would read the bytes in the wrong order.
 The next bottleneck remains the combined projection/attention/collective path. More offline
 format work must still be judged against complete same-provider logits and sustained decode,
 not inferred by subtracting isolated kernel timings from the earlier 53-ms conditioned replay floor.
+
+## Scale-LUT follow-up (2026-11-22)
+
+This change keeps only the measured N32/N64 **K128** scale-LUT path. Paired W1/W3, K256, and
+its depth-one/depth-two streaming implementations remain on the preserved experimental branches;
+they are not runtime options in this PR.
+
+### End-to-end result
+
+| Same-provider B=1 configuration | Matched control TPS | Candidate TPS | Candidate ms/token |
+| --- | ---: | ---: | ---: |
+| N32/K128 scale-aware LUT | 8.562436 | 9.566600 | 104.530348 |
+| **N64/K128 scale-aware LUT** | **8.562436** | **10.680570** | **93.627963** |
+
+The N64 change is **+24.7375% TPS**, saving **23.161225 ms/token**. Two later 64-step N64
+windows measured **10.693568** and **10.694418 TPS**. A separate matched 16-step repeat gives
+**8.586612 → 10.752446 TPS (+25.2234%)** and is not substituted for the sustained benchmark.
+
+All sustained windows exclude four warmups and time 64 synchronized autoregressive forwards,
+context 24→88, including host argmax. The shorter repeat uses context 24→40. These are
+single-request, batch-one decode rates, **not** prefill or batched aggregate throughput, and the
+fixed-length benchmark deliberately continues after EOS. This is one prompt/context regime, not
+a distribution across diverse prompts or long contexts.
+
+The [N64 comparison](<evidence/ascend-scale-lut-20261122/comparisons/N64-LUT.json>),
+[N32 comparison](<evidence/ascend-scale-lut-20261122/comparisons/N32-LUT.json>) and
+[short-repeat comparison](<evidence/ascend-scale-lut-20261122/comparisons/N64-repeat16.json>)
+check output IDs and all eight ranks' three complete saved FP32 tensors: original-reference,
+candidate-teacher and final. Every comparison has zero differing bits. This does **not** claim
+every timed step's full logit distribution was saved, or equivalence to the original exact-default
+implementation or a general model-quality evaluation. The separately authorized native
+Cube/HC/Engram experimental provider remains the control; no new lossy quantization is added.
+
+### Why the decoder can be smaller
+
+The complete scan inspects **46,080 original scale matrices**, **16,986,931,200 E8M0 bytes**,
+without expanding whole weight matrices. All literal scale codes lie in **117…127**. The
+[global/matrix summary](<evidence/ascend-scale-lut-20261122/scale-histogram-summary.json>) is
+complete; its separately labelled tile-local histogram samples 64 tiles per matrix.
+
+A universal **12 × 256 uint32 table = 12,288 bytes** maps one packed code byte plus one original
+scale byte to two exact BF16 operands. Eleven slots retain every observed scale, including rare
+outliers; slot 11 is `0x7fc07fc0` poison. The total scale-byte map sends unsupported values to
+that poison slot, rather than reinterpreting them or dropping outliers. This is not a per-expert
+dictionary or an expanded weight bank.
+
+The A2 kernel keeps the proven true-unsigned `uint8→half→int32` index casts. It expands the
+scale slot offsets in Cube order, adds packed-byte indices, and gathers both BF16 operands
+straight into the bounded decoded tile. The separate FP32 weight multiply and BF16 narrowing
+are removed. Operand zero-folding follows the already accepted native consumer.
+
+### N64 physical format and unchanged payload
+
+The additional source tag is `relic.fp4.cube-n64-k128.v1`:
+
+```python
+codes_cube = codes.view(N // 64, 4, 16, K // 128, 8, 8).permute(0, 3, 4, 1, 2, 5).contiguous()
+scales_cube = scales.view(N // 64, 64, K // 128, 4).permute(0, 2, 3, 1).contiguous()
+```
+
+The inverse recovers every original code and scale byte, including signed-zero nibble encodings.
+N64/K128 geometry is required, not inferred from a same-sized tensor. TP2 W1/W3 is 1152×5120
+and W2 is 5120×1152, each requiring **no padding**. N64 halves output-tile tasks, not weight
+traffic or matrix FLOPs. Payload stays `NK/2 + NK/32`, or exactly **36,097,228,800 bytes/card
+= 33.618164 GiB** for routed experts. No full persistent converted checkpoint is delivered.
+
+| Fixed K128 consumer | Vector UB bytes | BF16 GM ring bytes, 24 workers | Prepared-table bytes/device |
+| --- | ---: | ---: | ---: |
+| N32 LUT | 61,952 | 393,216 | 21,504 |
+| N64 LUT | 110,592 | 786,432 | 29,696 |
+
+The bounded GM ring is the validated A2 handoff; no A5 direct UB→L1 or native FP4/FP8
+arithmetic is assumed. A1 has one slot and is loaded from its base. Shared/unshared activations
+select only the GM row address; output-buffer READY/FREE fences guard slot reuse.
+
+### Explicit admission and ownership
+
+The default `bank_format="original-n16"` is unchanged. N32 keeps both its existing compact
+consumer and the new optional LUT consumer. N64 requires its exact-format scale-LUT consumer,
+`group_k=4`, `output_rows=64`, the original NPU/TP placement and complete N64/K128 geometry.
+Both formats use an exact library SHA-256 and queried ABI; same-sized tables or scratch do not
+identify a source format. Each output-row variant is built as a separate native library.
+
+All original CPU scale bytes are checked against 117…127 **before** conversion/copy for a LUT
+bank. The manager marks its scale certificate true only after every bank installs successfully.
+Both BF16 and scale-window certificates are explicit booleans. Ordinary consumers receive no
+new LUT keyword; neither serving nor the CPU oracle silently chooses the new implementation.
+Tables are prepared before graph capture, and input/output/staging storage must not alias.
+
+If a compact owner's NPU completion fence fails during close, graphs, banks, workspace and TP
+group stay owned for a cleanup retry. Retirement occurs only after the fence succeeds; the
+original noncompact default close policy is not changed.
+
+### Validation, rejected alternatives and evidence
+
+The original Ascend validation covers all 256 packed-byte codes, all eleven scale codes, 24,576
+basis BF16 values per K128 candidate, 96 changing-input/route graph replays, and nine real
+W1/W3/W2 TP2 projections across layers 0/20/39. Complete FP32 accumulators and BF16 outputs
+match, with empty slots, invalid IDs and unsupported-scale poisoning separately gated. These
+[operator records](<evidence/ascend-scale-lut-20261122/operator-gates.json>) are numerical
+acceptance, not model-rate extrapolations.
+
+For completeness, the [rejected-alternatives record](<evidence/ascend-scale-lut-20261122/rejected-alternatives.json>)
+retains measured decisions without shipping those implementations: paired W1/W3 changes TPS
+by only +0.4674%; N32/K256 reaches 10.250180 TPS; N64/K256 depth one falls to 9.849394 TPS;
+depth two recovers to 10.645824 TPS but does not beat its matched 10.694418 N64/K128 control.
+Those results are not multiplied into the selected speedup.
+
+The [compact evidence manifest](<evidence/ascend-scale-lut-20261122/manifest.json>) distinguishes
+historical full-model validation from the newly trimmed PR test suite. It retains all-rank tensor
+hashes, [rank timing summaries](<evidence/ascend-scale-lut-20261122/rank-timings.json>), native
+source/library hashes and a deterministic [raw selected-receipt archive](<evidence/ascend-scale-lut-20261122/raw-selected-receipts.tar.gz>).
+The full original experimental bundle and commits remain preserved rather than rewritten.
+Checkpoint weights and full tensor payloads are not copied into the PR; the latter were compared
+on the Ascend server and remain represented here by their hashes.
+
+Tests and builds run only on Linux, never on the macOS development machine. The historical
+Ascend model measurement is not rerun merely to trim unused optional branches. Fresh portable
+CPU/mock tests validate the slim integration without claiming a new Ascend performance result.
+Original checkpoint identities and shared CI/CANN configuration were unchanged, and the
+historical [lease-release receipt](<evidence/ascend-scale-lut-20261122/safety/release.json>) is retained.
+
+**50 TPS is not reached.** It still requires 20 ms/token, versus approximately 93.5 ms/token on
+the selected path. Attention/cache/HC/head and collective work remain the next useful focus,
+not an unmeasured claim that a larger FP4 tile alone meets the target.

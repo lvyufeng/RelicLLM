@@ -1,0 +1,426 @@
+{
+  "scope": "Slim N32/N64 K128 scale-LUT PR evidence; no paired or K256 implementation",
+  "historical_core_checkpoint": "adbce6958c57d135c2a44c0bbb1b1370cada474a",
+  "historical_runtime_checkpoint": "994b400a6c03bac02c0ad355a37b2d32f55f6ef3",
+  "historical_full_bundle_manifest_sha256": "ae3ed5927629dd82aee3b4f382a6707a5b92f6e1f147287938e057e1cc6c3d4b",
+  "original_expert_code_scale_payload_bytes_per_card": 36097228800,
+  "scale_matrices_fully_scanned": 46080,
+  "scale_bytes_fully_scanned": 16986931200,
+  "original_scale_byte_range": [
+    117,
+    127
+  ],
+  "paired_BF16_LUT_bytes": 12288,
+  "selected_consumer": "N64/K128 scale-aware paired-BF16 LUT",
+  "source_format": "relic.fp4.cube-n64-k128.v1",
+  "new_lossy_quantization": false,
+  "full_converted_checkpoint_delivered": false,
+  "fixed_length_benchmark_continues_after_EOS": true,
+  "same_provider_bit_parity_not_original_exact_default_or_general_quality_acceptance": true,
+  "saved_FP32_gates": [
+    "reference",
+    "candidate_teacher_forced",
+    "final"
+  ],
+  "all_timed_step_logits_not_saved": true,
+  "target_50_TPS_reached": false,
+  "old_experiment_branches_preserved": true,
+  "historical_hardware": "8x Ascend910B3, 64GiB/card; native Cube/HC, host Engram, TP2/EP4",
+  "compiled_CPP_sha256": "f0387e16f604b99e6192375933ba064593c8affd518c4fc0a83cc989ed15a336",
+  "compiled_CPP_vs_PR": "Only the extra EOF blank line was normalized after hardware validation.",
+  "historical_tests_are_not_slim_PR_test_counts": true,
+  "raw_archive_members": [
+    {
+      "path": "N32-LUT64/Cube-model-rank-0.json",
+      "bytes": 116899,
+      "sha256": "3e792edb7b78f742635867f2979eacdfc5665d2b002f03523ceeca7d071e1d22"
+    },
+    {
+      "path": "N32-LUT64/Cube-model-rank-1.json",
+      "bytes": 116903,
+      "sha256": "87503d6f8446001201c299fcea360e5936ee0a682890f5f2630193cc239c368b"
+    },
+    {
+      "path": "N32-LUT64/Cube-model-rank-2.json",
+      "bytes": 116901,
+      "sha256": "c0a57c21561f8c68b0c9e24907c648a66630e269915bb5da03f5c4c4db6d2349"
+    },
+    {
+      "path": "N32-LUT64/Cube-model-rank-3.json",
+      "bytes": 116900,
+      "sha256": "ec91e6146c7740fe8541920b60293dfb30891dcc5f9c677dc666e44db0936da9"
+    },
+    {
+      "path": "N32-LUT64/Cube-model-rank-4.json",
+      "bytes": 116906,
+      "sha256": "4cf984a3dc1af88768d76eea60e572c7732460cea563949dd8e916db6dbbbb3f"
+    },
+    {
+      "path": "N32-LUT64/Cube-model-rank-5.json",
+      "bytes": 116898,
+      "sha256": "179ffeb5e148b08dcd69e8e7137e025454897d67a13926443c442f7db9869ca9"
+    },
+    {
+      "path": "N32-LUT64/Cube-model-rank-6.json",
+      "bytes": 116910,
+      "sha256": "bf28cb6ee1f22c68a8701bac0ab9a058a4b28d171ca548d505d5613c2f2b61f7"
+    },
+    {
+      "path": "N32-LUT64/Cube-model-rank-7.json",
+      "bytes": 116910,
+      "sha256": "875cebb52601b49ebdc46c16a31fa1e9ce321ba2aa994cbd91448c07cd8f58f6"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-0.json",
+      "bytes": 114724,
+      "sha256": "46b5bdba1f6b02145f8b4de2ab1a5d5f4c0b18364bc0ad36adf0edc33c9b0342"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-1.json",
+      "bytes": 114724,
+      "sha256": "4fc38bf8159bd4d576800231a8db45d97b83d75de66f5e3d54183d84af4024b8"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-2.json",
+      "bytes": 114723,
+      "sha256": "37d5b814acc179ae938f2d4108687d5649516de65a42f6353e9a70bde96a07fc"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-3.json",
+      "bytes": 114725,
+      "sha256": "0b0162c6f710262d6666ece37d9bf6b3619fad43495df9804a0656511643577b"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-4.json",
+      "bytes": 114728,
+      "sha256": "bf25ecd3670b1ee43f8cef5b8d5452d7570d44405b05adb355c7a9eaaae80b84"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-5.json",
+      "bytes": 114726,
+      "sha256": "1a914fbebb1aaf99d026b0aac2204a7d618f06686cc9074f46c6f39a2f9145ce"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-6.json",
+      "bytes": 114726,
+      "sha256": "be387521353ccea53d74e10d47599b37d80a2011e704d674b8904e0dd08aaae6"
+    },
+    {
+      "path": "N64-LUT16/Cube-model-rank-7.json",
+      "bytes": 114724,
+      "sha256": "d202705ea02ad26c67c92034ab2cffcfa0cf247fa62f7328ff36fb8f1152d284"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-0.json",
+      "bytes": 116905,
+      "sha256": "007b01f3f9612c8d4394d1dd67565f77bb430ced7703a20d6a08b34ff7791432"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-1.json",
+      "bytes": 116903,
+      "sha256": "e64eb7994df0ee731e0f6336466350d08275f6cea71d4ff120dae037bade7224"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-2.json",
+      "bytes": 116902,
+      "sha256": "65387e73644e8af7941a081be50db85500cba8ae46328f12f72dbc2260be9fd6"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-3.json",
+      "bytes": 116903,
+      "sha256": "8b6029abe883bbbe652a6d2a5f2e0322fe937dde63c4bca1ba0c6e71749b8a53"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-4.json",
+      "bytes": 116909,
+      "sha256": "7188ddc3824bda584467c12e6b9792fdddf4736504d0300cd491f6eab0cb92c1"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-5.json",
+      "bytes": 116904,
+      "sha256": "94a88535927816d32cf12b113af4aa61bfd4ce2375d82690066553e59cd3074c"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-6.json",
+      "bytes": 116908,
+      "sha256": "3dc6ffa9b2ea882e06e6a9955e9a10b0285e52c649cbc0608ea2a5c041ef0c3e"
+    },
+    {
+      "path": "N64-LUT64/Cube-model-rank-7.json",
+      "bytes": 116911,
+      "sha256": "1fa185034028913d0dcffcb05f2fe55a713f7ceeacb28840af4914f4fe0f5ac2"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-0.json",
+      "bytes": 117067,
+      "sha256": "687c931145a86093a0df0ead8473aac108af7cf51d8da61e4f330df30636f6ef"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-1.json",
+      "bytes": 117077,
+      "sha256": "4147eaa6e4a48e350aae2d677051ae2438f6d51ab38629a951c44751840c7434"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-2.json",
+      "bytes": 117067,
+      "sha256": "10cd8281722869cc6bc4c61a6120a31f10daf00e95dab87a85d565a449bffbbc"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-3.json",
+      "bytes": 117075,
+      "sha256": "25bcc75ccb46f686cecbc8e2cd7aac046b7f935e88965e461a835f04dc4a316d"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-4.json",
+      "bytes": 117066,
+      "sha256": "25790cff5c024ae61d8fbc61a7cae02df4d87c27c6d4aed4f6c7e854a376a2e7"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-5.json",
+      "bytes": 117072,
+      "sha256": "abc4c8d508eef2581a89a7c1528c85ead507baac00e52861ed3ef5af5a6b878b"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-6.json",
+      "bytes": 117071,
+      "sha256": "c3f8f0d5f3851416c9e7282b9e6ab6de3b7797e8b08b015beb4df0a2ea07962f"
+    },
+    {
+      "path": "N64-independent64-a/Cube-model-rank-7.json",
+      "bytes": 117068,
+      "sha256": "bdd1e26b3e8e2ed5d7b5c7b5b4e9d395e2c5db5112b9bafc3d799eb47dce20bd"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-0.json",
+      "bytes": 117087,
+      "sha256": "bbfdfe2147b7f6c5e9ac389375da26d103e3236b91f51cbca98645e74a037e86"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-1.json",
+      "bytes": 117090,
+      "sha256": "378a9265afd7044341f907c67482a3e3b48e7b72a2d9628640284e56d0903393"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-2.json",
+      "bytes": 117086,
+      "sha256": "64781d9a33827d6a2d7ce1808c462563aa244d46be00ff2051dbfd8e65a77758"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-3.json",
+      "bytes": 117089,
+      "sha256": "25431294ba9b8b4d5463aee3bcd8df9411f237866b6194f321f0856b8de3b51a"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-4.json",
+      "bytes": 117086,
+      "sha256": "2e37e59b6733bf2150eeb8526fa573b0747f0e4bcae044a298238b4d3cec019f"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-5.json",
+      "bytes": 117080,
+      "sha256": "86e300cd5f715c87c88733beb82b84aaadd3dcf666a42ef6642799810646bd1d"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-6.json",
+      "bytes": 117091,
+      "sha256": "290767aa55964b871dca583c93452db8b4e6f68e82008cbcf6b3912b41c38cd6"
+    },
+    {
+      "path": "N64-independent64-b/Cube-model-rank-7.json",
+      "bytes": 117086,
+      "sha256": "221e1adfa0d1e5eac709c490ca44cc457380c78203d3881c48af0f5300843ff8"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-0.json",
+      "bytes": 114727,
+      "sha256": "1b4cadc7b81266d815c1421f44123f512e813d243b945bd830cefdb9bdd8c850"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-1.json",
+      "bytes": 114722,
+      "sha256": "b13d5d641458ebdd960946c16a4c292e7f3671158a227958ecc6545f5ebfee95"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-2.json",
+      "bytes": 114726,
+      "sha256": "342229bb2019a79ed14061016ec72252619a74840012206536e8ff8e8e49c0ae"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-3.json",
+      "bytes": 114727,
+      "sha256": "ddb8ad93ff20bfd85dd1a401d8f0992e3ae869ea0109cb881b1159c6e4faf4ff"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-4.json",
+      "bytes": 114724,
+      "sha256": "a0f4f3f06f3ffe7708828784e1231b70f2f24c4751ba1aabecc289134739b031"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-5.json",
+      "bytes": 114727,
+      "sha256": "f6ace9e481a2b8fc653d6af8b4d2e92b73d31f98c4932f7dac1d23658e749378"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-6.json",
+      "bytes": 114726,
+      "sha256": "28992fada5bcbca194b0911908f9e23b6bcf85f4daa1683d29dd66e4c5aacdc0"
+    },
+    {
+      "path": "compact-control16/Cube-model-rank-7.json",
+      "bytes": 114724,
+      "sha256": "da520a37ad536a031082c0741714c0c57a4de0280b66906ddd67a3dc305635da"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-0.json",
+      "bytes": 116912,
+      "sha256": "1e4a796cae7e32e2119f3aef999ce3f24c7ebb36578440c455d205d28bfe67ca"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-1.json",
+      "bytes": 116906,
+      "sha256": "679a590d9421afb9250b7f02390e5fee6dc2224a225e600e4937dc4f203b6c4f"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-2.json",
+      "bytes": 116909,
+      "sha256": "f8e3b55f6ebdabde3828fff9220766bfcec0a4458bd784be0f470d49655c0cb1"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-3.json",
+      "bytes": 116908,
+      "sha256": "3e88c7ecc0d309f1feaa612b13d14cfbe6b26496987981c30e3a96e287cba3e7"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-4.json",
+      "bytes": 116909,
+      "sha256": "283a47092b2db4adb6ed5ccea959e1c24787ba614ad7bbba00b4fd539bdef8c5"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-5.json",
+      "bytes": 116909,
+      "sha256": "3ad76d5b2ccab9f3616f07fbe9ad960cf32218713440c580ecc3443a917bb15d"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-6.json",
+      "bytes": 116907,
+      "sha256": "a1ed50958a98271c9f4ac85cc2a86b54b097ebcbc3891f18bf0f6a38e1acda0a"
+    },
+    {
+      "path": "compact-control64/Cube-model-rank-7.json",
+      "bytes": 116910,
+      "sha256": "3a25898a287f3c9cd74158625e91a7526916e7529599075eb42e64f98425c562"
+    },
+    {
+      "path": "operator/scale-lut-probe.json",
+      "bytes": 145791,
+      "sha256": "d39f190f896ca81c5d41518b432b68b804cc635c42094238a45e18bda926b504"
+    }
+  ],
+  "files": [
+    {
+      "path": "comparisons/N32-LUT.json",
+      "bytes": 9315,
+      "sha256": "8c87fa0c0f7f75a95c3f327975762525b15986e2d2f79faa9609be5a531196e8"
+    },
+    {
+      "path": "comparisons/N64-LUT.json",
+      "bytes": 9314,
+      "sha256": "e4c09503f655d426aa63b8c2169b73d466dc585f529b3229520af3fd2460cc80"
+    },
+    {
+      "path": "comparisons/N64-repeat16.json",
+      "bytes": 9295,
+      "sha256": "e31ec37dbdcd396badd56db177bb100466201df526285f21d445640e57229481"
+    },
+    {
+      "path": "native-build-v2.json",
+      "bytes": 2675,
+      "sha256": "cd25fab58adbbbf7f3d0109bd381785cf47deb269623b2cbe93c9ef2e1757cc6"
+    },
+    {
+      "path": "operator-gates.json",
+      "bytes": 9662,
+      "sha256": "a141e362eeb8b6322f118e32ae8a3bc790932e964b665712e00e5c6c8ebe8df2"
+    },
+    {
+      "path": "portable-validation/core.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "portable-validation/core.stdout.log",
+      "bytes": 691,
+      "sha256": "b1e9f7007eacfb04b9aa9ef94359e40eb8d1837b32d59b3d786049b61891303f"
+    },
+    {
+      "path": "portable-validation/docs.stderr.log",
+      "bytes": 639,
+      "sha256": "a2a70bc7a9686ecc497ac58ee1b29929c311e6b091b8e54fb185571ca6c04f58"
+    },
+    {
+      "path": "portable-validation/docs.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "portable-validation/results.json",
+      "bytes": 4598,
+      "sha256": "957e3285d6f3131196e97d0184daa7b0a2fceb343cfb07b5a60b1f57edadbfbe"
+    },
+    {
+      "path": "portable-validation/runtime.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "portable-validation/runtime.stdout.log",
+      "bytes": 179,
+      "sha256": "33254a0ecd510c8b988e80e50cec998e450505b0712ae59005e2469076595b0d"
+    },
+    {
+      "path": "rank-timings.json",
+      "bytes": 23312,
+      "sha256": "d051b03e21a2b1a353a0e1052deb67583c44cb9083ec0a0280d4cdbb09888384"
+    },
+    {
+      "path": "raw-selected-receipts.tar.gz",
+      "bytes": 417216,
+      "sha256": "1b6d45f468ee811e6cd9f9e5641909e2afa228a5666ba48f0d035a57513381ad"
+    },
+    {
+      "path": "rejected-alternatives.json",
+      "bytes": 2737,
+      "sha256": "db50c0c9ad4e86de1804cb47eb24430b8ec3b1cb2ca24bb44fecfdf0752d8e52"
+    },
+    {
+      "path": "safety/checkpoint-and-processes.json",
+      "bytes": 598,
+      "sha256": "83f8ccbea5103e783fd88e3f30a852d4439ea8349cdf04012e308b704fc8160c"
+    },
+    {
+      "path": "safety/release.json",
+      "bytes": 507,
+      "sha256": "00612062938cb3212cc3a572afa368c78bd565805a0eb560ebc5c63290f68b39"
+    },
+    {
+      "path": "scale-histogram-summary.json",
+      "bytes": 11550,
+      "sha256": "14d73eb0e5ab1d7aa1f8dbfd11d58ccd76479e3d9f03374f1419f313f5debd8e"
+    }
+  ],
+  "portable_PR_test_counts": {
+    "core": {
+      "passed": 329,
+      "skipped": 2
+    },
+    "runtime": {
+      "passed": 86,
+      "skipped": 0
+    }
+  },
+  "portable_PR_python": "3.11.18 (main, Nov 11 2026, 00:16:37) [Clang 23.1.3 ]",
+  "portable_PR_strict_docs_passed": true,
+  "portable_tests_are_not_new_NPU_measurements": true,
+  "compatible_validation_environment_is_private": true,
+  "initial_Python310_baseline_StrEnum_mismatch_was_not_fixed_in_project": true
+}

@@ -1,0 +1,12 @@
+{
+  "host": "ts-216",
+  "released": true,
+  "detail": "lease dropped",
+  "selected_path": "N64/K128 scale-aware paired-BF16 LUT",
+  "all_eight_NPU_process_tables_empty_before_release": true,
+  "all_35_current_trial_ownership_tokens_had_no_live_processes": true,
+  "original_90_file_checkpoint_stat_identity_unchanged": true,
+  "shared_CANN_configuration_and_links_unchanged": true,
+  "native_same_provider_FP32_parity_not_original_exact_default_quality_acceptance": true,
+  "target_50_TPS_reached": false
+}

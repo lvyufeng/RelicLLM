@@ -1,0 +1,94 @@
+{
+  "paired": {
+    "control": {
+      "slowest_rank_seconds": 7.464569571428001,
+      "TPS": 8.573836627495798,
+      "ms_per_token": 116.63389955356251
+    },
+    "candidate": {
+      "slowest_rank_seconds": 7.429841158911586,
+      "TPS": 8.613912280377136,
+      "ms_per_token": 116.09126810799353
+    },
+    "TPS_ratio": 1.0046741796727054,
+    "milliseconds_saved_per_token": 0.5426314455689862,
+    "accepted_same_provider_bit_delta": true,
+    "timed_steps": 64,
+    "context": [
+      24,
+      88
+    ],
+    "excluded_warmups": 4,
+    "raw_comparison_sha256": "1251c1e309e9f930304da498062b0ffe03c8cfaafa765222b1734057bb1362ff",
+    "implementation_in_this_PR": false
+  },
+  "N32-K256": {
+    "control": {
+      "slowest_rank_seconds": 7.483922476880252,
+      "TPS": 8.551665279499131,
+      "ms_per_token": 116.93628870125394
+    },
+    "candidate": {
+      "slowest_rank_seconds": 6.2437928868457675,
+      "TPS": 10.250179844183052,
+      "ms_per_token": 97.55926385696512
+    },
+    "TPS_ratio": 1.1986179894991635,
+    "milliseconds_saved_per_token": 19.377024844288826,
+    "accepted_same_provider_bit_delta": true,
+    "timed_steps": 64,
+    "context": [
+      24,
+      88
+    ],
+    "excluded_warmups": 4,
+    "raw_comparison_sha256": "6661a9d2dec3d98a0643552024ffb7363bd2f54129b0f30b4828207ad9804a95",
+    "implementation_in_this_PR": false
+  },
+  "N64-K256-D1": {
+    "control": {
+      "slowest_rank_seconds": 5.984905947931111,
+      "TPS": 10.693568212567117,
+      "ms_per_token": 93.51415543642361
+    },
+    "candidate": {
+      "slowest_rank_seconds": 6.497861612588167,
+      "TPS": 9.84939412621749,
+      "ms_per_token": 101.52908769669011
+    },
+    "TPS_ratio": 0.9210577732737,
+    "milliseconds_saved_per_token": -8.014932260266505,
+    "accepted_same_provider_bit_delta": true,
+    "timed_steps": 64,
+    "context": [
+      24,
+      88
+    ],
+    "excluded_warmups": 4,
+    "raw_comparison_sha256": "9a1d9154be2c1c177925905379bce128dc69c27daebc86d74865ca991ccdf897",
+    "implementation_in_this_PR": false
+  },
+  "N64-K256-D2": {
+    "control": {
+      "slowest_rank_seconds": 5.9844302190467715,
+      "TPS": 10.694418291704006,
+      "ms_per_token": 93.5067221726058
+    },
+    "candidate": {
+      "slowest_rank_seconds": 6.011746787466109,
+      "TPS": 10.645824294102606,
+      "ms_per_token": 93.93354355415795
+    },
+    "TPS_ratio": 0.9954561345670297,
+    "milliseconds_saved_per_token": -0.4268213815521449,
+    "accepted_same_provider_bit_delta": true,
+    "timed_steps": 64,
+    "context": [
+      24,
+      88
+    ],
+    "excluded_warmups": 4,
+    "raw_comparison_sha256": "6dcc0004fad83ceee66f4aba0c451871339d96a5b559ff15031d154bd0e4172f",
+    "implementation_in_this_PR": false
+  }
+}

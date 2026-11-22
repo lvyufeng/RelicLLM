@@ -1,0 +1,65 @@
+{
+  "variants": {
+    "scale-lut-n32": {
+      "library": "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n32/build/lib/librelic_scale_lut_tile_cube.so",
+      "sha256": "3b330d3f6d757fd3fe9089dcf1235be7886c5cd4f7a93d9ba8e22cfa8598bfa4",
+      "source_hashes": {
+        "scale_lut_tile_cube.cpp": "f0387e16f604b99e6192375933ba064593c8affd518c4fc0a83cc989ed15a336",
+        "CMakeLists.txt": "7b52fe4c14c228ad3ae2b07a4106a6d0eae3ceb719ac57d276f3336a8b391ca9"
+      },
+      "source_snapshot": "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n32/source",
+      "configure_command": [
+        "cmake",
+        "-S",
+        "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n32/source",
+        "-B",
+        "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n32/build",
+        "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
+        "-DSOC_VERSION=Ascend910B3",
+        "-DRUN_MODE=npu",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DRELIC_LUT_OUTPUT_ROWS=32"
+      ],
+      "bank_format": "relic.fp4.cube-n32-k128.v1",
+      "group_k": 4,
+      "output_rows": 32,
+      "scale_min": 117,
+      "scale_max": 127,
+      "code_LUT_bytes": 12288,
+      "ring_bytes_per_rank": 393216,
+      "prepared_table_words": 5376
+    },
+    "scale-lut-n64": {
+      "library": "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n64/build/lib/librelic_scale_lut_tile_cube.so",
+      "sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+      "source_hashes": {
+        "scale_lut_tile_cube.cpp": "f0387e16f604b99e6192375933ba064593c8affd518c4fc0a83cc989ed15a336",
+        "CMakeLists.txt": "7b52fe4c14c228ad3ae2b07a4106a6d0eae3ceb719ac57d276f3336a8b391ca9"
+      },
+      "source_snapshot": "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n64/source",
+      "configure_command": [
+        "cmake",
+        "-S",
+        "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n64/source",
+        "-B",
+        "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n64/build",
+        "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.2.0",
+        "-DSOC_VERSION=Ascend910B3",
+        "-DRUN_MODE=npu",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DRELIC_LUT_OUTPUT_ROWS=64"
+      ],
+      "bank_format": "relic.fp4.cube-n64-k128.v1",
+      "group_k": 4,
+      "output_rows": 64,
+      "scale_min": 117,
+      "scale_max": 127,
+      "code_LUT_bytes": 12288,
+      "ring_bytes_per_rank": 786432,
+      "prepared_table_words": 7424
+    }
+  },
+  "original_checkpoint_writes": 0,
+  "prior_native_binaries_not_overwritten": true,
+  "no_per_weight_expansion": true
+}

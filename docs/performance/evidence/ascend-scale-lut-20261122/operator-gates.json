@@ -1,0 +1,285 @@
+{
+  "corpus": {
+    "original_E2M1_byte_values": 256,
+    "original_E8M0_scale_codes": [
+      117,
+      127
+    ],
+    "K_positions": 128,
+    "decoded_BF16_values_per_candidate": 24576,
+    "same_control_FP32_BF16_bit_differences": 0
+  },
+  "dynamic": [
+    {
+      "K": 256,
+      "N": 128,
+      "shared": true,
+      "changing_replays": 32,
+      "same_control_FP32_BF16_bit_differences": 0,
+      "invalid_source_and_scale_poison": true
+    },
+    {
+      "K": 256,
+      "N": 128,
+      "shared": false,
+      "changing_replays": 32,
+      "same_control_FP32_BF16_bit_differences": 0,
+      "invalid_source_and_scale_poison": true
+    },
+    {
+      "K": 1152,
+      "N": 128,
+      "shared": false,
+      "changing_replays": 32,
+      "same_control_FP32_BF16_bit_differences": 0,
+      "invalid_source_and_scale_poison": true
+    }
+  ],
+  "real_projections": [
+    {
+      "layer": 0,
+      "projection": "w1",
+      "TP2_shape": [
+        1152,
+        5120
+      ],
+      "source_keys": [
+        "layers.0.ffn.experts.0.w1.weight",
+        "layers.0.ffn.experts.1.w1.weight",
+        "layers.0.ffn.experts.2.w1.weight",
+        "layers.0.ffn.experts.3.w1.weight",
+        "layers.0.ffn.experts.4.w1.weight",
+        "layers.0.ffn.experts.5.w1.weight",
+        "layers.0.ffn.experts.6.w1.weight",
+        "layers.0.ffn.experts.7.w1.weight"
+      ],
+      "original_codes_sha256": "b6f8725dc20331a40bc4bf1ac15284b1a2484f78f9839ba1afe834cf27e45662",
+      "original_scales_sha256": "3d11fe567e9bc64e9c83e8ae373cd9cbe4914a314923fe0cf6e65127a2313aa6",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.43473229743540287,
+        "scale-lut-n32": 0.3360589034855366,
+        "scale-lut-n64": 0.283882914421459
+      }
+    },
+    {
+      "layer": 0,
+      "projection": "w3",
+      "TP2_shape": [
+        1152,
+        5120
+      ],
+      "source_keys": [
+        "layers.0.ffn.experts.0.w3.weight",
+        "layers.0.ffn.experts.1.w3.weight",
+        "layers.0.ffn.experts.2.w3.weight",
+        "layers.0.ffn.experts.3.w3.weight",
+        "layers.0.ffn.experts.4.w3.weight",
+        "layers.0.ffn.experts.5.w3.weight",
+        "layers.0.ffn.experts.6.w3.weight",
+        "layers.0.ffn.experts.7.w3.weight"
+      ],
+      "original_codes_sha256": "b3e178a2640f4763b18239bfa34e6c27cc22717f2e9dff27a544285be5f1d6ea",
+      "original_scales_sha256": "d373c7a1947b1add8d5201bd1cc7a21f674f000b429b9a3b91005eb35a26cdae",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.43580688846608,
+        "scale-lut-n32": 0.33679744228720665,
+        "scale-lut-n64": 0.2851272389913599
+      }
+    },
+    {
+      "layer": 0,
+      "projection": "w2",
+      "TP2_shape": [
+        5120,
+        1152
+      ],
+      "source_keys": [
+        "layers.0.ffn.experts.0.w2.weight",
+        "layers.0.ffn.experts.1.w2.weight",
+        "layers.0.ffn.experts.2.w2.weight",
+        "layers.0.ffn.experts.3.w2.weight",
+        "layers.0.ffn.experts.4.w2.weight",
+        "layers.0.ffn.experts.5.w2.weight",
+        "layers.0.ffn.experts.6.w2.weight",
+        "layers.0.ffn.experts.7.w2.weight"
+      ],
+      "original_codes_sha256": "8b8ded6e0dec760cdaec5b394e8315c154f087cd6575f5aed1816747c9a29d08",
+      "original_scales_sha256": "3002970a593aa2ff0ea7a6e4b19e1702b6ec93b0ac24182dfefdab55453d972d",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.5155932546282808,
+        "scale-lut-n32": 0.4004646713534991,
+        "scale-lut-n64": 0.33391833615799743
+      }
+    },
+    {
+      "layer": 20,
+      "projection": "w1",
+      "TP2_shape": [
+        1152,
+        5120
+      ],
+      "source_keys": [
+        "layers.20.ffn.experts.0.w1.weight",
+        "layers.20.ffn.experts.1.w1.weight",
+        "layers.20.ffn.experts.2.w1.weight",
+        "layers.20.ffn.experts.3.w1.weight",
+        "layers.20.ffn.experts.4.w1.weight",
+        "layers.20.ffn.experts.5.w1.weight",
+        "layers.20.ffn.experts.6.w1.weight",
+        "layers.20.ffn.experts.7.w1.weight"
+      ],
+      "original_codes_sha256": "54c7fc3661c474874112a98c9657a112d9bf44d45b866c888ebb7d5a328982b7",
+      "original_scales_sha256": "5d2c03d2d471e6dfb5725152126f5bc78ce9e754cf91c1785672c20f88f9a18d",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.43399007214854163,
+        "scale-lut-n32": 0.3344486079489191,
+        "scale-lut-n64": 0.2843579277396202
+      }
+    },
+    {
+      "layer": 20,
+      "projection": "w3",
+      "TP2_shape": [
+        1152,
+        5120
+      ],
+      "source_keys": [
+        "layers.20.ffn.experts.0.w3.weight",
+        "layers.20.ffn.experts.1.w3.weight",
+        "layers.20.ffn.experts.2.w3.weight",
+        "layers.20.ffn.experts.3.w3.weight",
+        "layers.20.ffn.experts.4.w3.weight",
+        "layers.20.ffn.experts.5.w3.weight",
+        "layers.20.ffn.experts.6.w3.weight",
+        "layers.20.ffn.experts.7.w3.weight"
+      ],
+      "original_codes_sha256": "186f8e444ba114cb123b4ff327320322452a311e3027587462c2bd58ab6a1e02",
+      "original_scales_sha256": "f94f43d2b1a909168e61bb8077b5f81ed5f0a35368a2884af7e0c467a3d92994",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.43282223244508106,
+        "scale-lut-n32": 0.3332332319890459,
+        "scale-lut-n64": 0.28272772518297035
+      }
+    },
+    {
+      "layer": 20,
+      "projection": "w2",
+      "TP2_shape": [
+        5120,
+        1152
+      ],
+      "source_keys": [
+        "layers.20.ffn.experts.0.w2.weight",
+        "layers.20.ffn.experts.1.w2.weight",
+        "layers.20.ffn.experts.2.w2.weight",
+        "layers.20.ffn.experts.3.w2.weight",
+        "layers.20.ffn.experts.4.w2.weight",
+        "layers.20.ffn.experts.5.w2.weight",
+        "layers.20.ffn.experts.6.w2.weight",
+        "layers.20.ffn.experts.7.w2.weight"
+      ],
+      "original_codes_sha256": "a2d42cb217f38a21d77054e60fc58028c824a406f4643ff7f2572146ecf47275",
+      "original_scales_sha256": "5997dcef0c822d74f930d50a691f068cc1ed9449a18e72146b4a32be33df8e8d",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.5115127035727104,
+        "scale-lut-n32": 0.3977393498644233,
+        "scale-lut-n64": 0.3308677502597372
+      }
+    },
+    {
+      "layer": 39,
+      "projection": "w1",
+      "TP2_shape": [
+        1152,
+        5120
+      ],
+      "source_keys": [
+        "layers.39.ffn.experts.0.w1.weight",
+        "layers.39.ffn.experts.1.w1.weight",
+        "layers.39.ffn.experts.2.w1.weight",
+        "layers.39.ffn.experts.3.w1.weight",
+        "layers.39.ffn.experts.4.w1.weight",
+        "layers.39.ffn.experts.5.w1.weight",
+        "layers.39.ffn.experts.6.w1.weight",
+        "layers.39.ffn.experts.7.w1.weight"
+      ],
+      "original_codes_sha256": "14e9ec2e48b0310343c3d06d8f124b7389b0645da1caa679e782d3538519d076",
+      "original_scales_sha256": "9b4b207e718f78d996234d9c9613cdc4b7ef857e4c2efdd40cd7ea615fc459fd",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.4320616911475857,
+        "scale-lut-n32": 0.33331243321299553,
+        "scale-lut-n64": 0.28072941737870377
+      }
+    },
+    {
+      "layer": 39,
+      "projection": "w3",
+      "TP2_shape": [
+        1152,
+        5120
+      ],
+      "source_keys": [
+        "layers.39.ffn.experts.0.w3.weight",
+        "layers.39.ffn.experts.1.w3.weight",
+        "layers.39.ffn.experts.2.w3.weight",
+        "layers.39.ffn.experts.3.w3.weight",
+        "layers.39.ffn.experts.4.w3.weight",
+        "layers.39.ffn.experts.5.w3.weight",
+        "layers.39.ffn.experts.6.w3.weight",
+        "layers.39.ffn.experts.7.w3.weight"
+      ],
+      "original_codes_sha256": "f988a402901f41d65b5ce7a004ef7d07e56e389d9f588830cc42a4e5a0a27835",
+      "original_scales_sha256": "0788917e7655d4857fee7f454f9b9d0976cd58d3c4f5328704a80b7fc9fa77ce",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.4329259196917216,
+        "scale-lut-n32": 0.3327127390851577,
+        "scale-lut-n64": 0.28270176456620294
+      }
+    },
+    {
+      "layer": 39,
+      "projection": "w2",
+      "TP2_shape": [
+        5120,
+        1152
+      ],
+      "source_keys": [
+        "layers.39.ffn.experts.0.w2.weight",
+        "layers.39.ffn.experts.1.w2.weight",
+        "layers.39.ffn.experts.2.w2.weight",
+        "layers.39.ffn.experts.3.w2.weight",
+        "layers.39.ffn.experts.4.w2.weight",
+        "layers.39.ffn.experts.5.w2.weight",
+        "layers.39.ffn.experts.6.w2.weight",
+        "layers.39.ffn.experts.7.w2.weight"
+      ],
+      "original_codes_sha256": "61eaf82cb26af59e63b54cf72927518059ddb60d70df6edaa908b3aeab40a230",
+      "original_scales_sha256": "54b00864fbf4022f24c4dbf3f981554fdcfd6bf88bbccaf6f0161a47b342c71c",
+      "same_control_FP32_BF16_bit_differences": 0,
+      "changing_replays": 16,
+      "active_three_mean_ms": {
+        "compact-control": 0.5121005621428291,
+        "scale-lut-n32": 0.4617541174714764,
+        "scale-lut-n64": 0.33032385787616175
+      }
+    }
+  ],
+  "raw_operator_receipt_sha256": "d39f190f896ca81c5d41518b432b68b804cc635c42094238a45e18bda926b504",
+  "projection_timings_are_not_model_TPS": true
+}

@@ -1,0 +1,488 @@
+{
+  "scope": "all 40 layers x384 routed experts x3 projection original E8M0 scale grids",
+  "scale_matrices": 46080,
+  "scale_bytes": 16986931200,
+  "checkpoint_files_written": 0,
+  "decoded_weight_values_materialized": 0,
+  "new_quantization": false,
+  "local_tile_histogram_is_64_fixed_tiles_per_matrix_sample": true,
+  "projection_histograms": {
+    "w1": {
+      "117": 2,
+      "118": 336,
+      "119": 2702356,
+      "120": 3203042134,
+      "121": 2454674990,
+      "122": 1867471,
+      "123": 22618,
+      "124": 454,
+      "125": 39
+    },
+    "w3": {
+      "119": 1265383,
+      "120": 3007538665,
+      "121": 2650589395,
+      "122": 2731807,
+      "123": 182793,
+      "124": 2184,
+      "125": 167,
+      "126": 6
+    },
+    "w2": {
+      "117": 448,
+      "118": 13920,
+      "119": 1154835,
+      "120": 3090297046,
+      "121": 2565400712,
+      "122": 4564127,
+      "123": 834706,
+      "124": 43594,
+      "125": 977,
+      "126": 33,
+      "127": 2
+    }
+  },
+  "matrix_distinct_scale_counts": {
+    "w1": {
+      "4": 14490,
+      "5": 732,
+      "6": 115,
+      "3": 4,
+      "7": 18,
+      "8": 1
+    },
+    "w3": {
+      "4": 14384,
+      "5": 823,
+      "6": 125,
+      "3": 1,
+      "7": 24,
+      "8": 3
+    },
+    "w2": {
+      "5": 1312,
+      "6": 430,
+      "4": 13168,
+      "7": 227,
+      "8": 174,
+      "3": 3,
+      "9": 44,
+      "10": 2
+    }
+  },
+  "matrix_contiguous_scale_range_widths": {
+    "w1": {
+      "4": 14489,
+      "5": 722,
+      "6": 116,
+      "3": 4,
+      "7": 28,
+      "8": 1
+    },
+    "w3": {
+      "4": 14384,
+      "5": 811,
+      "6": 133,
+      "3": 1,
+      "7": 27,
+      "8": 4
+    },
+    "w2": {
+      "5": 1265,
+      "6": 462,
+      "4": 13168,
+      "7": 241,
+      "8": 175,
+      "3": 3,
+      "9": 44,
+      "10": 2
+    }
+  },
+  "sampled_tile_distinct_scale_counts": {
+    "w1": {
+      "2": 906077,
+      "4": 1839,
+      "3": 75124
+    },
+    "w3": {
+      "2": 924797,
+      "3": 56918,
+      "4": 1311,
+      "5": 14
+    },
+    "w2": {
+      "2": 927982,
+      "3": 53030,
+      "4": 1717,
+      "5": 299,
+      "6": 12
+    }
+  },
+  "sampled_tile_scale_range_widths": {
+    "w1": {
+      "2": 906077,
+      "4": 1841,
+      "3": 75122
+    },
+    "w3": {
+      "2": 924797,
+      "3": 56909,
+      "4": 1318,
+      "5": 16
+    },
+    "w2": {
+      "2": 927982,
+      "3": 52957,
+      "4": 1758,
+      "5": 323,
+      "6": 17,
+      "7": 3
+    }
+  },
+  "first_layer_first_expert": {
+    "w1": {
+      "layer": 0,
+      "expert": 0,
+      "projection": "w1",
+      "scale_bytes": 368640,
+      "scale_sha256": "4df334ae5e4ade9cc3930a2bdc1037f11c86c2d9e983265a2b99fc934523f124",
+      "min": 119,
+      "max": 122,
+      "distinct": 4,
+      "contiguous_range_width": 4,
+      "histogram": {
+        "119": 299,
+        "120": 239919,
+        "121": 128331,
+        "122": 91
+      }
+    },
+    "w2": {
+      "layer": 0,
+      "expert": 0,
+      "projection": "w2",
+      "scale_bytes": 368640,
+      "scale_sha256": "2952c7e29c793783ce608363d9cc81149821a94e8f5d988fd2591c4730f18a17",
+      "min": 119,
+      "max": 123,
+      "distinct": 5,
+      "contiguous_range_width": 5,
+      "histogram": {
+        "119": 149,
+        "120": 238594,
+        "121": 129841,
+        "122": 55,
+        "123": 1
+      }
+    },
+    "w3": {
+      "layer": 0,
+      "expert": 0,
+      "projection": "w3",
+      "scale_bytes": 368640,
+      "scale_sha256": "1b0736c3398262d06c130802ee3bee11eb21cbdf96c60639a00a9d262d5ad365",
+      "min": 119,
+      "max": 122,
+      "distinct": 4,
+      "contiguous_range_width": 4,
+      "histogram": {
+        "119": 238,
+        "120": 241667,
+        "121": 126672,
+        "122": 63
+      }
+    }
+  },
+  "checkpoint_stat_identity": {
+    "model-00001-of-00048.safetensors": {
+      "size": 970533624,
+      "mtime_ns": 1794824175913792889,
+      "inode": 89167983,
+      "device": 64772
+    },
+    "model-00002-of-00048.safetensors": {
+      "size": 1323858272,
+      "mtime_ns": 1794824234214195712,
+      "inode": 89167984,
+      "device": 64772
+    },
+    "model-00003-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794825865901476861,
+      "inode": 89167985,
+      "device": 64772
+    },
+    "model-00004-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794825886969622621,
+      "inode": 89167986,
+      "device": 64772
+    },
+    "model-00005-of-00048.safetensors": {
+      "size": 7405953784,
+      "mtime_ns": 1794825877825559358,
+      "inode": 89167989,
+      "device": 64772
+    },
+    "model-00006-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794825691692271589,
+      "inode": 89167987,
+      "device": 64772
+    },
+    "model-00007-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794826146051415144,
+      "inode": 89167988,
+      "device": 64772
+    },
+    "model-00008-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794825992030349486,
+      "inode": 89167990,
+      "device": 64772
+    },
+    "model-00009-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794826129167298285,
+      "inode": 89159579,
+      "device": 64772
+    },
+    "model-00010-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794825968990190083,
+      "inode": 89159608,
+      "device": 64772
+    },
+    "model-00011-of-00048.safetensors": {
+      "size": 7405953784,
+      "mtime_ns": 1794827631425697540,
+      "inode": 89168066,
+      "device": 64772
+    },
+    "model-00012-of-00048.safetensors": {
+      "size": 7389759032,
+      "mtime_ns": 1794828320018466009,
+      "inode": 89168067,
+      "device": 64772
+    },
+    "model-00013-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794828261922063696,
+      "inode": 89168068,
+      "device": 64772
+    },
+    "model-00014-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794828453455390053,
+      "inode": 89168069,
+      "device": 64772
+    },
+    "model-00015-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794828109721009711,
+      "inode": 89168070,
+      "device": 64772
+    },
+    "model-00016-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794828671952903138,
+      "inode": 89168071,
+      "device": 64772
+    },
+    "model-00017-of-00048.safetensors": {
+      "size": 7405956128,
+      "mtime_ns": 1794828864234234678,
+      "inode": 89168075,
+      "device": 64772
+    },
+    "model-00018-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794828894154441874,
+      "inode": 89168078,
+      "device": 64772
+    },
+    "model-00019-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794830096162762645,
+      "inode": 89168079,
+      "device": 64772
+    },
+    "model-00020-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794830569902041498,
+      "inode": 89168080,
+      "device": 64772
+    },
+    "model-00021-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794830713519035490,
+      "inode": 89168081,
+      "device": 64772
+    },
+    "model-00022-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794830599762248164,
+      "inode": 89168082,
+      "device": 64772
+    },
+    "model-00023-of-00048.safetensors": {
+      "size": 7400713088,
+      "mtime_ns": 1794830827835826690,
+      "inode": 89168084,
+      "device": 64772
+    },
+    "model-00024-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794830911516405852,
+      "inode": 89168086,
+      "device": 64772
+    },
+    "model-00025-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794833607823067414,
+      "inode": 89168139,
+      "device": 64772
+    },
+    "model-00026-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794833804680429828,
+      "inode": 89168223,
+      "device": 64772
+    },
+    "model-00027-of-00048.safetensors": {
+      "size": 7395337384,
+      "mtime_ns": 1794833506854368628,
+      "inode": 89168445,
+      "device": 64772
+    },
+    "model-00028-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794835582288732340,
+      "inode": 89168524,
+      "device": 64772
+    },
+    "model-00029-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794835684369438822,
+      "inode": 89168244,
+      "device": 64772
+    },
+    "model-00030-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794835789470166205,
+      "inode": 89168259,
+      "device": 64772
+    },
+    "model-00031-of-00048.safetensors": {
+      "size": 7395337384,
+      "mtime_ns": 1794833824228565117,
+      "inode": 89168160,
+      "device": 64772
+    },
+    "model-00032-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794836364946148971,
+      "inode": 89168413,
+      "device": 64772
+    },
+    "model-00033-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794835990879560123,
+      "inode": 89168319,
+      "device": 64772
+    },
+    "model-00034-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794836405658430733,
+      "inode": 89168226,
+      "device": 64772
+    },
+    "model-00035-of-00048.safetensors": {
+      "size": 7395337384,
+      "mtime_ns": 1794833546998646459,
+      "inode": 89168172,
+      "device": 64772
+    },
+    "model-00036-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794837630874909259,
+      "inode": 89168599,
+      "device": 64772
+    },
+    "model-00037-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794837968889248043,
+      "inode": 89168320,
+      "device": 64772
+    },
+    "model-00038-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794837856476470238,
+      "inode": 89168568,
+      "device": 64772
+    },
+    "model-00039-of-00048.safetensors": {
+      "size": 7395337384,
+      "mtime_ns": 1794833964121533292,
+      "inode": 89168188,
+      "device": 64772
+    },
+    "model-00040-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794838041781752400,
+      "inode": 89168293,
+      "device": 64772
+    },
+    "model-00041-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794838597509597688,
+      "inode": 89168484,
+      "device": 64772
+    },
+    "model-00042-of-00048.safetensors": {
+      "size": 7389761368,
+      "mtime_ns": 1794838711822388971,
+      "inode": 89168203,
+      "device": 64772
+    },
+    "model-00043-of-00048.safetensors": {
+      "size": 1323837624,
+      "mtime_ns": 1794838447996563075,
+      "inode": 89168279,
+      "device": 64772
+    },
+    "model-00044-of-00048.safetensors": {
+      "size": 2652728736,
+      "mtime_ns": 1794838592769564877,
+      "inode": 89168155,
+      "device": 64772
+    },
+    "model-00045-of-00048.safetensors": {
+      "size": 2573998176,
+      "mtime_ns": 1794838604661647195,
+      "inode": 89168108,
+      "device": 64772
+    },
+    "model-00046-of-00048.safetensors": {
+      "size": 2706402896,
+      "mtime_ns": 1794838400972237705,
+      "inode": 89168473,
+      "device": 64772
+    },
+    "model-00047-of-00048.safetensors": {
+      "size": 101535150936,
+      "mtime_ns": 1794843664596684250,
+      "inode": 89169362,
+      "device": 64772
+    },
+    "model-00048-of-00048.safetensors": {
+      "size": 101537926640,
+      "mtime_ns": 1794844003695031309,
+      "inode": 89168141,
+      "device": 64772
+    }
+  },
+  "elapsed_seconds": 174.45597661007196,
+  "not_a_performance_benchmark": true
+}
