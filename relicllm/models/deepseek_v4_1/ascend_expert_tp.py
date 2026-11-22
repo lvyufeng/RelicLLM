@@ -23,6 +23,7 @@ from .ascend_device_routing import _OWNER
 
 ORIGINAL_BANK_FORMAT = "original-n16"
 COMPACT_BANK_FORMAT = "relic.fp4.cube-n32-k128.v1"
+COMPACT_BANK_FORMAT64 = "relic.fp4.cube-n64-k128.v1"
 
 
 @dataclass
@@ -89,31 +90,42 @@ class ExpertTPDispatch:
 
     @staticmethod
     def _require_matching_bank_format(bank_format, consumer, backend):
-        if not isinstance(bank_format, str) or bank_format not in (ORIGINAL_BANK_FORMAT, COMPACT_BANK_FORMAT):
+        if not isinstance(bank_format, str) or bank_format not in (ORIGINAL_BANK_FORMAT, COMPACT_BANK_FORMAT, COMPACT_BANK_FORMAT64):
             raise ValueError("choose an explicit supported expert bank format")
         consumer_format = getattr(consumer, "weight_format", ORIGINAL_BANK_FORMAT)
         if bank_format == ORIGINAL_BANK_FORMAT:
             if consumer_format != ORIGINAL_BANK_FORMAT or getattr(consumer, "cube_packed", False):
                 raise ValueError("original expert banks require an original-format consumer")
             return
+        rows = 64 if bank_format == COMPACT_BANK_FORMAT64 else 32
         if (backend != "triton" or consumer is None or not callable(consumer)
-                or consumer_format != COMPACT_BANK_FORMAT
+                or consumer_format != bank_format
                 or getattr(consumer, "cube_packed", False) is not True
                 or not isinstance(getattr(consumer, "group_k", None), int)
                 or isinstance(getattr(consumer, "group_k", None), bool)
                 or getattr(consumer, "group_k", None) != 4
                 or not isinstance(getattr(consumer, "output_rows", None), int)
                 or isinstance(getattr(consumer, "output_rows", None), bool)
-                or getattr(consumer, "output_rows", None) != 32):
-            raise ValueError("compact expert banks require their explicit N32/K128 Cube consumer and NPU backend")
+                or getattr(consumer, "output_rows", None) != rows):
+            raise ValueError(f"compact expert banks require their explicit N{rows}/K128 Cube consumer and NPU backend")
+        ExpertTPDispatch._consumer_scale_lut_range(consumer, required=bank_format == COMPACT_BANK_FORMAT64)
 
     @staticmethod
-    def _require_compact_geometry(dim, local_mid, device):
+    def _consumer_scale_lut_range(consumer, *, required=False):
+        minimum, maximum = getattr(consumer, "scale_min", None), getattr(consumer, "scale_max", None)
+        if minimum is None and maximum is None and not required:
+            return None
+        if type(minimum) is not int or type(maximum) is not int or (minimum, maximum) != (117, 127):
+            raise ValueError("compact scale-LUT consumer must declare the checked 117..127 E8M0 range")
+        return minimum, maximum
+
+    @staticmethod
+    def _require_compact_geometry(dim, local_mid, device, *, rows=32):
         if device.type != "npu":
             raise ValueError("compact expert banks require NPU residency")
         for n, k in ((local_mid, dim), (dim, local_mid)):
-            if n % 32 or k % 128:
-                raise ValueError("compact expert projections require complete N32/K128 geometry")
+            if n % rows or k % 128:
+                raise ValueError(f"compact expert projections require complete N{rows}/K128 geometry")
 
     def __init__(self, model, *, consumer=None, tp_world=2, backend="triton", rank=None, world=None,
                  reduce_fp32=None, capture_graphs=True, restore_residency=True, reserve_bytes=4 * 2**30,
@@ -123,6 +135,7 @@ class ExpertTPDispatch:
             raise ValueError("choose explicit original-byte TP geometry and backend")
         self._require_matching_bank_format(bank_format, consumer, backend)
         self.bank_format = bank_format
+        self.scale_lut_certified = False
         self._require_no_expert_graph_owner()
         initialized = dist.is_available() and dist.is_initialized()
         self.rank = dist.get_rank() if rank is None and initialized else (0 if rank is None else rank)
@@ -177,17 +190,20 @@ class ExpertTPDispatch:
         if any((store.dim, full_mid, store.topk, store.n_experts, store.device) != geometry for _, store, full_mid in self.entries):
             raise ValueError("shared TP workspace requires identical expert layer geometry")
         self.geometry = geometry
-        if self.bank_format == COMPACT_BANK_FORMAT:
-            self._require_compact_geometry(first.dim, first.inter_dim // tp_world, first.device)
+        if self.bank_format != ORIGINAL_BANK_FORMAT:
+            rows = 64 if self.bank_format == COMPACT_BANK_FORMAT64 else 32
+            self._require_compact_geometry(first.dim, first.inter_dim // tp_world, first.device, rows=rows)
         group_k = consumer.group_k if consumer is not None else 1
+        layout_options = {"compact_n64": True} if self.bank_format == COMPACT_BANK_FORMAT64 else {}
         self.workspace = make_tile_moe_workspace(first.dim, first.inter_dim // tp_world, first.topk,
             device=self.device, group_k=group_k, block_dim=consumer.block_dim if consumer is not None else 24,
-            weight_rows=getattr(consumer, "output_rows", 16), max_bytes=max_workspace_bytes)
+            weight_rows=getattr(consumer, "output_rows", 16), max_bytes=max_workspace_bytes, **layout_options)
 
     def _make_bank(self, store, full_mid):
         local_mid = full_mid // self.tp_world
         owned = tuple(range(self.ep_rank, store.n_experts, self.ep_world))
         count = len(owned)
+        scale_lut_range = self._consumer_scale_lut_range(self.consumer, required=self.bank_format == COMPACT_BANK_FORMAT64)
         required = count * packed_expert_bytes(store.dim, local_mid)
         if self.backend == "triton":
             free, _ = torch.npu.mem_get_info(self.device)
@@ -208,12 +224,20 @@ class ExpertTPDispatch:
                     projection=name, tp_rank=self.tp_rank, tp_world=self.tp_world, full_inter_dim=full_mid)
                 if int(scale.min()) < 2 or int(scale.max()) > 252:
                     raise ValueError("the original expert shard is not certified for exact BF16 operands")
-                if self.bank_format == COMPACT_BANK_FORMAT:
-                    from relic_core.kernels.cube_packed_format import convert_fp4_cube
+                if scale_lut_range is not None:
+                    if code.device.type != "cpu" or scale.device.type != "cpu":
+                        raise ValueError("scale-LUT certification requires original CPU checkpoint bytes")
+                    if int(scale.min()) < scale_lut_range[0] or int(scale.max()) > scale_lut_range[1]:
+                        raise ValueError("the original expert shard is outside the certified 117..127 E8M0 LUT range")
+                if self.bank_format != ORIGINAL_BANK_FORMAT:
+                    if self.bank_format == COMPACT_BANK_FORMAT64:
+                        from relic_core.kernels.cube_packed_format64 import convert_fp4_cube64 as convert
+                    else:
+                        from relic_core.kernels.cube_packed_format import convert_fp4_cube as convert
 
                     if code.device.type != "cpu" or scale.device.type != "cpu":
                         raise ValueError("compact TP conversion requires original CPU checkpoint bytes")
-                    converted = convert_fp4_cube(code, scale)
+                    converted = convert(code, scale)
                     if (converted.format != self.bank_format or converted.n != n or converted.k != k
                             or converted.payload_bytes != n * k // 2 + n * k // 32):
                         raise ValueError("compact TP conversion changed the declared format, geometry or byte count")
@@ -237,11 +261,12 @@ class ExpertTPDispatch:
             self._require_matching_bank_format(self.bank_format, self.consumer, self.backend)
             self._require_no_expert_graph_owner()
             for ffn, store, full_mid in self.entries:
-                if self.bank_format == COMPACT_BANK_FORMAT:
+                if self.bank_format != ORIGINAL_BANK_FORMAT:
                     if ((store.dim, store.inter_dim, store.topk, store.n_experts, store.device) != self.geometry
                             or store.inter_dim != full_mid):
                         raise ValueError("compact expert geometry changed before installation")
-                    self._require_compact_geometry(store.dim, full_mid // self.tp_world, store.device)
+                    rows = 64 if self.bank_format == COMPACT_BANK_FORMAT64 else 32
+                    self._require_compact_geometry(store.dim, full_mid // self.tp_world, store.device, rows=rows)
                 if (ffn.routed is not store or store._arenas is None
                         or getattr(store, _OWNER, None) is not None
                         or getattr(store, "_relic_m1_routed_dispatch_owner", None) is not None):
@@ -252,6 +277,8 @@ class ExpertTPDispatch:
                     if self.device.type != "npu":
                         raise ValueError("expert TP NPU backend needs NPU resident weights")
                     torch.npu.synchronize(self.device)
+                    if self._consumer_scale_lut_range(self.consumer) is not None:
+                        self.consumer.prepare_device_metadata(self.device)
                     # Every physical rank creates all groups in the same order.
                     for ep in range(self.ep_world):
                         group = dist.new_group(list(range(ep * self.tp_world, (ep + 1) * self.tp_world)), backend="hccl")
@@ -274,6 +301,9 @@ class ExpertTPDispatch:
                     if self.backend == "triton" and self.rank == 0:
                         print(f"EXPERT_TP_RESIDENT layer={original.layer_id} TP={self.tp_world} EP={self.ep_world} bytes={shard.resident_bytes}", flush=True)
                     self.replacements.append((ffn, original, shard))
+                # Advertised bounds alone do not certify the bytes. Every owned
+                # projection must finish its CPU-range-checked load first.
+                self.scale_lut_certified = self._consumer_scale_lut_range(self.consumer) is not None
                 self.installed = True
             except BaseException:
                 for ffn, original, shard in reversed(self.replacements):
@@ -292,9 +322,11 @@ class ExpertTPDispatch:
             return self
 
     def _execute(self, shard, x, weights, indices):
+        options = {"certified_scale_lut_operands": True} if self.scale_lut_certified else {}
         partial = tp_moe_down_partials(x, weights, indices, shard.banks,
             ep_rank=self.ep_rank, ep_world=self.ep_world, n_experts=shard.n_experts,
-            workspace=self.workspace, consumer=self.consumer, swiglu_limit=shard.swiglu_limit, backend=self.backend)
+            workspace=self.workspace, consumer=self.consumer, swiglu_limit=shard.swiglu_limit,
+            backend=self.backend, **options)
         if self.reduce_fp32 is not None:
             if self.reduce_fp32(partial) is not None:
                 raise RuntimeError("the FP32 TP collective must update the provided partial in place")
@@ -355,7 +387,8 @@ class ExpertTPDispatch:
                 "one_TP_leader_emits_into_original_global_MoE_reduce": True,
                 "source_checkpoint_files_unchanged": True,
                 "bank_format": self.bank_format,
-                "resident_encoding_changed": self.bank_format == COMPACT_BANK_FORMAT,
+                "resident_encoding_changed": self.bank_format != ORIGINAL_BANK_FORMAT,
+                "scale_LUT_CPU_range_certified": self.scale_lut_certified,
                 "original_FP8_activation_grids_unchanged": True,
                 "packed_weight_and_scale_resident_byte_count_unchanged": True,
                 "TP_down_partition_and_EP_global_FP32_sum_order_differ": True,
@@ -393,6 +426,10 @@ class ExpertTPDispatch:
                     torch.npu.synchronize(self.device)
                 except BaseException as error:
                     errors.append(error)
+            if errors and self.bank_format != ORIGINAL_BANK_FORMAT:
+                # A failed fence does not retire raw compact-stage references.
+                # Keep every resource and ownership state intact for cleanup retry.
+                raise errors[0]
             self.graphs.clear()
             for ffn, original, shard in reversed(self.replacements):
                 ffn.routed = original

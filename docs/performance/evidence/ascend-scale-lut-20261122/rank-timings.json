@@ -1,0 +1,611 @@
+{
+  "compact-control64": {
+    "timed_steps": 64,
+    "critical_rank_seconds": 7.474508032202721,
+    "TPS": 8.56243644722385,
+    "ranks": [
+      {
+        "rank": 0,
+        "timed_decode_seconds": 7.4744766522198915,
+        "sustained_single_stream_TPS": 8.562472394771913,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "1e4a796cae7e32e2119f3aef999ce3f24c7ebb36578440c455d205d28bfe67ca"
+      },
+      {
+        "rank": 1,
+        "timed_decode_seconds": 7.474508032202721,
+        "sustained_single_stream_TPS": 8.56243644722385,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "679a590d9421afb9250b7f02390e5fee6dc2224a225e600e4937dc4f203b6c4f"
+      },
+      {
+        "rank": 2,
+        "timed_decode_seconds": 7.474463382735848,
+        "sustained_single_stream_TPS": 8.562487595808427,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "f8e3b55f6ebdabde3828fff9220766bfcec0a4458bd784be0f470d49655c0cb1"
+      },
+      {
+        "rank": 3,
+        "timed_decode_seconds": 7.4744205214083195,
+        "sustained_single_stream_TPS": 8.562536696549316,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "3e88c7ecc0d309f1feaa612b13d14cfbe6b26496987981c30e3a96e287cba3e7"
+      },
+      {
+        "rank": 4,
+        "timed_decode_seconds": 7.474446410313249,
+        "sustained_single_stream_TPS": 8.562507038874843,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "283a47092b2db4adb6ed5ccea959e1c24787ba614ad7bbba00b4fd539bdef8c5"
+      },
+      {
+        "rank": 5,
+        "timed_decode_seconds": 7.474486482329667,
+        "sustained_single_stream_TPS": 8.562461133791805,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "3ad76d5b2ccab9f3616f07fbe9ad960cf32218713440c580ecc3443a917bb15d"
+      },
+      {
+        "rank": 6,
+        "timed_decode_seconds": 7.474458391778171,
+        "sustained_single_stream_TPS": 8.562493313281315,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "a1ed50958a98271c9f4ac85cc2a86b54b097ebcbc3891f18bf0f6a38e1acda0a"
+      },
+      {
+        "rank": 7,
+        "timed_decode_seconds": 7.474466661922634,
+        "sustained_single_stream_TPS": 8.562483839286733,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "3a25898a287f3c9cd74158625e91a7526916e7529599075eb42e64f98425c562"
+      }
+    ]
+  },
+  "N32-LUT64": {
+    "timed_steps": 64,
+    "critical_rank_seconds": 6.689942288212478,
+    "TPS": 9.566599716826632,
+    "ranks": [
+      {
+        "rank": 0,
+        "timed_decode_seconds": 6.689877377822995,
+        "sustained_single_stream_TPS": 9.566692539411946,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "3e792edb7b78f742635867f2979eacdfc5665d2b002f03523ceeca7d071e1d22"
+      },
+      {
+        "rank": 1,
+        "timed_decode_seconds": 6.689922488294542,
+        "sustained_single_stream_TPS": 9.56662803074053,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "87503d6f8446001201c299fcea360e5936ee0a682890f5f2630193cc239c368b"
+      },
+      {
+        "rank": 2,
+        "timed_decode_seconds": 6.689906568266451,
+        "sustained_single_stream_TPS": 9.56665079652738,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "c0a57c21561f8c68b0c9e24907c648a66630e269915bb5da03f5c4c4db6d2349"
+      },
+      {
+        "rank": 3,
+        "timed_decode_seconds": 6.689876946620643,
+        "sustained_single_stream_TPS": 9.56669315604217,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "ec91e6146c7740fe8541920b60293dfb30891dcc5f9c677dc666e44db0936da9"
+      },
+      {
+        "rank": 4,
+        "timed_decode_seconds": 6.6899170177057385,
+        "sustained_single_stream_TPS": 9.566635853720703,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "4cf984a3dc1af88768d76eea60e572c7732460cea563949dd8e916db6dbbbb3f"
+      },
+      {
+        "rank": 5,
+        "timed_decode_seconds": 6.689902817830443,
+        "sustained_single_stream_TPS": 9.566656159701196,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "179ffeb5e148b08dcd69e8e7137e025454897d67a13926443c442f7db9869ca9"
+      },
+      {
+        "rank": 6,
+        "timed_decode_seconds": 6.689911748282611,
+        "sustained_single_stream_TPS": 9.566643389044653,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "bf28cb6ee1f22c68a8701bac0ab9a058a4b28d171ca548d505d5613c2f2b61f7"
+      },
+      {
+        "rank": 7,
+        "timed_decode_seconds": 6.689942288212478,
+        "sustained_single_stream_TPS": 9.566599716826632,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "875cebb52601b49ebdc46c16a31fa1e9ce321ba2aa994cbd91448c07cd8f58f6"
+      }
+    ]
+  },
+  "N64-LUT64": {
+    "timed_steps": 64,
+    "critical_rank_seconds": 5.992189634591341,
+    "TPS": 10.680569858895113,
+    "ranks": [
+      {
+        "rank": 0,
+        "timed_decode_seconds": 5.992183795198798,
+        "sustained_single_stream_TPS": 10.680580267127256,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "007b01f3f9612c8d4394d1dd67565f77bb430ced7703a20d6a08b34ff7791432"
+      },
+      {
+        "rank": 1,
+        "timed_decode_seconds": 5.992168595083058,
+        "sustained_single_stream_TPS": 10.680607360166055,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "e64eb7994df0ee731e0f6336466350d08275f6cea71d4ff120dae037bade7224"
+      },
+      {
+        "rank": 2,
+        "timed_decode_seconds": 5.992178465239704,
+        "sustained_single_stream_TPS": 10.680589767354304,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "65387e73644e8af7941a081be50db85500cba8ae46328f12f72dbc2260be9fd6"
+      },
+      {
+        "rank": 3,
+        "timed_decode_seconds": 5.992068573832512,
+        "sustained_single_stream_TPS": 10.680785643790749,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "8b6029abe883bbbe652a6d2a5f2e0322fe937dde63c4bca1ba0c6e71749b8a53"
+      },
+      {
+        "rank": 4,
+        "timed_decode_seconds": 5.992160574533045,
+        "sustained_single_stream_TPS": 10.6806216562358,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "7188ddc3824bda584467c12e6b9792fdddf4736504d0300cd491f6eab0cb92c1"
+      },
+      {
+        "rank": 5,
+        "timed_decode_seconds": 5.992130075581372,
+        "sustained_single_stream_TPS": 10.680676018834681,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "94a88535927816d32cf12b113af4aa61bfd4ce2375d82690066553e59cd3074c"
+      },
+      {
+        "rank": 6,
+        "timed_decode_seconds": 5.992171784862876,
+        "sustained_single_stream_TPS": 10.680601674617138,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "3dc6ffa9b2ea882e06e6a9955e9a10b0285e52c649cbc0608ea2a5c041ef0c3e"
+      },
+      {
+        "rank": 7,
+        "timed_decode_seconds": 5.992189634591341,
+        "sustained_single_stream_TPS": 10.680569858895113,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "1fa185034028913d0dcffcb05f2fe55a713f7ceeacb28840af4914f4fe0f5ac2"
+      }
+    ]
+  },
+  "N64-independent64-a": {
+    "timed_steps": 64,
+    "critical_rank_seconds": 5.984905947931111,
+    "TPS": 10.693568212567117,
+    "ranks": [
+      {
+        "rank": 0,
+        "timed_decode_seconds": 5.984905947931111,
+        "sustained_single_stream_TPS": 10.693568212567117,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "687c931145a86093a0df0ead8473aac108af7cf51d8da61e4f330df30636f6ef"
+      },
+      {
+        "rank": 1,
+        "timed_decode_seconds": 5.984800007194281,
+        "sustained_single_stream_TPS": 10.693757506193375,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "4147eaa6e4a48e350aae2d677051ae2438f6d51ab38629a951c44751840c7434"
+      },
+      {
+        "rank": 2,
+        "timed_decode_seconds": 5.984902338124812,
+        "sustained_single_stream_TPS": 10.693574662415037,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "10cd8281722869cc6bc4c61a6120a31f10daf00e95dab87a85d565a449bffbbc"
+      },
+      {
+        "rank": 3,
+        "timed_decode_seconds": 5.9848894672468305,
+        "sustained_single_stream_TPS": 10.693597659614136,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "25bcc75ccb46f686cecbc8e2cd7aac046b7f935e88965e461a835f04dc4a316d"
+      },
+      {
+        "rank": 4,
+        "timed_decode_seconds": 5.984863208606839,
+        "sustained_single_stream_TPS": 10.693644577867966,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "25790cff5c024ae61d8fbc61a7cae02df4d87c27c6d4aed4f6c7e854a376a2e7"
+      },
+      {
+        "rank": 5,
+        "timed_decode_seconds": 5.984875648282468,
+        "sustained_single_stream_TPS": 10.693622350928317,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "abc4c8d508eef2581a89a7c1528c85ead507baac00e52861ed3ef5af5a6b878b"
+      },
+      {
+        "rank": 6,
+        "timed_decode_seconds": 5.984862187877297,
+        "sustained_single_stream_TPS": 10.69364640168923,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "c3f8f0d5f3851416c9e7282b9e6ab6de3b7797e8b08b015beb4df0a2ea07962f"
+      },
+      {
+        "rank": 7,
+        "timed_decode_seconds": 5.984902547672391,
+        "sustained_single_stream_TPS": 10.693574288004148,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "bdd1e26b3e8e2ed5d7b5c7b5b4e9d395e2c5db5112b9bafc3d799eb47dce20bd"
+      }
+    ]
+  },
+  "N64-independent64-b": {
+    "timed_steps": 64,
+    "critical_rank_seconds": 5.9844302190467715,
+    "TPS": 10.694418291704006,
+    "ranks": [
+      {
+        "rank": 0,
+        "timed_decode_seconds": 5.9843942588195205,
+        "sustained_single_stream_TPS": 10.694482554467362,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "bbfdfe2147b7f6c5e9ac389375da26d103e3236b91f51cbca98645e74a037e86"
+      },
+      {
+        "rank": 1,
+        "timed_decode_seconds": 5.9844302190467715,
+        "sustained_single_stream_TPS": 10.694418291704006,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "378a9265afd7044341f907c67482a3e3b48e7b72a2d9628640284e56d0903393"
+      },
+      {
+        "rank": 2,
+        "timed_decode_seconds": 5.984376789070666,
+        "sustained_single_stream_TPS": 10.694513774079853,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "64781d9a33827d6a2d7ce1808c462563aa244d46be00ff2051dbfd8e65a77758"
+      },
+      {
+        "rank": 3,
+        "timed_decode_seconds": 5.984401029534638,
+        "sustained_single_stream_TPS": 10.694470454794505,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "25431294ba9b8b4d5463aee3bcd8df9411f237866b6194f321f0856b8de3b51a"
+      },
+      {
+        "rank": 4,
+        "timed_decode_seconds": 5.984402058646083,
+        "sustained_single_stream_TPS": 10.6944686157132,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "2e37e59b6733bf2150eeb8526fa573b0747f0e4bcae044a298238b4d3cec019f"
+      },
+      {
+        "rank": 5,
+        "timed_decode_seconds": 5.984401118941605,
+        "sustained_single_stream_TPS": 10.69447029501909,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "86e300cd5f715c87c88733beb82b84aaadd3dcf666a42ef6642799810646bd1d"
+      },
+      {
+        "rank": 6,
+        "timed_decode_seconds": 5.984412709251046,
+        "sustained_single_stream_TPS": 10.694449582507094,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "290767aa55964b871dca583c93452db8b4e6f68e82008cbcf6b3912b41c38cd6"
+      },
+      {
+        "rank": 7,
+        "timed_decode_seconds": 5.984345968812704,
+        "sustained_single_stream_TPS": 10.69456885239167,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "221e1adfa0d1e5eac709c490ca44cc457380c78203d3881c48af0f5300843ff8"
+      }
+    ]
+  },
+  "compact-control16": {
+    "timed_steps": 16,
+    "critical_rank_seconds": 1.863365851342678,
+    "TPS": 8.586612225651201,
+    "ranks": [
+      {
+        "rank": 0,
+        "timed_decode_seconds": 1.8632487514987588,
+        "sustained_single_stream_TPS": 8.587151869620163,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "1b4cadc7b81266d815c1421f44123f512e813d243b945bd830cefdb9bdd8c850"
+      },
+      {
+        "rank": 1,
+        "timed_decode_seconds": 1.8632797496393323,
+        "sustained_single_stream_TPS": 8.587009010910496,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "b13d5d641458ebdd960946c16a4c292e7f3671158a227958ecc6545f5ebfee95"
+      },
+      {
+        "rank": 2,
+        "timed_decode_seconds": 1.8632964491844177,
+        "sustained_single_stream_TPS": 8.586932050991322,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "342229bb2019a79ed14061016ec72252619a74840012206536e8ff8e8e49c0ae"
+      },
+      {
+        "rank": 3,
+        "timed_decode_seconds": 1.8633206617087126,
+        "sustained_single_stream_TPS": 8.586820469927915,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "ddb8ad93ff20bfd85dd1a401d8f0992e3ae869ea0109cb881b1159c6e4faf4ff"
+      },
+      {
+        "rank": 4,
+        "timed_decode_seconds": 1.8633056599646807,
+        "sustained_single_stream_TPS": 8.586889603664535,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "a0f4f3f06f3ffe7708828784e1231b70f2f24c4751ba1aabecc289134739b031"
+      },
+      {
+        "rank": 5,
+        "timed_decode_seconds": 1.863291130401194,
+        "sustained_single_stream_TPS": 8.586956562475002,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "f6ace9e481a2b8fc653d6af8b4d2e92b73d31f98c4932f7dac1d23658e749378"
+      },
+      {
+        "rank": 6,
+        "timed_decode_seconds": 1.863365851342678,
+        "sustained_single_stream_TPS": 8.586612225651201,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "28992fada5bcbca194b0911908f9e23b6bcf85f4daa1683d29dd66e4c5aacdc0"
+      },
+      {
+        "rank": 7,
+        "timed_decode_seconds": 1.86330487113446,
+        "sustained_single_stream_TPS": 8.586893238924725,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "da520a37ad536a031082c0741714c0c57a4de0280b66906ddd67a3dc305635da"
+      }
+    ]
+  },
+  "N64-LUT16": {
+    "timed_steps": 16,
+    "critical_rank_seconds": 1.4880334939807653,
+    "TPS": 10.752446140978343,
+    "ranks": [
+      {
+        "rank": 0,
+        "timed_decode_seconds": 1.4879522640258074,
+        "sustained_single_stream_TPS": 10.75303313609696,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "46b5bdba1f6b02145f8b4de2ab1a5d5f4c0b18364bc0ad36adf0edc33c9b0342"
+      },
+      {
+        "rank": 1,
+        "timed_decode_seconds": 1.4879974238574505,
+        "sustained_single_stream_TPS": 10.752706787974113,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "4fc38bf8159bd4d576800231a8db45d97b83d75de66f5e3d54183d84af4024b8"
+      },
+      {
+        "rank": 2,
+        "timed_decode_seconds": 1.4879958936944604,
+        "sustained_single_stream_TPS": 10.752717845393047,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "37d5b814acc179ae938f2d4108687d5649516de65a42f6353e9a70bde96a07fc"
+      },
+      {
+        "rank": 3,
+        "timed_decode_seconds": 1.4880334939807653,
+        "sustained_single_stream_TPS": 10.752446140978343,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "0b0162c6f710262d6666ece37d9bf6b3619fad43495df9804a0656511643577b"
+      },
+      {
+        "rank": 4,
+        "timed_decode_seconds": 1.4879938941448927,
+        "sustained_single_stream_TPS": 10.752732294775134,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "bf25ecd3670b1ee43f8cef5b8d5452d7570d44405b05adb355c7a9eaaae80b84"
+      },
+      {
+        "rank": 5,
+        "timed_decode_seconds": 1.488021763972938,
+        "sustained_single_stream_TPS": 10.752530902021796,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "1a914fbebb1aaf99d026b0aac2204a7d618f06686cc9074f46c6f39a2f9145ce"
+      },
+      {
+        "rank": 6,
+        "timed_decode_seconds": 1.488001304678619,
+        "sustained_single_stream_TPS": 10.752678744092705,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "be387521353ccea53d74e10d47599b37d80a2011e704d674b8904e0dd08aaae6"
+      },
+      {
+        "rank": 7,
+        "timed_decode_seconds": 1.488009943626821,
+        "sustained_single_stream_TPS": 10.752616317201607,
+        "single_stream": true,
+        "batch_size": 1,
+        "NPU_completion_and_host_argmax_included": true,
+        "finite_final_logits": true,
+        "raw_rank_receipt_sha256": "d202705ea02ad26c67c92034ab2cffcfa0cf247fa62f7328ff36fb8f1152d284"
+      }
+    ]
+  }
+}

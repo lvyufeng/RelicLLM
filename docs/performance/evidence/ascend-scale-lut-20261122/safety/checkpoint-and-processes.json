@@ -1,0 +1,15 @@
+{
+  "timestamp_UTC": "2026-11-21T20:15:11.534286+00:00",
+  "hostname": "ascend216",
+  "private_live_jobs": [],
+  "all_eight_NPU_process_tables_empty": true,
+  "checkpoint_stat_identity_unchanged": true,
+  "checkpoint_files_compared": 90,
+  "no_new_full_checkpoint_checksum_claim": true,
+  "CANN_env_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+  "CANN_links": {
+    "/usr/local/Ascend/cann": "/usr/local/Ascend/cann-9.2.0",
+    "/usr/local/Ascend/ascend-toolkit/latest": "/usr/local/Ascend/cann-9.2.0"
+  },
+  "no_shared_configuration_change_or_device_reset": true
+}
