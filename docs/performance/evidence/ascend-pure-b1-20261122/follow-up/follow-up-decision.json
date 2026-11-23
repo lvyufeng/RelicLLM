@@ -1,0 +1,32 @@
+{
+  "accepted_s1": {
+    "immutable_bundle": "docs/performance/evidence/ascend-pure-b1-20261122",
+    "user_acceptance_context": 36,
+    "user_acceptance_is_not_general_numerical_headroom": true
+  },
+  "metadata_only": true,
+  "no_model_or_device_execution_on_build_host": true,
+  "pair_measurements": {
+    "first": {
+      "TPS_gain_percent": 3.383383076673896,
+      "all_eight_ranks_bit_identical": true
+    },
+    "repeat": {
+      "TPS_gain_percent": 3.0789861036000676,
+      "all_eight_ranks_bit_identical": true
+    }
+  },
+  "pending_new_canonical_controls": true,
+  "provisional_s2b": {
+    "canonical_acceptance": false,
+    "not_promoted_current_decision": "not accepted",
+    "numerical_acceptance_global": false,
+    "pair_scope_only": true,
+    "pending": "new canonical controls restoring the old excluded-oracle allocation pair (root job 8459)",
+    "provisional": true,
+    "reason": "matched control/candidate pair is bit-identical and faster, but both control and candidate only reproduce the original pre-S1 identity 4824df at context 36; the immutable accepted S1 canonical identity 852d95 is not reproduced"
+  },
+  "root_job_label": "8459",
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.follow-up.v1"
+}

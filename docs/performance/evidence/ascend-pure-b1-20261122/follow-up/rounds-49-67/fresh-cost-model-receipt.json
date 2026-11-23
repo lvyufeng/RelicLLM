@@ -1,0 +1,38 @@
+{
+  "schema": "relic.pure-b1.fresh-cost-model.v1",
+  "capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T091443Z, rank 0, 4 forwards",
+  "why": "The previous cost model was derived from capture T043116Z (04:37 UTC), which predates the narrow head being wired into the profile module and therefore describes a lane about 2.3 ms a step slower than the registered one. This capture is of the registered lane (narrow_output_head installed, 178 calls, bf16 resident) and replaces it.",
+  "capture_span": {"us": 316493, "forwards": 4, "ms_per_forward_under_profiling": 79.1,
+                   "note": "profiling instruments every kernel, so this exceeds the registered 71.10 ms timed step; the shares are what this receipt is for, not the absolute"},
+  "us_per_forward_by_engine": {
+    "AI_VECTOR_CORE": {"tasks_per_forward": 6914.8, "us_per_forward": 27157.2, "share": 0.3432},
+    "COMMUNICATION": {"tasks_per_forward": 130.2, "us_per_forward": 19175.5, "share": 0.2423},
+    "MIX_AIC": {"tasks_per_forward": 200.0, "us_per_forward": 14456.5, "share": 0.1827},
+    "AI_CORE": {"tasks_per_forward": 672.5, "us_per_forward": 7199.3, "share": 0.0910},
+    "AI_CPU": {"tasks_per_forward": 31.0, "us_per_forward": 2761.9, "share": 0.0349},
+    "MIX_AIV": {"tasks_per_forward": 357.5, "us_per_forward": 1415.7, "share": 0.0179}
+  },
+  "output_head_confirming_the_correction": {
+    "before_narrow_head_capture_T043116Z": {"us_per_call": 2346.8, "dtype": "FP32 by FP32"},
+    "registered_lane_capture_T091443Z": {"us_per_call": 1074.4, "dtype": "bf16 resident twin"},
+    "saving_us": 1272.4,
+    "reading": "the narrow-BF16 head saves 1.27 ms a forward and is already banked in the registered 14.064584 tok/s; this is what the previous round wrongly reported as unclaimed"
+  },
+  "top_operators": [
+    {"operator": "relic_scale_lut_tile_cube_0", "per_forward": 120.0, "us_per_forward": 12091.0, "share": 0.1528},
+    {"operator": "aclnnMatmul_MatMulCommon_MatMulV2", "per_forward": 348.5, "us_per_forward": 5214.0, "share": 0.0659},
+    {"operator": "fast_fused_fp8_activation_decode_kernel", "per_forward": 322.0, "us_per_forward": 3455.8, "share": 0.0437},
+    {"operator": "aclnnMatmul_MatMulV3Common_MatMulV3", "per_forward": 80.0, "us_per_forward": 2365.5, "share": 0.0299},
+    {"operator": "aclnnBatchMatMul_BatchMatMulNd_BatchMatMulV2", "per_forward": 324.0, "us_per_forward": 1985.2, "share": 0.0251},
+    {"operator": "aclnnInplaceCopy_CastAiCore_Cast", "per_forward": 696.5, "us_per_forward": 1783.0, "share": 0.0225},
+    {"operator": "_gather_layouts_kernel", "per_forward": 40.0, "us_per_forward": 1671.9, "share": 0.0211},
+    {"operator": "clamp_gate_up_kernel", "per_forward": 40.0, "us_per_forward": 1320.6, "share": 0.0167},
+    {"operator": "aclnnInplaceIndexCopy_TransposeAiCore_Transpose", "per_forward": 138.0, "us_per_forward": 1239.9, "share": 0.0157},
+    {"operator": "Cast", "per_forward": 9.0, "us_per_forward": 1173.1, "share": 0.0148}
+  ],
+  "what_is_actionable": {
+    "largest_single_item": "relic_scale_lut_tile_cube_0 at 15.3%, but this was already bounded in an earlier round: block_dim is at its 24 maximum and the gather is about 20% of the kernel, leaving at most 2.4 ms of upside",
+    "cleanest_remaining": "the AI_CPU bucket (31 operators a forward, 3.5%) and the plumbing copies (696 cast-copies 2.25%, 138 transposing copies 1.57%). These are dispatch, not arithmetic, and none of them touches precision, layout or the FP32-TP-down contract.",
+    "closed": "communication at 24.2% is straggler wait from MoE routing imbalance and cannot be recovered by scheduling (stream overlap measured unavailable) or by rebalancing (protected contract)"
+  }
+}

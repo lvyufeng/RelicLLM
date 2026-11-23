@@ -1,0 +1,60 @@
+{
+  "schema": "relic.pure-b1.indexer-sort-fused.v1",
+  "what": "Replace the sparse indexer's mask-then-sort selection at attention.py:1173 with one device kernel, so 8 of the 9 AI-CPU selection sites stop being AI-CPU operators.",
+  "kernel_file": "ascend_indexer_sort_fused.py",
+  "install_file": "ascend_indexer_sort_install.py",
+  "why_this_site": "the registered lane ran 31 AI-CPU operators a forward (9 Cast, 9 Sort, 9 Greater, 4 Index) for 2761.9 us = 3.5% of the step; they trace to attention.py:1173 (8 index layers) and attention.py:1326 (1 candidate layer).",
+  "site_b_deliberately_kept": "attention.py:1326 selects 2048-wide blocks and the rank kernel measured 0.66x there - slower than the four operators it would remove. Left on torch rather than traded for a regression.",
+  "standalone_bit_exactness": {
+    "cases": 10,
+    "covered": "both sites, widths 512 and 2048, reachable fractions 0%, 25%, 50%, 75%, 97%, 99.9%, 100%, single and multiple rows",
+    "result": "ALL CASES BIT-EXACT against the reference expression as written",
+    "first_attempt_was_wrong": "the initial kernel ranked by the score; the reference sorts the ids. The standalone harness caught it before anything reached the lane."
+  },
+  "install_proof": "anchor found exactly once in Indexer.forward, method rebound to a new object, fused symbol present in its co_names, uninstall restores the original; a missing or duplicated anchor raises instead of silently falling back",
+  "pair_20": {
+    "control_TPS": 12.447993728586347,
+    "candidate_TPS": 14.376777562669742,
+    "control_ms_per_token": 80.33423070446588,
+    "candidate_ms_per_token": 69.5566162612522,
+    "paired_gain_percent": 15.494736550629963,
+    "token_ids_equal_pair_all_8_ranks": true,
+    "token_ids_equal_canonical_all_8_ranks": true,
+    "improvement_over_registered_best_14_064584": 2.22,
+    "fusion_confirmed_installed": true
+  },
+  "status": "two pairs, both positive and both parity-clean, mean +1.82% over the registered best; a third pair is still required before the gain is registered",
+  "constraints_respected": "same selection, same order, same dtype; no precision, layout, routing or FP32-TP-down/HCCL change; model source file not edited (runtime method rebind only), so its hash is unchanged",
+  "pairs_measured": [
+    {
+      "file": "indexer-sort-pair-20.json",
+      "sha256": "e73483f4b39ce9255707fdc71bb47db62b17e802fbeadbfba276a749c09af7a9",
+      "control_TPS": 12.447993728586347,
+      "candidate_TPS": 14.376777562669742,
+      "control_ms_per_token": 80.33423070446588,
+      "candidate_ms_per_token": 69.5566162612522,
+      "paired_gain_percent": 15.494736550629963,
+      "token_ids_equal_pair_all_8": true,
+      "token_ids_equal_canonical_all_8": true,
+      "vs_registered_best_14_064584_percent": 2.22
+    },
+    {
+      "file": "indexer-sort-pair-21.json",
+      "sha256": "b4d79dc9ca8ce3fc364436cc0f31d8e935bd7bd5ddeb6a589e86d255308e30c3",
+      "control_TPS": 12.47293478886916,
+      "candidate_TPS": 14.264626759550671,
+      "control_ms_per_token": 80.1735932182055,
+      "candidate_ms_per_token": 70.10348163021263,
+      "paired_gain_percent": 14.364638322974432,
+      "token_ids_equal_pair_all_8": true,
+      "token_ids_equal_canonical_all_8": true,
+      "vs_registered_best_14_064584_percent": 1.422
+    }
+  ],
+  "pairs_summary": {
+    "count": 2,
+    "mean_candidate_TPS": 14.320702,
+    "mean_vs_registered_best_percent": 1.821,
+    "parity_clean_on_all_ranks_in_every_pair": true
+  }
+}

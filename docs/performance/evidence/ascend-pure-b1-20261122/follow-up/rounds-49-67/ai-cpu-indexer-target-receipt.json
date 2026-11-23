@@ -1,0 +1,26 @@
+{
+  "schema": "relic.pure-b1.ai-cpu-indexer-target.v1",
+  "capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T091443Z (registered lane, narrow head in effect)",
+  "finding": {
+    "what": "31 operators a forward run on AI_CPU, not on a cube or vector unit, for 2761.9 us = 3.5% of the profiled forward. They are 9 Cast (1173.1 us), 4 Index (approx 900 us), 9 Sort (approx 333 us), 9 Greater (approx 331 us).",
+    "why_ai_cpu": "each of these is a small index-space computation whose result feeds a gather, so the framework put it on the host-side AI CPU rather than a device kernel.",
+    "source": "RelicLLM/relicllm/models/deepseek_v4_1/attention.py line 1326, inside Indexer._stream_prefix, one call per tile per index layer: torch.where(block_values > -torch.inf, block_keys, -1).sort(dim=-1).values.int(). That single expression is the Greater, the Sort and the Cast. A second site at line 1173 does the same for the index keys. select_candidate_blocks at lines 815-844 has the same shape but its own docstring says it is NOT what runs - _stream_prefix applies the same rule a tile at a time.",
+    "geometry_from_checkpoint_config": {
+      "index_source_layer_ids": [2, 8, 14, 20, 24, 28, 32, 36],
+      "index_source_layer_count": 8,
+      "index_topk": 512,
+      "candidate_source_layer_id": 20,
+      "candidate_topk_blocks": 2048,
+      "candidate_block_size": 8,
+      "note": "8 index layers, each selecting 512 compressed positions and narrowing to at most 2048 blocks. This is real work, not plumbing - the observation is only that it runs on the wrong engine."
+    }
+  },
+  "constraint_that_shapes_the_fix": {
+    "the_sort_cannot_be_dropped": "attention.py around line 1168 records that the sort exists so the selection matches the reference's topk(...).indices.sort(): every -1 must land after every real id. Changing the order changes the gather order downstream and would not be bit-exact.",
+    "so_the_only_legal_fix": "compute the same selection, with the same output order and dtype, in a device kernel instead of on AI_CPU.",
+    "precedent": "ascend_window_idxs_fused.py did exactly this for the window index build: int32 arithmetic in vector form, bit-exact, 17.11 us to 1.41 us in-graph, 2.58% off the step. The same harness shape applies here."
+  },
+  "expected_ceiling": "the whole AI_CPU bucket is 3.5% of device time, so removing all of it is worth at most about 2.8 ms a forward. AI_CPU operators also serialise against the stream, so the wall-clock cost may exceed the device-time share, but that is not measured and must not be claimed.",
+  "status": "target identified and constrained; not implemented. This round deliberately stops before writing a sorting kernel so the lane is not left half-changed.",
+  "next_round": "write the fused selection kernel (mask then ascending sort of up to 2048 int32 block ids, and the 512-wide index-key form), install it behind the same conditional-install pattern the other fusions use, and prove it with 8-rank complete token-ID parity plus the class-2 full-logit comparison before registering any gain."
+}

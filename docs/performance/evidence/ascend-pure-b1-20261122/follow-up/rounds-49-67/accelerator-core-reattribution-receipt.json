@@ -1,0 +1,46 @@
+{
+  "schema": "relic.pure-b1.accelerator-core-reattribution.v1",
+  "capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T043116Z, rank 0, 4 forwards",
+  "lane": "registered lane, 14.064584 tok/s / 71.10 ms per step",
+  "why": "The earlier cost model grouped tasks by block count, which hid which engine actually spends the step. Regrouping the same CSV by the profiler's Accelerator Core column changes the target completely.",
+  "us_per_forward_by_core": {
+    "AI_VECTOR_CORE": {"us_per_forward": 28035.7, "percent_of_step": 39.43, "tasks_per_forward": 6915.8},
+    "COMMUNICATION": {"us_per_forward": 18592.1, "percent_of_step": 26.15, "tasks_per_forward": 130.2},
+    "MIX_AIC": {"us_per_forward": 14499.3, "percent_of_step": 20.39, "tasks_per_forward": 200.0},
+    "AI_CORE": {"us_per_forward": 8426.6, "percent_of_step": 11.85, "tasks_per_forward": 672.5},
+    "AI_CPU": {"us_per_forward": 2626.2, "percent_of_step": 3.69, "tasks_per_forward": 31.0},
+    "MIX_AIV": {"us_per_forward": 1416.8, "percent_of_step": 1.99, "tasks_per_forward": 357.5}
+  },
+  "finding_ai_cpu": {
+    "summary": "31 serialised operators per forward run on the AI CPU, not the AI cores, for 2626.2 us (3.69% of the step).",
+    "operators": {
+      "Cast": {"per_forward": 9.0, "us_per_forward": 1025.3},
+      "Index": {"per_forward": 4.0, "us_per_forward": 936.5},
+      "Sort": {"per_forward": 9.0, "us_per_forward": 333.2},
+      "Greater": {"per_forward": 9.0, "us_per_forward": 331.1}
+    }
+  },
+  "finding_vector_core_plumbing": {
+    "summary": "The vector core is not a long tail of tiny unknown ops; it is dominated by framework plumbing doing memory traffic and type conversion.",
+    "top_plumbing": {
+      "aclnnInplaceCopy_CastAiCore_Cast": {"per_forward": 697.5, "us_per_forward": 1891.6},
+      "aclnnInplaceCopy_SliceAiCore_Slice": {"per_forward": 346.0, "us_per_forward": 1103.3},
+      "aclnnInplaceIndexCopy_TransposeAiCore_Transpose": {"per_forward": 138.0, "us_per_forward": 1240.4},
+      "aclnnPowTensorScalar_PowsAiCore_Pows": {"per_forward": 84.0, "us_per_forward": 1059.5},
+      "aclnnCat_ConcatD_ConcatD": {"per_forward": 77.0, "us_per_forward": 969.6},
+      "aclnnMul_MulAiCore_Mul": {"per_forward": 577.5, "us_per_forward": 872.5},
+      "aclnnAdd_AddAiCore_Add": {"per_forward": 562.0, "us_per_forward": 876.8},
+      "aclnnAdds_AddAiCore_Add": {"per_forward": 517.0, "us_per_forward": 774.9}
+    },
+    "five_plumbing_operators_us_per_forward": 6264.4,
+    "five_plumbing_operators_percent_of_step": 8.81
+  },
+  "pow_attribution": {
+    "observed": "84 Pows per forward at 12.61 us each",
+    "not_rmsnorm": "the row-normalisation fusion patches attention.RMSNorm.forward and the lane runs with it installed; a separate norm class was ruled out by reading the sources",
+    "most_likely": "ascend_host_engram.py:475 evaluates torch.rsqrt twice in one call; 40 calls a forward gives 80, plus 4 elsewhere, matching the observed 84",
+    "status": "hypothesis, not confirmed by a targeted capture"
+  },
+  "conclusion": "The next real lever is the count of framework-dispatched elementwise operators per layer (697 casts, 346 slices, 138 transpose-copies, 84 pows, 77 concats a forward), not another fused kernel on top of the big matmuls. This is the same class the community stack attacks with its Model Runner V2 and PGO work.",
+  "constraints_respected": "read-only analysis of an existing profile; no model change, no numerics change, no kernel or library change, no new run"
+}

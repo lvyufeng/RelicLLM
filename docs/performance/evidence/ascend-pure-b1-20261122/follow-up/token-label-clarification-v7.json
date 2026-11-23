@@ -1,0 +1,28 @@
+{
+  "corrected_reading": {
+    "canonical_audit_sha256": "e165c5de656035a7d92b665e29eea422c48208771b8873a82bf1ebcfa5283108",
+    "source": "canonical audit rank_reports new_candidate rows: tokens_equal_canonical=true on all 8 ranks",
+    "token_id_differences": 0,
+    "token_ids_equal": true
+  },
+  "historical_record": {
+    "field": "verified_proof.token_ids_equal",
+    "file": "final-admission-v6.json",
+    "sha256": "772239dba0c034896546b2d63c9b0677a4bcc71458ce6e95beec148b582b3c0d",
+    "stored_value": 0,
+    "stored_value_meaning": "token-id DIFFERENCE count, not a boolean"
+  },
+  "metadata_only": true,
+  "policy": {
+    "all_measured_data_unchanged": true,
+    "measured_all8_token_differences_still_zero": true,
+    "no_review109_reopen_needed": true,
+    "numeric_admission_unchanged": true,
+    "review_scope_unchanged": true,
+    "v6_file_rewritten": false,
+    "v6_measured_hashes_preserved": true
+  },
+  "purpose": "label clarification for a historical field; no measured data changed",
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.token-label-clarification.v1"
+}

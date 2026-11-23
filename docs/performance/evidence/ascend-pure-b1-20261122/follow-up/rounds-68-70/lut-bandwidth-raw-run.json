@@ -1,0 +1,286 @@
+{
+  "schema": "relic.pure-b1.evidence.lut-bandwidth-receipt.v1",
+  "generated_utc": "2026-11-23T11:00:05.460567+00:00",
+  "hypothesis_not_yet_proven": true,
+  "no_speedup_claimed": true,
+  "purpose": "decide P0 feasibility for the expert projection kernel: bandwidth, per-call fixed cost or tile padding, at the real per-card expert geometry",
+  "measured_context_not_re_derived": {
+    "accepted_stack_TPS": 11.61,
+    "ms_per_token": 86.1,
+    "device_kernel_ms_per_forward": 86.99,
+    "expert_path_ms_per_forward": 14.83,
+    "expert_bytes_per_card_per_token": 564000000,
+    "implied_expert_GB_per_s": 38.0,
+    "hbm_peak_GB_per_s_approx": 800.0
+  },
+  "geometry": {
+    "rows_per_projection": 1152,
+    "K": 5120,
+    "per_expert_matrix_bytes": 3133440,
+    "layout": {
+      "format": "relic.fp4.cube-n64-k128.v1",
+      "n": 1152,
+      "k": 5120,
+      "cube_rows": 64,
+      "cube_k": 128,
+      "scale_k": 32,
+      "source_codes_shape": [
+        1152,
+        2560
+      ],
+      "source_scales_shape": [
+        1152,
+        160
+      ],
+      "codes_shape": [
+        18,
+        40,
+        8,
+        4,
+        16,
+        8
+      ],
+      "scales_shape": [
+        18,
+        40,
+        4,
+        64
+      ],
+      "codes_bytes": 2949120,
+      "scales_bytes": 184320,
+      "source_bytes": 3133440,
+      "payload_bytes": 3133440,
+      "padding_bytes": 0,
+      "size_exact": true
+    },
+    "bank_codes_shape": [
+      6,
+      72,
+      160,
+      16,
+      16
+    ],
+    "bank_scales_shape": [
+      6,
+      72,
+      160,
+      16
+    ],
+    "blocks": 160,
+    "tiles": 72,
+    "block_dim": 24,
+    "world": 2,
+    "selected_global_ids": [
+      0,
+      2,
+      4,
+      6,
+      8,
+      10
+    ],
+    "local_ids_after_world_division": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "synthetic_bank_experts": 6,
+    "real_card_owned_experts": 96
+  },
+  "library": {
+    "path": "<private-root>/...",
+    "sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+    "expected_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+    "matches_expected": true
+  },
+  "cann": {
+    "set_env_path": "/usr/local/Ascend/cann-9.2.0/set_env.sh",
+    "sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+    "expected_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+    "matches_expected": true
+  },
+  "consumer": {
+    "output_rows": 64,
+    "layout_id": 2,
+    "group_k": 4,
+    "weight_format": "relic.fp4.cube-n64-k128.v1",
+    "table_words": 7424,
+    "table_bytes_per_device": 29696,
+    "stage_shape": [
+      24,
+      2,
+      8192
+    ],
+    "stage_bytes": 786432,
+    "measured_scale_range": [
+      117,
+      127
+    ],
+    "prepared_decode_tables_once_per_device": true
+  },
+  "variants": [
+    {
+      "label": "groups_1_runtime_bf16",
+      "groups": 1,
+      "output_dtype": "bfloat16",
+      "timing_us": {
+        "count": 40,
+        "min_us": 316.72000885009766,
+        "median_us": 366.2799894809723,
+        "p95_us": 387.45999336242676,
+        "max_us": 405.0599932670593,
+        "mean_us": 368.5930013656616
+      },
+      "touched_bytes": 3155200,
+      "achieved_GB_per_s": 8.614175195513672,
+      "touched_breakdown": {
+        "codes_bytes": 2949120,
+        "scales_bytes": 184320,
+        "activation_bytes": 10240,
+        "fp32_output_write_bytes": 4608,
+        "runtime_bf16_narrow_bytes": 6912
+      }
+    },
+    {
+      "label": "groups_6_runtime_bf16",
+      "groups": 6,
+      "output_dtype": "bfloat16",
+      "timing_us": {
+        "count": 40,
+        "min_us": 472.2599983215332,
+        "median_us": 474.9400019645691,
+        "p95_us": 671.239972114563,
+        "max_us": 2314.5999908447266,
+        "mean_us": 561.9569979608059
+      },
+      "touched_bytes": 18880000,
+      "achieved_GB_per_s": 39.752389611116534,
+      "touched_breakdown": {
+        "codes_bytes": 17694720,
+        "scales_bytes": 1105920,
+        "activation_bytes": 10240,
+        "fp32_output_write_bytes": 27648,
+        "runtime_bf16_narrow_bytes": 41472
+      }
+    },
+    {
+      "label": "groups_1_kernel_fp32",
+      "groups": 1,
+      "output_dtype": "float32",
+      "timing_us": {
+        "count": 40,
+        "min_us": 277.57999300956726,
+        "median_us": 284.280002117157,
+        "p95_us": 295.0800061225891,
+        "max_us": 302.1000027656555,
+        "mean_us": 286.0084995627403
+      },
+      "touched_bytes": 3148288,
+      "achieved_GB_per_s": 11.07460242209557,
+      "touched_breakdown": {
+        "codes_bytes": 2949120,
+        "scales_bytes": 184320,
+        "activation_bytes": 10240,
+        "fp32_output_write_bytes": 4608,
+        "runtime_bf16_narrow_bytes": 0
+      }
+    },
+    {
+      "label": "groups_6_kernel_fp32",
+      "groups": 6,
+      "output_dtype": "float32",
+      "timing_us": {
+        "count": 40,
+        "min_us": 472.8800058364868,
+        "median_us": 473.98000955581665,
+        "p95_us": 475.3600060939789,
+        "max_us": 638.7400031089783,
+        "mean_us": 478.1950019299984
+      },
+      "touched_bytes": 18838528,
+      "achieved_GB_per_s": 39.7454061778982,
+      "touched_breakdown": {
+        "codes_bytes": 17694720,
+        "scales_bytes": 1105920,
+        "activation_bytes": 10240,
+        "fp32_output_write_bytes": 27648,
+        "runtime_bf16_narrow_bytes": 0
+      }
+    }
+  ],
+  "m1_vs_m16": {
+    "status": "blocked_by_accepted_contract",
+    "guard": "_validate (online_tile_cube): 'at most eight selected slots and a bounded launch grid' and x.shape[0] in (1, groups); the consumer's output_rows=64 and groups<=8 cannot express an M=16 activation tile",
+    "smallest_faithful_alternative": "max accepted width: 6 selected slots on one broadcast activation row, plus the six-single-call vs one-six-group comparison",
+    "implied_fixed_cost_per_call_us": 344.54798698425293,
+    "note": "negative or small values mean per-call fixed cost is not the dominant term; this is a hypothesis to be read against the timing spread, not a proven causal claim"
+  },
+  "reference": {
+    "practical_reference_not_spec_peak": true,
+    "same_byte_volume": {
+      "bytes": 18800640,
+      "read_only_sum": {
+        "timing_us": {
+          "count": 20,
+          "min_us": 3480.4399013519287,
+          "median_us": 3481.839895248413,
+          "p95_us": 3483.180046081543,
+          "max_us": 3510.9400749206543,
+          "mean_us": 3483.3890080451965
+        },
+        "achieved_GB_per_s": 5.3996279454597556
+      },
+      "copy_read_write": {
+        "timing_us": {
+          "count": 20,
+          "min_us": 58.52000042796135,
+          "median_us": 83.8799998164177,
+          "p95_us": 98.24000298976898,
+          "max_us": 98.7199991941452,
+          "mean_us": 85.7310002669692
+        },
+        "achieved_GB_per_s": 448.2746790926956
+      }
+    },
+    "large_volume_practical_peak": {
+      "bytes": 268435456,
+      "read_only_sum": {
+        "timing_us": {
+          "count": 10,
+          "min_us": 50936.038970947266,
+          "median_us": 50937.93869018555,
+          "p95_us": 50969.15817260742,
+          "max_us": 50969.15817260742,
+          "mean_us": 50941.42761230469
+        },
+        "achieved_GB_per_s": 5.269853137023794
+      },
+      "copy_read_write": {
+        "timing_us": {
+          "count": 10,
+          "min_us": 433.75998735427856,
+          "median_us": 435.25999784469604,
+          "p95_us": 439.1799867153168,
+          "max_us": 439.1799867153168,
+          "mean_us": 435.5339974164963
+        },
+        "achieved_GB_per_s": 1233.448776957352
+      }
+    }
+  },
+  "environment": {
+    "torch_version": "2.10.0+cpu",
+    "torch_npu_version": "2.10.0.post7",
+    "device_name": "Ascend910B3",
+    "iterations": 40,
+    "warmup": 20
+  },
+  "interpretation_limits": [
+    "one synthetic byte-exact projection per expert slot; routing, HCCL and layer scheduling excluded",
+    "synthetic codes/scales exercise the accepted layout and certified scale range, not checkpoint values",
+    "GB/s uses the touched-byte formula recorded per variant; compare variants, not absolute expectations",
+    "any speedup inference from these numbers is explicitly not made here"
+  ]
+}

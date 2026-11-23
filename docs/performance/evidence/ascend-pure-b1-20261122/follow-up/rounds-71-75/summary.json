@@ -1,0 +1,80 @@
+{
+  "schema": "relic.pure-b1.evidence.rounds-71-75.v1",
+  "scope": "rounds 71 to 75. This section exists mostly because two of these rounds contained wrong claims, and the record of how they were caught is worth more than the claims were.",
+  "owns_previous_bundles": false,
+  "registered_result_unchanged": {
+    "TPS": 14.287598,
+    "ms_per_token": 69.9922,
+    "note": "no work in rounds 71 to 75 was adopted"
+  },
+  "the_two_wrong_claims": [
+    {
+      "round": 60,
+      "claim": "the output-head matmul was worth 1.27 ms that had not yet been banked",
+      "reality": "the capture that claim rested on predated the narrow head, so the saving was already in the lane. Recorded in the earlier bundle with a CORRECTION marker.",
+      "how_caught": "the run record stated narrow_output_head installed and bfloat16 while the capture predated it"
+    },
+    {
+      "rounds": "71-73",
+      "claim": "the registered lane runs fully eager, NPU graph capture is implemented but used by nothing, NpuDecodeGraphs is never instantiated, and the remaining device-idle was plausibly eager launch overhead worth attacking",
+      "reality": "the lane captures NPU graphs and always has. Worse for the claim, the exact configuration the objective asks for is what ships: inline one-layer graphs, 40 layers captured, the independent two-recording variant retired, and FP32 bit-identical parity to eager on all eight ranks.",
+      "how_caught": "reading the per-rank run records, which state graphs = True and carry the inline capture, variant counts, retirement count and per-step parity list directly",
+      "root_cause": "a case-sensitive grep for NPUGraph and similar spellings when the flag is RELIC_CUBE_NPUGRAPH, all caps, set in the generated wrapper rather than in the launcher; an empty grep was read as absence",
+      "secondary_error": "the round-74 retraction withdrew \"fully eager\" but described the shipping behaviour as two recordings around an eager middle, when the records show the inline variant is in use so the middle is inside the recording"
+    }
+  ],
+  "graph_boundary_question_answered": {
+    "objective_item": "inline originalA -> nativeTP_execute -> originalB as one layer NPUGraph, same kernel/layout/provider contracts, full eight-rank complete 64-step FP32 bit-identical parity against the control before accepting any extra gain",
+    "verdict": "DELIVERED in the shipping configuration, verified on all eight ranks of the registered run",
+    "evidence": {
+      "inline_TP_layer_graphs.layers": 40,
+      "inline_TP_layer_graphs.captured": true,
+      "inline_TP_layer_graphs.variants": 43,
+      "inline_TP_layer_graphs.driver_counts.replays": 6120,
+      "independent_TP_graphs_retired_after_explicit_fence": 40,
+      "graph_candidate_eager_FP32_bit_differences": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "private_graph_capture_seconds_excluded": 4.141067163087428
+    },
+    "consequence": "no capture work remains. The 8.7% of profiled span that is not device-busy is not launch overhead, which is consistent with the device-bound measurement."
+  },
+  "other_findings_in_this_stretch": {
+    "redundant_fp8_activation_quantisation_closed": "quantize_decode_fp8_fast has two call sites; the one that matters computes decoded_x once and reuses it for w1, w3 and w2, so the device path is already deduped and the expected 1.2% does not exist",
+    "o_projection_transpose_closed": "the 1171.6 us transpose cannot be removed bit-exactly: the contiguous pre-transpose was not bit-identical in 3 of 6 then 5 of 8 trials and was slower eagerly, and the transposed-view variant was 0 of 8. Recorded as a deviation class needing explicit approval, not adopted."
+  },
+  "methodology_note": "both wrong claims were caught by reading a stored record rather than by reasoning further. The rule this section argues for: when a claim rests on a grep returning nothing, go read the run record field that states the answer before building three rounds on it.",
+  "manifest": {
+    "README.txt": "4f565c5962dfc454ea5d8649cd3d95ad76ee5ed5224641d0682116a9ddd742ff",
+    "graph-boundary-retraction-receipt.json": "c1caf64fbf56ed17bdf5a82b24383eb3832d549db8724e76c35fb5c47c8e8699",
+    "graph-boundary-step1-receipt.json": "20ed939628481c88d89a8a03bea672c8a44a2a0083a3f770caac6ff2c82b9cd5",
+    "graph-boundary-step2-receipt.json": "2ff08891e4d977c6be88c4867ccdb9bc1b8964ec7376d9ff80d6107dfade7165",
+    "graph-objective-item-complete-receipt.json": "57eeccfefcddd0f056aef4413e81e7a94ab7002199d2097de2ef183deb5df286",
+    "lut-bandwidth-receipt.json": "c6d7ad5da9b5e1ce037222eb44030c0a50fe296ece1113eb214adf8033228cc2",
+    "wo-a-transpose-receipt.json": "6a224581c2c802042ea57d54c02c06638b43d1976501840c4cf6305c8e5e7d7d"
+  },
+  "missing_sources": [],
+  "verification": {
+    "manifest_files": 7,
+    "manifest_integrity": "ALL MATCH",
+    "json_files_parsing": 7,
+    "readme_states_the_parity_list": true,
+    "readme_records_both_wrong_claims": true,
+    "readme_gives_the_root_cause": true
+  },
+  "manifest_renamed_from": [
+    "README.md"
+  ],
+  "sanitized": {
+    "host_names_redacted": true,
+    "private_paths_redacted": true,
+    "note": "Hostnames and private absolute paths in this section were replaced with neutral placeholders (<private-root>, <redacted-host>, host_run) before publication. No measured value, timing, parity result or verdict was changed; only the identifying strings were."
+  }
+}

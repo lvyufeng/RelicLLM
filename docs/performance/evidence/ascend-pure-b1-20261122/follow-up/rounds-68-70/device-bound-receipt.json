@@ -1,0 +1,21 @@
+{
+  "schema": "relic.pure-b1.device-bound-evidence.v1",
+  "capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T103426Z (registered lane, 14.2876 tok/s / 69.99 ms)",
+  "purpose": "Decide whether the remaining time is host-side or device-side before spending another round on it. Two candidate host-side leads were tested and both are closed.",
+  "finding_1_host_copies_are_hidden": {
+    "measurement": "device 0 is busy for 287045 us of a 314467 us span = 91.3%, union of task intervals over 4 forwards",
+    "interpretation": "the busy total is 71.8 ms a forward against a timed step of 69.99 ms, so the profiling instrumentation itself inflates task durations. The real step has effectively no idle: the device is wall-to-wall busy.",
+    "consequence": "host-side time cannot appear on the critical path. aten::copy_ shows 4277.7 us of host self time a forward (95 calls) but only 63.1 us of device time, and that host time is overlapped. Shortening it would not move the token rate."
+  },
+  "finding_2_pos_host_is_free": {
+    "hypothesis": "attention.py reads pos.host at eight sites and would force a device-to-host scalar sync per layer, explaining the 95 copy_ calls.",
+    "checked": "decode_pos.py:194 - Pos.host is a @property returning self._host, a plain Python int assigned in __init__. There is no item() and no synchronisation.",
+    "verdict": "hypothesis was wrong; pos.host costs nothing. Recorded so a later round does not chase it again."
+  },
+  "finding_3_copy_sizes": {
+    "expensive_copies": "the highest host-time aten::copy_ rows are shape 1,1 by 1,1 (70-177 us host, 0.0 us device) and 1,1,4,5120 (about 66 us host). The scalar ones have no device time at all, i.e. they never touch the accelerator.",
+    "but": "see finding 1: they are hidden regardless"
+  },
+  "conclusion": "The lane is device-bound with the device continuously busy. Every remaining gain must come from doing less device work or faster device work; host-side restructuring has no headroom left. That reorders the options: the scale-LUT cube kernel (15.4%, bounded at under 2.4 ms) and the plumbing copies (2.26% + 1.58%) are the only device-side items still open, and communication (26.2%) remains closed by the routing contract.",
+  "method": "read-only analysis of an existing capture; no model run, no code, weight or numerics change"
+}

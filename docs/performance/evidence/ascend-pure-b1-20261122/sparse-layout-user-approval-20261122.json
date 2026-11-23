@@ -1,0 +1,37 @@
+{
+  "date_local": "2026-11-22",
+  "time_zone": "Asia/Shanghai",
+  "authorization_source": "direct human message in this optimization session",
+  "user_statement": "\u8fd9\u4e2a\u8bef\u5dee\u6211\u89c9\u5f97\u53ef\u4ee5\u63a5\u53d7",
+  "historical_receipt_preserved": "sparse-layout-rejected-comparison-1.json",
+  "new_decision": "accept the specifically measured sparse-layout numerical deviation, subject to independent stability remeasurement",
+  "observed_deviation": {
+    "control_TPS": 10.655377730227762,
+    "candidate_TPS": 11.084782108906726,
+    "context": [
+      24,
+      88
+    ],
+    "timed_steps": 64,
+    "excluded_warmups": 4,
+    "changed_full_logit_step": 12,
+    "changed_absolute_context": 36,
+    "FP32_changed_values_per_rank": 129251,
+    "maximum_absolute_FP32_logit_difference": 0.003835439682006836,
+    "other_63_full_logit_steps_bit_identical": true,
+    "all_eight_ranks_token_ids_reference8_teacher8_and_final_bit_identical": true,
+    "bit_exact": false
+  },
+  "unchanged_constraints": {
+    "one_complete_forward_per_next_token": true,
+    "batch_one_single_request": true,
+    "no_MTP_no_speculation_no_request_batching": true,
+    "original_weight_payload_size_and_represented_values_lossless": true,
+    "no_new_lossy_quantization_or_FP16_collective": true,
+    "no_original_exact_default_or_general_quality_acceptance_inferred": true,
+    "subsequent_graph_fusion_requires_full_FP32_parity_to_this_accepted_layout_control": true,
+    "tests_builds_and_model_measurements_server_only": true,
+    "serving_defaults_and_master_unchanged": true,
+    "new_PR_merge_not_authorized": true
+  }
+}

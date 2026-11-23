@@ -1,0 +1,57 @@
+{
+  "corrections": {
+    "correct_repeat_source": "verified .coord/S2b-canonical-repeat-verified-085516 output (root downloaded exact 085516)",
+    "numerical_proof_affected": false,
+    "old_wrong_folder_kept_unchanged_as_history": true,
+    "root_level_comparison_and_audit": "correct 085516 receipts, produced with explicit server arguments",
+    "v3_files_preserved_unmodified": true,
+    "v3_repeat_selector_source": "first duplicate-basename copy (wrong for dep trace)",
+    "v3_summary_source": "first duplicate-basename copy (wrong for dep trace)"
+  },
+  "metadata_only": true,
+  "numerical_evidence_unchanged": {
+    "first_canonical_candidate_TPS": 11.5613956081916,
+    "measured_candidate_TPS_range": [
+      11.548656515,
+      11.5613956081916
+    ],
+    "repeat_vs_first_bit_differences": 0,
+    "verified_repeat_candidate_TPS": 11.548656514878644
+  },
+  "raw_source_sha256": {
+    "S2b-canonical-candidate-repeat-audit.json": "e165c5de656035a7d92b665e29eea422c48208771b8873a82bf1ebcfa5283108",
+    "S2b-canonical-candidate-repeat-comparison.json": "139f6c2901d1a3b694c622c807e8affc62737e3514de7737510c23c1fff6995f",
+    "S2b-canonical-repeat-verified-085516/S2b-actual-kernel-selection.json": "f994141af7dbe1ce6885cc2e275e516ffce7726121d8defe66becff543d47f3d",
+    "S2b-canonical-repeat-verified-085516/summary.json": "3d5bdfcbf86f351b4b14783db3b5b79c14d47b19d3417dd409d4890f8ce0702c"
+  },
+  "retained_limits": {
+    "additional_NPU_trials": false,
+    "fifty_TPS_claimed": false,
+    "general_quality_headroom": false,
+    "new_error_waiver": false,
+    "numerical_global": false,
+    "serving_defaults_or_PR_merge_changed": false,
+    "strict_output_paired_gain_approved": false
+  },
+  "review_status": {
+    "candidate_only_qualified_criteria_all_met": true,
+    "control_still_non_canonical": true,
+    "do_not_claim_final_review_before_message": true,
+    "numerical_admission": "conditional candidate-only, retained until review-109 final admission after this provenance fix",
+    "paired_gain_still_provisional": true,
+    "retract_premature_v3_final_wording": true,
+    "review109_final_issued": false,
+    "review109_final_proofreading_in_progress": true
+  },
+  "reviewed": false,
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.follow-up.decision.v4",
+  "scope": "provenance correction and review-status correction; not a numerical promotion",
+  "verified_folder_provenance": {
+    "first_copy_csv_sha256_superseded": "346dfe851d0f65cdc89bd2ef417125a5350de72aba66ea9058b43a58cff3f1b7",
+    "folder": "<coord>/S2b-canonical-repeat-verified-085516",
+    "rank0_raw_kernel_csv_sha256": "027141340dd18cf3c8268c743a0f600b79be46c777a93d992c04a679762f8b34",
+    "safety_summary_sha256": "304e383fa3d411ad0aaed85485fca5574c5263beb27950bbfb292c9b8e4564c1",
+    "summary_sha256": "3d5bdfcbf86f351b4b14783db3b5b79c14d47b19d3417dd409d4890f8ce0702c"
+  }
+}

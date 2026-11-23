@@ -1,0 +1,34 @@
+{
+  "schema": "relic.pure-b1.stability-repeat.v1",
+  "purpose": "the objective asks for an independent repeat to verify the accepted gain is stable. This is that repeat: the registered lane rerun once, unchanged, in the shipping configuration.",
+  "run": {
+    "output": "logs/pure-B1-fused-row-norm-candidate-steps64-20261123T112154Z",
+    "returncode": 0,
+    "elapsed_s": 340.7,
+    "owned_cleanup_complete": true,
+    "started_at": "2026-11-23T11:21:54Z",
+    "finished_at": "2026-11-23T11:27:35Z"
+  },
+  "result": {
+    "sustained_single_stream_TPS": 14.269744110811518,
+    "registered_mean_TPS": 14.287598,
+    "registered_best_TPS": 14.376778,
+    "registered_worst_TPS": 14.22139,
+    "deviation_from_registered_mean_percent": -0.125,
+    "inside_registered_pair_spread": true,
+    "verdict": "reproduced"
+  },
+  "parity_and_configuration_reconfirmed_in_this_run": {
+    "graphs": true,
+    "inline_TP_layer_graphs_captured": true,
+    "inline_TP_layer_graphs_layers": 40,
+    "independent_TP_graphs_retired_after_explicit_fence": 40,
+    "graph_candidate_eager_FP32_bit_differences": [0,0,0,0,0,0,0,0],
+    "narrow_output_head_installed": true,
+    "narrow_output_head_weight_dtype": "bfloat16 resident"
+  },
+  "what_this_means": "the 14.2876 tok/s registration is not a lucky pair. A fresh run of the same configuration lands 0.13% below the registered mean and inside the spread that the three registration pairs themselves showed. The graph configuration and the FP32 parity were re-observed identically, so the repeat also independently confirms the round-75 finding that the inline one-layer capture is the shipping configuration.",
+  "what_is_not_claimed": "this is not a new optimisation and it does not move the registered number. It is a reproducibility check on the existing one, and it introduces no change of any kind.",
+  "method": "one bounded run of the unmodified launcher under a fresh lease receipt, with the run's own teardown reporting zero live owned processes",
+  "lease_receipt": "reuse-lease-20261123T112000Z.json"
+}

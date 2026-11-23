@@ -1,0 +1,390 @@
+{
+  "audits": [
+    {
+      "audit": {
+        "all_new_outputs_match_canonical": false,
+        "new_pair_parity_is_not_canonical_identity": true,
+        "no_new_NPU_or_model_execution": true,
+        "rank_summary": [
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 0,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 0,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 1,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 1,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 2,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 2,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 3,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 3,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 4,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 4,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 5,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 5,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 6,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 6,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 7,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 7,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          }
+        ],
+        "sanitized_derived_summary": true,
+        "user_S1_error_acceptance_not_extra_headroom": true
+      },
+      "source": "S2b-canonical-output-audit.json"
+    },
+    {
+      "audit": {
+        "all_new_outputs_match_canonical": false,
+        "new_pair_parity_is_not_canonical_identity": true,
+        "no_new_NPU_or_model_execution": true,
+        "rank_summary": [
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 0,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 0,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 1,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 1,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 2,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 2,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 3,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 3,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 4,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 4,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 5,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 5,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 6,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 6,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 7,
+            "role": "new_control",
+            "state_selected": false,
+            "tokens_equal_canonical": true
+          },
+          {
+            "changed_full_contexts_relative_canonical": [
+              36
+            ],
+            "inline_selected": true,
+            "layout_selected": true,
+            "rank": 7,
+            "role": "new_candidate",
+            "state_selected": true,
+            "tokens_equal_canonical": true
+          }
+        ],
+        "sanitized_derived_summary": true,
+        "user_S1_error_acceptance_not_extra_headroom": true
+      },
+      "source": "S2b-repeat-canonical-audit.json"
+    }
+  ],
+  "decision": "not accepted",
+  "derived_from": [
+    "S2b-canonical-output-audit.json",
+    "S2b-repeat-canonical-audit.json"
+  ],
+  "notes": [
+    "The audits compare pair outputs against the immutable accepted S1 canonical identity.",
+    "Only context 36 differs; the new control and candidate both reproduce the original pre-S1 identity."
+  ],
+  "provisional": true
+}

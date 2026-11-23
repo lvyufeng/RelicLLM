@@ -1,0 +1,53 @@
+{
+  "base_runtime_commit": "532bb3a6495ac52581e40c3423b350a8ae0cea9c",
+  "base_core_commit": "ea114a5c175b28c25ed1b49d66f7b138701df5fc",
+  "candidate_sources": [
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/ascend_sparse_attention_layout.py",
+      "bytes": 16330,
+      "sha256": "133a8257be14e790e6e324b897ec62ff32a4b19d82370fbe5e9b333507ceb717"
+    },
+    {
+      "project": "relic-core",
+      "path": "relic_core/kernels/_ascend_sparse_attention_layout_kernels.py",
+      "bytes": 5680,
+      "sha256": "1ac7a1e3c5e4cb967e40d06aeea616a9635ffa86f52ccb25e4600dd2fd399ecf"
+    },
+    {
+      "project": "relic-core",
+      "path": "tests/test_ascend_sparse_attention_layout.py",
+      "bytes": 16358,
+      "sha256": "35b9835fc01c2f674a87fc02c163f79ad43145541fb0d6d116de6fd01ace8e84"
+    },
+    {
+      "project": "RelicLLM",
+      "path": "relicllm/models/deepseek_v4_1/ascend_sparse_attention_layout.py",
+      "bytes": 12690,
+      "sha256": "943eabeae0996c1f43a5e0ddff8f55cafd5b371fb87989887c5483ead764543d"
+    },
+    {
+      "project": "RelicLLM",
+      "path": "tests/test_ascend_sparse_attention_layout_binding.py",
+      "bytes": 11744,
+      "sha256": "9a916d4f265239c60d85d1f2f97640fb5c08cdabdb7e74402617fb370d41f1e3"
+    }
+  ],
+  "raw_comparison_receipt_identities": {
+    "sparse-layout-rejected-comparison-1.json": {
+      "bytes": 29129,
+      "sha256": "5ee9616f29cfd4e97ed8aeaef04dff548d6baa2e07ff42351aa1ac2422845e43"
+    },
+    "accepted-layout-repeat-comparison.json": {
+      "bytes": 28150,
+      "sha256": "be4aca537a8012b284e608b69df186f5b391eb6ee89af3d5ba860eb2726de4ed"
+    },
+    "sparse-layout-user-approval-20261122.json": {
+      "bytes": 1576,
+      "sha256": "b860cc4d5db3f44094b2128b5e3122883668529317c679242f5cc5664dcec80b"
+    }
+  },
+  "original_checkpoint_weights_not_in_bundle": true,
+  "full_FP32_tensors_compared_on_server_not_in_bundle": true,
+  "source_paths_sanitized_no_rewriting_of_measured_hashes": true
+}

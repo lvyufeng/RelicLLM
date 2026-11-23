@@ -1,0 +1,81 @@
+{
+  "schema": "relic.pure-b1.lut-bandwidth-measured.v1",
+  "why": "The expert projection is 15.4% of the step and had only ever been bounded by reasoning. The driver that answers it existed in the evidence bundle but was never run - its own title says \"written, not run\".",
+  "identities_pinned_and_verified_before_the_run": {
+    "library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+    "cann_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+    "note": "the first library found on the box was the v1-n64 build (c896289f) and was rejected by the hash guard; the lane pins v2-n64 at 7dce3e3d, which is what these numbers describe"
+  },
+  "geometry": {
+    "rows_per_projection": 1152,
+    "K": 5120,
+    "per_expert_matrix_bytes": 3133440,
+    "format": "relic.fp4.cube-n64-k128.v1",
+    "padding_bytes": 0
+  },
+  "measured_standalone": {
+    "groups_1_runtime_bf16": {
+      "groups": 1,
+      "median_us": 366.3,
+      "touched_bytes": 3155200,
+      "GB_per_s": 8.61
+    },
+    "groups_6_runtime_bf16": {
+      "groups": 6,
+      "median_us": 474.9,
+      "touched_bytes": 18880000,
+      "GB_per_s": 39.75
+    },
+    "groups_1_kernel_fp32": {
+      "groups": 1,
+      "median_us": 284.3,
+      "touched_bytes": 3148288,
+      "GB_per_s": 11.07
+    },
+    "groups_6_kernel_fp32": {
+      "groups": 6,
+      "median_us": 474.0,
+      "touched_bytes": 18838528,
+      "GB_per_s": 39.75
+    }
+  },
+  "finding_1_the_call_is_dominated_by_per_call_cost": {
+    "one_group_us": 366.3,
+    "six_groups_us": 474.9,
+    "extra_five_experts_us": 108.7,
+    "implied_fixed_cost_us": 344.5,
+    "reading": "five more experts add only about 110 us, so the call is dominated by per-call cost rather than per-expert bytes. Six groups reach 39.8 GB/s, reproducing the ~38 GB/s the earlier note recorded."
+  },
+  "finding_2_practical_reference": {
+    "same_volume_read_only_sum": {
+      "median_us": 3481.8,
+      "GB_per_s": 5.4
+    },
+    "same_volume_copy_read_write": {
+      "median_us": 83.9,
+      "GB_per_s": 448.27
+    },
+    "which_to_use": "the copy reference is the meaningful practical number. The read-only sum reference reports 5.4 GB/s, which is a reduction over an awkward shape rather than a bandwidth measurement, and must not be read as the device limit."
+  },
+  "finding_3_standalone_numbers_are_host_bound": {
+    "standalone_six_group_us": 474.9,
+    "in_graph_us_per_call": 101.0,
+    "gap_factor": 4.7,
+    "consequence": "a 4.7x gap means the standalone loop pays host launch and synchronisation the graph does not, so the 344.5 us implied fixed cost must NOT be read as kernel-internal. The harness cannot separate kernel fixed cost from host launch cost and cannot size the opportunity on its own."
+  },
+  "finding_4_sized_in_graph_instead": {
+    "touched_bytes_per_call": 18880000,
+    "in_graph_us_per_call": 101.0,
+    "effective_GB_per_s": 186.9,
+    "practical_copy_reference_GB_per_s": 448.3,
+    "ratio_off_reference": 2.4,
+    "generous_best_case_if_it_reached_copy_bandwidth_ms": 7.1,
+    "why_that_best_case_is_unreachable": "the kernel runs M=1 - one activation row broadcast across expert groups - while the cube unit is built for M=16 tiles, so most of every loaded tile is padding. That is a property of single-request decode, not of this implementation, and it is the same reason a larger acceptance length is so much faster."
+  },
+  "conclusion": "The item is real, but its honest in-graph size is about 2.4x off a practical copy reference, not the order of magnitude the raw fixed-cost line implies. The dominant cause is M=1 tile padding, which a better kernel cannot remove without more tokens per step. This closes \"swap the LUT kernel\" as a route to 50 tok/s, while leaving room for perhaps 1 to 2 ms from a better M=1 kernel.",
+  "integrity": {
+    "hypothesis_not_yet_proven": true,
+    "no_speedup_claimed": true
+  },
+  "method": "the driver shipped in the evidence bundle, run for the first time, both pinned hashes verified before the run; single card, no model, no checkpoint or CANN change"
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "relic.pure-b1.graph-objective-item-complete.v1",
+  "what_the_objective_asked_for": "inline originalA -> nativeTP_execute -> originalB as one layerNPUGraph with the same kernel/layout/provider contracts, compared to the accepted layout control, requiring full eight-rank complete 64-step FP32 bit-identical parity before accepting any extra gain.",
+  "finding": "this is already delivered in the shipping configuration, and the evidence is in the registered run's own per-rank records.",
+  "evidence_registered_run": {
+    "capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T103426Z (the 14.287598 tok/s lane)",
+    "per_rank_all_eight": {
+      "inline_TP_layer_graphs.layers": 40,
+      "inline_TP_layer_graphs.captured": true,
+      "inline_TP_layer_graphs.variants": 43,
+      "inline_TP_layer_graphs.driver_counts.replays": 6120,
+      "independent_TP_graphs_retired_after_explicit_fence": 40,
+      "graph_candidate_eager_FP32_bit_differences": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "ranks_checked": 8,
+    "ranks_identical": true,
+    "parity_verdict": "every compared step is FP32 bit-identical to eager on all eight ranks",
+    "capture_cost_kept_out_of_the_measurement": "private_graph_capture_seconds_excluded = 4.141067163087428"
+  },
+  "what_this_means": {
+    "the_item_is_complete": "the inline one-layer graph is what runs, the 40 layers are captured, and the independent two-recording variant was retired (40 of them) rather than kept as a fallback with unclear status.",
+    "my_round_74_description_was_still_wrong_in_mechanism": "round 74 correctly retracted the \"fully eager\" claim but then described the shipping behaviour as two recordings around an eager middle. The records show the inline variant is in use and the independent variant was retired, so the eager middle is inside the recording rather than between two of them.",
+    "therefore": "there is no remaining work on this objective item. It should be recorded as delivered rather than investigated further."
+  },
+  "why_this_was_not_seen_earlier": "the earlier rounds grepped launcher source for graph spellings instead of reading the per-rank run record, which states the inline capture, the variant count, the retirement and the parity list directly. Three rounds were spent investigating a question the record answers in one field.",
+  "note_on_the_earlier_retraction_receipts": "receipt-closure.json (round 74) stands as the record of the wrong \"fully eager\" claim. This receipt supersedes the mechanism detail in it and closes the objective item.",
+  "method": "read-only reading of the eight per-rank run records of the registered lane; no model run, no code change"
+}

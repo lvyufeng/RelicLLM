@@ -1,0 +1,39 @@
+{
+  "schema": "relic.pure-b1.output-head-and-plumbing.v1",
+  "capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T043116Z, rank 0, 4 forwards",
+  "method": "read-only over the existing capture's operator_details.csv and kernel_details.csv; no model run, no change to code, weights or numerics",
+  "finding_1_output_head_is_fp32": {
+    "kernel": "aclnnMatmul_MatMulCommon_MatMulV2",
+    "input_shapes": "1,5120;129280,5120",
+    "output_shapes": "1,129280",
+    "calls_per_forward": 1,
+    "us_per_forward": 2346.8,
+    "share_of_step": "3.30% of 71.10 ms",
+    "declared_dtype": "FP32 x FP32 (from the kernel name)",
+    "no_bf16_twin_present": true,
+    "arithmetic": "FP32 weight traffic is 129280*5120*4 = 2.65 GB; at the measured 2.35 ms that is 1.13 TB/s, i.e. the call is bandwidth-bound reading the weight, not compute-bound. The checkpoint stores head.weight in BF16 (1.32 GB), so the FP32 widening doubles the per-step read.",
+    "why_it_matters": "the repository's own ascend_head_bf16.py documents this: Head widens head.weight from the checkpoint's bf16 to fp32 and keeps it resident. The approved narrow-BF16-head deviation class exists to avoid exactly this traffic, and its receipt validated all 8 x 129280 = 1034240 logits.",
+    "installed_here": false,
+    "evidence_not_installed": "this capture's Cube-model-rank-0.json records narrow_output_head = null",
+    "expected_gain_if_enabled": "traffic falls from 2.65 GB to 1.32 GB, so the call should approach ~1.2 ms, saving about 1.15 ms a forward = 1.6% of the step, inside the already-approved deviation class"
+  },
+  "finding_2_partial_host_table": {
+    "operator_details_csv_rows": 2082,
+    "device_time_covered_us": 70276.1,
+    "real_device_time_us": 294384,
+    "caveat": "operator_details.csv covers only about 24% of device time, so its internal percentages must not be read as shares of the step; only per-call durations corroborated by kernel_details.csv are used above"
+  },
+  "finding_3_synchronisation": {
+    "observed": "c10d::barrier 5313.6 us and wait_event 5146.0 us, plus two HcclAllreduce rows at 5312.3 us each",
+    "reading": "these are the same 5.3 ms event seen from three angles, matching the single 5312.3 us collective outlier in the earlier tail analysis; it is one long wait per capture, not a per-forward cost, and it is already covered by the routing-imbalance explanation",
+    "do_not_double_count": true
+  },
+  "next_action": "find why the narrow head is absent (profile_pure_b1_reuse.py line 30-47 installs it conditionally and the capture recorded null), then enable it and measure; it is the largest item this round that is both unclaimed and already authorised",
+  "CORRECTION_20261123T0920Z": {
+    "what_was_wrong": "finding_1 concluded the approved narrow-BF16 head was not in effect and that ~1.15 ms a forward (1.6%) was unclaimed. That is false.",
+    "evidence": "the current lane records narrow_output_head as {\"installed\": true, \"weight_dtype\": \"bfloat16 resident\"} on every recent candidate trial (073054Z, 074354Z, 075418Z, 083343Z). The capture this receipt analysed (T043116Z, 04:37 UTC) predates the narrow head being wired into profile_pure_b1_reuse.py and recorded null.",
+    "what_survives": "the measurement that the head matmul in THAT capture was FP32, 2346.8 us a forward, reading 2.65 GB. It describes the pre-narrow-head lane, which is why the head was worth optimising and why the approved class was created.",
+    "what_does_not_survive": "the claim that the gain is unclaimed, and the implied 14.06 -> 14.29 tok/s. That gain is already banked in the registered 14.064584 tok/s.",
+    "wider_consequence": "because T043116Z predates the narrow head, EVERY attribution derived from it describes a lane ~2.3 ms a step slower than the registered one: the 39.4% vector core, the 3.7% AI_CPU, the 6.26 ms plumbing, and the 73.6 ms total device time. Those numbers must be replaced by a fresh capture of the registered lane before any of them is used to choose work."
+  }
+}

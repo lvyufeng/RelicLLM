@@ -1,0 +1,217 @@
+{
+  "accepted_exact_attention_preparation_reuse": {
+    "accepted_kernel_effect": {
+      "S2b_prepare_and_post_calls_each_unchanged": 552,
+      "actual_preparation_launches_removed": 192,
+      "all_eight_ranks_verified": true,
+      "candidate_calls": 1288,
+      "control_calls": 1480,
+      "four_excluded_profiled_forwards": true,
+      "host_counts_include_capture_not_NPU_replay": true,
+      "host_scope_reuses": 924,
+      "native_projection_calls_unchanged": 480,
+      "no_new_model_or_NPU_execution": true,
+      "original_FP8_preparation_kernel": "fast_fused_fp8_activation_decode_kernel",
+      "original_weight_payload_grid_and_FP32_collectives_unchanged": true,
+      "per_forward_preparation_launches_removed": 48.0,
+      "registered_attention_modules": 40
+    },
+    "independent_repeat": {
+      "acceptance_layer": "approved_endpoint",
+      "all_eight_rank_boolean_flags": {
+        "approved_endpoint_pair_allowed": true,
+        "strict_pair_matches": true,
+        "token_ids_equal_canonical": true,
+        "token_ids_equal_pair": true
+      },
+      "approval_receipt": {
+        "criterion_matches_named_values": true,
+        "path_label": "ctx36-two-endpoint-user-approval-20261123.json",
+        "sha256": "60ec1eca5341de42ff78cbc611c475d2b763b2ce32e5eb8217e2f8f946c37214"
+      },
+      "approved_endpoint_definition": {
+        "alternate_full64_sha256": "4824df2735d91d8c45b293b3378b534b5695607e25f20e395ce9bd8be4dc5236",
+        "canonical_full64_sha256": "852d957ac0d1f9116c9b8fdc1de29a9819afe78a35f1f64d3a0fdadd160313d1",
+        "changed_elements": 129251,
+        "closed_two_value_set_not_a_tolerance": true,
+        "context": 36,
+        "max_abs_difference": 0.003835439682006836,
+        "timed_step_index": 12
+      },
+      "approved_endpoint_pair": true,
+      "candidate_TPS": 11.59814733280801,
+      "control_TPS": 11.560274208616125,
+      "numerical_acceptance": true,
+      "paired_TPS_difference_percent": 0.32761441042339356,
+      "rank_rows": 8,
+      "strict_output_stable_canonical_pair": false
+    },
+    "mechanism": "scope, not cache: the scope reuses the original quantizer's own prepared codes/scales objects (including the fused-decode annotation) inside one attention call, clears on every exit, and keeps the original provider for CPU/prefill",
+    "pair_1": {
+      "acceptance_layer": "strict",
+      "all_eight_rank_boolean_flags": {
+        "approved_endpoint_pair_allowed": true,
+        "strict_pair_matches": true,
+        "token_ids_equal_canonical": true,
+        "token_ids_equal_pair": true
+      },
+      "approval_receipt": {
+        "criterion_matches_named_values": true,
+        "path_label": "ctx36-two-endpoint-user-approval-20261123.json",
+        "sha256": "60ec1eca5341de42ff78cbc611c475d2b763b2ce32e5eb8217e2f8f946c37214"
+      },
+      "approved_endpoint_definition": {
+        "alternate_full64_sha256": "4824df2735d91d8c45b293b3378b534b5695607e25f20e395ce9bd8be4dc5236",
+        "canonical_full64_sha256": "852d957ac0d1f9116c9b8fdc1de29a9819afe78a35f1f64d3a0fdadd160313d1",
+        "changed_elements": 129251,
+        "closed_two_value_set_not_a_tolerance": true,
+        "context": 36,
+        "max_abs_difference": 0.003835439682006836,
+        "timed_step_index": 12
+      },
+      "approved_endpoint_pair": true,
+      "candidate_TPS": 11.606829728700983,
+      "control_TPS": 11.547188662864219,
+      "numerical_acceptance": true,
+      "paired_TPS_difference_percent": 0.5164985831449309,
+      "rank_rows": 8,
+      "strict_output_stable_canonical_pair": true
+    },
+    "trial_kind": "attention_preparation_reuse"
+  },
+  "closed_negative_findings": {
+    "copy_removal_candidate_proposed": false,
+    "preparation_kernel_count_reduction_is_valid_lever_by_itself": false,
+    "provably_redundant_per_layer_copy_exists": false,
+    "reason": "every executed copy/cat site is a semantic lifetime, layout or dtype requirement; the aggregate Memcpy category includes non-copy rows and is a budget, not a critical path"
+  },
+  "comparison_decision_logic_and_tests": {
+    "decision_source": {
+      "bytes": 12899,
+      "sha256": "1b2e7c72b640b7f84a964c2fa11b5cdac295c77d7c48822af4d5120712b4f58c"
+    },
+    "endpoint_layer": "a matching approval receipt plus both columns inside the closed two-value set; the endpoint layer is unavailable when the receipt is missing or does not name those exact values",
+    "rejections_covered_by_tests": [
+      "two columns agreeing with each other on a third value",
+      "an extra changed step",
+      "the same other-tensor error in both columns",
+      "a wrong magnitude at the approved step",
+      "a missing approval"
+    ],
+    "strict_layer": "both columns canonical, pair equality, token IDs canonical, and every non-copy tensor equal",
+    "tests_passed_server_side": 10,
+    "tests_source": {
+      "bytes": 6050,
+      "sha256": "d3d13b43c6018f3412480277716e7e400cd5f85e436a75e076dd0d94ce0164f9"
+    }
+  },
+  "direct_user_two_endpoint_criterion": {
+    "approval_receipt_sha256": "60ec1eca5341de42ff78cbc611c475d2b763b2ce32e5eb8217e2f8f946c37214",
+    "changed_elements": 129251,
+    "closed_two_value_set_not_a_tolerance": true,
+    "context": 36,
+    "control_columns_have_landed_on_either_state": true,
+    "copy_pass_excluded_from_timing": true,
+    "criterion": "the other 63 steps, both eight-step families, the final state, finiteness and token IDs must match canonical on all eight ranks; the single named step must equal exactly one of the two hashes with exactly that changed-element count and max-abs",
+    "criterion_matches_named_values": true,
+    "explicitly_not_granted": [
+      "general_error_tolerance",
+      "new_lossy_weight_or_activation_quantization",
+      "fp16_or_narrower_weight_or_collective_wire",
+      "different_activation_grid",
+      "reduced_sinkhorn_iterations",
+      "mtp_speculative_decoding_or_request_batching",
+      "fused_triton_attention_reduction_replacing_the_torch_fp32_denominator_tree",
+      "permission_to_retire_the_old_strict_rejection_receipt",
+      "serving_default_or_pull_request_merge",
+      "fifty_tokens_per_second_claim"
+    ],
+    "max_abs_difference": 0.003835439682006836,
+    "mechanism_is_not_claimed": true,
+    "observed_states": [
+      "852d957ac0d1f9116c9b8fdc1de29a9819afe78a35f1f64d3a0fdadd160313d1",
+      "4824df2735d91d8c45b293b3378b534b5695607e25f20e395ce9bd8be4dc5236"
+    ],
+    "old_strict_rejection_retained": true,
+    "preservation_rules": [
+      "strict_rejection_receipts_remain_valid_and_unmodified",
+      "prior_S1_scoped_acceptance_receipt_remains_separate",
+      "both_known_states_were_already_inside_the_previously_accepted_deviation_envelope",
+      "this_criterion_applies_only_to_that_single_named_step"
+    ],
+    "third_value_or_extra_changed_step_rejected": true,
+    "timed_step_index": 12
+  },
+  "metadata_only": true,
+  "public_payloads_copied": false,
+  "raw_source_identities": {
+    "compare_pure_b1_reuse.py": {
+      "bytes": 12899,
+      "sha256": "1b2e7c72b640b7f84a964c2fa11b5cdac295c77d7c48822af4d5120712b4f58c"
+    },
+    "ctx36-two-endpoint-user-approval-20261123.json": {
+      "bytes": 3744,
+      "sha256": "60ec1eca5341de42ff78cbc611c475d2b763b2ce32e5eb8217e2f8f946c37214"
+    },
+    "exact-attention-reuse-pair-1-endpoint-v2.json": {
+      "bytes": 81186,
+      "sha256": "d4487c2e0a6ddc5ed48be3df173b743c577e0307eaaa9a97f89c7812710c325b"
+    },
+    "exact-attention-reuse-pair-repeat-endpoint-v2.json": {
+      "bytes": 82295,
+      "sha256": "44284191d1253f766d767502398b9a88a7812d58d27fe4c4efc9fa3bec3cd26c"
+    },
+    "exact-attention-reuse-selection-1.json": {
+      "bytes": 8967,
+      "sha256": "478e8273adc1fae3cbefbfb32b1b68c576cc5ae1ec3e03b25767a3fd3e14233c"
+    },
+    "shared-prepare-reuse-pair-1.json": {
+      "bytes": 82304,
+      "sha256": "dc9858e2e27bfe7a87887f8f472c6c68a1aab3a23ac32ec98b24e1588d99021f"
+    },
+    "shared-prepare-reuse-selection-1.json": {
+      "bytes": 9340,
+      "sha256": "90ff22c8c9b9937755046cb7bcf49f18e709a5553458fd306e2b133d116ad2a7"
+    },
+    "test_compare_pure_b1_reuse.py": {
+      "bytes": 6050,
+      "sha256": "d3d13b43c6018f3412480277716e7e400cd5f85e436a75e076dd0d94ce0164f9"
+    }
+  },
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.follow-up.v9",
+  "scope": "accepted exact preparation reuse, direct-user two-endpoint criterion, shared-scope negative result",
+  "shared_expert_preparation_scope_negative": {
+    "acceptance_layer": "approved_endpoint",
+    "adopted": false,
+    "candidate_TPS": 11.631003375325955,
+    "control_TPS": 11.652519901152331,
+    "explicit_lesson": "preparation-kernel-count reduction is not by itself a valid performance lever",
+    "guard_relaxation_attempted": false,
+    "guard_relaxation_requirement": "explicit fail-closed session, not done",
+    "inside_same_configuration_run_to_run_variation": true,
+    "kernel_effect": {
+      "S2b_prepare_and_post_calls_each_unchanged": 552,
+      "actual_preparation_launches_removed": 160,
+      "all_eight_ranks_verified": true,
+      "candidate_calls": 1128,
+      "control_calls": 1288,
+      "four_excluded_profiled_forwards": true,
+      "host_counts_include_capture_not_NPU_replay": true,
+      "host_scope_reuses": 1690,
+      "native_projection_calls_unchanged": 480,
+      "no_new_model_or_NPU_execution": true,
+      "original_FP8_preparation_kernel": "fast_fused_fp8_activation_decode_kernel",
+      "original_weight_payload_grid_and_FP32_collectives_unchanged": true,
+      "per_forward_preparation_launches_removed": 40.0,
+      "registered_attention_modules": 40
+    },
+    "measured_direction": "slower",
+    "mechanism_verified": true,
+    "numerical_acceptance": true,
+    "paired_TPS_difference_percent": -0.1846512686431767,
+    "performance_claim": null,
+    "plausible_cause": "per-call site validation issued two device-runtime queries on each of forty shared forwards, plausibly consuming the saved launches; this remains a hypothesis",
+    "trial_kind": "shared_expert_preparation_scope"
+  }
+}

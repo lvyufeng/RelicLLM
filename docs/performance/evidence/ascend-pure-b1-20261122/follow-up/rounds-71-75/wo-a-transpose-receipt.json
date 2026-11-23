@@ -1,0 +1,40 @@
+{
+  "schema": "relic.pure-b1.wo-a-transpose-negative.v1",
+  "capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T103426Z (registered lane)",
+  "what_was_found": {
+    "operator": "aclnnBatchMatMul_TransposeAiCore_Transpose",
+    "calls_per_forward": 48,
+    "us_per_forward": 1171.6,
+    "share_of_vector_core": 0.0434,
+    "shape": "1024,4096 -> 4096,1024, about 40 occurrences a forward i.e. once a layer",
+    "cause": "attention.py:1688-1689 reads the o-projection weight as [groups, o_lora_rank, d] and einsums over d, so the framework materialises a transpose of that constant weight before the matmul, every layer, every token",
+    "why_it_looked_attractive": "the weight is constant during a decode, so transposing it once per module looks like removing repeated work; and a transpose changes no value"
+  },
+  "what_was_measured": {
+    "claim_under_test": "same products, same ascending reduction over d, constant storage layout only, therefore bit-identical",
+    "trials": 8,
+    "result_contiguous_pretranspose": "3 of 6 trials in the first test and 5 of 8 in the second were NOT bit-identical; 1 to 2 of 2048 elements differ, max abs up to 0.5",
+    "result_transposed_view": "0 of 8 bit-identical",
+    "eager_cost_reference": 165.7,
+    "eager_cost_transposed_view": 99.6,
+    "eager_cost_contiguous_copy": 212.1,
+    "verdict": "the reduction order is NOT layout-invariant on this build. The faster variant changes results every time; the variant that sometimes matches is slower than the status quo."
+  },
+  "conclusion": "The 1171.6 us transpose cannot be removed bit-exactly, and no variant is both exact and faster. Recorded as a negative result; the change was not adopted.",
+  "available_only_with_approval": {
+    "class": "bf16 reduction-order deviation in the o-projection (wo_a) matmul",
+    "mechanism": "append .transpose(1, 2) to the matmul operand instead of a materialised [g, d, r] copy",
+    "expected_gain": "the op drops from about 165.7 us to 99.6 us eagerly, so roughly 0.5 to 0.7 ms a forward, about 0.7 to 1.0% of the step",
+    "observed_error": "0 of 8 trials bit-identical; where differences appear it is 1 to 2 of 2048 elements, max abs up to 0.5 on bf16",
+    "why_it_needs_approval": "the objective forbids new quality relaxation without explicit scoped approval; this is a different op and a different class from the existing row-norm and narrow-head approvals, so those receipts do not cover it",
+    "status": "NOT adopted. Offered to the user as a decision, with the measured error, not as an optimisation already taken."
+  },
+  "second_layout_item_not_yet_pursued": {
+    "operator": "aclnnInplaceIndexCopy_TransposeAiCore_Transpose",
+    "calls_per_forward": 138,
+    "us_per_forward": 1244.4,
+    "observation": "138 is exactly the call count of _state_post_pv_kernel and _state_prepare_kernel, so these small 1,1,512 index-copy-transposes belong to the sparse-attention state machinery",
+    "status": "identified, not investigated"
+  },
+  "method": "standalone bit-exactness harness on the device before any lane change; no model run, no code change adopted"
+}

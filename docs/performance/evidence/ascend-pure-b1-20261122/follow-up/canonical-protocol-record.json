@@ -1,0 +1,318 @@
+{
+  "actual_kernel_selection": {
+    "no_new_device_or_model_run": true,
+    "rank_reports": [
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 0,
+        "raw_kernel_csv_sha256": "346dfe851d0f65cdc89bd2ef417125a5350de72aba66ea9058b43a58cff3f1b7"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 1,
+        "raw_kernel_csv_sha256": "90ada5ad15080bbd391d91d20e031f21de78b1434b1975d2bdfb560883090883"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 2,
+        "raw_kernel_csv_sha256": "d66eb94a7591c2cc1581cd4a1af77d7818323d2f9da8c8721b176ca3426a4d27"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 3,
+        "raw_kernel_csv_sha256": "e75240882c3d7ec1a73b7fa43fad8f30a214bf83eca023eea2ab1cead11d80b9"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 4,
+        "raw_kernel_csv_sha256": "4acba7df057f7f19949d61c570c5741174091df557cbac25abfbe8561245ceb4"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 5,
+        "raw_kernel_csv_sha256": "7b4f80b765990b9e690273f46fb22e342b7e5ddfc4a081df33a7b2ca0e124f6e"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 6,
+        "raw_kernel_csv_sha256": "5a3fc0cff18d542ffa89a16157dcad12e9c64593bf04af658eb07bc625ac2a6c"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 7,
+        "raw_kernel_csv_sha256": "d6724521aef3e72d88a75d6b88e126f49123184e6d0da8a7737615552e231109"
+      }
+    ]
+  },
+  "audit_rows": [
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 0,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 0,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 1,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 1,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 2,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 2,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 3,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 3,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 4,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 4,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 5,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 5,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 6,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 6,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": false,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-control-profile-steps64-20261122T083949Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 7,
+      "role": "new_control",
+      "state_selected": false,
+      "tokens_equal_canonical": true
+    },
+    {
+      "bit_identical_to_canonical": true,
+      "directory": "<task-private>/pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T084544Z",
+      "inline_selected": true,
+      "layout_selected": true,
+      "rank": 7,
+      "role": "new_candidate",
+      "state_selected": true,
+      "tokens_equal_canonical": true
+    }
+  ],
+  "canonical_audit": {
+    "all_new_outputs_match_canonical": false,
+    "new_pair_parity_is_not_canonical_identity": true,
+    "strict_acceptance_includes_tokens_and_selected_role_flags": true,
+    "user_S1_error_acceptance_not_extra_headroom": true
+  },
+  "decision": {
+    "candidate_only_canonical_identity_restored": true,
+    "candidate_only_detail": "all eight ranks: reference-8, teacher-forced-8, final and full 64-step tensors bit-identical, token ids exact 0 differences",
+    "current_status": "provisional pending the independent canonical-candidate repeat on the same frozen code",
+    "legacy_provisional_global_numerical_acceptance": false,
+    "legacy_records_preserved_unmodified": true,
+    "matched_pair_strict_output_approval": false,
+    "new_control_drift": "control reproduces the original pre-S1 identity 4824df at context 36, not the immutable accepted canonical 852d95",
+    "new_control_is_not_a_canonical_control": true,
+    "new_error_waiver": false,
+    "numerical_admission": "candidate 0 + independent repeat 0, conditional per review-109",
+    "pair_gain_not_approved_reason": "control drifts from canonical identity, so the matched-pair gain is not a strict-output-pair approved gain",
+    "pair_gain_percent": 3.890556896200592
+  },
+  "derived_from_raw_sha256": {
+    "S2b-canonical-candidate/S2b-actual-kernel-selection.json": "971cce85e065ab532755e03bdc4f723b5106e295469404f5a79078073e4b9dc1",
+    "S2b-canonical-protocol-matched-comparison.json": "2950b098e81e3f505be816dbc54b0b473757041adfb2a83b39773280e175ed02",
+    "S2b-restored-protocol-canonical-audit.json": "3bd7ed51158b7a25361b152906f92c4f22c146702628533467d0caec1379ce0b"
+  },
+  "matched_pair": {
+    "TPS_gain_percent": 3.890556896200592,
+    "all_eight_ranks_bit_identical_to_accepted_control": false,
+    "batch_size": 1,
+    "candidate_TPS": 11.5613956081916,
+    "candidate_ms_per_token": 86.49474802950863,
+    "context": [
+      24,
+      88
+    ],
+    "control_TPS": 11.12843741875679,
+    "control_ms_per_token": 89.85987541382201,
+    "excluded_warmups": 4,
+    "ms_saved_per_token": 3.365127384313382,
+    "pair_numerical_acceptance": false,
+    "timed_steps": 64
+  },
+  "metadata_only": true,
+  "pending": {
+    "description": "root independent canonical-candidate repeat, same frozen code; no invented values",
+    "run_label": "71cffe"
+  },
+  "provisional": true,
+  "role_summary": {
+    "new_candidate": {
+      "changed_contexts": [],
+      "rows": 8,
+      "true_flag_counts": {
+        "bit_identical_to_canonical": 8,
+        "inline_selected": 8,
+        "layout_selected": 8,
+        "state_selected": 8,
+        "tokens_equal_canonical": 8
+      }
+    },
+    "new_control": {
+      "changed_contexts": [
+        36
+      ],
+      "rows": 8,
+      "true_flag_counts": {
+        "bit_identical_to_canonical": 0,
+        "inline_selected": 8,
+        "layout_selected": 8,
+        "state_selected": 0,
+        "tokens_equal_canonical": 8
+      }
+    }
+  },
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.canonical-protocol.v1",
+  "scope": "canonical protocol rerun: new canonical control and candidate over the same 64-step B1 profile"
+}

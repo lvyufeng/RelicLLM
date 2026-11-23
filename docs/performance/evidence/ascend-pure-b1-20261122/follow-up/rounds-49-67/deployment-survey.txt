@@ -1,0 +1,82 @@
+# DeepSeek-V4.1-Flash 一体机部署：检索结果（2026-11-23）
+
+检索目的：确认「一体机上跑 V4.1-Flash 的最佳方案」，并校准本项目的目标是否现实。
+
+## 1. 与我们的硬件完全一致的两个社区交付
+
+### A. `CJYLZS/vllm-ascend-deepseek-v41-a2` — 8 × Ascend 910B3（A2），65536 MB/卡
+基于官方 `vllm-ascend v0.30.0rc2`，默认 Model Runner V2，**TP8/EP8**，W4A8 权重。
+实测（8K prompt → 512 输出，temperature=0）：
+
+| 并发 | 1 | 4 | 8 | 16 |
+|---|---|---|---|---|
+| 每步 (ms) | **27.13** | 36.10 | 41.44 | 50.44 |
+| 单流 tok/s | **136.9** | 81.2 | 66.4 | 62.5 |
+| A_spec | **4.10** | 3.48 | 3.65 | 3.95 |
+
+KV 容量 3,629,044 tokens。默认档 = V2 runner + 6 个 gate + **共享专家多流** + **PGO** +
+**`HCCL_OP_EXPANSION_MODE=AIV`** + `0005` 槽位映射标量化 + 2 GB/rank KV 外部池。
+7 个补丁，其中 `0005` 与我们的窗口 kernel 是**同一个 bug 类**：A2 的 AIV 标量单元用软件模拟
+64 位整数除法，那个内核「只搬几百字节却 89% 时间卡在标量管线」，改 int32 + 移位/掩码。
+（本项目 round 56 独立命中同一问题：window kernel 17.11 → 1.41 us，总步长 −2.58%。）
+
+### B. `chiro2001/deepseek-v4.1-flash-ascend910B` — A3（910C）/ A2（910B3）
+单流（1024 prompt / 256 out，`DRAFT_GRAPH=1`）：**23.9–24.9 ms/step，A = 2.40–2.74，100.7–109.8 tok/s**。
+128K 单流：30.2–31.6 ms → 85–90 tok/s。多流聚合：并发 64 时 **719.5 tok/s**。
+A2 形态（在 A3 上模拟 TP8 同置，非真实 910B3）：27.953 ms/step，A = 2.525 → 90.322 tok/s。
+KV：A3 TP8 交付默认 4,010,585 tokens。
+
+## 2. 结论一：50 tok/s 的纯 B=1 目标在本硬件上不可达
+
+纯 per-token、B=1、无投机 ⇒ tok/s = 1000 / (ms/step)。
+
+- 社区最优栈每步 **27.13 ms**（A2 真实实测）→ **36.9 tok/s**
+- 50 tok/s 需要每步 **≤ 20 ms**
+
+即：**即使把 vLLM-ascend + W4A8 + V2 runner + 6 个 gate + PGO + AIV 展开全用上，
+8×910B3 的单步地板也在 27 ms 左右。50 tok/s 纯 B=1 不是我们没优化到，而是硬件/栈的地板之外。**
+要 50+ 必须靠「每步出多个 token」，也就是 A（接受长度）> 1：社区正是靠 A_spec ≈ 4.1 拿到 136.9 tok/s。
+
+## 3. 结论二：我们的每步时间有约 2.6× 真实差距
+
+| | 每步 | 相对 |
+|---|---:|---:|
+| 本项目（8×910B3，纯 B=1） | **71.10 ms** | — |
+| 社区 A2 最优栈（并发 1） | **27.13 ms** | **2.62× 更快** |
+
+这一块是我们的正当优化空间，差距来源（按社区方案反推）：
+1. **`HCCL_OP_EXPANSION_MODE=AIV`** —— 改集合通信的执行方式；我们目前 25–29% 步长卡在集合通信空转
+2. **共享专家多流** —— 让共享专家与路由专家的计算/通信重叠；我们实测 0% 重叠
+3. **PGO（profile-guided optimization）**
+4. **Model Runner V2 + 7 个补丁**（记忆化、`where(out=)` 原地写、Triton 槽位映射、QLI 无候选、槽位链复用）
+5. W4A8 权重本身就是官方推荐形态（我们已是 MXFP4 路由专家 + FP8 激活，同路线）
+
+## 4. 结论三：一体化部署的公认形态
+
+- **权重**：W4A8（`chiro2001/DeepSeek-V4.1-Flash-1017-w4a8-Ascend`，ModelScope 可下），273 GB
+- **框架**：`vllm-ascend v0.30.0rc2`（镜像 `quay.io/ascend/vllm-ascend:v0.30.0rc2`）
+- **并行**：单机 TP8 / EP8（A2 一卡一 device；A3 一卡两 die，数 device 不数卡）
+- **关键开关**：Model Runner V2、DSpark 草稿图（`DRAFT_GRAPH=1` 低并发）、共享专家多流、
+  PGO、`HCCL_OP_EXPANSION_MODE=AIV`、KV 外部池、前缀缓存
+- **KV**：A2 约 362 万 token；A3 TP8 约 401 万 token
+- **容量/形态**：A3 单机可做 8+8 PD 分离 + CED，prefill 相对全 40 层同置 2.07×（144K）
+- 起服到 READY 约 9–11 min，首次另有编译缓存冷启动
+
+## 5. 对我们的直接启示
+
+1. 我们的内核融合路线与社区**收敛到同一结论**：`chiro2001` 仓里
+   `deploy/a3-tp8-fusion/` 是「解码路径融合实验包」，结论是**实测无收益、不对外发布**，
+   仅存负结果。本项目四轮融合只拿到 +12.3%，同一量级，且最大那部分来自精度而非融合。
+2. 真正的大杠杆在我们尚未做的两件事：**通信/计算重叠（多流 + AIV 展开）** 与 **投机解码**。
+   前者在约束内可做，后者被 objective 明确排除。
+3. 若用户愿意重新审视「纯 B=1 无投机」这条约束，**136.9 tok/s（A2 实测）** 是现成可达的，
+   不需要我们再发明什么。
+
+## 6. 来源
+
+- https://github.com/CJYLZS/vllm-ascend-deepseek-v41-a2
+- https://github.com/chiro2001/deepseek-v4.1-flash-ascend910B
+- https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash（模型卡：552B 骨干、CED 20+20 层、
+  prefill 激活 8B / decode 激活 16B、384 路由专家每 token 选 6、DSpark 投机解码、
+  FP4 主 KV 890 B/token、Engram 196.6B）
+- https://www.modelscope.cn/models/chiro2001/DeepSeek-V4.1-Flash-1017-w4a8-Ascend

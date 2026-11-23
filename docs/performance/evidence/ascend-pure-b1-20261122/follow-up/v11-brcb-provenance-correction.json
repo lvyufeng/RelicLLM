@@ -1,0 +1,288 @@
+{
+  "build_provenance_correction": {
+    "gives_per_site_hashes_for": [
+      "source",
+      "binary",
+      "cmake.log",
+      "build.log"
+    ],
+    "receipt": {
+      "bytes": 6700,
+      "sha256": "71e48b4c1a9f98e2a0ef2e05c8e782d41f1d4df2714efb016005f2b606fd3bbf"
+    },
+    "receipt_keys_present": [
+      "accepted_source",
+      "build_command_actually_used",
+      "build_sites",
+      "configure_command_actually_used",
+      "hardware_api_evidence",
+      "n32_native_parity",
+      "no_measurement_claimed_here",
+      "schema",
+      "source_to_binary_linkage",
+      "still_required_before_landing",
+      "supersedes",
+      "variant_source_after_the_stride_fix",
+      "variant_source_as_built_before_the_stride_fix",
+      "variant_source_final"
+    ],
+    "statement": "the first build receipt was assembled by copying the baseline receipt and swapping only the library path and sha, so its source_hashes/source_snapshot/configure_command/build_command described the baseline build",
+    "supersedes_receipt": {
+      "bytes": 1810,
+      "sha256": "295a6bfd07a7fc13e71dc740d1ea3e1ddef4ec117b183dc489a5924a977a5bcd"
+    },
+    "why_the_measured_pairs_are_unaffected": "the launcher consumed only that receipt's library path and sha, and verifies that pair against the file"
+  },
+  "end_to_end_unchanged": {
+    "best_candidate_TPS": 12.499051864305757,
+    "best_candidate_ms_per_token": 80.00606852874625,
+    "fifty_TPS_achieved": false,
+    "mean_delta_percent": 7.276989830367278,
+    "pairs": [
+      {
+        "acceptance_layer": "strict",
+        "candidate_TPS": 12.499051864305757,
+        "control_TPS": 11.605509747100315,
+        "delta_percent": 7.699292290273574,
+        "ms_saved": 6.159901065984741,
+        "rank_rows": 8,
+        "strict": true
+      },
+      {
+        "acceptance_layer": "strict",
+        "candidate_TPS": 12.447991825487886,
+        "control_TPS": 11.632330472198808,
+        "delta_percent": 7.012020121320517,
+        "ms_saved": 5.633053282508627,
+        "rank_rows": 8,
+        "strict": true
+      },
+      {
+        "acceptance_layer": "strict",
+        "candidate_TPS": 12.451102822151475,
+        "control_TPS": 11.62354619274953,
+        "delta_percent": 7.119657079507746,
+        "ms_saved": 5.71809355460573,
+        "rank_rows": 8,
+        "strict": true
+      }
+    ]
+  },
+  "final_provenance": {
+    "accepted_source_bytes": 24114,
+    "accepted_source_sha256": "3ca65ab82e727d8116ed81aa521accc6ec8aaad3ce12ca5b9e192c59b61dd188",
+    "diff_actual": {
+      "bytes": 2344,
+      "sha256": "bcfe43699cd3cd717afa8ea64f9345ac99df5d2c9a763f02105c3a7c7131a451"
+    },
+    "diff_bytes": 2344,
+    "diff_matches_declared": true,
+    "diff_sha256": "bcfe43699cd3cd717afa8ea64f9345ac99df5d2c9a763f02105c3a7c7131a451",
+    "diff_unified_lines": 33,
+    "variant_source_actual": {
+      "bytes": 25488,
+      "sha256": "caca541d1504c52699f0eb2aaf785ffca8bc7dae0a79958bae80480097791b52"
+    },
+    "variant_source_bytes": 25488,
+    "variant_source_matches_declared": true,
+    "variant_source_sha256": "caca541d1504c52699f0eb2aaf785ffca8bc7dae0a79958bae80480097791b52"
+  },
+  "honest_limits": {
+    "fifty_TPS_achieved": false,
+    "independent_npu_execution_trace": false,
+    "landing_requires": "its own relic-core review and a fresh user request",
+    "library_is_task_private": true,
+    "merged": false,
+    "n32_qualified": "component only; no N32 model rate",
+    "noncanonical_custom_prepared_tables_claimed_equivalent": false,
+    "serving_default": false,
+    "trace_evidence_available": "post-run file hashing plus the binding's hash-then-load check only"
+  },
+  "mechanism_correction": {
+    "api_excerpts": {
+      "header_excerpt": {
+        "bytes": 1733,
+        "sha256": "d23de86597a828a5eab7d5d52b3d9557d94f8d37d4c51877ca7ef4075cb40fb1"
+      },
+      "implementation_excerpt": {
+        "bytes": 1740,
+        "sha256": "f22c9f6ada607ef66bc69f83be2410cc9b9d612a6a672b51bac354436cadc7b2"
+      },
+      "index_receipt": {
+        "bytes": 6037,
+        "sha256": "fabaea0b769eb9da9392351cc7000e4b98ed74093bfd53bf63be7e885cef9bf3"
+      }
+    },
+    "corrected_form": "BrcbRepeatParams broadcast(1, 8)",
+    "earlier_wrong_form": "destination repeat stride derived from the tile count, N/8",
+    "why_no_source_stride_is_configured": "the implementation header shows BrcbImpl calls vbrcb(dst, src0, dstBlkStride, dstRepStride, repeatTime), so the source advance is implicitly consecutive eight words per repeat; an earlier src0RepStride = 1 assignment was a no-op and was removed",
+    "why_wrong": "one broadcast repeat always writes eight 32-byte destination blocks (64 32-bit words) whatever the tile width, so the destination repeat stride is the constant eight blocks; N/8 is only accidentally right at N64 and wrong at N32"
+  },
+  "metadata_only": true,
+  "n32_native_parity_gate": {
+    "acceptance": "accepted",
+    "all_outputs_bit_identical": true,
+    "candidate_N32_library_sha256": "cf9f5c6cca3ae9a21cadaed7fb4b32292f7e6bf975ec0b3140fabef5cc224f80",
+    "component_numbers_only": true,
+    "medians_us": {
+      "candidate": {
+        "groups_1_median_us": 268.8164822757244,
+        "groups_6_median_us": 772.3257876932621
+      },
+      "reference": {
+        "groups_1_median_us": 277.0121209323406,
+        "groups_6_median_us": 834.0752683579922
+      }
+    },
+    "no_n32_model_rate_claimed": true,
+    "receipt": {
+      "bytes": 14031,
+      "sha256": "880343799977a2e1ba04eb293d0925da3fc4ae28fd2bccf36947c49c0f34bde0"
+    },
+    "reference_N32_library_sha256": "3b330d3f6d757fd3fe9089dcf1235be7886c5cd4f7a93d9ba8e22cfa8598bfa4",
+    "verdict": {
+      "groups_1": {
+        "bit_identical": true,
+        "changed_elements": 0,
+        "max_abs_difference": 0.0,
+        "total_elements": 1152
+      },
+      "groups_6": {
+        "bit_identical": true,
+        "changed_elements": 0,
+        "max_abs_difference": 0.0,
+        "total_elements": 6912
+      }
+    }
+  },
+  "preconditions_archived": {
+    "count": 6,
+    "path_label": "<coord>/brcb-trial/preconditions/*.preconditions.json",
+    "reviewer_can_read_selected_library_identity_without_host_access": true,
+    "runs": [
+      {
+        "identity": {
+          "bytes": 27805,
+          "sha256": "3122e945bbfb487d6b3f532e91308a9a2fce47c02670f1454be742d9b59d8be0"
+        },
+        "label": "pure-B1-brcb-decoder-candidate-steps64-20261122T171636Z.preconditions.json",
+        "selected_library_label": "librelic_scale_lut_tile_cube.so",
+        "selected_library_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117"
+      },
+      {
+        "identity": {
+          "bytes": 27805,
+          "sha256": "5b779feff986d31a117a72196f0aa3102dec0f24045e70c306fff984cd77fdb5"
+        },
+        "label": "pure-B1-brcb-decoder-candidate-steps64-20261122T172842Z.preconditions.json",
+        "selected_library_label": "librelic_scale_lut_tile_cube.so",
+        "selected_library_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117"
+      },
+      {
+        "identity": {
+          "bytes": 27805,
+          "sha256": "adaf5767760418730450586fcc9fabb8d14cafb26e47bf0b388230877aa550ee"
+        },
+        "label": "pure-B1-brcb-decoder-candidate-steps64-20261122T174025Z.preconditions.json",
+        "selected_library_label": "librelic_scale_lut_tile_cube.so",
+        "selected_library_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117"
+      },
+      {
+        "identity": {
+          "bytes": 27854,
+          "sha256": "5b9c2962abd247abad054bb46b7547967dcc75a36c56aff664f65cda7db1046a"
+        },
+        "label": "pure-B1-brcb-decoder-control-steps64-20261122T171107Z.preconditions.json",
+        "selected_library_label": "librelic_scale_lut_tile_cube.so",
+        "selected_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+      },
+      {
+        "identity": {
+          "bytes": 27854,
+          "sha256": "c25491836f7ac86390bef7bfa9e2d5b3356d0779bb2231226f17957bb8537e07"
+        },
+        "label": "pure-B1-brcb-decoder-control-steps64-20261122T172301Z.preconditions.json",
+        "selected_library_label": "librelic_scale_lut_tile_cube.so",
+        "selected_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+      },
+      {
+        "identity": {
+          "bytes": 27854,
+          "sha256": "a5cd173cf2099202aff31bf5172edf4f0ad55bc25e4beba83927ae4513eee20b"
+        },
+        "label": "pure-B1-brcb-decoder-control-steps64-20261122T173444Z.preconditions.json",
+        "selected_library_label": "librelic_scale_lut_tile_cube.so",
+        "selected_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+      }
+    ]
+  },
+  "public_payloads_copied": false,
+  "raw_source_identities": {
+    "brcb-decoder-pair-1.json": {
+      "bytes": 81920,
+      "sha256": "14dd86b2b4e4844d86dd141556bb0bb583b96849ee14f22173f460a6b9684166"
+    },
+    "brcb-decoder-pair-repeat.json": {
+      "bytes": 81921,
+      "sha256": "787f629ad78c0707fba8e7bf02e5e3545e1aba95f41840971480a57434b58965"
+    },
+    "brcb-decoder-pair-third.json": {
+      "bytes": 81919,
+      "sha256": "0345618cc5844923a48d25369bff90f9de39f5736fde6f95851f5bc17ec044ae"
+    },
+    "brcb-header-excerpt.txt": {
+      "bytes": 1733,
+      "sha256": "d23de86597a828a5eab7d5d52b3d9557d94f8d37d4c51877ca7ef4075cb40fb1"
+    },
+    "brcb-impl-excerpt.txt": {
+      "bytes": 1740,
+      "sha256": "f22c9f6ada607ef66bc69f83be2410cc9b9d612a6a672b51bac354436cadc7b2"
+    },
+    "compare_lut_brcb.json": {
+      "bytes": 14053,
+      "sha256": "d4452c309e7ce1952ce4b83fcad190842bce8d957e1efeaa8906c93840335e5b"
+    },
+    "compare_lut_brcb_n32.json": {
+      "bytes": 14031,
+      "sha256": "880343799977a2e1ba04eb293d0925da3fc4ae28fd2bccf36947c49c0f34bde0"
+    },
+    "diagnosis.json": {
+      "bytes": 9147,
+      "sha256": "7ebc53c7fc0e55a4c89251999de7c1e4ba6f5869f8a50fc4f80e3ee637f0f6e1"
+    },
+    "kernel-api-provenance.json": {
+      "bytes": 6037,
+      "sha256": "fabaea0b769eb9da9392351cc7000e4b98ed74093bfd53bf63be7e885cef9bf3"
+    },
+    "lut-brcb-build-provenance-v2.json": {
+      "bytes": 6700,
+      "sha256": "71e48b4c1a9f98e2a0ef2e05c8e782d41f1d4df2714efb016005f2b606fd3bbf"
+    },
+    "scale-lut-brcb-build.json": {
+      "bytes": 1810,
+      "sha256": "295a6bfd07a7fc13e71dc740d1ea3e1ddef4ec117b183dc489a5924a977a5bcd"
+    },
+    "scale_lut_tile_cube_brcb.cpp": {
+      "bytes": 25488,
+      "sha256": "caca541d1504c52699f0eb2aaf785ffca8bc7dae0a79958bae80480097791b52"
+    },
+    "scale_lut_tile_cube_brcb.diff": {
+      "bytes": 2344,
+      "sha256": "bcfe43699cd3cd717afa8ea64f9345ac99df5d2c9a763f02105c3a7c7131a451"
+    }
+  },
+  "rebuild_no_op_at_the_measured_width": {
+    "byte_identical_to_library_used_by_the_three_measured_pairs": true,
+    "final_source_rebuilt_for_N32_sha256": "cf9f5c6cca3ae9a21cadaed7fb4b32292f7e6bf975ec0b3140fabef5cc224f80",
+    "final_source_rebuilt_for_N64_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117"
+  },
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.follow-up.v11",
+  "supersedes": {
+    "record": "v10-accepted-lut-brcb-variant.json",
+    "scope": "provenance only: v10 recorded a variant source hash that is no longer the reviewed source; every measurement in v10 is unchanged and remains valid",
+    "sha256": "80a0dff9366d4382697d478daf9f811536bb3a6cb4c036cd925f46658d365b88",
+    "v10_rewritten": false
+  },
+  "why_correction": "v10 recorded the variant source as c45bd134\u2026; that source was correct for N64 but derived the broadcast destination repeat stride from the tile count, which is only accidentally right at N64 and packs the N32 geometry wrongly. Review caught it, the source was corrected and finally cleaned of a no-op, and both widths were rebuilt and proven."
+}

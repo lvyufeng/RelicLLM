@@ -1,0 +1,31 @@
+{
+  "schema": "relic.pure-b1.graph-boundary-step2.v1",
+  "question": "can this lane satisfy the NPU decode-graph adapter contract, and how large is the integration?",
+  "answer": "the contract is satisfiable and the integration is a single reversible constructor call. No launcher surgery is required, which is much cheaper than the earlier estimate.",
+  "contract_checked_before_spending_a_model_load": {
+    "constructor_gate": "NpuDecodeGraphs.__init__ refuses unless _reference_reduction_enabled(), i.e. unless POCKETLLM_V41_MMA_EMULATE is not disabled.",
+    "this_lane": "env.sh does not set POCKETLLM_V41_MMA_EMULATE at all, and kernels.quantized_linear documents emulation as ON by default. So the gate passes.",
+    "block_gates": [
+      "_require_capturable_block: every non host-side parameter and buffer of a block must be on the capture device. This lane is device-resident, so it should pass.",
+      "_require_consistent_metadata: refuses a half-attached codes/grid pair.",
+      "_require_staged_quantized_modules: a module marked quantized must have at least one linear carrying the file's E4M3 codes and E8M0 grid, which is what proves the original-byte staging ran. The lane loads through loader.load_backbone on the NPU device, which is that staging."
+    ],
+    "so": "no gate refuses this lane on inspection. A capture attempt is worth a run."
+  },
+  "the_integration_point": {
+    "mechanism": "DecodeGraphs.__init__ walks model.layers and does `graphs = LayerGraphs(block, self.pool, warmup)` then `block.decode_graph = graphs` (graphs.py:434-435). Block.forward reads that one attribute.",
+    "activation": "constructing NpuDecodeGraphs(model) is the whole opt-in: no CLI flag and no environment variable selects it, by design.",
+    "recording": "graphs.capture_pass(model_forward) runs the model forward once; the first reach of each layer records instead of replaying, and the caches are rewound afterwards so the following step is the one the eager column would have taken.",
+    "reversal": "release() sets block.decode_graph back to None, and the docstring says a layer that outlives the graphs then runs the eager body again. So the change is one assignment and reverting it is one assignment.",
+    "why_this_matters": "the earlier estimate assumed the launcher would need patching. It does not: the launcher constructs the model and drives steps, so adoption is one constructor before the timed loop plus one capture_pass call."
+  },
+  "what_the_capture_would_still_have_to_stop_on": [
+    "every layer must be replayable as two recordings plus the eager middle, so the per-forward dispatch closure from _forward_for(shard) (Python lock, installed-flag check) runs between the two recordings",
+    "the shared pool must hold forty layers of recordings at once; pool_bytes is reported precisely because it is the pool size and not a per-layer figure",
+    "capture_pass needs one real decode step, so it must run after the caches exist and before timing"
+  ],
+  "why_the_run_was_not_started_this_round": "a capture attempt is a full eight-rank model load plus the capture pass, which is well past the remaining budget for this round. Starting it and being cut off would leave a leased host with a half-run job, which the release discipline forbids.",
+  "what_is_not_claimed": "no capture was attempted, no parity measured, no speedup claimed. The objective gate stands unchanged: full eight ranks, complete 64 steps, FP32 bit-identical against the eager lane as control, before any gain is believed.",
+  "next": "construct NpuDecodeGraphs on the loaded model, call capture_pass with one real step, report whether it records and the reported pool_bytes; then run the parity gate. If the capture refuses, record the named refusal verbatim.",
+  "method": "read-only source analysis; no model run, no code change"
+}

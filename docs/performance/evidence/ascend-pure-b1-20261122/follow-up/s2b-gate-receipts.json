@@ -1,0 +1,445 @@
+{
+  "decision": {
+    "additional_error_headroom": false,
+    "bf16_only_npu_domain": true,
+    "numerical_acceptance_global": false,
+    "performance_claimed": false
+  },
+  "derived_from": "S2b gates run after the denominator was restored to the ATen reduction tree",
+  "provisional": true,
+  "receipts": {
+    "bf16_synthetic_gates": {
+      "BF16_only_NPU_domain": true,
+      "additional_error_headroom": false,
+      "changing_capture_reports": [
+        {
+          "changed_input_version": 0,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 128
+        },
+        {
+          "changed_input_version": 1,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 128
+        },
+        {
+          "changed_input_version": 2,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 128
+        },
+        {
+          "changed_input_version": 0,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 129
+        },
+        {
+          "changed_input_version": 1,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 129
+        },
+        {
+          "changed_input_version": 2,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 129
+        },
+        {
+          "changed_input_version": 0,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 288
+        },
+        {
+          "changed_input_version": 1,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 288
+        },
+        {
+          "changed_input_version": 2,
+          "dtype": "torch.bfloat16",
+          "output_bit_differences": 0,
+          "topk": 288
+        }
+      ],
+      "synthetic_gate_pair_local_acceptance_to_accepted_S1": true,
+      "original_FP32_failure_preserved": true,
+      "performance_claimed": false,
+      "reports": [
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 0,
+          "true_tail_keys": 0
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 1,
+          "true_tail_keys": 1
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 3,
+          "true_tail_keys": 3
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 31,
+          "true_tail_keys": 31
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 63,
+          "true_tail_keys": 63
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 64,
+          "true_tail_keys": 0
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 65,
+          "true_tail_keys": 1
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 100,
+          "true_tail_keys": 36
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 127,
+          "true_tail_keys": 63
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 128,
+          "true_tail_keys": 0
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 129,
+          "true_tail_keys": 1
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 192,
+          "true_tail_keys": 0
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 256,
+          "true_tail_keys": 0
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 257,
+          "true_tail_keys": 1
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 288,
+          "true_tail_keys": 32
+        },
+        {
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "output_bit_differences": 0,
+          "topk": 512,
+          "true_tail_keys": 0
+        }
+      ],
+      "unsupported_FP32_NPU_domain_refusals": [
+        {
+          "explicit_domain_refusal": true,
+          "kv_dtype": "torch.float32",
+          "q_dtype": "torch.float32"
+        },
+        {
+          "explicit_domain_refusal": true,
+          "kv_dtype": "torch.bfloat16",
+          "q_dtype": "torch.float32"
+        },
+        {
+          "explicit_domain_refusal": true,
+          "kv_dtype": "torch.float32",
+          "q_dtype": "torch.bfloat16"
+        }
+      ]
+    },
+    "original_real_input_gate": {
+      "changed_elements_bitwise": 0,
+      "max_abs_difference": 0.0,
+      "no_full_model_or_performance_work_started": true,
+      "original_rejected_BF16_output_delta": 0.0009765625,
+      "shape": [
+        1,
+        1,
+        8,
+        512
+      ],
+      "source_file": "<input-tensor-label>/rejected-layout-real-operands-rank-7"
+    },
+    "raw_numerator_rounding_attribution": {
+      "blocks_with_reference_old_state": [
+        {
+          "BF16_rounded_P_operand_FP32": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "block_start": 0,
+          "denominator_update": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "exp_rescale": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "post_PV_mul_add_with_reference_operands": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              512
+            ]
+          },
+          "raw_FP32_numerator_vs_CANN_exp": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "running_max": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "true_width": 64
+        },
+        {
+          "BF16_rounded_P_operand_FP32": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "block_start": 64,
+          "denominator_update": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "exp_rescale": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "post_PV_mul_add_with_reference_operands": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              512
+            ]
+          },
+          "raw_FP32_numerator_vs_CANN_exp": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "running_max": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "true_width": 64
+        },
+        {
+          "BF16_rounded_P_operand_FP32": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "block_start": 128,
+          "denominator_update": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "exp_rescale": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "post_PV_mul_add_with_reference_operands": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              512
+            ]
+          },
+          "raw_FP32_numerator_vs_CANN_exp": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "running_max": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "true_width": 64
+        },
+        {
+          "BF16_rounded_P_operand_FP32": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "block_start": 192,
+          "denominator_update": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "exp_rescale": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "post_PV_mul_add_with_reference_operands": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              512
+            ]
+          },
+          "raw_FP32_numerator_vs_CANN_exp": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8,
+              64
+            ]
+          },
+          "running_max": {
+            "changed_elements_bitwise": 0,
+            "max_abs_difference": 0.0,
+            "shape": [
+              8
+            ]
+          },
+          "true_width": 64
+        }
+      ],
+      "input_file": "<input-tensor-label>/rejected-layout-real-operands-rank-7",
+      "kv_shape": [
+        1,
+        256,
+        512
+      ],
+      "not_a_performance_measurement": true,
+      "q_shape": [
+        1,
+        1,
+        8,
+        512
+      ],
+      "saved_real_output": {
+        "changed_elements_bitwise": 1,
+        "max_abs_difference": 0.0009765625,
+        "shape": [
+          1,
+          1,
+          8,
+          512
+        ]
+      },
+      "softmax_scale": 0.04419417382415922,
+      "source_weights_not_loaded_or_modified": true,
+      "topk": 256
+    }
+  }
+}
