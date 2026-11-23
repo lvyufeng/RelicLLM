@@ -71,5 +71,10 @@
   },
   "manifest_renamed_from": [
     "README.md"
-  ]
+  ],
+  "sanitized": {
+    "host_names_redacted": true,
+    "private_paths_redacted": true,
+    "note": "Hostnames and private absolute paths in this section were replaced with neutral placeholders (<private-root>, <redacted-host>, host_run) before publication. No measured value, timing, parity result or verdict was changed; only the identifying strings were."
+  }
 }

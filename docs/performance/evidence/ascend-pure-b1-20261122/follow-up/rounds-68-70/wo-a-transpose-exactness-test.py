@@ -4,9 +4,9 @@ import sys
 import torch
 import torch_npu  # noqa: F401
 
-sys.path.insert(0, '/data1/relic-v41-pure-b1-20261122-1325/source')
-sys.path.insert(0, '/data1/relic-v41-pure-b1-20261122-1325/source/RelicLLM')
-sys.path.insert(0, '/data1/relic-v41-pure-b1-20261122-1325/source/relic-core')
+sys.path.insert(0, '<private-root>/source')
+sys.path.insert(0, '<private-root>/source/RelicLLM')
+sys.path.insert(0, '<private-root>/source/relic-core')
 
 torch.npu.set_device(0)
 device = torch.device('npu', 0)

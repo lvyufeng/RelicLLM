@@ -114,15 +114,15 @@
     "indexer-sort-fused-receipt.json": "1c7930ea92c6eda1f0e39ef0575482c02d18c6603bcd36ab3c8fa75352f0243d",
     "indexer-sort-install.py": "8c78e4c97ce3e4902aeb46d7cb547d4d332bde1ace3b61887d520140ed4ce1eb",
     "indexer-sort-kernel.py": "d2801cdb050404c8c41331a5ddf012579fe5e3eddf9053508cb7dd20be62a8b2",
-    "indexer-sort-pair-20.json": "e73483f4b39ce9255707fdc71bb47db62b17e802fbeadbfba276a749c09af7a9",
-    "indexer-sort-pair-21.json": "b4d79dc9ca8ce3fc364436cc0f31d8e935bd7bd5ddeb6a589e86d255308e30c3",
-    "indexer-sort-pair-22.json": "978390825aa90bb2300b0a093217a43e14418e640ac75203c4a0ab87214f9914",
+    "indexer-sort-pair-20.json": "ebd2b52481d004eb953d4d7b5623e3e250972864a945a3f5a8b3c086a1d99559",
+    "indexer-sort-pair-21.json": "fbdf6337dc3581543094a1cd81ba0c58e8769d5c539cc236ccf86a3e258731e8",
+    "indexer-sort-pair-22.json": "1bc957f9c4e10112200b84e86ae1e13b18a60d507ac0f59c95298ce7c32e6e61",
     "indexer-sort-registration-three-pair.json": "660b493ce7687d43adf23410823645e3ea25b6d915a18dcd286a7a5db6660f9d",
-    "lane-rerun-pair-19.json": "2d2882a3a03c8628e24e3023a62d5fe0132176d90f34748606c47564d54ccba7",
+    "lane-rerun-pair-19.json": "e98c97367c76435ff09020dfed9898965378262f04b743f34c5ac2357d9a8c9e",
     "output-head-and-plumbing-receipt.json": "13575f8a42e8990930317c97c910ca26eb8f908439720e24a4d89e88f9b4bc42",
     "routing-imbalance-receipt.json": "715a18f3c1eeb1db1fe5fe94aea4609d249754b285e649c6bd2a1d9ff5d26423",
     "routing-probe.py": "fdf71c0306ed6814cbfbcfd1076520a0e54ada5fe4a63868cc2b3927cad9a47c",
-    "stream-overlap-negative-receipt.json": "f108d0125a4753100d99f8e251fe52edbd58a52b033151b10b036c97036a2719",
+    "stream-overlap-negative-receipt.json": "2ad39b808b1dbd7f79c6c0171cff5e672f5cdbaeafe8cebc2edaa784e59ff665",
     "verify_bundle.py": "0a64bb9f231fba56f051cfffa1e696f2798b69a277e1032ae98e65d4c41152ce",
     "verify_pairs_in_readme.py": "e784227b7022cbe5050057b240e01574301d303614902651c99682d384d23d60"
   },
@@ -141,5 +141,10 @@
   "manifest_renamed_from": [
     "README.md",
     "deployment-survey.md"
-  ]
+  ],
+  "sanitized": {
+    "host_names_redacted": true,
+    "private_paths_redacted": true,
+    "note": "Hostnames and private absolute paths in this section were replaced with neutral placeholders (<private-root>, <redacted-host>, host_run) before publication. No measured value, timing, parity result or verdict was changed; only the identifying strings were."
+  }
 }

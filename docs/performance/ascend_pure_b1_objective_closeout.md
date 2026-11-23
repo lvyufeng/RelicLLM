@@ -43,7 +43,7 @@ were never modified.
 
 ### Server-only testing, never local macOS imports/tests/build/bench — **HELD**
 
-All model, native and benchmark execution ran on ts-216. Local work was AST/stdlib reading and document
+All model, native and benchmark execution ran on the leased Ascend host. Local work was AST/stdlib reading and document
 writing only.
 
 ### Contiguous-KV-layout deviation: accepted, scoped, old rejection preserved, new approval added — **DELIVERED**
@@ -79,9 +79,9 @@ Not pending: this is the shipping configuration. On **all eight ranks** of the r
 
 Capture cost is excluded from the measured step rather than folded into it.
 
-### Use the root's live ts-216 lease; owned default / dormant only; never CI — **HELD**
+### Use the root's live single-host lease; owned default / dormant only; never CI — **HELD**
 
-Every round claimed through `ts-fleet-bridge`, ran on ts-216 only, released at the end. Never `ci`, no device
+Every round claimed through `ts-fleet-bridge`, ran on the leased Ascend host only, released at the end. Never `ci`, no device
 resets, no shared CANN/checkpoint/config edits, no signals to foreign processes.
 
 ### Bound own jobs, reconcile lost replies, preserve hashes, fail-fence resources retained for retry, separated warmup/profiling — **HELD**

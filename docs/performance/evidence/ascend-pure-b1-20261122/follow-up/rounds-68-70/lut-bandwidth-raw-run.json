@@ -90,7 +90,7 @@
     "real_card_owned_experts": 96
   },
   "library": {
-    "path": "/data1/relic-v41-scale-lut-20261122-0150/cache/scale-lut-v2-n64/build/lib/librelic_scale_lut_tile_cube.so",
+    "path": "<private-root>/...",
     "sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
     "expected_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
     "matches_expected": true

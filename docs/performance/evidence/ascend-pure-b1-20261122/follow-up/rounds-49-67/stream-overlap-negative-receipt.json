@@ -1,7 +1,7 @@
 {
   "question": "Can compute and a collective overlap on the streams of this device?",
   "why": "The 19.3% of the decode step lost at collective barriers is straggler wait with every AI core idle. Overlap is the only remedy inside the protected contracts (routing cannot be rebalanced, and a faster collective cannot help a wait for compute that has not arrived).",
-  "device": "8 x Ascend 910B3, CANN 9.2.0, host ascend216",
+  "device": "8 x Ascend 910B3, CANN 9.2.0, host <redacted>",
   "harness": "bench_comm_overlap.py, torch.distributed 8 ranks over HCCL",
   "measurements_us": {
     "allReduce_20KB_alone": 301.7,

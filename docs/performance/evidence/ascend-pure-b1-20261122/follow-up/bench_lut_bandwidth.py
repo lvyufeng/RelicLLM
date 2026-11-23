@@ -54,7 +54,7 @@ interaction, no CANN or checkpoint change, no resident-bank mutation, no global
 provider installation. Any precondition failure exits non-zero. Target runtime
 under three minutes.
 
-Usage (root runs this on ts-216; nothing here is executed by the author):
+Usage (root runs this on the leased Ascend host; nothing here is executed by the author):
 
     python3 docs/performance/evidence/ascend-pure-b1-20261122/follow-up/bench_lut_bandwidth.py \
         --library /path/to/librelic_scale_lut_tile_cube.so \

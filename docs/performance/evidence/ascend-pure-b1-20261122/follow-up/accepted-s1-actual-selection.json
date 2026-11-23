@@ -545,7 +545,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank0/ascend216_3662594_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank0/host_run_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       },
       {
@@ -1090,7 +1090,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank1/ascend216_3662595_20261122151632653_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank1/host_run_20261122151632653_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       },
       {
@@ -1635,7 +1635,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank2/ascend216_3662596_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank2/host_run_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       },
       {
@@ -2180,7 +2180,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank3/ascend216_3662597_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank3/host_run_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       },
       {
@@ -2725,7 +2725,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank4/ascend216_3662598_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank4/host_run_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       },
       {
@@ -3270,7 +3270,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank5/ascend216_3662599_20261122151632655_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank5/host_run_20261122151632655_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       },
       {
@@ -3815,7 +3815,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank6/ascend216_3662600_20261122151632653_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank6/host_run_20261122151632653_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       },
       {
@@ -4360,7 +4360,7 @@
           "expert_TP": 2,
           "model": 8
         },
-        "source_kernel_csv": "profiler-rank7/ascend216_3662601_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "source_kernel_csv": "profiler-rank7/host_run_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
         "total_host_replay_count": 6120
       }
     ]

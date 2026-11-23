@@ -78,10 +78,10 @@
     "README.txt": "a3529edcd2e7914f2599322ffe4e9d9313ffe332d16693dc2bf43c34229add21",
     "device-bound-receipt.json": "359c634e016c3aadb3589c4087621fd7d3fd5466459128e33693e413a9b3de92",
     "indexer-profile-verification-receipt.json": "679ef98909df58784c47030df3e46d59b6180603762654e07552821fda8bf6c6",
-    "lut-bandwidth-raw-run.json": "ea0fd1c17ba0e1cf010b2161cee3438f72e0b00cbdeb3479f3aec693f54d1488",
+    "lut-bandwidth-raw-run.json": "a8207a7d6275c71f38f232502637ea4d38a6374a9c3ea58ecb304b96bb34dd81",
     "lut-bandwidth-receipt.json": "c6d7ad5da9b5e1ce037222eb44030c0a50fe296ece1113eb214adf8033228cc2",
     "wo-a-cached-transpose-patch.py": "6b4da193f4b00328427c2ac06ebb98d3361561c00553f6274106bb648e621423",
-    "wo-a-transpose-exactness-test.py": "7748b64e2994fcabe6d846e0f3eba705d38001ee2df23efb205930c016fcd518",
+    "wo-a-transpose-exactness-test.py": "2364a3325af8e5e3163a5400a6f9b8ccbe80ae4e3c5d3446075f4329c1a2cc12",
     "wo-a-transpose-receipt.json": "6a224581c2c802042ea57d54c02c06638b43d1976501840c4cf6305c8e5e7d7d",
     "wo-a-transpose-variants-test.py": "f105f13fb5f59474b66f0a441a7e74bf112301785d7651fe0a9dbdb589ae55b5"
   },
@@ -102,5 +102,10 @@
   },
   "manifest_renamed_from": [
     "README.md"
-  ]
+  ],
+  "sanitized": {
+    "host_names_redacted": true,
+    "private_paths_redacted": true,
+    "note": "Hostnames and private absolute paths in this section were replaced with neutral placeholders (<private-root>, <redacted-host>, host_run) before publication. No measured value, timing, parity result or verdict was changed; only the identifying strings were."
+  }
 }

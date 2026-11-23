@@ -1,7 +1,7 @@
 {
-  "control": "/data1/relic-v41-pure-b1-20261122-1325/logs/pure-B1-fused-row-norm-control-steps64-20261123T082810Z",
-  "candidate": "/data1/relic-v41-pure-b1-20261122-1325/logs/pure-B1-fused-row-norm-candidate-steps64-20261123T083343Z",
-  "immutable_canonical": "/data1/relic-v41-pure-b1-20261122-1325/logs/pure-B1-sparse-layout-candidate-profile-steps64-20261122T061008Z",
+  "control": "<private-root>/logs/pure-B1-fused-row-norm-control-steps64-20261123T082810Z",
+  "candidate": "<private-root>/logs/pure-B1-fused-row-norm-candidate-steps64-20261123T083343Z",
+  "immutable_canonical": "<private-root>/logs/pure-B1-sparse-layout-candidate-profile-steps64-20261122T061008Z",
   "trial_kind": "expert_projection_kernel_variant",
   "kernel_libraries": null,
   "control_TPS": 12.473708787725851,
@@ -31,8 +31,8 @@
   },
   "expected_environment_changes": {
     "RELIC_PERF_OUTPUT": [
-      "/data1/relic-v41-pure-b1-20261122-1325/logs/pure-B1-fused-row-norm-control-steps64-20261123T082810Z",
-      "/data1/relic-v41-pure-b1-20261122-1325/logs/pure-B1-fused-row-norm-candidate-steps64-20261123T083343Z"
+      "<private-root>/logs/pure-B1-fused-row-norm-control-steps64-20261123T082810Z",
+      "<private-root>/logs/pure-B1-fused-row-norm-candidate-steps64-20261123T083343Z"
     ],
     "RELIC_FUSED_RMS_NORM": [
       "0",

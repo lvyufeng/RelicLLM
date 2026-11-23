@@ -52,7 +52,7 @@
   "manifest": {
     "README.txt": "3a258367a6ca637c85fb53c917fa8cfc85ed6a7b246ebaca6c0b31b331951696",
     "graph-objective-item-complete-receipt.json": "57eeccfefcddd0f056aef4413e81e7a94ab7002199d2097de2ef183deb5df286",
-    "objective-closeout.txt": "d150ff7c191f17762c65afc359d8ceea98a90f6e5dc4d87b55220c0d3fb01287",
+    "objective-closeout.txt": "aec32fa1964191414896e2ceb77309a5e2d3f361484c9a2ca5bc8f439fbb064f",
     "stability-repeat-all-ranks.json": "a9a9b6ede93b000f90f801da5e73b69050ca0addf8707e90e7da3c4b1759b237",
     "stability-repeat-receipt.json": "17cd74fb9ce9d824aa66564ee931ebf7e2f3bf52e60b271a0cf46cfd4dfe1967"
   },
@@ -75,5 +75,10 @@
   "manifest_renamed_from": [
     "README.md",
     "objective-closeout.md"
-  ]
+  ],
+  "sanitized": {
+    "host_names_redacted": true,
+    "private_paths_redacted": true,
+    "note": "Hostnames and private absolute paths in this section were replaced with neutral placeholders (<private-root>, <redacted-host>, host_run) before publication. No measured value, timing, parity result or verdict was changed; only the identifying strings were."
+  }
 }
