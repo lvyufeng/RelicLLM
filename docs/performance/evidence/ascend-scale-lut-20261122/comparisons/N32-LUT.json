@@ -1,6 +1,6 @@
 {
-  "control_directory": "/data1/relic-v41-scale-lut-20261122-0150/logs/compact-control-profile-host-table-HC-steps64-20261121T182009Z",
-  "candidate_directory": "/data1/relic-v41-scale-lut-20261122-0150/logs/scale-lut-n32-profile-host-table-HC-steps64-20261121T182618Z",
+  "control_directory": "<private-root>/relic-v41-scale-lut-20261122-0150/logs/compact-control-profile-host-table-HC-steps64-20261121T182009Z",
+  "candidate_directory": "<private-root>/relic-v41-scale-lut-20261122-0150/logs/scale-lut-n32-profile-host-table-HC-steps64-20261121T182618Z",
   "all_rank_comparison": [
     {
       "rank": 0,

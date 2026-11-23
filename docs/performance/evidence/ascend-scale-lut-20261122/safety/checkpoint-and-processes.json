@@ -1,6 +1,6 @@
 {
   "timestamp_UTC": "2026-11-21T20:15:11.534286+00:00",
-  "hostname": "ascend216",
+  "hostname": "<host>",
   "private_live_jobs": [],
   "all_eight_NPU_process_tables_empty": true,
   "checkpoint_stat_identity_unchanged": true,

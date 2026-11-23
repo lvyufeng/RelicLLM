@@ -1,6 +1,6 @@
 {
-  "control_directory": "/data1/relic-v41-lut-n64-k256-d2-20261122-0314/logs/compact-control-host-table-HC-20261121T194542Z",
-  "candidate_directory": "/data1/relic-v41-lut-n64-k256-d2-20261122-0314/logs/LUT-N64-K128-host-table-HC-20261121T195114Z",
+  "control_directory": "<private-root>/relic-v41-lut-n64-k256-d2-20261122-0314/logs/compact-control-host-table-HC-20261121T194542Z",
+  "candidate_directory": "<private-root>/relic-v41-lut-n64-k256-d2-20261122-0314/logs/LUT-N64-K128-host-table-HC-20261121T195114Z",
   "all_rank_comparison": [
     {
       "rank": 0,

@@ -1,5 +1,5 @@
 {
-  "host": "ts-216",
+  "host": "<host>",
   "released": true,
   "detail": "lease dropped",
   "selected_path": "N64/K128 scale-aware paired-BF16 LUT",
