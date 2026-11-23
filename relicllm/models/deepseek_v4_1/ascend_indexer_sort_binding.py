@@ -20,7 +20,7 @@ Two rules make that safe enough to ship:
   traded for a regression.
 
 Nothing is reached by importing this module. `install()` is explicit, refuses a second owner that is not
-its own, and `uninstall()` restores the exact method object that was replaced.
+its own, and `close()` restores the exact method object that was replaced.
 """
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ class IndexerSortBinding:
             "numerical_or_performance_acceptance_claimed": False,
         }
 
-    def uninstall(self):
+    def close(self):
         """Restore the original method object, refusing from a thread that does not own the binding."""
         if threading.get_ident() != self._thread:
             raise RuntimeError("the indexer sort binding has to be closed from the thread that installed it")

@@ -91,14 +91,14 @@ def test_install_swaps_the_method_and_describes_what_it_did(monkeypatch):
         from relic_core.kernels.ascend_indexer_masked_sort import masked_sort_trailing_with_tail
         assert fused is masked_sort_trailing_with_tail
     finally:
-        owner.uninstall()
+        owner.close()
 
 
-def test_uninstall_restores_the_exact_original_object(monkeypatch):
+def test_close_restores_the_exact_original_object(monkeypatch):
     module = _fake_attention(monkeypatch, _WithAnchor)
     original = module.Indexer.forward
     owner = binding.install()
-    assert owner.uninstall() is True
+    assert owner.close() is True
     assert module.Indexer.forward is original
     for name in (binding._ORIGINAL, binding._OWNER, binding._INSTALLED_FLAG):
         assert not hasattr(module.Indexer, name)
@@ -111,7 +111,7 @@ def test_a_second_install_is_refused(monkeypatch):
         with pytest.raises(RuntimeError, match="already installed"):
             binding.install()
     finally:
-        owner.uninstall()
+        owner.close()
 
 
 def test_install_refuses_when_the_anchor_is_absent(monkeypatch):
@@ -126,7 +126,7 @@ def test_install_refuses_when_the_anchor_appears_twice(monkeypatch):
         binding.install()
 
 
-def test_uninstall_refuses_from_another_thread(monkeypatch):
+def test_close_refuses_from_another_thread(monkeypatch):
     module = _fake_attention(monkeypatch, _WithAnchor)
     owner = binding.install()
     try:
@@ -134,7 +134,7 @@ def test_uninstall_refuses_from_another_thread(monkeypatch):
 
         def _close():
             try:
-                owner.uninstall()
+                owner.close()
             except RuntimeError as exc:
                 failure.append(str(exc))
 
@@ -145,10 +145,10 @@ def test_uninstall_refuses_from_another_thread(monkeypatch):
         # The refusal left the binding intact rather than half-unwound.
         assert module.Indexer.forward is not module.Indexer._relic_indexer_sort_original
     finally:
-        owner.uninstall()
+        owner.close()
 
 
-def test_uninstall_refuses_when_the_method_was_replaced_behind_it(monkeypatch):
+def test_close_refuses_when_the_method_was_replaced_behind_it(monkeypatch):
     module = _fake_attention(monkeypatch, _WithAnchor)
     owner = binding.install()
     original = module.Indexer._relic_indexer_sort_original
@@ -158,10 +158,10 @@ def test_uninstall_refuses_when_the_method_was_replaced_behind_it(monkeypatch):
         # to be a different function.
         module.Indexer.forward = _WithoutAnchor.forward
         with pytest.raises(RuntimeError, match="no longer the one this binding installed"):
-            owner.uninstall()
+            owner.close()
     finally:
-        # The guarded uninstall refused, as it should, so unwind the class by hand: this test's
-        # whole point is the state uninstall declines to touch.
+        # The guarded close refused, as it should, so unwind the class by hand: this test's
+        # whole point is the state close() declines to touch.
         module.Indexer.forward = original
         for name in (binding._ORIGINAL, binding._OWNER, binding._INSTALLED_FLAG):
             if hasattr(module.Indexer, name):
@@ -173,5 +173,5 @@ def test_install_is_reversible_and_repeatable(monkeypatch):
     original = module.Indexer.forward
     for _ in range(3):
         owner = binding.install()
-        owner.uninstall()
+        owner.close()
         assert module.Indexer.forward is original
