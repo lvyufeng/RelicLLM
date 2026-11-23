@@ -64,6 +64,8 @@ by `scripts/gen_llms_txt.py`; edit the nav, not this file, and re-run the script
 - [DeepSeek-V4.1-Flash single-request capability](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_single_request_capability/)
 - [DeepSeek-V4.1-Flash behind the server](https://lvyufeng.github.io/RelicLLM/performance/deepseek_v4_1_flash_served_gate/)
 - [DeepSeek-V4.1-Flash dense stack in fp16, withdrawn](https://lvyufeng.github.io/RelicLLM/performance/v41_dense_gemm_dtype/)
+- [DeepSeek-V4.1-Flash pure B1 decode](https://lvyufeng.github.io/RelicLLM/performance/ascend_pure_b1_decode/)
+- [DeepSeek-V4.1-Flash pure B1 close-out](https://lvyufeng.github.io/RelicLLM/performance/ascend_pure_b1_objective_closeout/)
 - [Xing4.0-29B-A4B MLA attention on sm_75](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_attention_sm75/)
 - [Xing4.0-29B-A4B hyper-connection on sm_75](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_hyper_connection_sm75/)
 - [Xing4.0-29B-A4B decode launch gap](https://lvyufeng.github.io/RelicLLM/performance/xing4_0_decode_launch_gap/)

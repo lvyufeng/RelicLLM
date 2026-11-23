@@ -1,0 +1,79 @@
+{
+  "schema": "relic.pure-b1.evidence.rounds-76-78.v1",
+  "scope": "rounds 76 to 78: the independent stability repeat, and the objective completion report",
+  "owns_previous_bundles": false,
+  "registered_result": {
+    "TPS": 14.287598,
+    "ms_per_token": 69.9922,
+    "note": "unchanged by these rounds; this section is verification and close-out, not new work"
+  },
+  "stability_repeat": {
+    "run": "logs/pure-B1-fused-row-norm-candidate-steps64-20261123T112154Z",
+    "returncode": 0,
+    "elapsed_s": 340.7,
+    "owned_cleanup_complete": true,
+    "per_rank_TPS": {
+      "0": 14.269744110811518,
+      "1": 14.269698004464345,
+      "2": 14.269730267023535,
+      "3": 14.269887507603904,
+      "4": 14.26970303288632,
+      "5": 14.269826898528049,
+      "6": 14.269793263587383,
+      "7": 14.269760082167068
+    },
+    "TPS_min": 14.269698004464345,
+    "TPS_max": 14.269887507603904,
+    "rank_spread_absolute": 0.0001895031395591218,
+    "rank_spread_relative_percent": 0.001328010862597336,
+    "mean_TPS": 14.269767895884016,
+    "deviation_from_registered_mean_percent": -0.12479427343898841,
+    "inside_registered_pair_spread": true,
+    "configuration_reobserved_on_every_rank": {
+      "graphs": true,
+      "inline_TP_layer_graphs_captured": true,
+      "inline_TP_layer_graphs_layers": 40,
+      "independent_TP_graphs_retired_after_explicit_fence": 40,
+      "graph_candidate_eager_FP32_bit_differences": "all zeros on all eight ranks"
+    },
+    "reading": "the eight ranks agree to 0.0013% on their own timing, which is evidence the measurement itself is clean, and the value sits inside the spread the three registration pairs showed."
+  },
+  "objective_completion_report": {
+    "document": "objective-closeout.md",
+    "verdict_summary": "every clause that could be delivered is delivered and verified; the throughput target is NOT achieved and cannot be while the no-speculative-decoding constraint holds",
+    "corrections_it_caught_in_its_own_draft": [
+      "the progression table mixed best-pair values for early steps with a mean for the last one",
+      "the starting point was a single pair value; the control mean of the first trial is 12.452279",
+      "the overall gain was stated as +14.3% when the receipt-derived figure is +14.74%"
+    ],
+    "table_verification": "all twelve cells (six trials x control mean and candidate mean) were recomputed from the receipts on disk and re-verified programmatically",
+    "control_stability": "the six trials control means all land inside 12.449932 - 12.479610"
+  },
+  "manifest": {
+    "README.txt": "3a258367a6ca637c85fb53c917fa8cfc85ed6a7b246ebaca6c0b31b331951696",
+    "graph-objective-item-complete-receipt.json": "57eeccfefcddd0f056aef4413e81e7a94ab7002199d2097de2ef183deb5df286",
+    "objective-closeout.txt": "d150ff7c191f17762c65afc359d8ceea98a90f6e5dc4d87b55220c0d3fb01287",
+    "stability-repeat-all-ranks.json": "a9a9b6ede93b000f90f801da5e73b69050ca0addf8707e90e7da3c4b1759b237",
+    "stability-repeat-receipt.json": "17cd74fb9ce9d824aa66564ee931ebf7e2f3bf52e60b271a0cf46cfd4dfe1967"
+  },
+  "missing_sources": [],
+  "verification": {
+    "manifest_files": 5,
+    "manifest_integrity": "ALL MATCH",
+    "json_files_parsing": 4,
+    "readme_checks": {
+      "mean_TPS_quoted": true,
+      "rank_spread_quoted": true,
+      "registered_mean_quoted": true,
+      "deviation_quoted": true,
+      "parity_all_zero_stated": true,
+      "three_draft_errors_recorded": true,
+      "target_marked_not_achieved": true,
+      "ceiling_stated": true
+    }
+  },
+  "manifest_renamed_from": [
+    "README.md",
+    "objective-closeout.md"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "server_only_core_tests_passed": 62,
+  "server_only_runtime_tests_passed": 26,
+  "synthetic_strict_same_NPU_cases": 16,
+  "changing_capture_replays": 9,
+  "real_B1_eager_component_calls_per_rank": 320,
+  "all_eight_ranks_complete_64_step_repeat_FP32_bit_identical": true,
+  "original_control_not_bit_identical": true,
+  "user_accepted_observed_max_abs_logit_delta": 0.003835439682006836,
+  "accepted_observed_changed_context": 36,
+  "not_a_general_error_tolerance": true,
+  "scope_is_one_prompt_context24_to88_fixed_length_past_EOS_possible": true,
+  "old_rejection_and_later_user_acceptance_both_retained": true,
+  "current_serving_defaults_unchanged": true,
+  "no_new_lossy_weight_conversion": true,
+  "original_expert_payload_bytes_per_card": 36097228800,
+  "workspace_admission_is_declared_tensor_estimate_not_allocator_graph_BLAS_UB_peak": true,
+  "first_tile_compile_failed_required_UB_bits": 3146752,
+  "first_tile_compile_available_UB_bits": 1572864,
+  "compiled_tile": [
+    16,
+    64
+  ],
+  "50_TPS_achieved": false
+}

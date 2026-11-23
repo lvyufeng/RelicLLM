@@ -1,0 +1,20 @@
+{
+  "schema": "relic.pure-b1.graph-boundary-closure.v1",
+  "retraction": {
+    "what_i_claimed_in_rounds_71_to_73": "that the registered lane runs fully eager, that NPU graph capture is implemented but used by nothing, that NpuDecodeGraphs is never instantiated, and that the 8.7% device idle was plausibly launch gaps worth attacking by adopting capture.",
+    "status": "WRONG. All of it is withdrawn.",
+    "what_is_actually_true": "the lane captures NPU graphs per layer and has been doing so throughout. The generated wrapper for the registered run sets RELIC_CUBE_NPUGRAPH=\"1\", and the run record states graphs = True on every rank.",
+    "how_the_error_happened": "I grepped profile_pure_b1_reuse.py for the mixed-case spellings NPUGraph, npu.graph, graph_capture, decode_graphs and make_graphed. The flag is spelled RELIC_CUBE_NPUGRAPH, all caps, and it is set in the generated wrapper rather than in that script, so the grep returned nothing and I concluded from silence that the code path did not exist.",
+    "what_i_should_have_done": "read the run record first. It carries graphs explicitly (profile_actual_cube.py records \"graphs\": graph_driver is not None), so one look at a rank json would have settled it before any of the three rounds of investigation."
+  },
+  "the_actual_state_verified": {
+    "wrapper_flag": "RELIC_CUBE_NPUGRAPH=\"1\" in run-pure-B1-fused-row-norm-candidate-20261123T095956Z.generated.py",
+    "run_record": "logs/pure-B1-fused-row-norm-candidate-profile-steps64-20261123T103426Z/Cube-model-rank-{0,1}.json report graphs = True",
+    "code_path": "profile_actual_cube.py:289. When the flag is set it constructs NpuDecodeGraphs(model), builds a Pos.device for the capture, calls graph_driver.capture_pass(...) with one real step, records graph_capture_seconds, and keeps a graph_candidate_bit_differences list that is compared per step - the launcher already performs its own parity check against teacher logits.",
+    "expert_body_graphs": "None, and that is correct rather than a miss: profile_actual_cube.py:199-200 raises if RELIC_EXPERT_BODY_GRAPHS is set while device-selected MoE is active, because device-selected MoE replaces host dispatch. This lane is device-selected."
+  },
+  "what_this_closes": "The execution-graph-boundary avenue is closed and was never open. Graphs are already captured, so the remaining 8.7% of profiled span that is not device-busy is not eager launch overhead and cannot be recovered by capturing. The objective item \"inline originalA -> nativeTP_execute -> originalB one layerNPUGraph\" is already realised in the shipping configuration: the layer records body_a and body_b around the eager routed middle, the launcher captures it, and the run performs a per-step bit-parity check.",
+  "consequence_for_the_objective": "the launch-overhead hypothesis is dead, which is consistent with the earlier measurement that the device is wall-to-wall busy (91.3% of the profiled span). Every remaining gain must still come from less or faster device work.",
+  "process_note": "this is the second wrong claim of this session; the first was the round-60 attribution of the output-head cost, which was already banked. Both were caught by checking a record rather than by reasoning further. The correction pattern that worked - go to the run record, quote its field, then withdraw the claim in writing - is what was applied here.",
+  "method": "read the generated wrapper and the rank run records; no model run, no code change"
+}

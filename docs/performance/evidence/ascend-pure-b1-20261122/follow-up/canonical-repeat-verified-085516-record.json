@@ -1,0 +1,138 @@
+{
+  "frozen_sources": {
+    "S2b_helper_sha256": "bfc547c486b02cc73106791c5df74f331a88292bf0ab9633db2af79ef932fa4d",
+    "S2b_kernel_sha256": "55f57a9118bdc6dbc71217beeb97384f384f8d6a0dd866a64def0f4e1afaaa4a",
+    "S2b_tests_sha256": "b3f15f1dc76849198d6aca1855d075b2ee8e94817ad06deeb198bbf3b814f800",
+    "native_source_unchanged": true,
+    "no_new_model_or_NPU_execution_for_this_metadata_assembly": true,
+    "thread_source_frozen_across_first_and_repeat": true
+  },
+  "metadata_only": true,
+  "provenance_correction": true,
+  "raw_source_identities": {
+    "S2b-canonical-candidate-repeat-audit.json": {
+      "bytes": 79978,
+      "sha256": "e165c5de656035a7d92b665e29eea422c48208771b8873a82bf1ebcfa5283108"
+    },
+    "S2b-canonical-candidate-repeat-comparison.json": {
+      "bytes": 28177,
+      "sha256": "139f6c2901d1a3b694c622c807e8affc62737e3514de7737510c23c1fff6995f"
+    },
+    "S2b-canonical-repeat-verified-085516/S2b-actual-kernel-selection.json": {
+      "bytes": 8149,
+      "sha256": "f994141af7dbe1ce6885cc2e275e516ffce7726121d8defe66becff543d47f3d"
+    },
+    "S2b-canonical-repeat-verified-085516/summary.json": {
+      "bytes": 31073,
+      "sha256": "3d5bdfcbf86f351b4b14783db3b5b79c14d47b19d3417dd409d4890f8ce0702c"
+    }
+  },
+  "repeat_measurements": {
+    "absolute_values_are_measurements_not_promises": true,
+    "all_eight_ranks_bit_identical_to_accepted_control": true,
+    "batch_size": 1,
+    "context": [
+      24,
+      88
+    ],
+    "excluded_warmups": 4,
+    "first_canonical_candidate_TPS": 11.5613956081916,
+    "measured_candidate_TPS_range": [
+      11.548656515,
+      11.5613956081916
+    ],
+    "repeat_vs_first_TPS_gain_percent": -0.11018646662285247,
+    "repeat_vs_first_numerical_acceptance": true,
+    "timed_steps": 64,
+    "verified_repeat_candidate_TPS": 11.548656514878644,
+    "verified_repeat_candidate_ms_per_token": 86.59015866578557
+  },
+  "review_status": {
+    "candidate_only_qualified_criteria_all_met": true,
+    "control_still_non_canonical": true,
+    "do_not_claim_final_review_before_message": true,
+    "new_error_waiver": false,
+    "numerical_admission_status": "conditional; admission waits for review-109 final message after exact proofreading",
+    "paired_gain_still_provisional": true,
+    "review109_final_issued": false,
+    "review109_final_proofreading_in_progress": true
+  },
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.canonical-repeat.verified-085516.v1",
+  "supersedes_selector_scope": "canonical-candidate-repeat-record.json (v3 local selector/summary copied the FIRST duplicate-basename copy and is superseded; v3 file preserved unmodified)",
+  "verified_folder_only_provenance": {
+    "corrected_rank0_csv_sha256": "027141340dd18cf3c8268c743a0f600b79be46c777a93d992c04a679762f8b34",
+    "first_copy_rank0_raw_kernel_csv_sha256_superseded": "346dfe851d0f65cdc89bd2ef417125a5350de72aba66ea9058b43a58cff3f1b7",
+    "folder": "<coord>/S2b-canonical-repeat-verified-085516",
+    "kernel_selection_bytes": 8149,
+    "kernel_selection_sha256": "f994141af7dbe1ce6885cc2e275e516ffce7726121d8defe66becff543d47f3d",
+    "preconditions_output_marker": {
+      "comparison_candidate_receipt_label": "pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T085516Z",
+      "run_environment_output_label": null,
+      "summary_started_at_utc": "2026-11-22T08:55:16.474302+00:00"
+    },
+    "preconditions_selection_flags": {
+      "INLINE": null,
+      "LAYOUT": null,
+      "S2_softmax_state_variant": "candidate",
+      "STATE": null,
+      "accepted_S1_layout_and_inline_TP_fixed": true,
+      "selected_N64_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+    },
+    "preconditions_sha256": "fc1d6ff81f865f87c8cebcc4225ac8701ac7937fccfdcd712bbe611e96acd62a",
+    "rank0_raw_kernel_csv_sha256": "027141340dd18cf3c8268c743a0f600b79be46c777a93d992c04a679762f8b34",
+    "rank0_state_kernel_durations_us": {
+      "post_pv": 1986.0000000000005,
+      "prepare": 1584.5
+    },
+    "rule": "selector and summary provenance hashes below come from THIS verified folder and nowhere else",
+    "safety_summary_sha256": "304e383fa3d411ad0aaed85485fca5574c5263beb27950bbfb292c9b8e4564c1",
+    "summary_bytes": 31073,
+    "summary_sha256": "3d5bdfcbf86f351b4b14783db3b5b79c14d47b19d3417dd409d4890f8ce0702c",
+    "supersedes_exact_v3_fields": {
+      "canonical-candidate-repeat-record.json:derived_from_raw_sha256[S2b-canonical-candidate-repeat/summary.json]": "replaced by verified-folder summary_sha256",
+      "canonical-candidate-repeat-record.json:derived_from_raw_sha256[repeat kernel selection]": "replaced by verified-folder kernel_selection_sha256",
+      "canonical-candidate-repeat-record.json:kernel_execution_counts_from_summary": "replaced by verified-folder counts (552/552 per rank, 43 graphs, 320 BF16 calls)",
+      "follow-up-decision-v3.json:reviewer/reviewed/final_status": "review-109 final admission is NOT issued; v4 records proofreading in progress and conditional retention"
+    }
+  },
+  "verified_kernel_execution": {
+    "BF16_attention_calls_per_rank": 320,
+    "all_eight_ranks_report_same_counts": true,
+    "graphs": 43,
+    "owned_clean": true,
+    "post_pv_calls_per_rank": 552,
+    "prepare_calls_per_rank": 552,
+    "rank_count": 8,
+    "source_frozen": true
+  },
+  "verified_repeat_audit": {
+    "aggregate_false_reason": "the paired audit still contains the non-canonical control rows (pre-S1 4824df at context 36)",
+    "all_new_outputs_match_canonical": false,
+    "canonical_identity": "852d95",
+    "new_candidate_changed_contexts": [],
+    "new_candidate_rows": 8,
+    "new_candidate_true_flag_counts": {
+      "bit_identical_to_canonical": 8,
+      "inline_selected": 8,
+      "layout_selected": 8,
+      "state_selected": 8,
+      "tokens_equal_canonical": 8
+    },
+    "new_control_rows": 8,
+    "new_control_still_non_canonical": true
+  },
+  "verified_repeat_output": {
+    "cleanup_complete": true,
+    "live_owned_processes_at_cleanup": 0,
+    "output_receipt_marker": null,
+    "receipt_label_from_comparison": "pure-B1-S2b-canonical-state-candidate-profile-steps64-20261122T085516Z",
+    "returncode": 0,
+    "run_label": "085516",
+    "summary_finished_at_utc": "2026-11-22T09:01:22.829011+00:00",
+    "summary_name": "pure-B1-S2b-canonical-state-candidate-profile-steps64",
+    "summary_started_at_utc": "2026-11-22T08:55:16.474302+00:00",
+    "timed_out": false
+  },
+  "why_superseded": "Root wild rsync flattened both source runs (084544 and 085516) into one .coord/S2b-canonical-candidate-repeat folder; duplicate basenames meant first-wins, so the v3 local selector/summary came from the first copy. The root-level comparison JSON and direct canonical audit were produced with explicit server arguments and are the correct 085516 receipts."
+}

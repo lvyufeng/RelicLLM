@@ -1,0 +1,36 @@
+{
+  "candidate": {
+    "candidate_only_numerical_acceptance": true,
+    "canonical_identity": "852d95 reproduced",
+    "conditional": "admission requires the independent canonical-candidate repeat (root run 71cffe) to also be 0",
+    "detail": "all eight ranks bit-identical to accepted S1 reference-8/teacher-8/final/full-64, tokens exact; 0 differences",
+    "new_error_headroom": false,
+    "role": "S2b candidate under the new canonical protocol"
+  },
+  "control": {
+    "accepted": false,
+    "canonical_identity": "original pre-S1 4824df at context 36",
+    "role": "new canonical protocol control",
+    "why": "control drifts from the immutable accepted canonical 852d95; a drifting control cannot authorize a matched-pair gain"
+  },
+  "global_numerical_acceptance": false,
+  "legacy_artifacts": {
+    "S1_bundle_immutable": true,
+    "follow_up_v1_files_immutable": true,
+    "old_s2_rejections_preserved": true,
+    "old_test109_public_receipt_false_preserved": true
+  },
+  "matched_pair": {
+    "approved_gain": false,
+    "gain_percent": 3.890556896200592,
+    "why": "pair-local bit parity is false because the control is non-canonical; gain is not a strict-output-pair approved gain"
+  },
+  "metadata_only": true,
+  "no_new_error_waiver": true,
+  "pending": "independent canonical-candidate repeat 71cffe",
+  "reviewed": true,
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.follow-up.decision.v2",
+  "scope": "candidate-only canonical admission and separated control status; not a pair promotion",
+  "supersedes_as_review_scope": "follow-up-decision.json (v1 pair-only policy; v1 bytes preserved unmodified)"
+}

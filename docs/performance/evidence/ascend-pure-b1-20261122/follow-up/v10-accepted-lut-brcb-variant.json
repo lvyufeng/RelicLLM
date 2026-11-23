@@ -1,0 +1,278 @@
+{
+  "build_reproducibility": {
+    "cann_set_env_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+    "command": "cmake -DASCEND_CANN_PACKAGE_PATH=<cann> -DSOC_VERSION=Ascend910B3 -DRUN_MODE=npu -DCMAKE_BUILD_TYPE=Release -DRELIC_LUT_OUTPUT_ROWS=64 <source> && cmake --build <build> --parallel 2",
+    "evidence": "rebuilding the accepted source with cmake -DCMAKE_BUILD_TYPE=Release -DRUN_MODE=npu -DSOC_VERSION=Ascend910B3 -DRELIC_LUT_OUTPUT_ROWS=64 and --parallel 2 reproduced the accepted library byte for byte, sha256 7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+    "missing_release_flag_blocker": "without -DCMAKE_BUILD_TYPE=Release the CANN preprocess/merge step fails with a bare 'unknown file type', which is why earlier attempts did not build",
+    "result": "reproducible"
+  },
+  "component_measurement": {
+    "acceptance": "accepted",
+    "all_outputs_bit_identical": true,
+    "candidate_library_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117",
+    "geometry": {
+      "block_dim": 24,
+      "experts": 6,
+      "format": "relic.fp4.cube-n64-k128.v1",
+      "k": 5120,
+      "payload_bytes_per_expert": 3133440,
+      "rows": 1152,
+      "tp_world": 2
+    },
+    "iterations": 100,
+    "note": "latency is only reportable when the bytes agree; a differing candidate is rejected outright because this programme admits no new numerical deviation",
+    "reference_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+    "source_receipt": "compare_lut_brcb.json",
+    "timing_medians_us": {
+      "candidate": {
+        "groups_1_median_us": 242.9373562335968,
+        "groups_6_median_us": 563.1186068058014
+      },
+      "reference": {
+        "groups_1_median_us": 258.34236294031143,
+        "groups_6_median_us": 670.8339788019657
+      }
+    },
+    "verdict": {
+      "groups_1": {
+        "bit_identical": true,
+        "changed_elements": 0,
+        "max_abs_difference": 0.0,
+        "total_elements": 1152
+      },
+      "groups_6": {
+        "bit_identical": true,
+        "changed_elements": 0,
+        "max_abs_difference": 0.0,
+        "total_elements": 6912
+      }
+    },
+    "warmup": 20
+  },
+  "control_integrity": {
+    "attention_preparation_reuse_enabled_both_sides": true,
+    "both_sides_bank_format": "relic.fp4.cube-n64-k128.v1",
+    "candidate_library_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117",
+    "comparator_verifies_recorded_hashes_against_actual_files": true,
+    "control_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+    "each_side_recorded_exact_library_variables": true,
+    "environment_delta": [
+      "RELIC_TILE_CONSUMER_LIBRARY",
+      "RELIC_TILE_CONSUMER_SHA256",
+      "RELIC_PERF_OUTPUT"
+    ]
+  },
+  "end_to_end_matched_pairs": {
+    "all_strict_bit_identical_all_eight_ranks": true,
+    "best_candidate_TPS": 12.499051864305757,
+    "best_candidate_ms_per_token": 80.00606852874625,
+    "endpoint_allowance_consumed": false,
+    "mean_paired_TPS_difference_percent": 7.276989830367278,
+    "pairs": [
+      {
+        "acceptance_layer": "strict",
+        "approved_endpoint_pair": true,
+        "candidate_TPS": 12.499051864305757,
+        "candidate_ms_per_token": 80.00606852874625,
+        "control_TPS": 11.605509747100315,
+        "control_ms_per_token": 86.165969594731,
+        "expected_environment_changes": [
+          "RELIC_PERF_OUTPUT",
+          "RELIC_TILE_CONSUMER_LIBRARY",
+          "RELIC_TILE_CONSUMER_SHA256"
+        ],
+        "kernel_libraries": {
+          "candidate_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117",
+          "control_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+        },
+        "new_error_headroom": false,
+        "numerical_acceptance": true,
+        "paired_TPS_difference_percent": 7.699292290273574,
+        "paired_ms_saved": 6.159901065984741,
+        "rank_rows": 8,
+        "strict_output_stable_canonical_pair": true,
+        "strict_rank_scorecard": {
+          "approved_endpoint_pair_allowed": true,
+          "strict_pair_matches": true,
+          "token_ids_equal_canonical": true,
+          "token_ids_equal_pair": true
+        }
+      },
+      {
+        "acceptance_layer": "strict",
+        "approved_endpoint_pair": true,
+        "candidate_TPS": 12.447991825487886,
+        "candidate_ms_per_token": 80.33424298628233,
+        "control_TPS": 11.632330472198808,
+        "control_ms_per_token": 85.96729626879096,
+        "expected_environment_changes": [
+          "RELIC_PERF_OUTPUT",
+          "RELIC_TILE_CONSUMER_LIBRARY",
+          "RELIC_TILE_CONSUMER_SHA256"
+        ],
+        "kernel_libraries": {
+          "candidate_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117",
+          "control_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+        },
+        "new_error_headroom": false,
+        "numerical_acceptance": true,
+        "paired_TPS_difference_percent": 7.012020121320517,
+        "paired_ms_saved": 5.633053282508627,
+        "rank_rows": 8,
+        "strict_output_stable_canonical_pair": true,
+        "strict_rank_scorecard": {
+          "approved_endpoint_pair_allowed": true,
+          "strict_pair_matches": true,
+          "token_ids_equal_canonical": true,
+          "token_ids_equal_pair": true
+        }
+      },
+      {
+        "acceptance_layer": "strict",
+        "approved_endpoint_pair": true,
+        "candidate_TPS": 12.451102822151475,
+        "candidate_ms_per_token": 80.31417090387549,
+        "control_TPS": 11.62354619274953,
+        "control_ms_per_token": 86.03226445848122,
+        "expected_environment_changes": [
+          "RELIC_PERF_OUTPUT",
+          "RELIC_TILE_CONSUMER_LIBRARY",
+          "RELIC_TILE_CONSUMER_SHA256"
+        ],
+        "kernel_libraries": {
+          "candidate_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117",
+          "control_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+        },
+        "new_error_headroom": false,
+        "numerical_acceptance": true,
+        "paired_TPS_difference_percent": 7.119657079507746,
+        "paired_ms_saved": 5.71809355460573,
+        "rank_rows": 8,
+        "strict_output_stable_canonical_pair": true,
+        "strict_rank_scorecard": {
+          "approved_endpoint_pair_allowed": true,
+          "strict_pair_matches": true,
+          "token_ids_equal_canonical": true,
+          "token_ids_equal_pair": true
+        }
+      }
+    ],
+    "pairs_present": 3,
+    "protocol": {
+      "batch_size": 1,
+      "complete_copy_pass_excluded_from_timing": true,
+      "context": [
+        24,
+        88
+      ],
+      "excluded_warmups": 4,
+      "no_draft_speculation_or_request_batching": true,
+      "one_full_forward_per_token": true,
+      "timed_steps": 64
+    },
+    "target_status": {
+      "best_TPS": 12.499051864305757,
+      "best_ms_per_token": 80.00606852874625,
+      "fifty_TPS_achieved": false,
+      "fifty_TPS_requires_ms_per_token": 20.0
+    }
+  },
+  "future_work_remaining_term": {
+    "counters_remain_scalar_heavy": true,
+    "measured_context": {
+      "equal_volume_copy_GB_per_s": 428.9,
+      "large_volume_copy_GB_per_s": 1232.03,
+      "projection_GB_per_s": 39.8,
+      "source": "diagnosis.json concrete_gaps (bench_lut_bandwidth.py receipt on the accepted library)"
+    },
+    "removal_claimed": false,
+    "term": "the per-pair code-table gather in the same kernel"
+  },
+  "honest_scope": {
+    "acceptance_layer_allowance_consumed": false,
+    "bit_identical": true,
+    "broader_numerical_tolerance_granted": false,
+    "landing_requires": "a relic-core change with its own review and a fresh user request before any pull request",
+    "library_is_task_private": true,
+    "merged": false,
+    "serving_default": false
+  },
+  "identity_verification": {
+    "accepted_source_actual": {
+      "bytes": 24114,
+      "sha256": "3ca65ab82e727d8116ed81aa521accc6ec8aaad3ce12ca5b9e192c59b61dd188"
+    },
+    "accepted_source_file_present_locally": true,
+    "accepted_source_matches_declared": true,
+    "comparison_and_diagnosis_verified_from_file": true,
+    "diff_verified_from_file": true,
+    "pair_receipts_verified_from_file": true,
+    "variant_library_actual": {
+      "bytes": 399592,
+      "sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117"
+    },
+    "variant_library_file_present_locally": true,
+    "variant_library_matches_declared": true,
+    "variant_source_file_present_locally": false,
+    "variant_source_identity_source": "declared by the root receipt text; the private variant source itself was not present in the readable tree"
+  },
+  "mechanism": {
+    "change": "it now emits the same offsets with the vector broadcast instruction",
+    "unchanged": [
+      "prepared table ABI",
+      "bank format",
+      "activation grid",
+      "Cube MMA",
+      "FP32 accumulation order"
+    ],
+    "what": "the expert projection kernel expands each per-pair scale offset with a fixed pattern (each of the N group offsets repeats eight times, and the resulting N*8 words fill the group twice), but it used a general gather whose per-element offsets were executed on the AIV scalar unit"
+  },
+  "metadata_only": true,
+  "public_payloads_copied": false,
+  "raw_source_identities": {
+    "brcb-decoder-pair-1.json": {
+      "bytes": 81920,
+      "sha256": "14dd86b2b4e4844d86dd141556bb0bb583b96849ee14f22173f460a6b9684166"
+    },
+    "brcb-decoder-pair-repeat.json": {
+      "bytes": 81921,
+      "sha256": "787f629ad78c0707fba8e7bf02e5e3545e1aba95f41840971480a57434b58965"
+    },
+    "brcb-decoder-pair-third.json": {
+      "bytes": 81919,
+      "sha256": "0345618cc5844923a48d25369bff90f9de39f5736fde6f95851f5bc17ec044ae"
+    },
+    "compare_lut_brcb.json": {
+      "bytes": 14053,
+      "sha256": "d4452c309e7ce1952ce4b83fcad190842bce8d957e1efeaa8906c93840335e5b"
+    },
+    "diagnosis.json": {
+      "bytes": 9147,
+      "sha256": "7ebc53c7fc0e55a4c89251999de7c1e4ba6f5869f8a50fc4f80e3ee637f0f6e1"
+    },
+    "scale_lut_tile_cube_brcb.diff": {
+      "bytes": 1777,
+      "sha256": "7b40ea79c39feb8ae31b1c1012e5d92db908aa1bfe1b8276fae56b0af0073c89"
+    }
+  },
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.follow-up.v10",
+  "scope": "accepted expert-projection kernel variant (vector-broadcast scale-offset expansion)",
+  "variant_identities": {
+    "accepted_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c",
+    "accepted_source_bytes": 24114,
+    "accepted_source_sha256": "3ca65ab82e727d8116ed81aa521accc6ec8aaad3ce12ca5b9e192c59b61dd188",
+    "diff_bytes": 1777,
+    "diff_sha256": "7b40ea79c39feb8ae31b1c1012e5d92db908aa1bfe1b8276fae56b0af0073c89",
+    "diff_unified_lines": 27,
+    "recorded_file_matches": {
+      "accepted_source": true,
+      "variant_library": true,
+      "variant_source": false
+    },
+    "variant_library_bytes": 399592,
+    "variant_library_sha256": "46aca3d9e67cdf8204382d8eb37e8bf3ae603150242b0bd099cc2be8f16c9117",
+    "variant_source_bytes": 24927,
+    "variant_source_sha256": "c45bd1340264c38254136d0d033dfa417c9a2479eb6b928517ee64b6e1764e96"
+  }
+}

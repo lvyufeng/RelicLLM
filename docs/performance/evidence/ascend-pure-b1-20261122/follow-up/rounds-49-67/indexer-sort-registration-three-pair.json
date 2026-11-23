@@ -1,0 +1,66 @@
+{
+  "schema": "relic.pure-b1.indexer-sort-registration.v1",
+  "class": "bit-exact device relocation of the sparse indexer selection (attention.py:1173)",
+  "bit_exact": true,
+  "reason_bit_exact": "the selection returns the same int32 tensor in the same order: an entry's slot is the number of reachable ids below it. The reference sorts the ids; ids are unique and every tie is between sentinels that all collapse to the same padding value, so the sorted result is uniquely determined and no tie-break has to match torch.sort.",
+  "not_a_precision_change": true,
+  "approval_needed": false,
+  "pairs": [
+    {
+      "file": "indexer-sort-pair-20.json",
+      "sha256": "e73483f4b39ce9255707fdc71bb47db62b17e802fbeadbfba276a749c09af7a9",
+      "control_TPS": 12.447993728586347,
+      "candidate_TPS": 14.376777562669742,
+      "control_ms_per_token": 80.33423070446588,
+      "candidate_ms_per_token": 69.5566162612522,
+      "paired_gain_percent": 15.494736550629963,
+      "token_ids_equal_pair_all_8": true,
+      "token_ids_equal_canonical_all_8": true,
+      "vs_registered_best_14_064584_percent": 2.22
+    },
+    {
+      "file": "indexer-sort-pair-21.json",
+      "sha256": "b4d79dc9ca8ce3fc364436cc0f31d8e935bd7bd5ddeb6a589e86d255308e30c3",
+      "control_TPS": 12.47293478886916,
+      "candidate_TPS": 14.264626759550671,
+      "control_ms_per_token": 80.1735932182055,
+      "candidate_ms_per_token": 70.10348163021263,
+      "paired_gain_percent": 14.364638322974432,
+      "token_ids_equal_pair_all_8": true,
+      "token_ids_equal_canonical_all_8": true,
+      "vs_registered_best_14_064584_percent": 1.422
+    },
+    {
+      "file": "indexer-sort-pair-22.json",
+      "sha256": "978390825aa90bb2300b0a093217a43e14418e640ac75203c4a0ab87214f9914",
+      "control_TPS": 12.45972944907898,
+      "candidate_TPS": 14.221390128254777,
+      "control_ms_per_token": 80.25856452877633,
+      "candidate_ms_per_token": 70.31661398650613,
+      "paired_gain_percent": 14.13883572974386,
+      "token_ids_equal_pair_all_8": true,
+      "token_ids_equal_canonical_all_8": true,
+      "vs_registered_best_14_064584_percent": 1.115
+    }
+  ],
+  "registration": {
+    "pair_count": 3,
+    "mean_candidate_TPS": 14.287598,
+    "mean_candidate_ms_per_token": 69.9922,
+    "best_candidate_TPS": 14.376778,
+    "worst_candidate_TPS": 14.22139,
+    "worst_pair_still_above_previous_registered_best": true,
+    "previous_registered_best_TPS": 14.064584,
+    "previous_registered_best_ms": 71.1006,
+    "gain_over_previous_best_percent": 1.586,
+    "parity_clean_in_every_pair_on_all_8_ranks": true
+  },
+  "prior_receipts_preserved": [
+    "row-norm-deviation-class-user-approval-20261123.json",
+    "narrow-output-head-user-approval-20261123.json",
+    ".coord/window-v2/window-kernel-v2-three-pair.json"
+  ],
+  "model_source_edited": false,
+  "install_mechanism": "runtime rebind of Indexer.forward; attention.py hash unchanged; uninstall restores the original",
+  "constraints_respected": "same selection, same order, same dtype; no precision, layout, routing or FP32-TP-down/HCCL change; checkpoint untouched"
+}

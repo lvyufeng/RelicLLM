@@ -1,0 +1,43 @@
+{
+  "schema": "relic.pure-b1.indexer-fusion-profile-verification.v1",
+  "purpose": "Prove the registered indexer-selection fusion did what its pair gains said, by profiling the lane before and after it, and re-derive the cost model so the next target is not a stale one.",
+  "before_capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T091443Z (pre-fusion)",
+  "after_capture": "pure-B1-fused-row-norm-candidate-profile-steps64-20261123T103426Z (registered lane, fusion installed)",
+  "profiled_forward_ms": {"before": 79.12, "after": 78.62,
+                          "note": "profiling instrument counts all kernels, so these exceed the 69.99 ms timed step; the comparison between them is what this receipt is for"},
+  "ai_cpu_operators_per_forward": {
+    "before": {"total_us": 2761.9, "tasks": 31.0,
+                "Cast": {"count": 9.0, "us": 1173.1},
+                "Index": {"count": 4.0, "us": 901.9},
+                "Sort": {"count": 9.0, "us": 352.8},
+                "Greater": {"count": 9.0, "us": 334.1}},
+    "after": {"total_us": 1158.6, "tasks": 7.0,
+               "Index": {"count": 4.0, "us": 898.5},
+               "Cast": {"count": 1.0, "us": 176.5},
+               "Sort": {"count": 1.0, "us": 42.4},
+               "Greater": {"count": 1.0, "us": 41.1}},
+    "verdict": "8 of the 9 mask-sort-cast sites are gone, exactly as the fusion claims: Cast, Sort and Greater each fall from 9 to 1, and the surviving 1 of each is site B at attention.py:1326, which was deliberately left on torch because the rank kernel measured 0.66x there. AI_CPU device time falls 1603.3 us and the task count falls 31 to 7."
+  },
+  "device_time_by_engine_per_forward_after": {
+    "AI_VECTOR_CORE": {"us": 26981.5, "tasks": 6874.8},
+    "COMMUNICATION": {"us": 20620.7, "tasks": 130.2},
+    "MIX_AIC": {"us": 14544.9, "tasks": 200.0},
+    "AI_CORE": {"us": 7169.9, "tasks": 672.5},
+    "MIX_AIV": {"us": 1420.4, "tasks": 357.5},
+    "AI_CPU": {"us": 1158.6, "tasks": 7.0}
+  },
+  "largest_operators_after": [
+    {"operator": "relic_scale_lut_tile_cube_0", "per_forward": 120.0, "us_per_forward": 12121.6, "share": 0.1542},
+    {"operator": "aclnnMatmul_MatMulCommon_MatMulV2", "per_forward": 348.5, "us_per_forward": 5187.6, "share": 0.0660},
+    {"operator": "fast_fused_fp8_activation_decode_kernel", "per_forward": 322.0, "us_per_forward": 3390.8, "share": 0.0431},
+    {"operator": "aclnnMatmul_MatMulV3Common_MatMulV3", "per_forward": 80.0, "us_per_forward": 2423.4, "share": 0.0308},
+    {"operator": "aclnnBatchMatMul_BatchMatMulNd_BatchMatMulV2", "per_forward": 324.0, "us_per_forward": 1982.3, "share": 0.0252},
+    {"operator": "aclnnInplaceCopy_CastAiCore_Cast", "per_forward": 696.5, "us_per_forward": 1778.1, "share": 0.0226}
+  ],
+  "caveat": "COMMUNICATION moved from 19175.5 to 20620.7 us between the two captures with an identical task count of 130.2. That is the MoE routing straggler wait varying run to run, not a regression caused by the fusion, and it is larger than the AI_CPU saving - which is why the pair protocol, not a single profile, is what registers a gain.",
+  "next_target": {
+    "item": "The remaining AI_CPU operator is Index, 4 a forward at 898.5 us, and it is no longer the selection itself: tp.gather at attention.py:1193 is a collective all-gather under the banded path, not an AI_CPU index. So the four come from elsewhere in the indexer.",
+    "but": "the whole AI_CPU bucket is now 1158.6 us of a 78.6 ms profiled forward, about 1.3% of the real step, so its ceiling is small. The two dominant items are still the scale-LUT cube kernel at 15.4% (already bounded at under 2.4 ms upside) and communication at 26.2% (straggler wait, closed twice over).",
+    "honest_position": "the cheap, well-identified items in this lane are now largely spent. Further gains need either a faster compute kernel for the LUT path or a decision on the speculative-decoding constraint."
+  }
+}

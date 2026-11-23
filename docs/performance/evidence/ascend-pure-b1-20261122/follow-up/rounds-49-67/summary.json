@@ -1,0 +1,145 @@
+{
+  "schema": "relic.pure-b1.evidence.rounds-49-67.v1",
+  "scope": "rounds 49 to 67 of the pure batch-one decode work on one 8 x Ascend 910B3 (64 GiB a card) server",
+  "owns_previous_bundle": false,
+  "note": "the parent follow-up bundle records an earlier state and is left untouched; this section records what happened afterwards and does not restate it",
+  "registered_result": {
+    "TPS": 14.287598,
+    "ms_per_token": 69.9922,
+    "best_pair_TPS": 14.376778,
+    "worst_pair_TPS": 14.22139,
+    "previous_registered_TPS": 14.064584,
+    "gain_percent": 1.586,
+    "pair_count": 3,
+    "parity": "token_ids_equal_pair and token_ids_equal_canonical both true on all 8 ranks in every pair",
+    "class": "bit-exact device relocation of the sparse indexer selection (attention.py:1173)",
+    "needs_new_approval": false,
+    "receipt": "indexer-sort-registration-three-pair.json"
+  },
+  "prior_approvals_still_in_force": [
+    {
+      "class": "row normalisation",
+      "values_changed": 127476,
+      "of": 8273920,
+      "max_abs": 9.34600830078125e-05,
+      "receipt": "row-norm-deviation-class-user-approval-20261123.json"
+    },
+    {
+      "class": "narrow bf16 output head",
+      "full_logits_compared": 1034240,
+      "bit_differences": 1034216,
+      "max_abs": 0.062255859375,
+      "receipt": "narrow-output-head-user-approval-20261123.json"
+    }
+  ],
+  "measurements": {
+    "straggler_wait_is_routing_imbalance": {
+      "ep_world": 4,
+      "topk": 6,
+      "dispatches_sampled": 206,
+      "spread_at_least_2_fraction": 0.684,
+      "mean_busiest_owner_of_6": 2.772,
+      "mean_least_busy_owner_of_6": 0.388,
+      "calls_with_one_owner_holding_three_or_more": 0.607,
+      "reading": "the busiest expert-parallel owner does about seven times the least busy one, which is the 19.3% of the step spent at collective barriers with every core idle",
+      "receipt": "routing-imbalance-receipt.json"
+    },
+    "streams_do_not_overlap": {
+      "compute_against_compute": "two 4096^3 bf16 matmuls on two streams 1078.4 us against 1043.3 us sequential",
+      "compute_against_collective": "matmul against a 20 KB allReduce on two streams 481.5 us against 380.3 us sequential, i.e. the no-overlap sum (479.5) not the overlapped maximum (301.7)",
+      "reading": "the barrier wait cannot be hidden under work on another stream on this device",
+      "receipt": "stream-overlap-negative-receipt.json"
+    },
+    "device_is_wall_to_wall_busy": {
+      "device_busy_us": 287045,
+      "span_us": 314467,
+      "fraction": 0.913,
+      "reading": "host-side time is overlapped, so host restructuring has no headroom; every remaining gain must be less or faster device work",
+      "receipt": "device-bound-receipt.json"
+    },
+    "cost_model_by_engine": {
+      "AI_VECTOR_CORE": 26981.5,
+      "COMMUNICATION": 20620.7,
+      "MIX_AIC": 14444.9,
+      "AI_CORE": 7169.9,
+      "MIX_AIV": 1420.4,
+      "AI_CPU": 1158.6,
+      "units": "us a forward under profiling",
+      "receipt": "fresh-cost-model-receipt.json"
+    }
+  },
+  "closed_negative_results": [
+    {
+      "item": "HCCL_OP_EXPANSION_MODE=AIV",
+      "why": "improves a small collective's own latency; the wait here is for compute that has not arrived, so it cannot help. Attempted twice and never successfully measured, which is recorded rather than hidden."
+    },
+    {
+      "item": "rebalancing MoE routing",
+      "why": "which owner holds which expert is the model's own routing and part of the protected contract"
+    },
+    {
+      "item": "stream-level overlap",
+      "why": "measured unavailable on this device, both cases"
+    },
+    {
+      "item": "pos.host device-to-host sync",
+      "why": "decode_pos.py:194 shows Pos.host is a plain Python int property, no synchronisation"
+    },
+    {
+      "item": "host-side aten::copy_ overhead",
+      "why": "95 calls and 4277.7 us of host time a forward, but the device is 91.3% busy so it is overlapped"
+    },
+    {
+      "item": "rank-based sort for the 2048-wide candidate block selection",
+      "why": "measured 0.66x, i.e. slower than the four operators it would remove, so it was left alone"
+    }
+  ],
+  "deployment_survey": {
+    "same_hardware_deliverable": "CJYLZS/vllm-ascend-deepseek-v41-a2, 8 x 910B3 at 65536 MB a card",
+    "their_single_stream_step_ms": 27.13,
+    "their_acceptance_length": 4.1,
+    "their_single_stream_TPS": 136.9,
+    "implication": "at an acceptance length of one, that tuned stack is about 36.9 tok/s, so 50 tok/s pure batch-one is outside what the hardware gives even with a reference-quality stack; 50+ requires the model emitting more than one token a step",
+    "document": "deployment-survey.md"
+  },
+  "manifest": {
+    "README.txt": "f3d9a1bcf3e65cd913ff5607f646db7d08b9997cf96bc626aef9442316c33cc6",
+    "accelerator-core-reattribution-receipt.json": "8520e864ecc6ecd5873e3debbeef10b6b5454ab1056f081b1e3eeb98bc075a4b",
+    "ai-cpu-indexer-target-receipt.json": "1e86e7485c5cd3fbdd2a010beb3dc59c40e2c1703fb02c3409a7eaca93db2c75",
+    "bench-comm-overlap.py": "c8287482b6ca913b46b0fd88cad6ad6fc4e2172fa90688b555e2b8eaa6b57e94",
+    "deployment-survey.txt": "062a2aea246b7edde3de451e68b7292c522a568264fd70776a59e69902571f9f",
+    "device-bound-receipt.json": "359c634e016c3aadb3589c4087621fd7d3fd5466459128e33693e413a9b3de92",
+    "fresh-cost-model-receipt.json": "6d247edba4065369cc1c3a85ae122d2d4266f0b8abdc91c6a086d4cd068f2856",
+    "indexer-profile-verification-receipt.json": "679ef98909df58784c47030df3e46d59b6180603762654e07552821fda8bf6c6",
+    "indexer-sort-fused-receipt.json": "1c7930ea92c6eda1f0e39ef0575482c02d18c6603bcd36ab3c8fa75352f0243d",
+    "indexer-sort-install.py": "8c78e4c97ce3e4902aeb46d7cb547d4d332bde1ace3b61887d520140ed4ce1eb",
+    "indexer-sort-kernel.py": "d2801cdb050404c8c41331a5ddf012579fe5e3eddf9053508cb7dd20be62a8b2",
+    "indexer-sort-pair-20.json": "e73483f4b39ce9255707fdc71bb47db62b17e802fbeadbfba276a749c09af7a9",
+    "indexer-sort-pair-21.json": "b4d79dc9ca8ce3fc364436cc0f31d8e935bd7bd5ddeb6a589e86d255308e30c3",
+    "indexer-sort-pair-22.json": "978390825aa90bb2300b0a093217a43e14418e640ac75203c4a0ab87214f9914",
+    "indexer-sort-registration-three-pair.json": "660b493ce7687d43adf23410823645e3ea25b6d915a18dcd286a7a5db6660f9d",
+    "lane-rerun-pair-19.json": "2d2882a3a03c8628e24e3023a62d5fe0132176d90f34748606c47564d54ccba7",
+    "output-head-and-plumbing-receipt.json": "13575f8a42e8990930317c97c910ca26eb8f908439720e24a4d89e88f9b4bc42",
+    "routing-imbalance-receipt.json": "715a18f3c1eeb1db1fe5fe94aea4609d249754b285e649c6bd2a1d9ff5d26423",
+    "routing-probe.py": "fdf71c0306ed6814cbfbcfd1076520a0e54ada5fe4a63868cc2b3927cad9a47c",
+    "stream-overlap-negative-receipt.json": "f108d0125a4753100d99f8e251fe52edbd58a52b033151b10b036c97036a2719",
+    "verify_bundle.py": "0a64bb9f231fba56f051cfffa1e696f2798b69a277e1032ae98e65d4c41152ce",
+    "verify_pairs_in_readme.py": "e784227b7022cbe5050057b240e01574301d303614902651c99682d384d23d60"
+  },
+  "missing_sources": [],
+  "verification": {
+    "method": "verify_bundle.py and verify_pairs_in_readme.py are included so a reviewer can re-run them",
+    "manifest_integrity": "all 19 originally copied files matched their recorded sha256",
+    "json_parse": "all 15 JSON files in the section parse",
+    "readme_numbers_checked_against_receipts": {
+      "aggregate": "mean, ms a token and gain over the previous best all agree with the registration receipt",
+      "per_pair": "all three pairs: control TPS and ms, candidate TPS and ms, and the gain over 14.064584 recompute exactly from the pair receipts and appear in the README",
+      "result": "ALL README PAIR NUMBERS VERIFIED"
+    },
+    "why_this_matters": "the bundle is hand-assembled, so its claims were checked against the receipts programmatically rather than trusted."
+  },
+  "manifest_renamed_from": [
+    "README.md",
+    "deployment-survey.md"
+  ]
+}

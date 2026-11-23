@@ -1,0 +1,55 @@
+{
+  "approved_scope": {
+    "batch": "B1, one complete forward per next token",
+    "candidate": "S2b fused sparse-attention softmax state",
+    "context": "24..88, 64 timed steps, 4 excluded warmups, completion + host argmax",
+    "dtype_domain": "explicit BF16 q and BF16 kv only (FP32 NPU path refused)",
+    "qualification": "NUMERICALLY QUALIFIED ONLY"
+  },
+  "decision": "APPROVED to RETAIN, as an opt-in experimental path \u2014 not a default production path",
+  "final_status": true,
+  "history_policy": {
+    "final_status_applies_from_this_record_forward": true,
+    "no_files_deleted_or_rewritten": true,
+    "no_previous_record_retcon": true,
+    "v4_v5_conditional_records_remain_historical_unmodified": true
+  },
+  "metadata_only": true,
+  "not_approved": {
+    "fifty_TPS_claim": false,
+    "fma_dependence_assumed": false,
+    "fp32_npu_path": false,
+    "general_quality_headroom": false,
+    "new_error_waiver": false,
+    "serving_default_or_PR_merge_change": false,
+    "strict_output_paired_causal_performance_gain": false,
+    "why": "the canonical controls drift (control reproduces original pre-S1 4824df at context 36), so +3.38%/+3.89% strict-output-pair causal claims are NOT approved; absolute TPS values are reportable measurements"
+  },
+  "release_position": "opt-in experimental, retained; do not switch defaults or merge on this record",
+  "review": "review-109",
+  "review109_final_issued": true,
+  "review109_final_revision": "task109 rev3",
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.final-admission.v1",
+  "verified_proof": {
+    "canonical_first_candidate_bit_identical_all8_full4_tensors": true,
+    "canonical_repeat_bit_identical_all8_full4_tensors": true,
+    "finite_outputs_verified": true,
+    "measured_absolute_TPS": {
+      "first_canonical_candidate": 11.5613956081916,
+      "verified_repeat_candidate": 11.548656515
+    },
+    "rank0_raw_kernel_csv_sha256": "027141340dd18cf3c8268c743a0f600b79be46c777a93d992c04a679762f8b34",
+    "release_safety": {
+      "checkpoint_metadata_90_files_clean": true,
+      "lease_released_true_via_arbiter": true,
+      "live_probe_all8_free_util0_procs0": true,
+      "owned_tasks_40_clean_0_procs": true,
+      "safety_summary_sha256": "304e383fa3d411ad0aaed85485fca5574c5263beb27950bbfb292c9b8e4564c1",
+      "toolchain_hashes_verified_unchanged": true
+    },
+    "repeat_output": "085516",
+    "selector_and_summary_verified_from": "<coord>/S2b-canonical-repeat-verified-085516",
+    "token_ids_equal": 0
+  }
+}

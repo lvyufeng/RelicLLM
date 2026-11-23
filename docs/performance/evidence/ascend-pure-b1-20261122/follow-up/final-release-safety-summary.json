@@ -1,0 +1,25 @@
+{
+  "checkpoint": {
+    "file_count": 90,
+    "identity_vector_sha256": "83c056fda57d5c529b3146745d812164a800c3f3fa9c252117248cbacd47d441",
+    "metadata_stable_during_final_check": true,
+    "no_mtime_or_ctime_inside_task_phase": true,
+    "payload_hashes_not_recomputed_metadata_weight_only": true
+  },
+  "device_table_proof_is_separate_live_fleet_probe": true,
+  "metadata_only": true,
+  "no_device_reset_no_shared_CI_changes_no_files_deleted": true,
+  "owned_tasks": {
+    "all_cleanup_complete": true,
+    "count": 40,
+    "remaining_owned_processes": 0
+  },
+  "provenance": "derived from .coord/final-release-safety-proof.json; counts and hashes only, per-task labels not copied",
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.final-release-safety.v1",
+  "unchanged_toolchain_hashes": {
+    "CANN_set_env_sha256": "bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12",
+    "native_library_sha256": "7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c"
+  },
+  "verified_at_utc": "2026-11-22T09:07:54.347893+00:00"
+}

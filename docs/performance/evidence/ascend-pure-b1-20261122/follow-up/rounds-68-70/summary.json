@@ -1,0 +1,106 @@
+{
+  "schema": "relic.pure-b1.evidence.rounds-68-70.v1",
+  "scope": "rounds 68 to 70: three measured negative results and one open lead, after the indexer fusion was registered at 14.287598 tok/s / 69.9922 ms a token",
+  "owns_previous_bundle": false,
+  "registered_result_unchanged": {
+    "TPS": 14.287598,
+    "ms_per_token": 69.9922,
+    "receipt": "../indexer-sort-fused-registration-three-pair.json (in rounds-49-67)"
+  },
+  "negative_results": {
+    "o_projection_transpose": {
+      "operator": "aclnnBatchMatMul_TransposeAiCore_Transpose",
+      "us_a_forward": 1171.6,
+      "calls_a_forward": 48,
+      "cause": "attention.py:1688-1689 lays wo_a out as [groups, o_lora_rank, d] and einsums over d, so the framework materialises a transpose of a constant weight every layer",
+      "why_it_looked_safe": "a transpose changes no value, so pre-transposing once per module looked exact",
+      "measured": {
+        "contiguous_pretranspose": "not bit-identical (3/6 then 5/8), and 212.1 us eager, slower",
+        "transposed_view": "0 of 8 bit-identical, 99.6 us eager, 40% cheaper"
+      },
+      "error_when_it_differs": "1 to 2 of 2048 elements, max abs up to 0.5 on bf16",
+      "conclusion": "the reduction order on this build is not layout-invariant. Not adopted. Recorded as a new deviation class needing explicit user approval, because it is a different op from the row-norm and narrow-head approvals.",
+      "receipt": "wo-a-transpose-receipt.json"
+    },
+    "lut_expert_projection": {
+      "operator": "relic_scale_lut_tile_cube_0",
+      "us_a_forward": 12121,
+      "share_of_step": 0.154,
+      "how_decided": "the bandwidth driver that answers this had been in the evidence bundle since round 48 titled \"written, not run\". It was run for the first time, with the accepted v2-n64 library (7dce3e3d) and CANN (bbbda1c0) verified first. The first library found on the box was the v1-n64 build (c896289f) and the hash guard rejected it.",
+      "standalone": {
+        "1_group_us": 366.3,
+        "6_groups_us": 474.9,
+        "six_group_GB_per_s": 39.8,
+        "implied_fixed_cost_us": 344.5,
+        "reading": "five more experts cost only about 110 us, so the call is per-call-cost dominated rather than per-expert-byte dominated"
+      },
+      "two_cautions": [
+        "the harness same-volume read-only sum reference reports 5.4 GB/s while copy_ over the same volume reports 448.3 GB/s; only the copy is a practical device reference",
+        "the standalone numbers are host-bound: the same kernel takes 474.9 us standalone against 101 us a call in the model profile, a 4.7x gap, so the 344.5 us fixed cost is not kernel-internal"
+      ],
+      "sized_in_graph": {
+        "bytes_per_call": 18800640,
+        "us_per_call": 101,
+        "effective_GB_per_s": 186.9,
+        "practical_reference_GB_per_s": 448.3,
+        "ratio_off_reference": 2.4
+      },
+      "conclusion": "closes \"swap the LUT kernel\" as a route to 50 tok/s. The dominant cause is M=1 tile padding - one activation row broadcast across expert groups against a cube unit built for M=16 tiles - which is a property of single-request decode, not of the kernel. A better M=1 kernel may still find 1 to 2 ms.",
+      "receipt": "lut-bandwidth-receipt.json"
+    },
+    "wo_a_second_item_not_pursued": {
+      "operator": "aclnnInplaceIndexCopy_TransposeAiCore_Transpose",
+      "us_a_forward": 1244.4,
+      "calls_a_forward": 138,
+      "observation": "138 is exactly the call count of _state_post_pv_kernel and _state_prepare_kernel, so these belong to the sparse-attention state machinery rather than the projection"
+    }
+  },
+  "open_lead_for_a_later_round": {
+    "item": "redundant FP8 activation quantisation",
+    "operator": "fast_fused_fp8_activation_decode_kernel",
+    "calls_a_forward": 322,
+    "us_a_forward": 3390.8,
+    "us_per_call": 10.53,
+    "why_it_looks_real": "each call quantises roughly 10 KB and costs 10.5 us, so the cost is launch overhead, not work. modules.py:203-204 calls quantized_linear(x, w1) and quantized_linear(x, w3) on the SAME x, so one quantisation per MoE call is redundant, and 2 MoE FFNs a layer over 40 layers is about 80 redundant calls a forward, roughly 840 us = 1.2%.",
+    "why_it_is_bit_exact": "quantising the same unchanged tensor twice produces the same bytes, so reusing the first result cannot change any value",
+    "the_hazard_that_stops_a_quick_fix": "the runtime reuses activation buffers (`_reuse` does slot.copy_(value) in decode_pos.py), so a cache keyed on tensor identity would go stale when a buffer is overwritten. A correct fix dedupes at the call site rather than memoising inside the quantiser.",
+    "why_it_was_not_done_this_round": "quantized_linear is the soft/reference path while the device path uses the fused kernel, and the profiler did not capture input shapes for it, so pinning the 322 calls provenance needs a targeted capture first",
+    "estimated_gain_percent": 1.2
+  },
+  "device_bound_confirmation": {
+    "device_busy_us": 287045,
+    "span_us": 314467,
+    "fraction": 0.913,
+    "consequence": "host-side time is overlapped; every remaining gain must be less or faster device work",
+    "receipt": "device-bound-receipt.json"
+  },
+  "manifest": {
+    "README.txt": "a3529edcd2e7914f2599322ffe4e9d9313ffe332d16693dc2bf43c34229add21",
+    "device-bound-receipt.json": "359c634e016c3aadb3589c4087621fd7d3fd5466459128e33693e413a9b3de92",
+    "indexer-profile-verification-receipt.json": "679ef98909df58784c47030df3e46d59b6180603762654e07552821fda8bf6c6",
+    "lut-bandwidth-raw-run.json": "ea0fd1c17ba0e1cf010b2161cee3438f72e0b00cbdeb3479f3aec693f54d1488",
+    "lut-bandwidth-receipt.json": "c6d7ad5da9b5e1ce037222eb44030c0a50fe296ece1113eb214adf8033228cc2",
+    "wo-a-cached-transpose-patch.py": "6b4da193f4b00328427c2ac06ebb98d3361561c00553f6274106bb648e621423",
+    "wo-a-transpose-exactness-test.py": "7748b64e2994fcabe6d846e0f3eba705d38001ee2df23efb205930c016fcd518",
+    "wo-a-transpose-receipt.json": "6a224581c2c802042ea57d54c02c06638b43d1976501840c4cf6305c8e5e7d7d",
+    "wo-a-transpose-variants-test.py": "f105f13fb5f59474b66f0a441a7e74bf112301785d7651fe0a9dbdb589ae55b5"
+  },
+  "missing_sources": [],
+  "verification": {
+    "manifest_files": 9,
+    "manifest_integrity": "ALL MATCH",
+    "json_files_parsing": 6,
+    "readme_numbers_present": {
+      "lut_in_graph_GB_per_s_quoted": true,
+      "copy_reference_quoted": true,
+      "fixed_cost_quoted": true,
+      "negative_results_all_three_present": true,
+      "open_lead_quoted_gain": true,
+      "ceiling_stated": true
+    },
+    "registered_result_unchanged_by_these_rounds": true
+  },
+  "manifest_renamed_from": [
+    "README.md"
+  ]
+}

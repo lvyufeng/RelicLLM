@@ -1,0 +1,174 @@
+{
+  "actual_kernel_selection_repeat": {
+    "no_new_device_or_model_run": true,
+    "rank_reports": [
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 0,
+        "raw_kernel_csv_sha256": "346dfe851d0f65cdc89bd2ef417125a5350de72aba66ea9058b43a58cff3f1b7"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 1,
+        "raw_kernel_csv_sha256": "90ada5ad15080bbd391d91d20e031f21de78b1434b1975d2bdfb560883090883"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 2,
+        "raw_kernel_csv_sha256": "d66eb94a7591c2cc1581cd4a1af77d7818323d2f9da8c8721b176ca3426a4d27"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 3,
+        "raw_kernel_csv_sha256": "e75240882c3d7ec1a73b7fa43fad8f30a214bf83eca023eea2ab1cead11d80b9"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 4,
+        "raw_kernel_csv_sha256": "4acba7df057f7f19949d61c570c5741174091df557cbac25abfbe8561245ceb4"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 5,
+        "raw_kernel_csv_sha256": "7b4f80b765990b9e690273f46fb22e342b7e5ddfc4a081df33a7b2ca0e124f6e"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 6,
+        "raw_kernel_csv_sha256": "5a3fc0cff18d542ffa89a16157dcad12e9c64593bf04af658eb07bc625ac2a6c"
+      },
+      {
+        "BF16_real_attention_calls_checked": 320,
+        "both_collective_channels_share_actual_fused_model_count": 43,
+        "kernel_durations_not_additive_with_scope_wall_times": true,
+        "native_expert_calls_in_four_profiled_forwards": 480,
+        "native_model_id_export_limit": "external native expert tasks use sentinel Model ID",
+        "rank": 7,
+        "raw_kernel_csv_sha256": "d6724521aef3e72d88a75d6b88e126f49123184e6d0da8a7737615552e231109"
+      }
+    ]
+  },
+  "control_status_unchanged": {
+    "aggregate_audit_false_deliberately": true,
+    "control_identity": "original pre-S1 4824df at context 36",
+    "new_control_is_not_a_canonical_control": true
+  },
+  "decision": {
+    "additional_NPU_trials": false,
+    "candidate_only_numerical_qualified": true,
+    "defaults_or_merge_changed": false,
+    "fifty_TPS_claim": false,
+    "general_quality_headroom": false,
+    "new_error_waiver": false,
+    "numerical_admission": "candidate-only, EXPLICIT BF16 q/kv-only, B1 one-forward-per-token, context 24..88, 64 timed steps",
+    "numerical_global": false,
+    "old_v2_records_immutable": true,
+    "paired_gain_claims_still_provisional": true,
+    "paired_gain_control_drift_reason": "control still reproduces pre-S1 4824df, so pair gains (+3.38%/+3.89%) are not strict-output-pair approved",
+    "review109_conditions_all_passed": true,
+    "strict_output_pair_approved_gain": false
+  },
+  "derived_from_raw_bytes": {
+    "S2b-canonical-candidate-repeat-audit.json": 79978,
+    "S2b-canonical-candidate-repeat-comparison.json": 28177,
+    "S2b-canonical-candidate-repeat/S2b-actual-kernel-selection.json": 8172,
+    "S2b-canonical-candidate-repeat/summary.json": 33058
+  },
+  "derived_from_raw_sha256": {
+    "S2b-canonical-candidate-repeat-audit.json": "e165c5de656035a7d92b665e29eea422c48208771b8873a82bf1ebcfa5283108",
+    "S2b-canonical-candidate-repeat-comparison.json": "139f6c2901d1a3b694c622c807e8affc62737e3514de7737510c23c1fff6995f",
+    "S2b-canonical-candidate-repeat/.summary.json": null,
+    "S2b-canonical-candidate-repeat/S2b-actual-kernel-selection.json": "971cce85e065ab532755e03bdc4f723b5106e295469404f5a79078073e4b9dc1",
+    "S2b-canonical-candidate-repeat/summary.json": "cd648c562ad37a64ab652f6244a729db0e5c2ce29fc0d373c933167fe9c9b459"
+  },
+  "frozen_sources": {
+    "CANN_label": "bbbda... (unchanged)",
+    "S2b_helper_sha256": "bfc547c486b02cc73106791c5df74f331a88292bf0ab9633db2af79ef932fa4d",
+    "S2b_kernel_sha256": "55f57a9118bdc6dbc71217beeb97384f384f8d6a0dd866a64def0f4e1afaaa4a",
+    "S2b_tests_sha256": "b3f15f1dc76849198d6aca1855d075b2ee8e94817ad06deeb198bbf3b814f800",
+    "native_so_label": "7dce... (unchanged)",
+    "thread_source_frozen": true
+  },
+  "kernel_execution_counts_from_summary": {
+    "BF16_attention_calls_per_rank": 320,
+    "all_eight_ranks_report_the_same_counts": true,
+    "graphs": 43,
+    "live_owned_processes_at_cleanup": 0,
+    "owned_clean": true,
+    "post_pv_launches_per_rank": 552,
+    "prepare_launches_per_rank": 552,
+    "reported_from": "S2b-canonical-candidate-repeat/S2b-actual-kernel-selection.json + summary.json cleanup",
+    "returncode": 0,
+    "timed_out": false
+  },
+  "measurements": {
+    "absolute_TPS_is_measured_not_a_promise": true,
+    "batch_size": 1,
+    "context": [
+      24,
+      88
+    ],
+    "excluded_warmups": 4,
+    "first_canonical_candidate_TPS": 11.5613956081916,
+    "independent_repeat_candidate_TPS": 11.548656514878644,
+    "independent_repeat_candidate_ms_per_token": 86.59015866578557,
+    "measured_candidate_TPS_range": [
+      11.548656515,
+      11.5613956081916
+    ],
+    "same_frozen_sources_only_output_environment_label_changed": true,
+    "timed_steps": 64
+  },
+  "metadata_only": true,
+  "provisional": true,
+  "raw_summary_note": "summary.json is recorded as a hash/byte identity only; its task-private environment, command line and ownership material are not copied",
+  "repeat_audit": {
+    "all_new_outputs_match_canonical": false,
+    "new_pair_parity_is_not_canonical_identity": true,
+    "strict_acceptance_includes_tokens_and_selected_role_flags": true,
+    "user_S1_error_acceptance_not_extra_headroom": true
+  },
+  "repeat_candidate_role_summary": {
+    "all_true_flags": {
+      "bit_identical_to_canonical": 8,
+      "inline_selected": 8,
+      "layout_selected": 8,
+      "state_selected": 8,
+      "tokens_equal_canonical": 8
+    },
+    "canonical_identity_restored_all_eight_ranks": true,
+    "changed_contexts": [],
+    "rows": 8
+  },
+  "review": "review-109 final conditional admission criteria",
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.canonical-candidate-repeat.v1"
+}

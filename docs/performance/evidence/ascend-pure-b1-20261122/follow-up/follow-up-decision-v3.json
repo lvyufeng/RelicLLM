@@ -1,0 +1,58 @@
+{
+  "final_status": {
+    "aggregate_audit_false_deliberately": true,
+    "candidate_only_numerical_qualified": true,
+    "control_still_non_canonical": true,
+    "explicit_scope": "BF16 q/kv-only S2b prototype, B1 one complete forward per token, context 24..88, 64 timed steps",
+    "independent_repeat_audit": "8/8 new_candidate rows canonical 852d95, tokens/layout/inline/state all true, changed contexts []",
+    "independent_repeat_bit_differences": 0,
+    "kernel_execution_counts": {
+      "BF16_attention_calls_per_rank": 320,
+      "graphs": 43,
+      "live_owned_processes_at_cleanup": 0,
+      "owned_clean": true,
+      "post_pv_launches_per_rank": 552,
+      "prepare_launches_per_rank": 552,
+      "returncode": 0
+    },
+    "measured_candidate_TPS": [
+      11.548656515,
+      11.5613956081916
+    ]
+  },
+  "history": {
+    "no_old_data_removed": true,
+    "old_s2_rejections_preserved": true,
+    "test109_public_receipt_false_preserved": true,
+    "v1_and_v2_evidence_files_immutable": true
+  },
+  "metadata_only": true,
+  "provenance": {
+    "frozen_S2b_helper_sha256": "bfc547c486b02cc73106791c5df74f331a88292bf0ab9633db2af79ef932fa4d",
+    "frozen_S2b_kernel_sha256": "55f57a9118bdc6dbc71217beeb97384f384f8d6a0dd866a64def0f4e1afaaa4a",
+    "frozen_S2b_tests_sha256": "b3f15f1dc76849198d6aca1855d075b2ee8e94817ad06deeb198bbf3b814f800",
+    "raw_repeat_artifacts_sha256": {
+      "S2b-canonical-candidate-repeat-audit.json": "e165c5de656035a7d92b665e29eea422c48208771b8873a82bf1ebcfa5283108",
+      "S2b-canonical-candidate-repeat-comparison.json": "139f6c2901d1a3b694c622c807e8affc62737e3514de7737510c23c1fff6995f",
+      "S2b-canonical-candidate-repeat/.summary.json": null,
+      "S2b-canonical-candidate-repeat/S2b-actual-kernel-selection.json": "971cce85e065ab532755e03bdc4f723b5106e295469404f5a79078073e4b9dc1"
+    },
+    "raw_repeat_summary_sha256": "cd648c562ad37a64ab652f6244a729db0e5c2ce29fc0d373c933167fe9c9b459"
+  },
+  "retained_limits": {
+    "S1_context36_acceptance_remains_limited": true,
+    "additional_NPU_trials": false,
+    "fifty_TPS_claimed": false,
+    "general_quality_headroom": false,
+    "new_error_waiver": false,
+    "numerical_global": false,
+    "paired_gain_claims_provisional": true,
+    "serving_defaults_or_PR_merge_changed": false,
+    "strict_output_paired_gain_approved": false
+  },
+  "reviewed": true,
+  "reviewer": "review-109",
+  "sanitized": true,
+  "schema": "relic.pure-b1.evidence.follow-up.decision.v3",
+  "supersedes_review_scope": "follow-up-decision-v2.json (v2 bytes preserved unmodified)"
+}

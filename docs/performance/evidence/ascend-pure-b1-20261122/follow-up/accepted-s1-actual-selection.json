@@ -1,0 +1,4447 @@
+{
+  "accepted_s1_actual_selection_proof_v2": {
+    "no_extra_model_or_device_run": true,
+    "not_a_kernel_self_time_partition_or_bandwidth_estimate": true,
+    "rank_reports": [
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "909": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__909_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.5749929696321487,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.817440271377563
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.303841196000576,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.97950005531311
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3047194331884384,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.51528000831604
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2997415140271187,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.87060010433197
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3072107210755348,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.10401999950409
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3029424697160721,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.884660243988037
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3074817359447479,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.785059928894043
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2988697960972786,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.520179867744446
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30727963894605637,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.324379682540894
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3118915483355522,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.545900106430054
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30544959008693695,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.179139852523804
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29521435499191284,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.312180161476135
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.313563272356987,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.993760108947754
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2983119338750839,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.21038019657135
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3720428794622421,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.472839832305908
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2994602546095848,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.390600085258484
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3050127997994423,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.203980088233948
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30449312180280685,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.315019845962524
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31112227588891983,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.976200103759766
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3143828362226486,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.766479849815369
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3011319786310196,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.8370201587677
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30126236379146576,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.33113980293274
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3036120906472206,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.118340015411377
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3135707229375839,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.307940006256104
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3113122656941414,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.197699785232544
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3016935661435127,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.942500114440918
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31588226556777954,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.94920003414154
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30943192541599274,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.872380018234253
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3115711733698845,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.625099658966064
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2985512837767601,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.824699878692627
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3008982166647911,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.128940105438232
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30159298330545425,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.138540029525757
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31629111617803574,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.41476011276245
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30357856303453445,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.378039956092834
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31724851578474045,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.34283995628357
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30153244733810425,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.123019814491272
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30072126537561417,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.882099628448486
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3033000975847244,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.367820262908936
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.33159181475639343,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.753979921340942
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.32593216747045517,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.15741991996765
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "d657d827172e77a4be2868829f0919da4e87f903343f4a1c0f60e455b109065e",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 0,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank0/ascend216_3662594_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      },
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "909": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__909_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.4687327891588211,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.424880146980286
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27714017778635025,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.95464015007019
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2855472266674042,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.51148009300232
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28185080736875534,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.856359720230103
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29151421040296555,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.148460030555725
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2812519669532776,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.84984040260315
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2815593034029007,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.784839749336243
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27827173471450806,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.515699982643127
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2855490893125534,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.33583950996399
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29116496443748474,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.571919918060303
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28649065643548965,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.14658010005951
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2789432182908058,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.31223976612091
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28304196894168854,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.99399995803833
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2789832651615143,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.206740140914917
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28115231543779373,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.4896399974823
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28106197714805603,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.34626007080078
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2805609256029129,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.175400257110596
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28304196894168854,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.33917987346649
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28200261294841766,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.973939895629883
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2892613410949707,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.773839950561523
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27990248054265976,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.87787961959839
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27888547629117966,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.241379857063293
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2809595316648483,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.165980100631714
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2812333405017853,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.27463984489441
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2800915390253067,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.269739866256714
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28090178966522217,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.8681800365448
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29288139194250107,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.985820055007935
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2820724621415138,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.874599933624268
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2802126109600067,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.61579990386963
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28256233781576157,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.827079892158508
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2784188836812973,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.130139708518982
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2800729125738144,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.135559916496277
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27810409665107727,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.41256022453308
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28614047914743423,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.38919985294342
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28075557202100754,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.342399835586548
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28008967638015747,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.121039986610413
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2921298146247864,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.842080116271973
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27692224830389023,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.32893991470337
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2888217568397522,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.761820077896118
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31616445630788803,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.13472008705139
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "026c33fb1025507360e2878e21ed055b4a90edf4902a7d4b4400dfac9c716f5c",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 1,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank1/ascend216_3662595_20261122151632653_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      },
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "206": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__206_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.4114517942070961,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.363199830055237
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2845004200935364,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.964479923248291
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28679240494966507,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.508039712905884
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2826601266860962,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.867239952087402
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2833828330039978,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.111459970474243
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29680412262678146,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.8781601190567
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28698332607746124,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.785760045051575
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27836114168167114,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.515079975128174
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29198918491601944,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.358879804611206
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2885889261960983,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.512440085411072
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28496235609054565,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.186059832572937
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28396211564540863,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.305519938468933
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2865009009838104,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.996180176734924
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28580427169799805,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.207939982414246
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2869628369808197,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.46395993232727
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28170086443424225,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.387099862098694
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2799704670906067,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.17765986919403
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28171204030513763,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.340999960899353
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28588157147169113,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.97696018218994
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27611106634140015,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.769420266151428
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28271134942770004,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.834199905395508
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28470251709222794,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.283439993858337
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2854214981198311,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.171879768371582
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2793390303850174,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.266419887542725
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2811513841152191,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.265740156173706
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2794824540615082,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.877240061759949
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28973352164030075,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.979219675064087
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2803504467010498,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.87741994857788
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2910895273089409,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.62283992767334
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2797301858663559,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.8229398727417
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2810414880514145,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.129119753837585
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2843020483851433,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.142720341682434
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28124451637268066,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.414899826049805
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2823788672685623,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.383280158042908
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2864217385649681,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.33459973335266
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2853032201528549,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.127300024032593
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2801110967993736,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.844939947128296
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2872627228498459,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.363080143928528
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29668305069208145,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.795399785041809
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28253253549337387,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.194680094718933
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "2cf59ead60b5f714610acaa11d658d9245b0c5704e8ce7f3b1a750fbfbb83648",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 2,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank2/ascend216_3662596_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      },
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "206": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__206_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.5105100572109222,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.303620219230652
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27111079543828964,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.93339991569519
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27931295335292816,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.51058006286621
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2717813476920128,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.862300276756287
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2772640436887741,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.110599994659424
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2703927457332611,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.884079933166504
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27443189173936844,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.785279870033264
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2675820142030716,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.525599837303162
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27625076472759247,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.32229995727539
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2702409401535988,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.535879969596863
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28036441653966904,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.184100270271301
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27483049780130386,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.311960101127625
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2881307154893875,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.987460494041443
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2739420160651207,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.216119885444641
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2716127783060074,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.463759899139404
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2698516473174095,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.37988007068634
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2686725929379463,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.176700234413147
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28742197901010513,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.33914017677307
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2721622586250305,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.98893976211548
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2709701657295227,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.76605999469757
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27574971318244934,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.836779832839966
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2719024196267128,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.276540040969849
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2741236239671707,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.17192006111145
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27346331626176834,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.26416003704071
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2700928598642349,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.236519813537598
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2754107117652893,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.912539839744568
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27391593903303146,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.978560209274292
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27653295546770096,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.87473976612091
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2727629616856575,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.658459901809692
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27224142104387283,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.789160132408142
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2730106934905052,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.13167977333069
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2681417390704155,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.132020115852356
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2671191468834877,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.411580085754395
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.26833079755306244,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.386000156402588
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.271073542535305,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.343340039253235
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27916207909584045,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.130120158195496
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.311071053147316,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.837479829788208
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2832738682627678,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.361839890480042
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28131064027547836,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.799759984016418
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31976960599422455,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.156820058822632
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "9e02dd330e92db5975928aec9c8ce3303ee2b34f1f4060a85bd52f6c8f1e0b16",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 3,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank3/ascend216_3662597_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      },
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "503": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__503_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.45112334191799164,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.4861398935318
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27292221784591675,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.967260003089905
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27455296367406845,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.507539749145508
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2800021320581436,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.858700037002563
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27677230536937714,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.112499833106995
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2789832651615143,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.879419922828674
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27756113559007645,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.787599921226501
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27464237064123154,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.518800020217896
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28900522738695145,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.32800006866455
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2636276185512543,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.54423975944519
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2732435241341591,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.178540110588074
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27023162692785263,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.312339901924133
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28324220329523087,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.996240258216858
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27777068316936493,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.207080245018005
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2923132851719856,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.47234034538269
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2756817266345024,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.389400005340576
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27913041412830353,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.20933997631073
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27063116431236267,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.30959963798523
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2691829577088356,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.97729992866516
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2967417240142822,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.768999814987183
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27593784034252167,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.837559938430786
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27838442474603653,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.276880025863647
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2754395827651024,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.207020044326782
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.26976224035024643,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.231040120124817
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27202069759368896,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.271380186080933
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2818619832396507,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.875200033187866
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.26469212025403976,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.983319997787476
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2682749181985855,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.872639775276184
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.26463065296411514,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.624639987945557
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2749906852841377,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.826979756355286
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2728402614593506,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.12689983844757
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2651102840900421,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.176780104637146
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2684732899069786,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.372900009155273
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2769008278846741,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.382759928703308
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2681305631995201,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.341580152511597
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.25866366922855377,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.12250006198883
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27534086257219315,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.842819929122925
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27643609791994095,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.3644198179245
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29904209077358246,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.79255986213684
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3379210829734802,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.161719918251038
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "5221cc3d24f744f271721169a036a799a9e44ddf9f502ac391065bb67fca5a57",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 4,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank4/ascend216_3662598_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      },
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "503": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__503_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.5574934184551239,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.927460312843323
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30699558556079865,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.939459919929504
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31161028891801834,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.50902009010315
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3138110041618347,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.86918044090271
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3119753673672676,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.110220074653625
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31250249594449997,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.882859706878662
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31097419559955597,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.784500241279602
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.309760682284832,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.517899870872498
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31736213713884354,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.335800170898438
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30931364744901657,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.535820007324219
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.32626092433929443,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.184539794921875
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3106016665697098,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.306840181350708
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3135809674859047,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.990839958190918
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3059403970837593,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.20930004119873
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3751106560230255,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.477060079574585
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31037069857120514,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.387419939041138
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3197016194462776,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.174479961395264
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3105923533439636,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.342780113220215
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30883029103279114,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.9757399559021
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30960235744714737,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.809320211410522
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30892249196767807,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.796460151672363
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30570290982723236,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.281599879264832
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3082025796175003,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.171159982681274
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.34040119498968124,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.267499804496765
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31012482941150665,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.233659982681274
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.310421921312809,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.912699937820435
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3156205639243126,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.978959798812866
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3100624307990074,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.877659916877747
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31275302171707153,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.617380142211914
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.310603529214859,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.825200200080872
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3080219030380249,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.133500337600708
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3267405554652214,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.1386798620224
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3105010837316513,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.407480001449585
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3104116767644882,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.384419918060303
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3114640712738037,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.343379974365234
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31322240829467773,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.130239963531494
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30954182147979736,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.833359718322754
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3298623487353325,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.366199851036072
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31771138310432434,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.794619917869568
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3505125641822815,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.159679770469666
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "ab1fea59b11f13f33f3602e0854b540b64ffc44b1e7856cbe8ef7b0b612c553c",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 5,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank5/ascend216_3662599_20261122151632655_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      },
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "800": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__800_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.4537338390946388,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.34525990486145
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27569010853767395,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.944819927215576
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2775117754936218,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.511839628219604
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27561187744140625,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.865820288658142
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27740467339754105,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.11217999458313
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2791238948702812,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.882879972457886
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2839118242263794,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.821920037269592
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28035882860422134,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.481320142745972
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28324220329523087,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.327699899673462
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27889013290405273,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.537179946899414
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2952711656689644,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.18477976322174
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28174184262752533,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.31089973449707
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28621405363082886,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.990119934082031
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2907644957304001,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.217080235481262
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2758447080850601,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.45322036743164
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2729911357164383,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.390559911727905
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2788221463561058,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.171200037002563
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2764323726296425,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.342299818992615
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2759834751486778,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.977839946746826
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2767816185951233,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.77124035358429
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27736183255910873,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.841100215911865
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28664153069257736,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.27098000049591
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27791503816843033,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.177420139312744
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2800924703478813,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.263479948043823
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27809012681245804,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.240099668502808
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2831704914569855,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.90399980545044
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28917472809553146,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.013839840888977
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28005335479974747,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.845720171928406
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28055906295776367,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.62052035331726
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2826908603310585,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.824779987335205
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2820352092385292,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.13476002216339
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2734418958425522,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.133060097694397
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2779783681035042,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.40697979927063
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2810787409543991,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.388000011444092
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2823220565915108,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.34473991394043
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2914639189839363,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.126020073890686
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2846112474799156,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.838599920272827
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29452424496412277,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.36001992225647
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3324206918478012,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.794960021972656
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.3032619133591652,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.18797993659973
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "d6989f7f95cccf1df42852ffdd733cf647493a03880283268cdea5ecf1de117d",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 6,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank6/ascend216_3662600_20261122151632653_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      },
+      {
+        "TP_expert_native_kernel_calls_in_4_trace_forwards": 480,
+        "actual_CANN_collective_export_channels": {
+          "612": {
+            "calls": 353,
+            "calls_by_model_id": {
+              "10": 6,
+              "11": 6,
+              "12": 8,
+              "13": 8,
+              "14": 8,
+              "15": 8,
+              "16": 8,
+              "17": 6,
+              "18": 6,
+              "19": 8,
+              "20": 8,
+              "21": 8,
+              "22": 8,
+              "23": 8,
+              "24": 6,
+              "25": 6,
+              "26": 8,
+              "27": 8,
+              "28": 8,
+              "29": 8,
+              "30": 8,
+              "31": 12,
+              "32": 8,
+              "33": 8,
+              "35": 8,
+              "36": 12,
+              "37": 8,
+              "38": 8,
+              "39": 8,
+              "40": 12,
+              "41": 8,
+              "42": 8,
+              "4294967295": 1,
+              "43": 8,
+              "44": 12,
+              "45": 8,
+              "46": 8,
+              "47": 8,
+              "49": 12,
+              "5": 8,
+              "6": 8,
+              "7": 8,
+              "8": 8,
+              "9": 8
+            },
+            "first_exported_name": "hcom_allReduce__612_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "4294967295",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          },
+          "800": {
+            "calls": 160,
+            "calls_by_model_id": {
+              "10": 2,
+              "11": 2,
+              "12": 4,
+              "13": 4,
+              "14": 4,
+              "15": 4,
+              "16": 4,
+              "17": 2,
+              "18": 2,
+              "19": 4,
+              "20": 4,
+              "21": 4,
+              "22": 4,
+              "23": 4,
+              "24": 2,
+              "25": 2,
+              "26": 4,
+              "27": 4,
+              "28": 4,
+              "29": 4,
+              "30": 4,
+              "31": 4,
+              "32": 4,
+              "33": 4,
+              "35": 4,
+              "36": 4,
+              "37": 4,
+              "38": 4,
+              "39": 4,
+              "40": 4,
+              "41": 4,
+              "42": 4,
+              "43": 4,
+              "44": 4,
+              "45": 4,
+              "46": 4,
+              "47": 4,
+              "49": 4,
+              "5": 4,
+              "6": 4,
+              "7": 4,
+              "8": 4,
+              "9": 4
+            },
+            "first_exported_name": "hcom_allReduce__800_0_1",
+            "model_ids": [
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30",
+              "31",
+              "32",
+              "33",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "49",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "stream_ids": [
+              "N/A"
+            ]
+          }
+        },
+        "actual_layers_with_8_fused_replays": [
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.48119109123945236,
+            "layer": 0,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.746559977531433
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27096178382635117,
+            "layer": 1,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 13.960579872131348
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28940383344888687,
+            "layer": 2,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 18.510239839553833
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27667079120874405,
+            "layer": 3,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.86602008342743
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28137490153312683,
+            "layer": 4,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.112840056419373
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2782633528113365,
+            "layer": 5,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.881199836730957
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2781916409730911,
+            "layer": 6,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.782899856567383
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27250126004219055,
+            "layer": 7,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.518300175666809
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2827821299433708,
+            "layer": 8,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.335659742355347
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27853064239025116,
+            "layer": 9,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.534540176391602
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.29264017939567566,
+            "layer": 10,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.183879971504211
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2712234854698181,
+            "layer": 11,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.306440353393555
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28154999017715454,
+            "layer": 12,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.994619846343994
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28109271079301834,
+            "layer": 13,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.212399959564209
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28185173869132996,
+            "layer": 14,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 19.476420164108276
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27943309396505356,
+            "layer": 15,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.391420006752014
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2731187269091606,
+            "layer": 16,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.172019958496094
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27982331812381744,
+            "layer": 17,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.34271991252899
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2733943983912468,
+            "layer": 18,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.975340127944946
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2789124846458435,
+            "layer": 19,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.809120059013367
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27345307171344757,
+            "layer": 20,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.799140214920044
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.273129902780056,
+            "layer": 21,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.28078031539917
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27123093605041504,
+            "layer": 22,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.171019792556763
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2716127783060074,
+            "layer": 23,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.266480207443237
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2686893567442894,
+            "layer": 24,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.233540296554565
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2690441906452179,
+            "layer": 25,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 14.912140130996704
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2803616225719452,
+            "layer": 26,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.979219913482666
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28899405151605606,
+            "layer": 27,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.87667989730835
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2788808196783066,
+            "layer": 28,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 21.618319988250732
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.269891694188118,
+            "layer": 29,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.824560165405273
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2835094928741455,
+            "layer": 30,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.1318998336792
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2785138785839081,
+            "layer": 31,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.14106035232544
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2737129107117653,
+            "layer": 32,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 22.408779859542847
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.28383079916238785,
+            "layer": 33,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.384680271148682
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27488823980093,
+            "layer": 34,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.33930015563965
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.27277227491140366,
+            "layer": 35,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 16.132479786872864
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.30797068029642105,
+            "layer": 36,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 20.835659980773926
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2773730084300041,
+            "layer": 37,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.366160035133362
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.2741515636444092,
+            "layer": 38,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 15.792579889297485
+          },
+          {
+            "calls": 8,
+            "host_inclusive_ms": 0.31697191298007965,
+            "layer": 39,
+            "scope": "fused_layer_attention_TP_shared_reduce_HC",
+            "stream_elapsed_ms": 17.159419894218445
+          }
+        ],
+        "actual_shared_fused_model_count": 43,
+        "both_collective_channels_in_all_fused_graph_model_ids": [
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "49",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "channel_tags_do_not_infer_group_membership_or_wire_bandwidth": true,
+        "event_forwards": 8,
+        "kernel_csv_sha256": "58366fbf28dcaaca7f347b6cb9dc6e06533fa716f3dc7fb2afaf9c0e5a79dd57",
+        "native_expert_kernel_calls_by_model_id": {
+          "4294967295": 480
+        },
+        "native_kernel_group_model_ids_when_exporter_exposes_them": [],
+        "rank": 7,
+        "ready_checked_before_scope_install_by_original_base_recorder": true,
+        "recorded_graph_variants": 43,
+        "runtime_group_membership": {
+          "expert_TP": 2,
+          "model": 8
+        },
+        "source_kernel_csv": "profiler-rank7/ascend216_3662601_20261122151632654_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+        "total_host_replay_count": 6120
+      }
+    ]
+  },
+  "accepted_s1_source_manifest": {
+    "base_core_commit": "ea114a5c175b28c25ed1b49d66f7b138701df5fc",
+    "base_runtime_commit": "532bb3a6495ac52581e40c3423b350a8ae0cea9c",
+    "candidate_sources": [
+      {
+        "bytes": 16330,
+        "path": "relic_core/kernels/ascend_sparse_attention_layout.py",
+        "project": "relic-core",
+        "sha256": "133a8257be14e790e6e324b897ec62ff32a4b19d82370fbe5e9b333507ceb717"
+      },
+      {
+        "bytes": 5680,
+        "path": "relic_core/kernels/_ascend_sparse_attention_layout_kernels.py",
+        "project": "relic-core",
+        "sha256": "1ac7a1e3c5e4cb967e40d06aeea616a9635ffa86f52ccb25e4600dd2fd399ecf"
+      },
+      {
+        "bytes": 16358,
+        "path": "tests/test_ascend_sparse_attention_layout.py",
+        "project": "relic-core",
+        "sha256": "35b9835fc01c2f674a87fc02c163f79ad43145541fb0d6d116de6fd01ace8e84"
+      },
+      {
+        "bytes": 12690,
+        "path": "relicllm/models/deepseek_v4_1/ascend_sparse_attention_layout.py",
+        "project": "RelicLLM",
+        "sha256": "943eabeae0996c1f43a5e0ddff8f55cafd5b371fb87989887c5483ead764543d"
+      },
+      {
+        "bytes": 11744,
+        "path": "tests/test_ascend_sparse_attention_layout_binding.py",
+        "project": "RelicLLM",
+        "sha256": "9a916d4f265239c60d85d1f2f97640fb5c08cdabdb7e74402617fb370d41f1e3"
+      }
+    ],
+    "full_FP32_tensors_compared_on_server_not_in_bundle": true,
+    "original_checkpoint_weights_not_in_bundle": true,
+    "raw_comparison_receipt_identities": {
+      "accepted-layout-repeat-comparison.json": {
+        "bytes": 28150,
+        "sha256": "be4aca537a8012b284e608b69df186f5b391eb6ee89af3d5ba860eb2726de4ed"
+      },
+      "sparse-layout-rejected-comparison-1.json": {
+        "bytes": 29129,
+        "sha256": "5ee9616f29cfd4e97ed8aeaef04dff548d6baa2e07ff42351aa1ac2422845e43"
+      },
+      "sparse-layout-user-approval-20261122.json": {
+        "bytes": 1576,
+        "sha256": "b860cc4d5db3f44094b2128b5e3122883668529317c679242f5cc5664dcec80b"
+      }
+    },
+    "source_paths_sanitized_no_rewriting_of_measured_hashes": true
+  },
+  "accepted_s1_validation_and_limits": {
+    "50_TPS_achieved": false,
+    "accepted_observed_changed_context": 36,
+    "all_eight_ranks_complete_64_step_repeat_FP32_bit_identical": true,
+    "changing_capture_replays": 9,
+    "compiled_tile": [
+      16,
+      64
+    ],
+    "current_serving_defaults_unchanged": true,
+    "first_tile_compile_available_UB_bits": 1572864,
+    "first_tile_compile_failed_required_UB_bits": 3146752,
+    "no_new_lossy_weight_conversion": true,
+    "not_a_general_error_tolerance": true,
+    "old_rejection_and_later_user_acceptance_both_retained": true,
+    "original_control_not_bit_identical": true,
+    "original_expert_payload_bytes_per_card": 36097228800,
+    "real_B1_eager_component_calls_per_rank": 320,
+    "scope_is_one_prompt_context24_to88_fixed_length_past_EOS_possible": true,
+    "server_only_core_tests_passed": 62,
+    "server_only_runtime_tests_passed": 26,
+    "synthetic_strict_same_NPU_cases": 16,
+    "user_accepted_observed_max_abs_logit_delta": 0.003835439682006836,
+    "workspace_admission_is_declared_tensor_estimate_not_allocator_graph_BLAS_UB_peak": true
+  },
+  "s1_is_accepted_only_within_its_measured_context": true
+}

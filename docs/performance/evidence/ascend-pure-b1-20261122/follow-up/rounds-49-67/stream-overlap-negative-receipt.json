@@ -1,0 +1,18 @@
+{
+  "question": "Can compute and a collective overlap on the streams of this device?",
+  "why": "The 19.3% of the decode step lost at collective barriers is straggler wait with every AI core idle. Overlap is the only remedy inside the protected contracts (routing cannot be rebalanced, and a faster collective cannot help a wait for compute that has not arrived).",
+  "device": "8 x Ascend 910B3, CANN 9.2.0, host ascend216",
+  "harness": "bench_comm_overlap.py, torch.distributed 8 ranks over HCCL",
+  "measurements_us": {
+    "allReduce_20KB_alone": 301.7,
+    "matmul_1x5120_by_5120x16384_bf16_alone": 177.8,
+    "sequential_one_stream": 380.3,
+    "two_streams": 481.5,
+    "sum_of_parts_no_overlap": 479.5,
+    "max_of_parts_full_overlap": 301.7
+  },
+  "verdict": "no overlap: the two-stream time equals the no-overlap sum and is 26.6% slower than one stream",
+  "prior_independent_measurement": "two 4096^3 BF16 matmuls on two streams 1078.4 us against 1043.3 us sequential, ratio 1.034",
+  "conclusion": "Stream-level overlap is unavailable on this device for compute against compute and for compute against collective. The barrier wait is not recoverable by scheduling, so the execution-graph overlap route is closed.",
+  "note": "The 301.7 us collective here is a cold synchronised measurement including launch and blocking wait; the same collective measures ~36 us in-graph. The overlap conclusion does not depend on that scale."
+}

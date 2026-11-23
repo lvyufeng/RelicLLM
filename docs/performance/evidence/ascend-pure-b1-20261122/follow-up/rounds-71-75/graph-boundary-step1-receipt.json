@@ -1,0 +1,28 @@
+{
+  "schema": "relic.pure-b1.graph-boundary-step1.v1",
+  "question": "does the host read that forces the middle of every layer to stay eager exist on THIS lane, and is it step dependent?",
+  "answer": "the host read does not exist on this lane. The lane routed store performs no host read at all, so the documented reason for the three-part split does not apply here.",
+  "how_it_was_established": {
+    "the_split_is_generic": "graphs.py LayerGraphs records _body_a, then calls _routed eagerly, then records _body_b. ascend_graphs.py explains the eager middle exists because the routed expert store can keep experts in host memory and does a host read (a .tolist()) that a recording cannot hold.",
+    "three_stores_were_checked_not_one": [
+      "modules.py:318 ResidentRoutedExperts -> has counts = torch.bincount(...).tolist() at :324, but it is a dense loop over all experts on dense weights; its own docstring says it is for the tests and for a truncated table, and it runs on the CPU. Not this lane.",
+      "loader.py:676 CheckpointRoutedExperts -> also a dense per-expert loop, and it calls check_activation_matches_experts(x, torch.device(\"cpu\"), ...): it runs on the CPU pulling weights out of the checkpoint per expert. Not this lane.",
+      "ascend_packed_experts.py:441 AscendPackedRoutedExperts and ascend_tile_major_experts.py:371 AscendTileMajorRoutedExperts -> grep for tolist(), .cpu(), item(), .numpy() returns NOTHING in either file. These are the device-resident banked stores, and one of them is what this lane runs."
+    ],
+    "the_only_remaining_host_reads_belong_elsewhere": "device_experts.py has indices_row.tolist(), and its own docstring records that pattern as a measured 1.012x slowdown; it is not this lane path either."
+  },
+  "second_check_the_syncs_are_not_in_the_hot_path": {
+    "what_was_found": "ascend_expert_tp.py contains two torch.npu.synchronize(self.device) calls, at lines 279 and 426",
+    "which_functions": "line 279 is inside install(), line 426 inside close()",
+    "verdict": "one-time setup and teardown, not per forward. There is no per-layer device barrier, so the eager middle is not paying a synchronisation cost on this lane."
+  },
+  "third_finding_capture_is_already_anticipated_by_the_tp_installer": {
+    "evidence": "install() imports npu_graph_api, calls graph_pool_handle() and memory_allocated(), and a rollback path calls self.graphs.clear()",
+    "meaning": "the expert tensor-parallel layer already reserves a capture pool and holds a graphs container, so adoption is a designed path rather than something to invent. The lane launcher simply never constructs the decode graph adapter, so nothing is captured.",
+    "what_capture_would_still_have_to_contend_with": "the per-forward routed path is the closure built by _forward_for(shard), which takes a Python lock and checks an installed flag on every call. That is host bookkeeping, not a device sync, but it is the code that runs between the two recordings."
+  },
+  "what_this_changes": "the one-recording-per-layer idea is not blocked by a host read on this lane, which was the stated reason for splitting. Whether it is achievable now turns on the capture mechanics (the dispatch closure and the pool) rather than on a synchronisation that does not exist here.",
+  "what_is_not_claimed": "no capture was attempted, no parity was measured and no speedup is claimed. The objective gate still stands: full eight ranks, complete 64 steps, FP32 bit-identical against the eager lane as control, before any gain is believed.",
+  "next": "attempt the capture on the real tree the way ascend_graphs.py intends, then run the objective parity gate against the eager control.",
+  "method": "read-only source analysis across three candidate stores; no model run, no code change"
+}

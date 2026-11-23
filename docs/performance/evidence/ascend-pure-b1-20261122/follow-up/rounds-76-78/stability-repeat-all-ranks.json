@@ -1,0 +1,146 @@
+[
+  {
+    "rank": 0,
+    "TPS": 14.269744110811518,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "rank": 1,
+    "TPS": 14.269698004464345,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "rank": 2,
+    "TPS": 14.269730267023535,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "rank": 3,
+    "TPS": 14.269887507603904,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "rank": 4,
+    "TPS": 14.26970303288632,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "rank": 5,
+    "TPS": 14.269826898528049,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "rank": 6,
+    "TPS": 14.269793263587383,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "rank": 7,
+    "TPS": 14.269760082167068,
+    "graphs": true,
+    "captured": true,
+    "layers": 40,
+    "retired": 40,
+    "diffs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+]

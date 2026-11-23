@@ -1,0 +1,100 @@
+# LUT expert-projection bandwidth micro-benchmark (written, not run)
+
+This directory holds a bounded benchmark driver for P0 of the "why not 50 TPS"
+plan: the expert projection kernel. It answers whether the accepted
+`relic_scale_lut_tile_cube` projection is bandwidth-bound, per-call fixed-cost
+bound or tile-padding bound at the real per-card expert geometry. It never
+claims a speedup; the receipt it emits carries `hypothesis_not_yet_proven: true`.
+
+## Driver
+
+`bench_lut_bandwidth.py` (single process, single card, device 0, under three
+minutes). It:
+
+1. builds one byte-exact synthetic compact N64 projection per expert slot at the
+   real per-card matrix geometry, `n = 2304 // 2 = 1152` rows and `K = 5120`,
+   using only the public helpers `cube_geometry64` / `convert_fp4_cube64` from
+   `relic_core.kernels.cube_packed_format64` (accepted
+   `relic.fp4.cube-n64-k128.v1`, CPU-only conversion, byte exact, zero padding);
+2. fills six expert slots (`3,133,440 B` each: `2,949,120 B` packed codes plus
+   `184,320 B` E8M0 scales, equal to the measured `9,400,320 / 3` per-card
+   matrix) with deterministic synthetic bytes and certified `117..127` scales,
+   then copies them into the exact bank shapes the runtime uses
+   (`[owned, n//16, k//32, 16, 16]` codes, `[owned, n//16, k//32, 16]` scales);
+3. calls `AscendCScaleLUTTileCubeConsumer(x, b, s, selected, world=2, ...)` with
+   the contract's certified flags, preallocated ring scratch and fp32
+   accumulation, after `prepare_device_metadata(device)`;
+4. times a warmup plus `--iterations` measured calls with NPU events and reports
+   min / median / p95 / max microseconds plus an auditable GB/s number from the
+   exact touched-byte formula recorded per variant;
+5. measures the same kernel at 1 versus 6 selected experts and in the runtime
+   bf16 path versus the fp32 kernel-only path, and derives an implied per-call
+   fixed cost from one-six-group call versus six single-group calls;
+6. measures a practical device read reference over the same byte volume
+   (read-only `sum` and `copy_` read+write), plus a large-volume practical peak;
+7. writes a JSON receipt with geometry, library and CANN `set_env.sh` SHA256,
+   consumer ABI facts, raw timings, derived GB/s and interpretation limits.
+
+## Contracts followed, and the one guard that blocks M=16
+
+The driver follows the real validation contracts of
+`relic_core.kernels.cube_packed_format64` and
+`relic_core.kernels.ascendc_scale_lut_tile_cube` (plus the shared
+`_validate` from `relic_core.kernels.online_tile_cube`): contiguous uint8 banks,
+`n = tiles*16`, `blocks % group_k == 0` with `group_k = 4`, `output_rows = 64`,
+`n % output_rows == 0`, `1 <= groups <= 8`, `x` shape `(1, K)` or
+`(groups, K)`, output fp32, ring scratch `[block_dim, 2, output_rows*128]`,
+six non-aliasing storages, `certified_bf16_operands` and
+`certified_scale_lut_operands` explicitly true.
+
+An activation with **M=16 rows** (or 16 selected slots) is not expressible
+through the accepted LUT consumer. The guard is `_validate`'s
+
+> `if not 0 < groups <= 8: raise ValueError("at most eight selected slots and a bounded launch grid are supported")`
+
+together with `x.shape[0] in (1, groups)`. The consumer's `output_rows = 64`
+and `groups <= 8` cannot express an M=16 activation tile. The smallest faithful
+alternative implemented here is the maximum accepted width (6 selected slots on
+one broadcast activation row) plus the six-single-call versus one-six-group call
+comparison, which separates per-call fixed cost from per-expert bandwidth. The
+receipt records this under `m1_vs_m16` with the guard text and the implied fixed
+cost.
+
+A second precondition is the library identity: the consumer must report
+`output_rows = 64`, `layout_id = 2`, `group_k = 4`, format
+`relic.fp4.cube-n64-k128.v1` and the accepted table words. A library built with
+another `RELIC_LUT_OUTPUT_ROWS` is refused with a named error rather than
+measured. The driver pins the accepted library SHA256
+`7dce3e3dfa9aa3fb9159a425bd71c8e41bfbd437a3ea197c7d4abc8cb9f9072c` and the
+accepted CANN `set_env.sh` SHA256
+`bbbda1c0f925b0e8673e8c83958d6bb333e0e7d3ed0eb389db1457d92b3c3b12`, both
+overridable.
+
+## Command line for the root
+
+```bash
+cd <runtime worktree>
+PYTHONPATH=<relic-core worktree> python3 \
+  docs/performance/evidence/ascend-pure-b1-20261122/follow-up/bench_lut_bandwidth.py \
+  --library /path/to/librelic_scale_lut_tile_cube.so \
+  --cann-set-env /usr/local/Ascend/ascend-toolkit/set_env.sh \
+  --receipt /tmp/bench_lut_bandwidth_receipt.json
+```
+
+The driver exits non-zero on any precondition failure (missing NPU, wrong
+library hash, wrong CANN hash, non-N64 consumer, out-of-range synthetic scale,
+non-finite output). It does not reset devices, touch CI/Jenkins, modify CANN, the
+checkpoint or any resident bank, and installs no global provider.
+
+## How to read the result
+
+* `variants[*].timing_us` and `variants[*].achieved_GB_per_s` are the primary
+  numbers; the touched-byte breakdown is recorded per variant so the denominator
+  is auditable.
+* `m1_vs_m16.implied_fixed_cost_per_call_us` is a hypothesis to be read against
+  the timing spread, not a proven causal claim.
+* `reference.same_byte_volume` and `reference.large_volume_practical_peak` are
+  practical achievable numbers in this container, not HBM spec peaks.
+* Nothing in the receipt is a speedup claim. The measured context (11.61 tok/s,
+  86.1 ms/token, ~38 GB/s implied expert-path bandwidth) is recorded as input to
+  be explained, not re-derived.

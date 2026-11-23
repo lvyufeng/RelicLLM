@@ -1,0 +1,152 @@
+{
+  "synthetic_rows": [
+    {
+      "topk": 0,
+      "true_tail_keys": 0,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 1,
+      "true_tail_keys": 1,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 3,
+      "true_tail_keys": 3,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 31,
+      "true_tail_keys": 31,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 63,
+      "true_tail_keys": 63,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 64,
+      "true_tail_keys": 0,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 65,
+      "true_tail_keys": 1,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 100,
+      "true_tail_keys": 36,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 127,
+      "true_tail_keys": 63,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 128,
+      "true_tail_keys": 0,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 129,
+      "true_tail_keys": 1,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 192,
+      "true_tail_keys": 0,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 256,
+      "true_tail_keys": 0,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 257,
+      "true_tail_keys": 1,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 288,
+      "true_tail_keys": 32,
+      "BF16_bit_differences": 0,
+      "finite": true
+    },
+    {
+      "topk": 512,
+      "true_tail_keys": 0,
+      "BF16_bit_differences": 0,
+      "finite": true
+    }
+  ],
+  "changing_capture_rows": [
+    {
+      "topk": 128,
+      "changed_input_version": 0,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 128,
+      "changed_input_version": 1,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 128,
+      "changed_input_version": 2,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 129,
+      "changed_input_version": 0,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 129,
+      "changed_input_version": 1,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 129,
+      "changed_input_version": 2,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 288,
+      "changed_input_version": 0,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 288,
+      "changed_input_version": 1,
+      "BF16_bit_differences": 0
+    },
+    {
+      "topk": 288,
+      "changed_input_version": 2,
+      "BF16_bit_differences": 0
+    }
+  ],
+  "source_inputs_on_NPU": true,
+  "same_provider_torch_bmm": true,
+  "one_forward_per_token_semantics": true,
+  "weights_and_indices_not_requantized": true,
+  "performance_claimed": false
+}

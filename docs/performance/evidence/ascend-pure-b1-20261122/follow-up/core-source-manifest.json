@@ -1,0 +1,58 @@
+{
+  "candidate_sources": [
+    {
+      "bytes": 11907,
+      "path": "relic_core/kernels/ascend_sparse_attention_state.py",
+      "project": "relic-core",
+      "role": "S2b helper (provisional)",
+      "sha256": "bfc547c486b02cc73106791c5df74f331a88292bf0ab9633db2af79ef932fa4d"
+    },
+    {
+      "bytes": 8151,
+      "path": "relic_core/kernels/_ascend_sparse_attention_state_kernels.py",
+      "project": "relic-core",
+      "role": "S2b kernel (provisional)",
+      "sha256": "55f57a9118bdc6dbc71217beeb97384f384f8d6a0dd866a64def0f4e1afaaa4a"
+    },
+    {
+      "bytes": 16372,
+      "path": "tests/test_ascend_sparse_attention_state.py",
+      "project": "relic-core",
+      "role": "S2b tests (provisional)",
+      "sha256": "b3f15f1dc76849198d6aca1855d075b2ee8e94817ad06deeb198bbf3b814f800"
+    },
+    {
+      "bytes": 16330,
+      "path": "relic_core/kernels/ascend_sparse_attention_layout.py",
+      "project": "relic-core",
+      "role": "accepted S1 helper",
+      "sha256": "133a8257be14e790e6e324b897ec62ff32a4b19d82370fbe5e9b333507ceb717"
+    },
+    {
+      "bytes": 5680,
+      "path": "relic_core/kernels/_ascend_sparse_attention_layout_kernels.py",
+      "project": "relic-core",
+      "role": "accepted S1 kernel",
+      "sha256": "1ac7a1e3c5e4cb967e40d06aeea616a9635ffa86f52ccb25e4600dd2fd399ecf"
+    }
+  ],
+  "cpu_fixture_counter_note": "CPU fixture counters account for the capture-pass replay; they are metadata only and no CPU test suite was run while assembling this bundle",
+  "defaults_and_PR_merge_unchanged": true,
+  "full_FP32_tensors_compared_on_server_not_in_bundle": true,
+  "inline_private_source": {
+    "bytes": 40022,
+    "defaults_and_PR_merge_unchanged": true,
+    "label": "<coord>/ascend_inline_tp_layer_graphs.py",
+    "not_copied_into_bundle": true,
+    "sha256": "9ddd1f4c4ce27070ff44833211659ffd28764c45aa3183ec66bd290d93e7b641"
+  },
+  "inline_private_source_identity": "<coord>/ascend_inline_tp_layer_graphs.py",
+  "inline_private_tests": {
+    "label": "<coord>/test_inline_tp_layer_graphs.py",
+    "not_copied_into_bundle": true,
+    "sha256": "950ee0e49d1c423bcec1bd4f2540d7bbb70a84d15d2235dd1feac46de1903bb5"
+  },
+  "input_tensor_payloads_not_in_bundle": true,
+  "original_checkpoint_weights_not_in_bundle": true,
+  "s2b_is_provisional_not_merged": true
+}
