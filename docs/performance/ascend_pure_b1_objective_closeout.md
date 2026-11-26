@@ -1083,3 +1083,54 @@ two are what turn the prefill from a reference implementation into a path.
 
 None of this moves the Phase-1 metric, which is decode-only: the pure-B1 forward stays at 57.25 ms and
 17.47 tok/s while a prefill path is built.
+
+### 21.8 The prefill defect: what is established, and what is not
+
+Section 21.3b ordered correctness before speed. This is the result of that work so far, written as evidence
+rather than as a conclusion, because one instrument turned out to be unreliable and the question is open.
+
+**Instrumentation added** (all environment-gated and off by default, so no measured lane changes):
+`RELIC_PREFILL_FINITE_SCAN` records the finiteness of every module output in the forward;
+`RELIC_ATTN_PROBE` records layer 0's inner results -- the two projections, the query rope, the window table,
+`sparse_attn`, the output rope, the `wo_a` einsum, the `wo_b` projection and the TP all-reduce's own input and
+output; `RELIC_STATE_FINITE` scans every parameter and buffer after the prefill; `RELIC_PREFILL_LENGTH_SCAN`
+walks prompt lengths in one process; `RELIC_PREFILL_FINITE_CHECK` reports the measured prefill's own logits.
+
+**Established.**
+
+1. The failure is real and reproducible. A 512-token prefill twice ended with the harness gate
+   `exact quality control contains nonfinite logits` on every rank. The same gate fails at 256 and at 128
+   tokens.
+2. **Not the collective expansion mode.** Unsetting `HCCL_OP_EXPANSION_MODE` (the AIV mode this lane adopted
+   for decode) leaves the 128-token failure unchanged, at the same first module.
+3. **Not the sparse-attention reference.** `_sparse_attn_torch` was unit-tested on the card at `topk=128`:
+   a first row with one real index and 127 sentinels, a fully valid row, a 25-position one-block case, and a
+   case whose second 64-wide block is entirely masked. All produced finite output.
+4. **Not layer 0's arithmetic on its face.** During the 128-token prefill, all eleven recorded layer-0 results
+   were finite, including the `wo_a` einsum and the TP all-reduce's input and output.
+5. **The prefill poisons state.** After a 128-token prefill, `RELIC_STATE_FINITE` finds **50 parameter or
+   buffer tensors non-finite**, among them `layers.1.attn.window_kv_cache`, `layers.2.attn.window_kv_cache`
+   and `layers.2.attn.compress_kv_cache`. Downstream of a poisoned layer 0 that is expected; what it means is
+   that the first bad value is written into a KV cache, not just into an activation.
+6. **There is a second, separate defect: cost is not linear near 26 tokens.** A 16-token prefill takes 65.06 s
+   and a 25-token prefill 78.16 s, but a 26-token prefill did not leave its first forward in 11 m 31 s before
+   it was killed. Whatever that path is, the earlier 3.13-s-per-token linear model does not describe it, and
+   the length boundary is between 25 and 26 tokens.
+7. A clean length curve was **not** obtained. `RELIC_PREFILL_LENGTH_SCAN` runs prefills in one process to
+   walk the boundary cheaply, but its own extra forwards -- caches cleared between lengths -- returned
+   non-finite logits even at 2 tokens, so those numbers are contamination by the scan and are recorded as a
+   method failure, not as a length threshold.
+
+**Not established: the first bad tensor.** The per-module scan and the inner-op probe disagree: the scan says
+`layers.0.attn` (and at 256 tokens, `layers.0.attn.kv_norm`) returned non-finite, while every value the probe
+read inside that same module was finite. The likeliest reason is that both instruments record a *flag computed
+asynchronously against a tensor that is later written through the same storage* -- the lane reuses static
+operand buffers, so a recorded finiteness flag can describe a buffer after the next write rather than at the
+moment of the call. That makes module-level hook flags unreliable here, and it is why nothing is claimed about
+the first bad tensor.
+
+**Next step, concrete.** Instrument the KV *write* rather than the read: after a prefill, recompute layer 0's
+K and V for the same tokens outside the model and compare them element-wise against `window_kv_cache`, which
+separates "the projection produced a bad value" from "the cache store wrote it to the wrong place". Then bracket
+the 25-to-26-token cost cliff with 24- and 32-token prompts, since the group count for the compressor's ratio-2
+layers is odd at 26 (13) and even at 24 and 32 -- a prediction this hypothesis makes and the next run tests.
