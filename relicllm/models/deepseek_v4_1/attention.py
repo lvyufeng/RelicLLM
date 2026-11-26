@@ -1498,6 +1498,11 @@ class Attention(nn.Module):
             self.n_groups * self.o_lora_rank, self.dim, bias=False, dtype=LINEAR_DTYPE, device=device
         )
         self.tp = None
+        # `wo_a`'s grouped weight, transposed once by the caller that captures this layer into a
+        # graph. The einsum in `forward` transposes it on every call (26.9 us of a 1024x4096
+        # `Transpose` a layer a step), and materialising the operand *before* capture removes the
+        # node from the graph instead of caching around it. None keeps the released contraction.
+        self._wo_a_precomputed: torch.Tensor | None = None
 
         n_layers = cfg.n_layers if cfg.n_layers is not None else len(cfg.compress_ratios)
         is_backbone = layer_id < n_layers
@@ -1707,8 +1712,14 @@ class Attention(nn.Module):
         # contiguous run of heads, so 16 heads from 16r is groups 2r and 2r+1 whole -- which is why
         # wo_a needs no collective of its own.
         o = o.view(bsz, seqlen, self.n_groups, -1)
-        wo_a = self.wo_a.weight.view(self.n_groups, self.o_lora_rank, -1)
-        o = torch.einsum("bsgd,grd->bsgr", o, wo_a)
+        if self._wo_a_precomputed is not None:
+            # The same contraction the released line spells, with the grouped weight already in
+            # `gdr` order. `wo_a` declares bf16 in the reference, so this einsum is not on the
+            # quantized-activation path and materialising the operand changes no arithmetic.
+            o = torch.einsum("bsgd,gdr->bsgr", o, self._wo_a_precomputed)
+        else:
+            wo_a = self.wo_a.weight.view(self.n_groups, self.o_lora_rank, -1)
+            o = torch.einsum("bsgd,grd->bsgr", o, wo_a)
         y = quantized_linear(o.flatten(2), self.wo_b.weight, quantized=self._quantized)
         # wo_b is row-parallel, so this is the partial sum over groups and the one collective the
         # attention half of a layer needs.
