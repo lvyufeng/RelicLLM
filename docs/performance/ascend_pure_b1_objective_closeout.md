@@ -914,3 +914,99 @@ throughput if it were all recovered, which is worth having but is not the factor
 and the Phase 1 gate. The gate still needs the device-side work reduced: the LUT decode (about 12 ms a step,
 producer-bound at 1.6x the vector-op floor), the exposed collective remainder (10.0 ms, imbalance-driven) and
 the kernel/launch tail.
+
+## 21. A published W4A8 x 910B4 serving protocol, reproduced as far as this lane allows
+
+A published report (`ModelDoctor`, "DeepSeek-V4.1-Flash W4A8 x 910B4 single node 8 cards: concurrency,
+long context, Agent; MRV2 throughput +19%") benchmarks the same model on the same class of hardware with a
+stated protocol. Reproducing its metric definitions on this lane is the useful comparison, because its
+headline number and this project's headline number are *not* the same quantity.
+
+### 21.1 The protocol as published
+
+| metric | definition | statistic |
+| --- | --- | --- |
+| per-request generation rate | interval between a request's first and last generated token | **median** across requests |
+| whole-window output throughput | effective output tokens / (first request issued -> last request finished), includes prefill, queueing and drain | -- |
+| TTFT | request issued -> first generated token (reasoning included) | **P95** |
+| TPOT | mean token interval inside the generation phase | **P95** |
+| E2E | request issued -> response finished | **P50** |
+| draft acceptance | accepted draft tokens / total draft tokens | -- |
+
+Their environment: 8 x Ascend 910B4, TP8 / DP1 / EP8, a separately distributed W4A8 checkpoint
+(`DeepSeek-V4.1-Flash-1017-w4a8`, mixed quantisation), Engram CPU offload, vLLM-Ascend v0.30.0rc2 with
+Model Runner V1 (MRV2 as a comparison), **DSpark MTP, five draft tokens a step**, `FULL_DECODE_ONLY` graphs,
+chunked prefill at 4096 tokens, AIPerf 0.13.0 over HTTP streaming. Fixed-length points force an exact output
+length, clear the prefix cache, and use 128 requests a point.
+
+Their 8K input / 512 output / concurrency 1 point: TTFT P95 **1.298 s**, TPOT P95 **18.25 ms**, E2E P50
+**9.84 s**, per-request generation rate median **59.8 tok/s**, whole-window throughput **52.02 tok/s**, draft
+acceptance **41.93 %**.
+
+### 21.2 What was reproduced here
+
+Fixed **8192-token** input (built and verified to tokenise to exactly 8192 tokens with this checkpoint's
+tokenizer), concurrency 1, cold cache -- this lane has no prefix cache at all, so every run is cold by
+construction. The timed window is the harness's pre-registered 64 forwards; that gate permits 16 or 64 and
+was not changed for this protocol. Prefill was chunked at 512, 2048 and 4096 tokens in the attempts below,
+matching the published stack's chunked-prefill shape.
+
+### 21.3 The decode dimension is measured; the prefill dimension is not
+
+Decode, from the adopted lane (section 19's three-pair measurement):
+
+| quantity | here | article, 8K here |
+| --- | ---: | ---: |
+| TPOT | **57.25 ms** (median, 128-token context, one token a forward) | 18.25 ms P95 (three tokens a forward) |
+| per-request generation rate | **17.47 tok/s** | 59.8 tok/s |
+| tokens per forward | **1** (Phase 1 forbids more) | **3.10** (5 drafts x 41.93 % acceptance, +1) |
+
+Prefill, measured and then abandoned, because this lane has no serving-grade prefill path:
+
+| prompt | first-forward (TTFT) |
+| --- | --- |
+| 25 tokens (the standard lane prompt) | **84.0 s** median over six runs, and that number includes the one-time static materialisation the server would do at startup, so it overstates TTFT rather than understating it |
+| 512 tokens, chunked 512 | first forward did not return in **11 m 8 s**; killed |
+| 2048 tokens, chunked 2048 | first forward did not return in **10 m 55 s**; killed |
+| 8192 tokens, chunked 4096 | first forward did not return in **33 m 43 s**; killed |
+
+Against 1.298 s for 8K on the published stack. TTFT, E2E and whole-window throughput from that protocol are
+therefore **not measurable on this lane**, and no number for them is quoted here.
+
+### 21.4 The comparison that is possible: cost per forward
+
+The published rate is produced by speculative decoding, so its per-forward cost has to be recovered before
+it can be put next to a pure-B1 step:
+
+- tokens per forward = 5 drafts x 41.93 % acceptance + 1 = **3.10**;
+- their per-forward time = 3.10 x 16.7 ms (median token interval) = **51.8 ms**, or 3.10 x 18.25 ms (P95
+  interval) = **56.6 ms**.
+
+This lane's pure-B1 forward is **57.25 ms**, one token per forward, three-pair verified. So per forward the
+two stacks are within roughly 0-10 % of each other, with two caveats that both cut against this lane: theirs
+is measured at 8192-token context and ours at 128, and theirs streams a weight format the hardware
+accelerates natively while this lane decodes the original FP4 payload to BF16 first (section 17).
+
+The 3.4x difference in the headline rates (59.8 against 17.47 tok/s) is therefore **MTP, not executor**: it
+is the 3.10 tokens a forward, which Phase 1 forbids and Phase 2 gates on Phase 1.
+
+### 21.5 What this protocol exposes, and the order it implies
+
+1. **Prefill is the missing capability, and only serving metrics need it.** Their 8K TTFT is 1.298 s; this
+   lane cannot complete a first forward for 512 tokens inside eleven minutes, because the prompt is pushed
+   through the decode-shaped stack (inline-TP M=1 layer graphs, per-token expert routing). A prefill path --
+   batched grouped-MoE GEMM, chunked attention, prefill graph capture -- is the single largest gap the
+   published protocol reveals. It does not change the Phase-1 pure-B1 metric, which is decode-only.
+2. **Decode is at per-forward parity with a production W4A8 stack**, so further decode work should be judged
+   against the items already recorded: the LUT decode (~12 ms a step, producer-bound), the exposed collective
+   remainder (~10.0 ms a step), and the kernel/launch tail (section 20).
+3. **MTP is the 3x, and it is Phase 2.** Nothing measured here changes that ordering: the gate is a pure-B1
+   measurement at 50 tok/s, and this lane is at 17.47.
+
+### 21.6 Limitations of the comparison
+
+Different card (910B4 in the report against 910B3 with 64 GiB here), different weights (their separately
+distributed W4A8 checkpoint against this objective's original FP4/FP8 payload and represented values), their
+MTP on, their HTTP front end and chunked prefill against this lane's in-process, pre-registered-window
+harness, and their 128 requests a point against this lane's single request. The per-forward comparison in
+21.4 is the only like-for-like quantity, and it is derived on their side, not measured.
