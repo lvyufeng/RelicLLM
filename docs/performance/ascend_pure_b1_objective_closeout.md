@@ -15,7 +15,7 @@ execution stack under the full acceptance protocol remains a separate verificati
 | Gain over the session | **+14.74%** |
 | Target | ≥ 50 tok/s — **not achieved** |
 | Community stack, same hardware, **with MTP** (acceptance 4.10) | 27.13 ms a step; ≈ 36.9 tok/s A1-normalised — **not** a pure-B1 measurement and **not** a ceiling |
-| Current dev lane (final, three-pair protocol on the adopted tree) | **16.87-16.94 tok/s / 59.0-59.3 ms per token** |
+| Current dev lane, three-pair protocol (section 19) | **17.4159-17.5084 tok/s / 57.12-57.35 ms per token**, with `HCCL_OP_EXPANSION_MODE=AIV` adopted; +22.3 % over registered |
 
 ---
 
@@ -709,6 +709,8 @@ this record's same-session master-stack control (14.0930 tok/s / 70.84 ms, laten
 (`ff557c3f...`), so the recorded source hash reproduces the adopted library. The 50 tok/s Phase-1 gate
 remains unmet and is not claimed.
 
+*Superseded for the standing figure by section 19: `HCCL_OP_EXPANSION_MODE=AIV` was adopted on top of this tree and measured at 17.4689 tok/s / 57.25 ms. The numbers in this section are the record of that round and are unchanged.*
+
 ## 18. The "reproduce from the two masters" requirement, closed with hashes and one control run
 
 The objective's first requirement is stronger than a throughput target: reproduce the complete 14.2876
@@ -774,3 +776,101 @@ number that should be quoted as such -- not as "master reproduction".
    prefetch (`33+/13-`) on top of them.
 4. No claim in this document is of the form "14.2876 reproduced from master". The measured statement is
    §18.3, and the correction is §18.4.3.
+
+## 19. A community lever that crosses over: `HCCL_OP_EXPANSION_MODE=AIV`, +3.4 % stream-identically
+
+Reading the comparative stack (`CJYLZS/vllm-ascend-deepseek-v41-a2`) for the objective's
+"compare against community pure-B1" clause turned up one lever that does not depend on its weight format or
+on MTP: `HCCL_OP_EXPANSION_MODE=AIV`, which moves the expansion and execution of collectives from the host
+CPU onto the Vector Core. That stack reports it as communication -42.3 % and step -10.8 % on this exact
+8x910B3 single-host topology, with two stated preconditions -- a symmetric single-host eight-card setup, and
+non-deterministic mode (`HCCL_DETERMINISTIC` must not be on). This lane is that topology, and section 8
+measured 13.2-14.8 ms a step of *exposed* collective time against ~0.38 ms of actual transmission, so the
+lever had a reason to transfer. It does.
+
+### 19.1 The three-pair measurement
+
+Orthogonal interleaved A/B, three pairs in one session, each arm a full 64 timed steps with warm-up and
+profiling excluded, the only difference between arms being one environment variable:
+
+| arm | tok/s, three runs | mean tok/s | median step, three runs | mean step |
+| --- | --- | ---: | --- | ---: |
+| A, adopted lane | 16.9390 / 16.8747 / 16.8863 | **16.9000** | 58.99 / 59.33 / 59.23 ms | 59.18 ms |
+| B, + `HCCL_OP_EXPANSION_MODE=AIV` | 17.4159 / 17.5084 / 17.4824 | **17.4689** | 57.35 / 57.12 / 57.29 ms | 57.25 ms |
+
+**+3.37 % tok/s and -3.26 % step**, same-signed in every pair (+2.81 %, +3.76 %, +3.53 %) -- which is what
+makes it a measurement rather than a drift reading. Every figure in the table was recomputed independently
+from the six receipts during review, to the digit; the arm scripts differ only by the one export.
+
+### 19.2 It is stream- and logit-identical in all six runs, on all eight ranks
+
+- all six 64-token token streams are identical to each other;
+- **all 48** final-logit tensors (6 runs x 8 ranks) are bit-identical, 0 differing elements, `max|d| = 0.0`,
+  compared against each other -- this is run-to-run and rank-to-rank parity, not parity against the CPU
+  oracle (section 14 covers that separate gate, where `max|d|` is 1.852);
+- the eight-rank token-output parity gate passes on the AIV arm **and** on the A arm;
+- the AIV plog self-check (`aivMode[1]`) is present for eight ranks of each AIV run, so the result does not
+  rest on one rank.
+
+What this record can say is narrow: **on this model, this topology, six 64-step runs produced identical
+tokens and identical logits.** The vendor describes AIV expansion as non-deterministic, so this is not a
+claim that the mode is deterministic in general; keep the stream-comparison gate for any later use.
+
+### 19.3 Adoption
+
+The setting is an environment variable, so the code is untouched: `HCCL_OP_EXPANSION_MODE=AIV` joins the
+lane's adopted environment (dev-tree `env.sh`) next to the retained RELIC_* switches; the file differs from
+its pre-adoption copy by that comment and export and nothing else. Standing measurement becomes
+**17.4689 tok/s / 57.25 ms**: **+22.3 %** over the registered 14.287598 tok/s and **-18.2 %** over its
+69.9922 ms step. Phase 1 remains unmet: 17.47 tok/s against the 50 tok/s gate is still a factor of 2.86.
+
+### 19.4 The mechanism, from a paired profile
+
+One AIV kernel profile against the post-pipelining profile already in the record
+(`w2-kprofile-pipelined`). Both are **three-step windows** (the profiler records a three-step kernel window,
+not a TPS window); the profiler's own `step_trace_time.csv` buckets, per window and per step:
+
+| bucket | no AIV, /window | no AIV, /step | with AIV, /window | with AIV, /step |
+| --- | ---: | ---: | ---: | ---: |
+| Computing | 130.92 ms | 43.64 ms | 130.44 ms | 43.48 ms |
+| Communication (Not Overlapped) | **34.97 ms** | **11.66 ms** | **29.99 ms** | **10.00 ms** |
+| Free | 19.20 ms | 6.40 ms | 18.55 ms | 6.18 ms |
+| Computing + Communication | 165.89 ms | 55.30 ms | 160.43 ms | 53.48 ms |
+
+The whole saving is the collective bucket: **-14.2 % on measured collective time, -1.66 ms a step**, with
+`Computing` flat (-0.16) and `Free` flat (-0.22). A kernel-row sum would double-count here -- the AIV
+profile records each collective twice, once as `hcom_*` and once as `AivKernel` with identical start time
+and duration -- so the table uses the profiler's own accounting, which does not.
+
+Interpretation, stated no wider than the instrument supports: the profiler attributes the *whole*
+collective to "Communication (Not Overlapped)", so a reduction in the host-side expansion cost inside the
+collective lands in that bucket, and that is what is observed -- collectives themselves are 14.2 % cheaper,
+dispatch gaps (`Free`) are not what moved. Section 8's finding that ~97 % of collective cost was waiting
+came from a different instrument (the two-stream wavefront test), and this profile neither confirms nor
+contradicts it. Of section 8's 13.2-14.8 ms a step, AIV recovered ~1.7 ms, i.e. 12-13 % of the item.
+
+These two profiles are hours apart on a shared host, so the *direction* is what they establish. The profile
+runs' own timed windows agree in magnitude with the three-pair figures: 59.05 -> 57.92 ms mean and
+58.83 -> 57.53 ms median, versus 59.18 -> 57.25 ms in section 19.1.
+
+### 19.5 What the comparison with that stack does and does not establish
+
+Reading its README settles the apples-to-apples question the objective raises. Its 27.13 ms a step at
+concurrency 1 is a forward that computes six positions (MTP, `SPEC_TOKENS=5`, measured acceptance 4.10),
+served from a separately distributed `w4a8` checkpoint
+(`chiro2001/DeepSeek-V4.1-Flash-1017-w4a8-Ascend`, which that README names) rather than this project's
+original FP4/FP8 payload. The README does not describe its matmul path, so this record draws no conclusion
+about how it implements the quantised weights; what is documentable is that the weights are a different
+distribution.
+
+Neither property transfers:
+
+- the checkpoint is a different weight distribution, while this objective preserves the original FP4/FP8
+  payload and the values it represents -- which is why this lane decodes FP4 to BF16 with a LUT at all;
+- six positions a forward is the MTP win the objective forbids in Phase 1.
+
+So that number is neither a pure-B1 measurement nor a bound. Per *forward* this lane is 2.11x slower
+(57.25 against 27.13 ms); per *position* the arithmetic gives 4.52 against 57.25 ms, or 12.7x, and that
+number is equally not a bound, because it divides a six-position forward by six as though the work scaled
+that way. The one part of that stack which is format-independent -- the collective expansion mode -- is what
+section 19.1 measures, and it transferred.
