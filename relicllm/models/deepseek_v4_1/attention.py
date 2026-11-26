@@ -620,6 +620,12 @@ INDEXER_CAND_SKIP_TEST = int(os.getenv("DEEPSEEK_V41_INDEXER_CAND_SKIP_TEST", "0
 # following tiles' arithmetic; 0 is the shipped order and 2 is where the lookahead saturates. See
 # `_ReducePipeline`.
 INDEXER_REDUCE_DEPTH = int(os.getenv("DEEPSEEK_V41_INDEXER_REDUCE_DEPTH", "0"))
+# The decode key gather reads `index_k[b, positions]`. Written with two index tensors -- a batch
+# `arange` and the positions -- the backend lowers it to an `aclnnIndex` kernel on the AI_CPU:
+# 239 us a step for a 128 KB copy in the decode profile. Folding the batch offset into the position
+# turns the same gather into one flat `index_select` on the vector cores: 530.8 us -> 20.0 us at
+# bsz=1, width=4096, m=4096, d=128. Setting this to 1 restores the two-tensor form.
+INDEX_GATHER_TWO_INDEX = os.getenv("RELIC_INDEX_GATHER_ADVANCED", "0") == "1"
 
 
 def _as_column(lens: torch.Tensor | int, bsz: int, seqlen: int, device, dtype) -> torch.Tensor:
@@ -1387,9 +1393,25 @@ class Indexer(nn.Module):
                 # a block at the end of the cache covers positions past its width, and a padded
                 # block is a `-1`: both are gathered from a valid slot and masked out below, so the
                 # gather index never leaves the cache
-                gathered = index_k[
-                    torch.arange(bsz, device=q.device).reshape(bsz, 1, 1), tile.clamp(0, width - 1)
-                ]
+                if INDEX_GATHER_TWO_INDEX:
+                    gathered = index_k[
+                        torch.arange(bsz, device=q.device).reshape(bsz, 1, 1), tile.clamp(0, width - 1)
+                    ]
+                elif index_k.dim() == 3 and index_k.is_contiguous():
+                    # Fold the batch offset into the position: the same rows in the same order, as
+                    # one flat gather that stays on the vector cores. The flat form needs the cache
+                    # contiguous (flattening a view would copy it); its offsets widen to int64 once
+                    # bsz * width reaches 2**31, so no row index can wrap.
+                    column = index_k.size(-1)
+                    offset_dtype = torch.int32 if bsz * width < 2 ** 31 else torch.int64
+                    batch_offsets = torch.arange(bsz, device=q.device, dtype=offset_dtype).reshape(bsz, 1, 1)
+                    flat_positions = (tile.clamp(0, width - 1) + batch_offsets * width).reshape(-1)
+                    gathered = index_k.reshape(bsz * width, column).index_select(0, flat_positions)
+                    gathered = gathered.view(bsz, tile.size(1), tile.size(2), column)
+                else:
+                    gathered = index_k[
+                        torch.arange(bsz, device=q.device).reshape(bsz, 1, 1), tile.clamp(0, width - 1)
+                    ]
                 score = torch.einsum("bqhd,bqmd->bqhm", q_tile_t, gathered)
                 score = (score.relu_() * weights_t.unsqueeze(-1)).sum(dim=2)
                 # As in `_stream_prefix`: `tp` is the world on the head split and None on a row band,
