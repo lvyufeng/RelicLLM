@@ -708,3 +708,69 @@ multi-hour changes with their own three-pair protocols.
 this record's same-session master-stack control (14.0930 tok/s / 70.84 ms, latency -16.7 %). The source was restored to the adopted revision and rebuilt byte-identically
 (`ff557c3f...`), so the recorded source hash reproduces the adopted library. The 50 tok/s Phase-1 gate
 remains unmet and is not claimed.
+
+## 18. The "reproduce from the two masters" requirement, closed with hashes and one control run
+
+The objective's first requirement is stronger than a throughput target: reproduce the complete 14.2876
+stack from the two masters, and do not claim master reproduction until a 64-step master-only run proves
+it. This section closes it both ways -- the registered operating point is reproducible on this hardware,
+and a literal master-only run is not performable at all.
+
+### 18.1 What the three reference hashes actually are
+
+The campaign has been quoting `caca541d` (source), `46aca3d9` (library) and, after this session's work,
+`4df634cb` / `ff557c3f`. They pin to concrete revisions:
+
+| artifact | sha256 | where it is |
+| --- | --- | --- |
+| decoder `.cpp` at `relic-core` `1d9b182` ("land the BRCB scale-LUT decoder source") | `caca541d1504c526` | objective's "final source" |
+| library built from it | `46aca3d9e67cdf82`, 399,592 B | held as `registered-before-pipeline.so` |
+| decoder `.cpp` at `3c8c98a` (the adopted prefetch) | `4df634cbde357ce8` | this branch's HEAD |
+| library built from it | `ff557c3f4669331e`, 403,032 B | deployed and env-pinned |
+
+The step from master to `caca541d` is substantive, not cosmetic: **22 insertions / 4 deletions** replacing
+the general `Gather(expandedSlot_, slotOff_, pairRepeat_, ...)` broadcast with the `Brcb` quadrant loop.
+From `caca541d` to the adopted `4df634cb`: **33 insertions / 13 deletions** (the single-row prefetch plus
+the pair-ring export). master's decoder is neither: it is `3ca65ab82e727d81`.
+
+### 18.2 A literal master-only run cannot be performed
+
+Both masters were read, not assumed:
+
+- `relic-core` master carries the scale-LUT decoder, but at revision `3ca65ab8` -- the pre-BRCB form.
+- `RelicLLM` master contains **none** of the lane wiring. `profile_pure_b1_reuse.py`,
+  `ascend_inline_tp_layer_graphs.py` and `profile_actual_cube.py` are all absent from the master tree; the
+  branch is **+2,097,081 lines across 2,231 files** over master, which is the lane itself.
+- The Python bindings that the lane drives (`ascendc_scale_lut_tile_cube.py`, `ascendc_tile_moe.py`) *are*
+  identical in master and on the branch, so the earlier statement that "all code was merged" is right for
+  the bindings and wrong for the decoder revision and the launcher. That is the overstatement this section
+  corrects.
+
+So a master-only 64-step run does not exist to be run: there is no launcher on master to start it and no
+`caca541d` decoder to build. The 14.287598 figure belongs to the registered dev stack, not to the masters.
+
+### 18.3 The registered operating point does reproduce, measured
+
+The closest sound experiment was already in the campaign: the `ARM=master` side of the interleaved
+`m5` pair (`logs/m5-master-vs-lane-20261126T075733Z`), 64 timed steps, which ran the registered tree
+`relic-b1-master-baseline-20261124T044500Z`. That tree's provenance is checkable and is *not* GitHub
+master: its decoder is `caca541d` and its library is `46aca3d9`. It measured:
+
+| arm | tok/s | median step | vs registered 14.287598 / 69.9922 ms |
+| --- | ---: | ---: | --- |
+| registered tree, 64 steps | **14.0776** | **70.96 ms** | **-1.47 % / +1.4 %** |
+
+That is reproduction of the registered stack to within session drift on this shared host, and it is the
+number that should be quoted as such -- not as "master reproduction".
+
+### 18.4 What the correction therefore is
+
+1. The 14.2876 stack reproduces on this hardware at **14.0776 / 70.96 ms** (64 steps, registered tree and
+   pre-pipeline decoder build `46aca3d9`); difference from the registered figure is machine drift.
+2. It does **not** reproduce "from the two masters": master's decoder is a superseded revision and master
+   has no launcher. The lane that measures it lives on the branch.
+3. The earlier blanket claim that all related code was merged is withdrawn; only the Python bindings match
+   master. The decoder change (`22+/4-`) and the whole launcher chain are branch-only, as is the adopted
+   prefetch (`33+/13-`) on top of them.
+4. No claim in this document is of the form "14.2876 reproduced from master". The measured statement is
+   §18.3, and the correction is §18.4.3.
