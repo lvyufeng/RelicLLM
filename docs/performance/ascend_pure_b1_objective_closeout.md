@@ -874,3 +874,43 @@ So that number is neither a pure-B1 measurement nor a bound. Per *forward* this 
 number is equally not a bound, because it divides a six-position forward by six as though the work scaled
 that way. The one part of that stack which is format-independent -- the collective expansion mode -- is what
 section 19.1 measures, and it transferred.
+
+## 20. Where the 57.25 ms now goes: the host side issues the step in 16 ms
+
+Section 19 left the step at 57.25 ms with the profiler's own buckets at `Computing` 43.48,
+`Communication (Not Overlapped)` 10.00 and `Free` 6.18 ms a step. The harness already carries a phase
+instrument (`RELIC_STEP_PHASES=1`), and it splits each step at the host/device boundary, which the kernel
+profile cannot:
+
+| phase, eight ranks, sixteen timed steps | median | mean |
+| --- | ---: | ---: |
+| host enqueue (Python call until the last op is issued) | 15.6-16.3 ms | 16.5-17.0 ms |
+| device completion after the host finished issuing | 40.9-42.1 ms | 40.4-41.2 ms |
+| greedy argmax and host hand-off | 0.18 ms | 0.19 ms |
+
+So the host spends **16.2 ms a step, 28 % of it, issuing work**, and the device still has 41 ms to run after
+the host has issued everything. Those two facts bound what host-side work can buy: the device is idle for
+`Free` = 6.18 ms a step (10.8 %), so making the host infinitely fast could recover at most that much; the
+other 10 ms of host time is already covered by device execution.
+
+`cProfile` on a timed step (`RELIC_STEP_CPROFILE=1`) rules out the obvious suspect: the 42 graph replays cost
+almost nothing on the host (`torch_npu._C.replay` tottime 1 ms for 42 calls under profiler inflation), and the
+profile is diffuse -- 232 functions, none above 5 ms -- i.e. the 16.2 ms is per-op dispatch and guard work
+spread across the step, not one hot call. Also tried and closed this round:
+
+- `TASK_QUEUE_ENABLE=2`, the async task queue that would attack exactly that per-op cost, is **refused by
+  torch_npu during graph capture**: "Do not support TASK_QUEUE_ENABLE = 2 during NPU graph capture, please
+  export TASK_QUEUE_ENABLE=1/0". This lane captures layer graphs, so the lever is out by construction rather
+  than by measurement.
+- `TASK_QUEUE_ENABLE=1` is accepted, and measured neutral: enqueue 15.1-16.2 ms (unchanged), step 57.30 ms
+  median and 17.3868 tok/s on a single 64-step run against the 17.4689 standing mean -- inside this host's
+  run-to-run spread, with the phase split identical. The default already behaves this way; nothing to adopt.
+- `RELIC_DISPATCH_TIMING=1` and `RELIC_CUBE_PROFILE=1` are bit-rotted switches from earlier rounds and crash
+  the run; they were not used, and the phase instrument above is the supported path.
+
+What this changes for the remaining plan: the device-side buckets (`Computing` 43.48 ms, `Communication`
+10.00 ms) are still the bulk, and the recoverable host-side slack is 6.18 ms a step at most -- about 12 % of
+throughput if it were all recovered, which is worth having but is not the factor of 2.86 between this lane
+and the Phase 1 gate. The gate still needs the device-side work reduced: the LUT decode (about 12 ms a step,
+producer-bound at 1.6x the vector-op floor), the exposed collective remainder (10.0 ms, imbalance-driven) and
+the kernel/launch tail.
