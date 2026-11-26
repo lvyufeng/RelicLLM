@@ -983,12 +983,46 @@ killed: a 512-token prompt needs about 26 minutes by the slope and had not finis
 prompt had not finished after 33 m 43 s. The published stack's 8K TTFT is 1.298 s, i.e. 0.16 ms a prompt
 token, so this lane is roughly four orders of magnitude away on that metric.
 
-The cause is structural and visible in the numbers above: the prompt is pushed through the decode-shaped
-stack, where the mixture of experts is applied *per token* -- each prompt token re-selects its experts and
-each selection re-decodes those experts' weights. At 25 tokens across 61 layers that is about 9,150 expert
-decodes for a quarter-second of real prefill work. TTFT, E2E and whole-window throughput from the published
-protocol are therefore quotable here only as this: the warm TTFT of a 25-token request is 78.16 s and the
-cost is linear in prompt tokens at 3.13 s each.
+### 21.3b What the 3.13 s a prompt token actually is
+
+A profiled 16-token prefill (cProfile around the measured forward; it inflates wall time about 3x but keeps
+the shares) attributes it, and the answer is not device arithmetic:
+
+| finding | evidence |
+| --- | --- |
+| host-side waiting dominates | 2.67 M Python calls, 134.4 s of the 205 s profiled inside `select.poll` |
+| the prefill runs *reference* implementations, decomposed into thousands of tiny ops | `sum` 3,981 calls, `where` 2,734, `exp2` 2,688, `trunc_` 1,152, `frexp` 770, `amax` 427, `ones_like` 1,920, `torch.empty` 4,004 |
+| per-op transfers | `Tensor.to` 6,597 calls / 31.8 s, `torch.tensor` 459 calls / 14.3 s |
+| the window index table is built eagerly, per query row | `get_window_topk_idxs` 26.6 s over 40 calls: the fused device path returns `None` for a prefill and the eager build runs |
+| block-FP8 GEMM is torch emulation here | `mma.fp8_block_gemm` 13.8 s, driving 768 `sum` and 384 `amax` |
+| host Engram is *not* the problem | disabling its prefetch: 65.97 s against 65.06 s, i.e. neutral |
+
+Two structural reasons sit behind that list:
+
+1. **Every optimized sparse-attention variant in `relic_core.kernels.ops.sparse_attn` is `q.is_cuda`-gated.**
+   On Ascend, decode and prefill both fall through to `_sparse_attn_torch`; decode is fast because the
+   layer graphs capture it and replay it, while prefill has no graph and pays the host cost of every op.
+2. **The batched-expert lever is CUDA-only.** `--expert-batched` (which the loader documents as the lever
+   that moves prefill at all: 3.04x-3.69x, host share of a layer 230.68 ms -> 0.08 ms at 512 tokens) is
+   refused on this backend with `NPU expert execution does not use CUDA hot/pool/batched arena options`, and
+   the flag is silently dropped when no pool is configured -- this lane's runs pass `--expert-pool-rows 0`,
+   so both mechanisms are off. On NPU the prefill instead goes through `ascend_packed_experts`, which widens
+   an expert's weights to INT8 per call and calls a block GEMM, eagerly.
+
+Scaling confirms the linear read rather than an expert-saturation one: 16 tokens 65.06 s (4.07 s/token),
+25 tokens 78.16 s (3.13 s/token), and a 512-token prefill spent about **twenty minutes** in its first forward
+(2.4 s/token; the run reached the quality gate 28 minutes after launch, of which about four are model load).
+An 8192-token prefill is therefore hours, which is what the killed attempts above showed.
+
+**And at 512 tokens the prefill is not only slow, it is numerically invalid.** That 512-token run got through
+the prefill and then failed the harness's own gate with `exact quality control contains nonfinite logits` on
+every rank: the logits the prefill produced were not finite, so nothing downstream of it is meaningful. The
+lane has only ever been measured on 25-token prompts, which is why this has not come up before. Two
+consequences for the plan in 21.7: the prefill path needs its correctness established at representative
+lengths *before* it is optimised, and a prefill speedup measured on a broken forward would be worthless. The
+first diagnostic to run when work starts is where the first non-finite value appears as prompt length grows
+(attention path, KV/indexer tables, or the INT8 widening in the expert path), since that is also likely to
+name the code the optimisation has to touch.
 
 ### 21.4 The comparison that is possible: cost per forward
 
@@ -1030,23 +1064,22 @@ harness, and their 128 requests a point against this lane's single request. The 
 
 ### 21.7 The prefill plan this measurement implies
 
-The measured 3.13 s a prompt token is not a kernel-percentage problem; it is a missing batching dimension.
-Decode batches one request's one token, so the expert weights are decoded once per selected expert per layer
-and amortised over a single token. A prefill must amortise the same decode over a chunk of tokens:
+Four steps, in the order their measured shares justify. None of them is kernel-percentage tuning; the first
+two are what turn the prefill from a reference implementation into a path.
 
-1. **Group tokens by selected expert inside each layer, decode each selected expert's weights once, and run
-   one many-row GEMM per expert** (the grouped-MoE shape a serving stack uses). For an 8192-token chunk over
-   ~6-8 selected experts a layer, that turns 8192 weight decodes per expert into one, which is where the four
-   orders of magnitude are: the steady-state cost becomes the chunk's weight streaming, not its token count.
-2. **A prefill attention path** (chunked, causal, S x S) instead of the decode-shaped one-token attention the
-   layer graphs carry today.
-3. **Prefill graphs**, so the chunk's layers replay like the decode layer graphs do.
-
-Order-of-magnitude expectation for (1) alone on this payload: a 8192-token chunk streams roughly 61 layers x
-~7 experts x ~24 MB of decoded weights, about 10 GB, which is ~10 s at the measured 1.0-1.1 TB/s HBM read
-floor, against 7.1 hours today. Getting from ~10 s to the published 1.3 s needs the weight-format work this
-objective deliberately does not allow (their natively accelerated W4A8 payload) plus faster attention; it is
-not reachable by tuning this lane.
+1. **Capture the prefill forward in a graph, per chunk size.** The decode side already proves the mechanism
+   (40 captured layer graphs, replayed 42 times a step): the same op storm costs nothing once it is captured.
+   This needs static position and token buffers for the chunk, and it needs the host Engram path off for
+   prefill -- measured neutral (65.97 s against 65.06 s), so nothing is lost.
+2. **A prefill sparse-attention path for Ascend**, replacing `_sparse_attn_torch`. The CUDA variants cannot
+   be reused as they are `q.is_cuda`-gated; the reference's blocked-softmax arithmetic is documented in
+   `_SPARSE_ATTN_BLOCK` and has to be preserved bit for bit.
+3. **A packed-FP4 expert GEMM over a chunk**: group a chunk's tokens by selected expert, read each expert's
+   packed bytes once, and run one many-row GEMM per expert, instead of widening the expert to INT8 per call.
+   This is the grouped-MoE shape, and on this payload it is the piece that makes prefill cost follow the
+   chunk's weight stream rather than its token count.
+4. **Prefill graphs and the same batched shape for the attention projections**, then measure the published
+   protocol's TTFT and whole-window throughput on this lane.
 
 None of this moves the Phase-1 metric, which is decode-only: the pure-B1 forward stays at 57.25 ms and
 17.47 tok/s while a prefill path is built.
