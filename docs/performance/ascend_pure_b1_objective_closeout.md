@@ -961,17 +961,34 @@ Decode, from the adopted lane (section 19's three-pair measurement):
 | per-request generation rate | **17.47 tok/s** | 59.8 tok/s |
 | tokens per forward | **1** (Phase 1 forbids more) | **3.10** (5 drafts x 41.93 % acceptance, +1) |
 
-Prefill, measured and then abandoned, because this lane has no serving-grade prefill path:
+Prefill: measured, with a warm-up split against the one-time start-up cost. Serving stacks warm up before
+they measure, and this lane's first forward pays start-up costs (static-operand materialisation, first-launch
+kernel setup) that belong to process start rather than to a request. The harness now has an environment-gated
+warm-up that replays the *same* prompt once, discards its state, and then measures the next prefill
+(`RELIC_PREFILL_WARMUP=1`; the same prompt is required because the host Engram path refuses a forward whose
+payload digest differs across ranks, which a synthetic short prompt trips). On the standard 25-token prompt:
 
-| prompt | first-forward (TTFT) |
-| --- | --- |
-| 25 tokens (the standard lane prompt) | **84.0 s** median over six runs, and that number includes the one-time static materialisation the server would do at startup, so it overstates TTFT rather than understating it |
-| 512 tokens, chunked 512 | first forward did not return in **11 m 8 s**; killed |
-| 2048 tokens, chunked 2048 | first forward did not return in **10 m 55 s**; killed |
-| 8192 tokens, chunked 4096 | first forward did not return in **33 m 43 s**; killed |
+| quantity | value |
+| --- | ---: |
+| cold first prefill (start-up included) | 83.67 s |
+| **warm measured prefill (TTFT)** | **78.16 s** |
+| start-up share | 5.5 s (6.6 %) |
+| warm prefill per prompt token | **3.13 s/token** |
+| decode unaffected by the warm-up | TPOT 57.29 ms median, greedy 64/64 |
 
-Against 1.298 s for 8K on the published stack. TTFT, E2E and whole-window throughput from that protocol are
-therefore **not measurable on this lane**, and no number for them is quoted here.
+So the prefill is not a start-up artefact: it costs about **3.13 s for every prompt token**, which puts an
+8192-token prompt at roughly 7.1 hours on the linear fit. That fit is consistent with the attempts that were
+killed: a 512-token prompt needs about 26 minutes by the slope and had not finished its first forward after
+11 m 8 s, a 2048-token prompt about 107 minutes and had not finished after 10 m 55 s, and the 8192-token
+prompt had not finished after 33 m 43 s. The published stack's 8K TTFT is 1.298 s, i.e. 0.16 ms a prompt
+token, so this lane is roughly four orders of magnitude away on that metric.
+
+The cause is structural and visible in the numbers above: the prompt is pushed through the decode-shaped
+stack, where the mixture of experts is applied *per token* -- each prompt token re-selects its experts and
+each selection re-decodes those experts' weights. At 25 tokens across 61 layers that is about 9,150 expert
+decodes for a quarter-second of real prefill work. TTFT, E2E and whole-window throughput from the published
+protocol are therefore quotable here only as this: the warm TTFT of a 25-token request is 78.16 s and the
+cost is linear in prompt tokens at 3.13 s each.
 
 ### 21.4 The comparison that is possible: cost per forward
 
@@ -1010,3 +1027,26 @@ distributed W4A8 checkpoint against this objective's original FP4/FP8 payload an
 MTP on, their HTTP front end and chunked prefill against this lane's in-process, pre-registered-window
 harness, and their 128 requests a point against this lane's single request. The per-forward comparison in
 21.4 is the only like-for-like quantity, and it is derived on their side, not measured.
+
+### 21.7 The prefill plan this measurement implies
+
+The measured 3.13 s a prompt token is not a kernel-percentage problem; it is a missing batching dimension.
+Decode batches one request's one token, so the expert weights are decoded once per selected expert per layer
+and amortised over a single token. A prefill must amortise the same decode over a chunk of tokens:
+
+1. **Group tokens by selected expert inside each layer, decode each selected expert's weights once, and run
+   one many-row GEMM per expert** (the grouped-MoE shape a serving stack uses). For an 8192-token chunk over
+   ~6-8 selected experts a layer, that turns 8192 weight decodes per expert into one, which is where the four
+   orders of magnitude are: the steady-state cost becomes the chunk's weight streaming, not its token count.
+2. **A prefill attention path** (chunked, causal, S x S) instead of the decode-shaped one-token attention the
+   layer graphs carry today.
+3. **Prefill graphs**, so the chunk's layers replay like the decode layer graphs do.
+
+Order-of-magnitude expectation for (1) alone on this payload: a 8192-token chunk streams roughly 61 layers x
+~7 experts x ~24 MB of decoded weights, about 10 GB, which is ~10 s at the measured 1.0-1.1 TB/s HBM read
+floor, against 7.1 hours today. Getting from ~10 s to the published 1.3 s needs the weight-format work this
+objective deliberately does not allow (their natively accelerated W4A8 payload) plus faster attention; it is
+not reachable by tuning this lane.
+
+None of this moves the Phase-1 metric, which is decode-only: the pure-B1 forward stays at 57.25 ms and
+17.47 tok/s while a prefill path is built.
