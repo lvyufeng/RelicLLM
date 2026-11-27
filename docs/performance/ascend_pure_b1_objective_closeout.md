@@ -1235,3 +1235,67 @@ two frameworks that serve this model family solved it, and maps their design ont
   <https://github.com/vllm-project/vllm-ascend/blob/main/vllm_ascend/ops/mla.py>
 * SGLang server arguments (prefill CUDA graph flags, chunked prefill size, overlap scheduler, MoE runner
   backends): <https://github.com/sgl-project/sglang/blob/main/docs/docs/advanced_features/server_arguments.mdx>
+
+### 22.6 Where the prefill time actually goes: the watchdog result
+
+Section 21.3b attributed the prefill to eager per-op host work, from a profile of the *cold first* forward.
+A stack watchdog settles it, and the answer is sharper and worse: the prefill is waiting on the **CPU-resident
+Engram**, not on launch overhead.
+
+Armed with `RELIC_FAULTHANDLER_SECONDS`, a 26-token prefill printed, in every rank:
+
+```
+mma.py:594 fp8_block_gemm
+kernels.py:384 quantized_linear
+modules.py:437 _forward_pass
+modules.py:501 _forward_span
+ascend_host_engram.py:347 _verify
+ascend_host_engram.py:328 call
+ascend_host_engram.py:453 rank0_host_engram
+modules.py:476 forward          <- the Engram module, called from the block
+```
+
+Read together with the code: this lane keeps the Engram's tables **mmap-backed on the host**
+(`DEEPSEEK_V41_ENGRAM_RANK0=1`), so every Engram layer's forward runs `_forward_span` **on the CPU** and rank 0
+broadcasts the result. `_verify` is the one-time cross-rank proof (`if self.verify_always or not self.verified`),
+so the first forward pays it once; after that the steady-state cost is a host compute plus a broadcast **per
+Engram layer per forward**. A decode step pays that for one token; a prefill pays it for a chunk, on a host that
+eight ranks share.
+
+That also retires two earlier readings. The "26-token prefill is slower than a 128-token one" was not a hang and
+not content-driven: a diverse-prose prompt behaves the same way as a repeated paragraph, so the earlier
+content hypothesis is withdrawn. And the 65 % `select.poll` share in section 21.3b is mostly **the host computing
+the Engram while the device waits**, not per-op launch overhead -- which is why the itemised op counts in that
+section never added up to the wall time.
+
+### 22.7 The device-Engram attempt, and an incident to record honestly
+
+The obvious fix is to stop paying a host cost at all: put the Engram on the card. This lane refuses that
+outright -- `--resident-engram` raises "unsupported for NPU backbones: it copies the large host tables per
+rank; keep the mmap-backed host Engram instead" -- so the guard is a memory-cost warning, not an oversight.
+
+An environment-gated override was added to test the premise (`RELIC_ALLOW_RESIDENT_ENGRAM_NPU=1`), and a
+128-token prefill was launched with a device-resident Engram. **The host became unreachable about four minutes
+into that run and has not returned.** Whether the override caused it is *not* established: the suspected
+mechanism is host memory -- per-rank copies of the mmap-backed tables against 64 GiB of host RAM -- but there is
+no console access to confirm an OOM kill, and a network fault is equally consistent with what is observable
+from here.
+
+What is recorded, until the host returns and its log can be read:
+
+* the override must be treated as a **potentially destructive experiment**, not a performance switch, and is not
+  to be repeated until the table bytes times the ranks are added up against host memory *before* the run;
+* the guard's reason stands as written, and the override stays off by default with that comment in the code;
+* the prefill work is not blocked on this: the host-cost question can be attacked without moving the Engram to
+  the card, by making the per-chunk host work smaller -- the Engram's `_forward_span` already tiles the token
+  axis at `HC_TOKEN_TILE`, and the prefill's chunk size is a free parameter, so the host cost per chunk is
+  measurable as a function of chunk size before any placement change is attempted.
+
+### 22.8 What the next session does first
+
+1. Read the host's log for the incident above (OOM or not), and only then decide whether a device Engram is
+   worth re-testing and at what table size.
+2. Measure the prefill's host cost as a function of chunk tokens with the Engram where it is: if the cost is
+   the host Engram's per-chunk compute, the fix is the chunk schedule and the tiling constant, not kernels.
+3. Then the framework-shaped work from 22.3 stands: device-side window slots (the KV convention both
+   frameworks use), one registered op per layer, piecewise prefill graphs, grouped-MoE prefill.
