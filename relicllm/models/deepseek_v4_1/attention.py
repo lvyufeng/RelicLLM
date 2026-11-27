@@ -374,7 +374,16 @@ def get_window_topk_idxs(
     # queued on the stream -- a stack watchdog found six of eight ranks inside that copy on a prefill.
     # The expression below is the same arithmetic in the same order; only the device it is evaluated
     # on changes, and `pos.host` stays a Python int because a scalar needs no transfer.
-    _table_dev = torch.device(device) if device is not None else pos.torch_device
+    # A host `Pos` has no device -- `pos.torch_device` is only meaningful on the device path and
+    # says so by asserting -- so the no-`device` case falls back to the CPU tensors the original
+    # body built. That keeps the eager/host callers bit-identical and only moves the build when a
+    # caller named a device.
+    if device is not None:
+        _table_dev = torch.device(device)
+    elif pos.on_device:
+        _table_dev = pos.torch_device
+    else:
+        _table_dev = torch.device("cpu")
     if pos.first():
         end = torch.arange(seqlen, device=_table_dev).unsqueeze(1)
         idxs = (end - window_size + 1).clamp(0) + torch.arange(min(seqlen, window_size), device=_table_dev)
