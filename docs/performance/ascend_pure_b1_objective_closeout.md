@@ -1623,3 +1623,45 @@ effective per card** (the budget needs ~100 GFLOP a second a card at 5,000 tok/s
 **launch cost that cannot be amortised** -- i.e. if the 17 us is per *dispatch group* rather than per kernel, and
 a layer needs more than ~600. P1 measures both directly: it prints the per-layer launch count and exchange time,
 so the decision to build P2 is made on this host's numbers rather than on the budget table.
+
+## 25. The prefill's wall, measured: the FP4 widening costs 85 s a chunk
+
+Section 24 budgeted the prefill as exchange + grouped GEMM + attention + launches, and 2.5-5x of headroom. That
+budget was missing one term, and it is the one that dominates: the packed expert store's prefill path **widens FP4
+to INT8 on the card for every projection of every expert, every chunk**, through relic-core's frozen
+`unpack_fp4_to_int8` and `fp4_int8_scale`.
+
+Measured on the lane's 910B3 with the real expert geometry (layer 1's 48 owned experts, 2304 x 5120):
+
+| what | time | rate |
+|---|---|---|
+| 48 per-expert widenings (w1, 574 MiB of INT8 output) | **718.5 ms** | ~0.8 GB/s |
+| the same bytes as one stacked widening | 715.1 ms | 1.0x -- **no batching win** |
+
+So the cost is the operator, not the call count. A layer is 48 experts x 3 projections = 1.7 GiB of INT8 output,
+i.e. **~2.1 s a layer, 85 s a chunk**, and it does not scale with tokens: it is per-weight. That caps prefill at
+2048 / 85 s ~= **24 tok/s** for a 2,048-token chunk and 8192 / (85 + compute) ~= **96 tok/s** for 8,192 -- which
+is exactly the regime the earlier runs sat in, and it is two orders of magnitude below the 1,280 tok/s the
+staged-resident plan was sized for.
+
+**Consequences, and the one that is not acceptable.**
+
+1. Caching the widened weights across chunks does not fit: a layer's widened form is 1.7 GiB (INT8 values are
+   twice the packed bytes, plus the FP32 half-scales) against 860 MiB packed, so ~5 layers of the 40 fit the
+   ~10 GiB the dense tree leaves free. A 12 % hit rate does not move a 85 s term.
+2. Batching the widening does not help (measured 1.0x), so there is no call-overhead win to take.
+3. **The widening has to be fused into the GEMM.** The decode path already proves it can be: `fp4_packed_gemv`
+   and the tile operators consume the packed E2M1 nibbles and the E8M0 grid directly, with no INT8 materialised.
+   What prefill needs is the same operator with a row tile instead of a single row -- a **multi-row packed-FP4
+   GEMM** that reads the resident arena and the grid and accumulates in the GEMM itself.
+
+That is section 24's P2, and this measurement is why it moves ahead of everything else: with the widening fused
+away, a layer's weight traffic is its packed 860 MiB read once a chunk (0.86 GiB / 21 GiB/s = 41 ms a layer if it
+were staged, zero if resident as it is), the GEMM is ~0.1-0.5 ms, and the 10.25 ms a layer at 2,048 tokens is
+reachable. Until it lands, prefill throughput is capped at ~24 tok/s at 2,048 tokens by arithmetic, not by tuning.
+
+**A correction this also settles.** The experts in this lane are already resident: the provider the runs select is
+`AscendTileMajorRoutedExperts`, a packed store whose `preloaded` arenas hold each rank's 48 x 40 experts (861 MiB
+a layer, 34 GiB a rank), and the loader's `store.preload()` stage is what fills them. Partial residency is
+therefore not needed, and the 10,891 blocking copies of the earlier profile were the widening's own staging, not
+expert loads. The prefill work is the fused GEMM and nothing else on the expert side.
