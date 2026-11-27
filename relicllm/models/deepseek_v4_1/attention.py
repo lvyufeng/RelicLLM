@@ -369,9 +369,15 @@ def get_window_topk_idxs(
     it.
     """
     pos = Pos.of(pos)
+    # Build the table where the tensors live. The prefill branches used to build on the host and copy
+    # (`idxs.to(device)` at the end), and a blocking host-to-device copy waits for everything already
+    # queued on the stream -- a stack watchdog found six of eight ranks inside that copy on a prefill.
+    # The expression below is the same arithmetic in the same order; only the device it is evaluated
+    # on changes, and `pos.host` stays a Python int because a scalar needs no transfer.
+    _table_dev = torch.device(device) if device is not None else pos.torch_device
     if pos.first():
-        end = torch.arange(seqlen).unsqueeze(1)
-        idxs = (end - window_size + 1).clamp(0) + torch.arange(min(seqlen, window_size))
+        end = torch.arange(seqlen, device=_table_dev).unsqueeze(1)
+        idxs = (end - window_size + 1).clamp(0) + torch.arange(min(seqlen, window_size), device=_table_dev)
         idxs = torch.where(idxs > end, -1, idxs)  # before the sequence started
     elif _is_continuation(pos, seqlen):
         # Positions, not slots: the row is one query's whole window by absolute position, and which
@@ -379,9 +385,9 @@ def get_window_topk_idxs(
         # position the query can still see, which is 0 for the first rows of a prompt shorter than
         # the window and `end - window_size + 1` once the window is full.
         assert not pos.on_device, "a chunk of more than one query is the eager path"
-        end = pos.host + torch.arange(seqlen).unsqueeze(1)
+        end = pos.host + torch.arange(seqlen, device=_table_dev).unsqueeze(1)
         start = (end - window_size + 1).clamp(0)
-        at = start + torch.arange(window_size)
+        at = start + torch.arange(window_size, device=_table_dev)
         # a position before the chunk is a ring slot, one inside the chunk is an offset past the
         # ring's `window_size` columns; a position the query has not reached is not attended to
         idxs = torch.where(at < pos.host, at % window_size, window_size + at - pos.host)
@@ -392,11 +398,16 @@ def get_window_topk_idxs(
         idxs = torch.where(idxs > pos.row(), -1, idxs)  # ring still filling
     else:
         oldest = pos.slot(window_size) + 1
-        idxs = torch.cat([torch.arange(oldest, window_size), torch.arange(oldest)])
+        idxs = torch.cat([
+            torch.arange(oldest, window_size, device=_table_dev),
+            torch.arange(oldest, device=_table_dev),
+        ])
         idxs = torch.where(idxs > pos.host, -1, idxs)  # ring still filling
     # `sparse_attn` needs real [b, m, topk] int32 memory, hence the materializing expand
     idxs = idxs.int().unsqueeze(0).expand(bsz, -1, -1).contiguous()
-    return idxs if device is None else idxs.to(device)
+    # Already on `_table_dev`: with `device` given it is that device, without one it is the
+    # position's own. Kept as a call rather than deleted so the signature reads as before.
+    return idxs if device is None else idxs.to(_table_dev)
 
 
 # There is deliberately no cache here. The one this replaced was `@lru_cache(1)` keyed on the
