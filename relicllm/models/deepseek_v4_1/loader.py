@@ -323,6 +323,18 @@ class V41Checkpoint:
             low, high = int(flat.min()), int(flat.max())
             if low < 0 or high >= entry.shape[0]:
                 raise IndexError(f"{key} has {entry.shape[0]} rows, so {low}..{high} is out of range")
+        if self.banked(key) is None:
+            # The mapping answers this gather, so its pages are what the cost is made of: start the
+            # reads before the gather asks for them (measured 13.6-16.8x on a cold sparse gather;
+            # see `MmapSafetensors.advise_willneed_rows`). A banked table skips this -- there is
+            # nothing to fault in and advising its mapping would read pages for nothing.
+            advise = getattr(self.reader, "advise_willneed_rows", None)
+            # Chunk gathers only. A decode step gathers a couple of dozen rows, where the advice costs
+            # more than the faults it saves -- the matched A/B put decode at 65.03 ms/step with it
+            # unconditional against 60.20 ms without it -- while a prefill chunk gathers thousands
+            # (12,519 ms cold against 19.4 ms advised on the real table).
+            if advise is not None and flat.numel() >= 128:
+                advise(key, flat)
         gathered = self.packed(key).view(torch.uint8)[flat]
         gathered = gathered.view(SAFETENSORS_DTYPES[entry.dtype][1])
         if dtype is not None:
