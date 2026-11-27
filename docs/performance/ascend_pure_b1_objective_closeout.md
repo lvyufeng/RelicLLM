@@ -1549,3 +1549,77 @@ It does not claim decode gets faster; Phase 1's decode gate is separate and unch
 500 tok/s gate can be met at a 512-token chunk on the staged variant (320 tok/s by budget) -- that is what the
 resident variant is for. And it does not treat the 500 figure as the end: the article's 1.298 s 8K TTFT implies
 ~6,300 tok/s, which is the target the resident path is sized for.
+
+## 24. Retargeting prefill to 5,000 tok/s: what the measured budgets say changes
+
+The gate is now **prefill >= 5,000 tok/s**, which is the article's regime rather than a stepping stone (8,192
+tokens at 5,000 tok/s is 1.64 s, against their 1.298 s P95). Two more measurements decide how far that is, and
+both came out in our favour.
+
+### 24.1 The two exchange and launch measurements
+
+| measurement (8 ranks, this host) | value |
+|---|---|
+| `all_to_all_single`, 2,048 x 5,120 bf16 (20 MiB a rank) | **0.24 ms -> ~650 GiB/s aggregate** |
+| `all_reduce`, same tensor | 0.32 ms -> ~106 GiB/s aggregate |
+| kernel launch latency | **17-19 us a launch** |
+
+So the links are not the constraint -- an expert-parallel dispatch/combine of a 2,048-token chunk costs about
+0.5 ms a layer, two orders of magnitude below the budget below. What *is* the constraint is the number of
+launches: at 17 us each, the per-layer budget permits roughly 600 of them, and today's per-expert loop spends
+that on copies alone (10,891 blocking copies for 23 tokens, section 22.10).
+
+### 24.2 The per-layer budget at 5,000 tok/s
+
+At 5,000 tok/s a 2,048-token chunk has 410 ms, i.e. **10.25 ms a layer**; at 8,192 tokens the chunk has 1.64 s,
+i.e. 41 ms a layer. Against that:
+
+| per layer, 2,048-token chunk | cost | note |
+|---|---|---|
+| all-to-all dispatch + combine (6 experts, EP8) | ~0.5 ms | measured 2 x 0.24 ms |
+| grouped GEMM, 3 projections (870 GFLOP a chunk) | 0.1-0.5 ms | geometry 48 experts x [256 x 5120] x [5120 x 2304] a rank |
+| MLA attention + indexer | 0.3-1 ms | ~50 GFLOP a layer |
+| Engram projections (2 layers only) | amortised | once on the card, not per chunk |
+| launches, grouped design (~50-100 a layer) | 0.9-1.7 ms | at 17 us |
+| **sum** | **~2-4 ms of 10.25** | 2.5-5x headroom |
+
+At 8,192 tokens the same terms scale with rows while the budget grows 4x, so the margin is larger. **5,000 tok/s
+is reachable with 2.5-5x margin**, and what stands between here and there is launch count and host round trips,
+not bandwidth and not FLOPs.
+
+### 24.3 What this changes in the plan
+
+1. **Resident experts stop being an optimisation and become a requirement.** The staged variant's ceiling is
+   (chunk tokens) / (33.5 GiB / 21 GiB/s) = 1,280 tok/s at 2,048 and 2,560 at 4,096; only a single ~8,192-token
+   chunk reaches 5,000, and the gate includes 2,048-token prompts. So the plan's variant B is a *correctness
+   stepping stone only* -- it must not be presented as the path to the gate.
+2. **The grouped GEMM is prioritised over overlap.** With launches at 17 us and ~48 experts a rank a layer,
+   grouped execution takes ~150 launches a layer to ~5; that is the single largest term in the budget after the
+   exchange, and it is also what makes the 17 us figure stop mattering.
+3. **Piecewise graphs become a first-class item, not a P4 nicety.** A recorded prefill step amortises the 17 us
+   launch cost to a replay; the plan's P4 item ("piecewise graphs") moves into P2/P3.
+4. **The all-to-all risk is retired.** The measured 650 GiB/s aggregate means EP8 dispatch/combine is cheap at
+   these chunk sizes; the risk table's "all-to-all latency at 2,048 dominates" is closed. The TP8 fallback stays
+   documented only in case the distribute ops themselves (not the links) misbehave.
+
+### 24.4 Revised milestones for the 5,000 target
+
+| # | work | expected | gate |
+|---|---|---|---|
+| P0 | finite-logit root cause; throughput receipt (tokens/s, TTFT, launches a layer, exchange time, distinct Engram rows, cache state) | -- | finite + greedy equal at 20/64/512 |
+| P1 | device routing + **resident experts** + per-expert kernels with no host read, chunk 2,048 | 2,000-8,000 (launch-bound) | **>= 2,000 at 2,048** |
+| P2 | grouped packed-FP4 GEMM (2-3 launches a layer), piecewise graph for the steady state | 5,000-12,000 | **>= 5,000 at 2,048** |
+| P3 | attention/indexer slot mapping, Engram projections on card, exchange/compute overlap, chunk tuning | +30-100% | **>= 5,000 at 8,192, TTFT <= 1.64 s** |
+| P4 | published-protocol re-measure (TTFT/TPOT P95, E2E P50, rate, whole-window) with the caveats of 23.1 | -- | numbers reported as such |
+
+Each gate is measured with the receipt from P0, two consecutive runs, cache state named, and the distinct Engram
+row count recorded -- section 22.11 is why.
+
+### 24.5 The one number that would break this plan
+
+Everything above assumes the resident path's per-layer cost is dominated by launches and exchange, which the
+measurements support. The number that would break it is a **grouped packed-FP4 GEMM that cannot reach ~1 TFLOP/s
+effective per card** (the budget needs ~100 GFLOP a second a card at 5,000 tok/s, so there is a 10x margin), or a
+**launch cost that cannot be amortised** -- i.e. if the 17 us is per *dispatch group* rather than per kernel, and
+a layer needs more than ~600. P1 measures both directly: it prints the per-layer launch count and exchange time,
+so the decision to build P2 is made on this host's numbers rather than on the budget table.
