@@ -1414,3 +1414,138 @@ That also locates the honest next step. The prefill's 170 s of blocking copies i
 tokens by expert on the device, hand the grouped rows to a grouped GEMM, and the per-expert host loop -- and its
 272 synchronisations a layer -- disappears. Until that lands, prefill on this lane is a host-interpreted loop and
 its numbers should be quoted with that caveat rather than as the model's prefill performance.
+
+## 23. A complete plan for prefill: 500 tok/s as the floor, 5,000 as the target
+
+The user's gate is **prefill >= 500 tok/s**. Today's measured prefill on this lane is 0.25-0.4 tok/s, so this is a
+rebuild of the prefill executor rather than a tuning pass. This section states the metric, the measured budget
+that decides whether the gate is reachable, the target architecture, the fallback, the work breakdown with a gate
+at each milestone, and the risks. All numbers below are measured on the lane's 910B3 host in this session unless
+marked otherwise.
+
+### 23.1 The metric
+
+**Prefill throughput** = prompt tokens / (first forward start -> last prompt token's logits ready). Chunked
+prefill counts chunks; it is not a rate that may exclude them. Reported alongside:
+
+* **TTFT** for the 512 / 2,048 / 8,192-token prompts (this is what the published protocol's E2E and P95 TTFT use);
+* **chunk size** and the number of chunks;
+* **cache state** (the 476 GB checkpoint's pages cold or warm -- section 22.11 shows this alone moves the number
+  1.7x), and the **distinct Engram rows** touched, which separates a repeated-paragraph prompt from prose;
+* **staged expert bytes** per chunk and the H2D time, so the bandwidth budget below can be checked rather than
+  assumed.
+
+The gate is `>= 500 tok/s` at 2,048 and 8,192 tokens, with the same number reproducible in two consecutive runs
+with the cache state named. TTFT follows from it: 8,192 tokens at 500 tok/s is 16.4 s; at 5,000 tok/s it is 1.6 s,
+which is article parity (their 1.298 s P95 at 8K implies ~6,300 tok/s).
+
+### 23.2 The measured budget
+
+Model facts, read from the checkpoint on the host:
+
+| quantity | value |
+|---|---|
+| hidden / layers / heads x head_dim | 5120 / 40 / 64 x 512 (MLA, q_lora 1280) |
+| routed experts / top-k / shared | **384 / 6 / 1**, moe_intermediate 2304, scaling 1.5 |
+| one expert (w1+w3+w2, FP4 packed in I8 + E8M0 block-32 scales) | 3 x 5.90 MB + 3 x 0.37 MB = **18.8 MB** |
+| all experts of one layer | 384 x 18.8 MB = 7.2 GB |
+| **experts this rank owns at expert-world 8** | 48/layer x 40 layers x 18.8 MB = **36.1 GB = 33.5 GiB** |
+| HBM per card (usable / free) | **61.0 / 59.3 GiB** |
+| H2D / D2H, measured | **21.0 / 19.6 GiB/s** |
+| dense weights at TP8 (estimate, to verify) | ~2 GiB/rank |
+
+Two consequences decide the plan:
+
+1. **The experts fit on the card.** 33.5 GiB of experts plus ~2 GiB of dense plus a few GiB of activations is
+   ~40 GiB against 59.3 free. Staging is therefore optional, not mandatory -- and staging is exactly the 170 s
+   that dominates today's prefill.
+2. **Staging is fast enough when amortised over a big enough chunk.** If the resident path is deferred, a chunk
+   that touches all 384 experts stages 33.5 GiB/rank: 1.6 s at 21 GiB/s. That is **1,280 tok/s at a 2,048-token
+   chunk, 2,560 at 4,096, 5,120 at 8,192** -- the whole gate sits on choosing a chunk that is not small. A
+   512-token chunk would be 320 tok/s, which is why the gate is stated at 2,048 and 8,192 and not at 512.
+
+### 23.3 Target architecture (A) and the fallback (B)
+
+**A -- resident experts.** Keep each rank's 48 x 40 experts in HBM (33.5 GiB) and never stage them again:
+
+* routing on device (`npu_moe_gating_top_k` or the current gate, then `npu_moe_init_routing`): sorted rows,
+  per-expert token counts and gather indices as device tensors, **no D2H read and no Python loop**;
+* one **grouped** packed-FP4 GEMM per projection per layer (see 23.4) instead of 272 per-expert calls a layer;
+* `npu_grouped_matmul_swiglu_quant`-shaped fusion for gate/up + SwiGLU + activation quant, if the scale layout
+  allows it;
+* EP exchange through `npu_moe_distribute_dispatch` / `_combine` (present in this CANN, 9.2) or, if their HCCL
+  path is unavailable, a TP8 layout instead of EP8 -- the same 33.5 GiB either way;
+* per-layer ceiling: all-to-all of 2,048 rows x 5120 bf16 for 6 experts ~= 336 MB a layer, 13.4 GiB a chunk over
+  HCCS -- **7,600-14,600 tok/s of headroom** by bandwidth alone, so the binding constraint becomes the GEMM and
+  the launch count, not the links.
+
+**B -- staged experts, no new kernel.** Same device routing and grouped call structure, but each layer's local
+experts are copied in one H2D burst into a double-buffered arena (0.84 GiB a layer) and the GEMMs are issued
+against the arena without any host read. Budget in 23.2: 1,280 tok/s at 2,048 and 2,560 at 4,096 -- above the
+gate, below the target.
+
+A is the target because it removes the bandwidth term entirely; B exists because it needs no new kernel and is
+already above 500.
+
+### 23.4 The one piece of new compute: a grouped packed-FP4 GEMM
+
+The experts are FP4 packed two-per-byte with E8M0 block-32 scales. The 910B3 has no native FP4 MMA, and this
+CANN's grouped matmuls take int8/fp8 operands -- feeding them our packed nibbles would compute a different
+product. So the grouped GEMM is ours to write, and the natural home is a Triton-Ascend kernel in relic-core
+(triton-ascend 3.2 is installed):
+
+* grid over (expert, output tile), with per-expert row ranges read from a device routing table;
+* the FP4 unpack and the block-32 scale application follow the existing `_project`/`mma` rules so the values stay
+  bit-identical to today's per-expert path -- that equivalence is the gate, not an afterthought;
+* one launch per projection (two per layer with the gate/up fused), which removes the 272-launch-per-layer cost
+  even in the staged variant.
+
+Alternative if a Triton kernel proves too slow: `npu_quant_grouped_matmul_dequant` with per-128x128-block fp8
+operands, dequantising each expert once into a per-layer fp8 arena (7.2 GB a layer, does not fit resident, so
+this only suits variant B).
+
+### 23.5 Numerics: the gate that must be fixed first
+
+No throughput number is worth having while the prefill's logits go non-finite at 128+ tokens and `greedy_matches`
+is false even on the fully reverted tree (section 22.11). Order of work:
+
+1. locate the first non-finite activation by writing each layer's post-attention and post-MoE tensors to a
+   side buffer for a 128-token prompt, one layer at a time, and stop at the first one that is not finite;
+2. bisect the suspect paths one at a time -- the host Engram (`DEEPSEEK_V41_ENGRAM_RANK0=0` against `1`), the
+   host GEMM emulation, and the decode-vs-prefill routing -- since the same weights produce finite logits at 20
+   tokens;
+3. only then re-measure: the gate for every prefill change below is **finite logits at 512 / 2,048 / 8,192 tokens
+   and greedy-equal tokens against today's slow prefill on a 64-token prompt**.
+
+### 23.6 Work breakdown, one gate per milestone
+
+| # | work | expected | gate |
+|---|---|---|---|
+| P0 | finite-logit root cause; add the throughput receipt (23.1) | -- | finite + greedy equal at 20/64/512 |
+| P1 | device routing + grouped call structure + staged experts (variant B), chunk 2,048 | 600-1,300 tok/s | **>= 500 at 2,048** |
+| P2 | packed-FP4 grouped GEMM kernel, two launches a layer | 1,500-3,000 | >= 1,500 at 2,048 |
+| P3 | resident experts (A) + EP exchange | 2,500-6,000 | **>= 500 at 8,192, TTFT <= 2.7 s** |
+| P4 | attention/indexer slot-mapping, Engram on device (rows only across the bus), chunk tuning, piecewise graphs | +30-100% | >= 3,000 sustained |
+| P5 | re-measure the published protocol (TTFT/TPOT P95, E2E P50, rate, whole-window) and record it | -- | numbers reported with their caveats |
+
+P4's Engram item is deliberate: with the row lookup prefetched (644x, section 22.12) the *host* part of a 2,048
+token chunk is ~1.5 ms of advice plus a page-cache memcpy, but the projections still run on the host in the
+bit-exact emulation -- 20 s of measured cost per Engram state. Moving the projections to the card (weights
+staged once at load) removes that term from the chunk entirely.
+
+### 23.7 Risks and what happens if each one lands
+
+| risk | likelihood | response |
+|---|---|---|
+| grouped FP4 GEMM in Triton is slower than the per-expert kernel | medium | variant B stands at 1,280-2,560 tok/s; keep the kernel on the critical path only for A |
+| `npu_moe_distribute_*` unusable under this HCCL build | medium | TP8 layout: shard each expert across ranks, all-reduce activations instead of dispatching rows (same memory) |
+| resident experts do not fit once dense + activations are counted | low (33.5 + 2 + ~4 GiB vs 59.3) | variant B, chunk 4,096 -> 2,560 tok/s |
+| the non-finite prefill is deeper than the Engram (a kernel bug) | medium | the bisect in 23.5 runs first and alone; if a kernel is wrong, no grouped path is allowed to land on top of it |
+| all-to-all latency at chunk 2,048 dominates | low by budget | chunk 4,096/8,192 amortises it; HCCS is not the binding term at these sizes |
+
+### 23.8 What this plan does not claim
+
+It does not claim decode gets faster; Phase 1's decode gate is separate and unchanged. It does not claim the
+500 tok/s gate can be met at a 512-token chunk on the staged variant (320 tok/s by budget) -- that is what the
+resident variant is for. And it does not treat the 500 figure as the end: the article's 1.298 s 8K TTFT implies
+~6,300 tok/s, which is the target the resident path is sized for.
