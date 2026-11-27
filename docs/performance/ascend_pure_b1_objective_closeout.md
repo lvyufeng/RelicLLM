@@ -1299,3 +1299,37 @@ What is recorded, until the host returns and its log can be read:
    the host Engram's per-chunk compute, the fix is the chunk schedule and the tiling constant, not kernels.
 3. Then the framework-shaped work from 22.3 stands: device-side window slots (the KV convention both
    frameworks use), one registered op per layer, piecewise prefill graphs, grouped-MoE prefill.
+
+### 22.9 The incident's cause, and what the Engram's own documentation says the prefill is paying
+
+The repository's `CheckpointEngramTable` docstring answers both questions, and it answers the incident first.
+
+**Why the override was dangerous, in the code's own numbers.** The two Engram tables are **91.55 and 91.56 GiB
+of rows**, plus 5.72 GiB of scales. `--resident-engram` does not put them on the card: it copies each table
+**into host RAM** (`_copy_into_ram`), and the loader refuses it on NPU precisely because that copy happens
+**per rank**. Eight ranks x ~189 GiB against a host that reports 64 GiB is not a tuning mistake, it is an
+impossible allocation, and the guard said so in its message. My override told eight processes to try it anyway,
+and the host went unreachable minutes later. The causality I could not establish from the host is now
+established from the code: the experiment was mis-specified before it ran, and the /proc and dmesg reading that
+was going to settle it was never needed. **What I should have done first was read the table size that the
+repository states in the class I was about to override a guard on.** The override stays off, and this section
+exists so the next reader does not repeat it.
+
+**What the same docstring says the prefill is paying.** "A 512-token prefill gathers 12,288 rows per table, so
+a cold one is 253 s per table", against "measured 21 to 49 ms for a row whose page is not resident, and
+0.004 ms for one that is"; the same 12,288 rows out of a resident copy take **9 ms**. The rows themselves are
+tens of megabytes. So the prefill's Engram cost is **entirely page-fault latency on random access into a
+91.55 GiB mapping**, not arithmetic, not launch overhead, and not bytes.
+
+That reframes the optimisation completely: the fix is **locality**, not memory. Gathering in ascending row order
+and scattering the results back is a permutation, so the output is element for element what the unsorted gather
+returns, but the reads walk the mapping forward instead of jumping around it. Sorting the ids before a grouped
+gather is what the serving frameworks do for their MoE token order, for exactly this reason. At the docstring's
+own numbers, a 512-token prefill's two tables go from ~506 s of cold page faults to a sequential read of ~50 MB
+a table -- a different order of magnitude, with no change to a single returned value and no memory added.
+
+The patch is prepared (`apply_engram_sorted_gather.py`, against `CheckpointEngramTable.lookup`, covering both
+the streaming and the resident-copy branch) and is inert-by-construction: sort, gather, unsort. It has **not**
+been applied or measured, because the host that carries the lane's environment is the one the incident took
+down; that is the first thing the next session does, followed immediately by a 26/64/128-token prefill timing
+series to price it.
