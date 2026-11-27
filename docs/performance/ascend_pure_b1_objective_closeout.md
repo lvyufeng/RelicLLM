@@ -1134,3 +1134,104 @@ K and V for the same tokens outside the model and compare them element-wise agai
 separates "the projection produced a bad value" from "the cache store wrote it to the wrong place". Then bracket
 the 25-to-26-token cost cliff with 24- and 32-token prompts, since the group count for the compressor's ratio-2
 layers is odd at 26 (13) and even at 24 and 32 -- a prediction this hypothesis makes and the next run tests.
+
+## 22. Prefill as vLLM and SGLang do it, and what that changes here
+
+Section 21.8 left two open items: a prefill that is numerically invalid at representative lengths, and a
+prefill that is 65 % host wait. Rather than design a prefill from first principles, this section reads how the
+two frameworks that serve this model family solved it, and maps their design onto this lane's measurements.
+
+### 22.1 What vLLM and SGLang converge on
+
+* **Chunked prefill, with a token budget as the unit of work.** vLLM V1 enables chunked prefill by default and
+  describes the tradeoff in `max_num_batched_tokens`: smaller chunks give better inter-token latency, larger
+  ones better TTFT, and "for optimal throughput, we recommend setting `max_num_batched_tokens > 8192`". SGLang
+  exposes the same thing as `--chunked-prefill-size` ("the maximum number of tokens in a chunk for the chunked
+  prefill; setting this to -1 means disabling chunked prefill").
+* **Prefill graphs, keyed by token count, with padding, and eager beyond a bound.** This is the part that
+  matters most here, and both frameworks have it first-class:
+  * vLLM's `CUDAGraphMode.PIECEWISE` captures everything and leaves the attention op eager ("attention or
+    other CUDA Graphs-incompatible operations stay eager, everything else goes into CUDA Graphs"), with
+    `FULL_AND_PIECEWISE` the default in V1. Dispatch is by a `BatchDescriptor(num_tokens, num_reqs, uniform)`
+    -- "uniform decode batches take graphs keyed by request count, and other batches take graphs keyed by token
+    count" -- to "the smallest compatible token-keyed graph", and `NONE` (eager) when none fits.
+  * SGLang takes the same shape as explicit flags: `--cuda-graph-backend-prefill` (backend for the prefill
+    phase, "breakable, disabled"), `--cuda-graph-bs-prefill` ("explicit list of batch sizes to capture for the
+    prefill CUDA graph"), `--cuda-graph-max-seq-len-prefill` ("longest sequence a prefill CUDA graph replay
+    admits; longer batches run eager prefill") and `--disable-cuda-graph-padding` ("still uses cuda graph when
+    padding is not needed").
+* **Attention is the graph break.** vLLM's piecewise compilation splits at attention (`splitting_ops`, and the
+  `eager_break_during_capture` decorator), because attention's metadata is the dynamic part. Everything else --
+  dense projections, norms, residuals -- is captured.
+* **One op per layer, with an out-parameter and a fake implementation.** vLLM-Ascend's Ascend MLA layer is a
+  single registered custom op, `torch.ops.vllm.mla_forward(hidden_states, output, prefix)`, registered with
+  `mutates_args=["output"]` and a fake impl, decorated `@eager_break_during_capture`, and it runs the *whole*
+  MLA preprocess (projections, both layernorms, rope) inside the attention impl. That is what makes the layer
+  capturable at all: the Python between the ops disappears, and the one op that cannot be captured is the
+  declared break point.
+* **Weight layout work hoisted to load time.** The same file marks the fused-preprocess weights in
+  `process_weights_after_loading` so that "quant methods must skip their own NZ conversion" -- i.e. transposes
+  and NZ layout conversions happen once, not per call.
+* **MoE prefill is a dedicated kernel family, behind a runner backend.** vLLM-Ascend keeps `ops/fused_moe/` as
+  its own package; SGLang exposes `--moe-runner-backend` with `deep_gemm`, `triton`, `cutlass` and others, and
+  lists Ascend-specific MoE all-to-all backends (`ascend_ops`, `ascend_fuseep`). In both, a prefill's MoE is a
+  grouped GEMM through a selected runner, not a Python loop of per-expert calls.
+* **Host work is overlapped or eliminated.** SGLang's `--disable-overlap-schedule` describes the default as
+  "the overlap scheduler, which overlaps the CPU scheduler with GPU model worker". The lesson is general: on
+  this hardware class the host side is a first-order cost, so it is either overlapped with device work or
+  captured out of existence.
+* Prefix caching (SGLang's RadixAttention, vLLM's automatic prefix caching) is a serving-throughput feature and
+  is **out of scope** here: this lane measures one cold request, and Phase 1 forbids reuse across requests.
+
+### 22.2 Mapping, item by item, onto this lane's measurements
+
+| framework pattern | what it would fix here, from section 21 |
+| --- | --- |
+| chunked prefill at a fixed token budget | this lane already has `--prefill-chunk-tokens`; the chunk size becomes the graph key |
+| prefill graphs keyed by token count, padded, eager beyond a bound | 134 of 205 profiled prefill seconds are `select.poll` -- host waiting -- and decode already proves capture works here (40 layer graphs, 42 replays a step) |
+| attention as the graph break point | the prefill builds a per-query host table (`get_window_topk_idxs`: 26.6 s over 40 calls) that has no place in a captured graph; it must become a device-side slot mapping |
+| one op per layer with fake impl and out-param | this lane's layer is Python between ops (`sum` 3,981 calls, `Tensor.to` 6,597), which is exactly what cannot be captured |
+| weight layout hoisted to load time | the prefill widens each expert's weights to INT8 per call and rebuilds the window table per query |
+| MoE as a grouped-GEMM runner | the prefill already groups by expert, but widens per call; needs one packed-FP4 GEMM over a chunk's rows |
+| host work overlapped or eliminated | 65 % of prefill is host wait; decode's remaining host share is 15.6-16.3 ms a step |
+
+### 22.3 The plan, revised against that evidence
+
+1. **Correctness first, and the frameworks say what the shape should be.** Their attention never gathers with
+   a `-1` sentinel: vLLM writes K/V through a slot mapping (`reshape_and_cache`) and the attention kernel walks
+   the cache by slot. This lane instead builds `idxs` on the host, masks with `-1`, clamps to 0 before the
+   gather and relies on a `-1e30` floor in the online softmax -- three different conventions in one path, and
+   the failure in section 21.8 lives there. Step 1 is the slot mapping: positions to window slots computed on
+   device once per chunk, K/V written through it, attention reading through it with a causal-length mask. Then
+   validate 20 / 26 / 64 / 128 / 256 / 512-token prefills for finite logits and greedy equality.
+2. **One op per layer.** Wrap the sparse-attention-and-MLA-preprocess path as a single registered op with an
+   out-parameter and a fake impl, so it becomes the declared graph break.
+3. **Piecewise prefill graphs.** Capture everything except that op, keyed by `(chunk tokens, max seq len)` with
+   padding, dispatching to the smallest covering graph and running eager beyond the captured bound -- vLLM's
+   `BatchDescriptor` dispatch with SGLang's `--cuda-graph-max-seq-len-prefill` semantics.
+4. **Grouped-MoE prefill.** One packed-FP4 GEMM per expert over the chunk's rows, reading each expert's bytes
+   once (the `moe-runner` analogue), which is also what section 21.7 estimated at ~10 s an 8192-token chunk
+   from weight streaming alone.
+5. Only then re-measure the published protocol's TTFT and whole-window throughput (section 21.5).
+
+### 22.4 What is deliberately not adopted
+
+* `torch.compile` / Inductor: vLLM's piecewise compilation is that stack, and this environment's torch has no
+  NPU Inductor path. The equivalent here is explicit graph capture around a registered op, which is also why
+  step 2 exists.
+* Prefix caching and RadixAttention: a single cold request never hits a cache; Phase 1 forbids reuse across
+  requests.
+* Mixed prefill-plus-decode batching, PD disaggregation, and the overlap scheduler: all three assume a serving
+  scheduler with many requests in flight. This lane is one request, one token a forward, and Phase 1 forbids
+  batching; the host-side benefit of the overlap scheduler is obtained here by capturing the host work instead.
+
+### 22.5 Sources
+
+* vLLM, CUDA Graphs design (PIECEWISE / FULL_AND_PIECEWISE, `BatchDescriptor`, `AttentionCGSupport`):
+  <https://github.com/vllm-project/vllm/blob/main/docs/design/cuda_graphs.md>
+* vLLM, Optimization and Tuning (chunked prefill, `max_num_batched_tokens`):
+  <https://github.com/vllm-project/vllm/blob/main/docs/configuration/optimization.md>
+* vLLM-Ascend MLA layer (`mla_forward` registered op, `eager_break_during_capture`, fused preprocess weights):
+  <https://github.com/vllm-project/vllm-ascend/blob/main/vllm_ascend/ops/mla.py>
+* SGLang server arguments (prefill CUDA graph flags, chunked prefill size, overlap scheduler, MoE runner
+  backends): <https://github.com/sgl-project/sglang/blob/main/docs/docs/advanced_features/server_arguments.mdx>
