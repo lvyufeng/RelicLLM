@@ -1333,3 +1333,84 @@ the streaming and the resident-copy branch) and is inert-by-construction: sort, 
 been applied or measured, because the host that carries the lane's environment is the one the incident took
 down; that is the first thing the next session does, followed immediately by a 26/64/128-token prefill timing
 series to price it.
+
+### 22.10 What the prefill's time is made of, measured instead of inferred
+
+Section 21.3b guessed at per-op overhead and section 22.6 corrected the guess to the host Engram. A cProfile of
+the prefill (`RELIC_PREFILL_PROFILE=1`, rank 0, a 23-token prompt) settles the shape, and it is neither:
+
+```
+216.7 s  prefill
+ 189.6  40 x block forward
+  187.5   40 x AscendPackedExperts.forward
+   167.5    40 x _routing  ->  169.8 s in 10,891 Tensor.to() calls (15.6 ms each)
+  26.3  Engram forward x 2 (one-time verify)
+   20.1    fp8_block_gemm on the host, including 611 torch.tensor calls = 17.9 s
+```
+
+Two facts are worth stating plainly.
+
+**The expert path is the prefill, and its cost is serialisation, not arithmetic.** `Tensor.to()` accounts for
+169.8 s of the 216.7 s as *self* time -- a copy blocking, not a computation running. 10,891 copies at 15.6 ms
+apiece: a copy that size should take microseconds, so the milliseconds are the wait in front of it, i.e. the
+per-expert loop staging and draining the device once per expert instead of once per layer. The FLOPs of a
+23-token prefill are trivial; what it actually pays is ~272 host/device round trips a layer.
+
+**The Engram now costs a quarter, and a fifth of that is a safety proof.** 26.3 s for two Engram layers, of which
+20.1 s is the one-time cross-rank verification running the host Engram forward through the bit-exact block-fp8
+GEMM emulation -- 611 `torch.tensor` constructions costing 17.9 s. That is a debug-grade path paying debug-grade
+prices on a production forward.
+
+### 22.11 Why the prefill numbers looked inconsistent, and what to measure instead
+
+The same 16-token prompt measured 65.06 s in one session and 65.39 s / 65.99 s in this one; a 23-token *diverse*
+prompt measured 214.4 s warm and 362.1 s cold; a 26-token prompt did not finish in 11 minutes. Three effects
+explain the spread, and none of them is the token count:
+
+1. **Page-cache state.** One experiment in this session dropped the page cache on the 910B3 host to make an
+   Engram gather honest, and that also evicted the 476 GB checkpoint's expert pages. The next prefill paid for a
+   cold first forward and measured 362 s instead of 214 s for the same prompt and config. A prefill measurement
+   that does not state its cache state is not a measurement.
+2. **Prompt content, through the Engram.** A repeated-paragraph prompt touches few distinct n-gram rows, so its
+   Engram pages stay resident and its prefill is cheap; diverse prose touches a new row per token per table, so
+   it pays cold random reads. The 65 s / 214 s pair is one prompt of each kind, not a length effect.
+3. **A one-time proof.** The Engram verification runs once per state -- two of them -- and costs ~20 s of host
+   emulated GEMM. On a short prefill that is a third of the wall time; on a long one it is noise.
+
+So the honest metric for this lane is not "prefill seconds for an N-token prompt". It is:
+**prefill seconds with the cache state named, for a prompt whose Engram row diversity is counted**, and reported
+alongside `rows_gathered` and the distinct-row count. The harness does not yet print the latter two, and adding
+them is the first thing to do before quoting another prefill number.
+
+### 22.12 The two changes this session tried, and what the A/B said
+
+Both are kept, and one needed narrowing:
+
+* **Engram gather prefetch** (`MmapSafetensors.advise_willneed_rows` + the call in `V41Checkpoint.rows`). On the
+  real 91.55 GiB table with the cache dropped, 12,288 rows cost **12,519 ms** as a plain gather and **19.4 ms**
+  with the advice in front of it -- 644x, and the advice itself is 16 ms of it. But the first version advised on
+  *every* gather, and a decode step gathers a couple of dozen rows where the advice costs more than the faults it
+  saves: the matched A/B (identical command, reverted tree) put decode at 60.20 ms/step without the patches and
+  65.03 ms/step with them, an 8 % regression. The patch now advises only when a gather is chunk-sized
+  (>= 128 rows), which is the case it was measured for.
+* **Device-side window table** (`get_window_topk_idxs` builds on the card instead of the host). It replaces a
+  blocking host-to-device copy per layer -- the copy waits for everything already queued, which is why a stack
+  watchdog found six of eight ranks inside that copy. In the same A/B it moved prefill by nothing measurable
+  (65.99 s reverted against 65.39 s patched), because the real prefill cost is the expert loop below it; it is
+  kept because it removes a per-layer sync that has no reason to exist.
+
+The A/B is the useful artefact here: two runs, identical commands, one tree reverted. It showed that a change
+which is a 644x win on its own microbenchmark can still be a 8 % loss in the decode path, and that a prefill
+"improvement" can be invisible because the thing below it dominates.
+
+### 22.13 What the NPU cannot do, so the next attempt does not try it
+
+`--expert-batched`, `--expert-pool-rows` and the hot-expert options are **refused on NPU by name** ("NPU expert
+execution does not use CUDA hot/pool/batched arena options"). The 3.04-3.69x prefill win those give on CUDA is
+therefore not available to this lane as a flag; it would have to be rebuilt as an NPU grouped-GEMM path
+(`npu_grouped_matmul` + device-side routing), which is the framework-shaped work of section 22.3, not a knob.
+
+That also locates the honest next step. The prefill's 170 s of blocking copies is a *routing* problem: group the
+tokens by expert on the device, hand the grouped rows to a grouped GEMM, and the per-expert host loop -- and its
+272 synchronisations a layer -- disappears. Until that lands, prefill on this lane is a host-interpreted loop and
+its numbers should be quoted with that caveat rather than as the model's prefill performance.
